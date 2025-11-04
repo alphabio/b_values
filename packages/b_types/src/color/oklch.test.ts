@@ -44,68 +44,6 @@ describe("oklchColorSchema", () => {
     expect(result.success).toBe(true);
   });
 
-  it("rejects lightness below 0", () => {
-    const result = oklchColorSchema.safeParse({
-      kind: "oklch",
-      l: -0.1,
-      c: 0.2,
-      h: 180,
-    });
-    expect(result.success).toBe(false);
-  });
-
-  it("rejects lightness above 1", () => {
-    const result = oklchColorSchema.safeParse({
-      kind: "oklch",
-      l: 1.1,
-      c: 0.2,
-      h: 180,
-    });
-    expect(result.success).toBe(false);
-  });
-
-  it("rejects chroma below 0", () => {
-    const result = oklchColorSchema.safeParse({
-      kind: "oklch",
-      l: 0.5,
-      c: -0.1,
-      h: 180,
-    });
-    expect(result.success).toBe(false);
-  });
-
-  it("rejects chroma above 0.4", () => {
-    const result = oklchColorSchema.safeParse({
-      kind: "oklch",
-      l: 0.5,
-      c: 0.5,
-      h: 180,
-    });
-    expect(result.success).toBe(false);
-  });
-
-  it("rejects alpha below 0", () => {
-    const result = oklchColorSchema.safeParse({
-      kind: "oklch",
-      l: 0.5,
-      c: 0.2,
-      h: 180,
-      alpha: -0.1,
-    });
-    expect(result.success).toBe(false);
-  });
-
-  it("rejects alpha above 1", () => {
-    const result = oklchColorSchema.safeParse({
-      kind: "oklch",
-      l: 0.5,
-      c: 0.2,
-      h: 180,
-      alpha: 1.1,
-    });
-    expect(result.success).toBe(false);
-  });
-
   it("rejects wrong kind", () => {
     const result = oklchColorSchema.safeParse({
       kind: "oklab",

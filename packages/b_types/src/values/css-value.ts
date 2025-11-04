@@ -123,7 +123,8 @@ export const cssValueSchema = z.union([
   keywordValueSchema,
 
   // Functions
-  calcFunctionSchema, // Or the more detailed calcOperationSchema if you parse the internals
+  calcFunctionSchema,
+  calcOperationSchema, // Operations inside calc() expressions
   minmaxFunctionSchema,
   clampFunctionSchema,
   urlFunctionSchema,

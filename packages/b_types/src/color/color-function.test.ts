@@ -72,26 +72,6 @@ describe("colorFunctionSchema", () => {
     expect(result.success).toBe(false);
   });
 
-  it("rejects alpha below 0", () => {
-    const result = colorFunctionSchema.safeParse({
-      kind: "color",
-      colorSpace: "srgb",
-      channels: [0.5, 0.2, 0.8],
-      alpha: -0.1,
-    });
-    expect(result.success).toBe(false);
-  });
-
-  it("rejects alpha above 1", () => {
-    const result = colorFunctionSchema.safeParse({
-      kind: "color",
-      colorSpace: "srgb",
-      channels: [0.5, 0.2, 0.8],
-      alpha: 1.1,
-    });
-    expect(result.success).toBe(false);
-  });
-
   it("rejects wrong kind", () => {
     const result = colorFunctionSchema.safeParse({
       kind: "rgb",

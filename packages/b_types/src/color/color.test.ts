@@ -62,9 +62,9 @@ describe("colorSchema", () => {
   it("validates LCH colors", () => {
     const result = colorSchema.safeParse({
       kind: "lch",
-      l: 50,
-      c: 50,
-      h: 180,
+      l: { kind: "literal", value: 50 },
+      c: { kind: "literal", value: 50 },
+      h: { kind: "literal", value: 180 },
     });
     expect(result.success).toBe(true);
   });

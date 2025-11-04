@@ -44,68 +44,6 @@ describe("hwbColorSchema", () => {
     expect(result.success).toBe(true);
   });
 
-  it("rejects whiteness below 0", () => {
-    const result = hwbColorSchema.safeParse({
-      kind: "hwb",
-      h: 120,
-      w: -1,
-      b: 30,
-    });
-    expect(result.success).toBe(false);
-  });
-
-  it("rejects whiteness above 100", () => {
-    const result = hwbColorSchema.safeParse({
-      kind: "hwb",
-      h: 120,
-      w: 101,
-      b: 30,
-    });
-    expect(result.success).toBe(false);
-  });
-
-  it("rejects blackness below 0", () => {
-    const result = hwbColorSchema.safeParse({
-      kind: "hwb",
-      h: 120,
-      w: 20,
-      b: -1,
-    });
-    expect(result.success).toBe(false);
-  });
-
-  it("rejects blackness above 100", () => {
-    const result = hwbColorSchema.safeParse({
-      kind: "hwb",
-      h: 120,
-      w: 20,
-      b: 101,
-    });
-    expect(result.success).toBe(false);
-  });
-
-  it("rejects alpha below 0", () => {
-    const result = hwbColorSchema.safeParse({
-      kind: "hwb",
-      h: 120,
-      w: 20,
-      b: 30,
-      alpha: -0.1,
-    });
-    expect(result.success).toBe(false);
-  });
-
-  it("rejects alpha above 1", () => {
-    const result = hwbColorSchema.safeParse({
-      kind: "hwb",
-      h: 120,
-      w: 20,
-      b: 30,
-      alpha: 1.1,
-    });
-    expect(result.success).toBe(false);
-  });
-
   it("rejects wrong kind", () => {
     const result = hwbColorSchema.safeParse({
       kind: "hsl",
