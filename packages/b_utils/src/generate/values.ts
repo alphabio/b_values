@@ -1,3 +1,4 @@
+// b_path:: packages/b_utils/src/generate/values.ts
 import type * as Type from "@b/types";
 
 /**
