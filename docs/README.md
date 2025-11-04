@@ -46,16 +46,18 @@ docs/
 ## 🏗️ Monorepo Structure
 
 ```
-b_turbo_template/
+b_values/
 ├── apps/                              ← Applications
-│   └── basic/                         ← Example app (React + TanStack Router + Convex)
+│   └── basic/                         ← Playground app (React + TanStack Router)
 │
 ├── packages/                          ← Shared packages
-│   ├── b_components/                  ← Shared React components
-│   ├── b_server/                      ← Server-side utilities
-│   ├── b_store/                       ← State management (Zustand)
-│   ├── ui/                            ← UI component library (Radix UI)
-│   ├── tailwind-config/               ← Shared Tailwind CSS config
+│   ├── b_keywords/                    ← CSS keyword enums
+│   ├── b_types/                       ← Zod schemas for value types
+│   ├── b_units/                       ← Unit definitions
+│   ├── b_parsers/                     ← CSS → IR parsers
+│   ├── b_generators/                  ← IR → CSS generators
+│   ├── b_properties/                  ← Property-level schemas
+│   ├── b_values/                      ← Main umbrella package
 │   └── typescript-config/             ← Shared TypeScript configs
 │
 ├── docs/                              ← Documentation (this directory)
@@ -63,7 +65,7 @@ b_turbo_template/
 ├── .github/                           ← GitHub workflows and config
 │
 ├── turbo.json                         ← Turborepo configuration
-├── pnpm-workspace.yaml                ← PNPM workspace config
+├── pnpm-workspace.yaml                ← PNPM workspace + catalog config
 ├── package.json                       ← Root package.json
 ├── justfile                           ← Just command runner recipes
 └── biome.json                         ← Biome linter/formatter config
@@ -84,11 +86,9 @@ b_turbo_template/
 
 - **Framework:** React 19
 - **Routing:** TanStack Router - type-safe routing
-- **Styling:** Tailwind CSS v4 - utility-first CSS
-- **UI Components:** Radix UI - accessible component primitives
-- **State Management:** Zustand - lightweight state management
-- **Backend:** Convex - serverless backend with real-time sync
-- **Auth:** Convex Auth - authentication for Convex apps
+- **Bundler:** Vite - next generation frontend tooling
+
+**Note:** This is a library-focused monorepo. Apps are used for testing/playground purposes.
 
 ### Developer Experience
 
@@ -444,6 +444,31 @@ just deps-update     # Update package.json only
 just deps-catalog    # Update catalog only
 ```
 
+**📌 Important: Catalog Pattern**
+
+This monorepo uses PNPM's catalog feature for centralized dependency management. All shared dependencies should be added to the catalog in `pnpm-workspace.yaml`:
+
+1. **Add to catalog:** `just deps-add <package-name>`
+   - Automatically finds latest version
+   - Adds to `pnpm-workspace.yaml` catalog
+   - Sorts entries alphabetically
+
+2. **Reference in package.json:** `"<package-name>": "catalog:"`
+   - Ensures consistent versions across all packages
+   - Single source of truth in catalog
+
+3. **Script location:** `./scripts/add-catalog-dep.sh`
+   - Handles scoped packages (@org/package)
+   - Works on macOS and Linux
+   - Requires `jq` for JSON parsing
+
+**Why catalog?**
+
+- ✅ Consistent versions across all packages
+- ✅ Single place to update dependencies
+- ✅ Prevents version drift
+- ✅ Easier dependency audits
+
 ---
 
 ## 🎯 Monorepo Concepts
@@ -471,14 +496,16 @@ just deps-catalog    # Update catalog only
 
 ## 🎓 Context: b_values Project
 
-A production-ready turborepo monorepo featuring:
+A production-ready monorepo for CSS value parsing and generation:
 
-- **Modern React stack** - React 19, TypeScript, Vite, TanStack Router
-- **Shared packages** - Reusable components, configs, and utilities
-- **Type safety** - End-to-end TypeScript with strict configs
-- **Code quality** - Biome linting/formatting, pre-commit hooks
-- **Professional DX** - Fast builds, hot reload, comprehensive tooling
-- **Scalable architecture** - Add apps and packages as needed
+- **7-package structure** - Clear separation: keywords, types, units, parsers, generators, properties, values
+- **Pure data transformation** - No state, no side effects, just CSS ↔ IR
+- **Type safety** - End-to-end TypeScript with Zod schemas
+- **Bidirectional** - Parse CSS to IR, generate IR to CSS
+- **Tree-shakeable** - Import only what you need
+- **Professional DX** - Fast builds, comprehensive testing, quality tooling
+
+**See `docs/sessions/001/` for complete architecture analysis and design decisions.**
 
 ---
 
