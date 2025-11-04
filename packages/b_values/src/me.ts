@@ -20,7 +20,7 @@ console.log(
         },
       },
     },
-    s: { kind: "literal", value: 100, unit: "%" },
+    s: { kind: "url", url: "https://example.com/saturation" },
     l: { kind: "literal", value: 50, unit: "%" },
     alpha: { kind: "literal", value: 0.5 },
   }),

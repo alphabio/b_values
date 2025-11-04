@@ -9,12 +9,14 @@
 
 **Phase 1: Color Type/Generator Tests (89 tests)**
 
-*Type Schema Tests (b_types):*
+_Type Schema Tests (b_types):_
+
 - ✅ RGB, HSL, HWB, LAB, LCH, OKLab, OKLCH (40 tests total)
 - ✅ Variables, keywords, calc expressions, mixed variants
 
-*Generator Tests (b_generators):*
-- ✅ RGB, HSL, LCH enhanced with CssValue tests  
+_Generator Tests (b_generators):_
+
+- ✅ RGB, HSL, LCH enhanced with CssValue tests
 - ✅ Created HWB, LAB, OKLab, OKLCH test files (49 tests total)
 
 **Phase 2: Utils Generator Tests (61 tests)**
@@ -27,16 +29,19 @@
 ## 📊 Current State
 
 **Working:**
+
 - ✅ **534 tests passing** (up from 384, +150 tests)
 - ✅ **b_utils/src/generate at 100% coverage**
 - ✅ All quality gates passing
 
 **Coverage Improvements:**
+
 - Statements: 60% → 69% (+9%)
 - Functions: 72% → 87% (+15%)
 - Branches: 57% → 62% (+5%)
 
 **Not working:**
+
 - b_utils/src/parse at 0% coverage (needs tests)
 
 ---
@@ -44,11 +49,10 @@
 ## 🎯 Next Steps
 
 **Immediate:**
+
 1. Add tests for parse functions (angle, length, position)
 
-**Future:**
-2. Implement color parsers
-3. Property schemas
+**Future:** 2. Implement color parsers 3. Property schemas
 
 ---
 
