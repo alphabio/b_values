@@ -1,7 +1,7 @@
 // b_path:: packages/b_utils/src/parse/color/lab.test.ts
 import { describe, expect, it } from "vitest";
 import { parseLabFunction } from "./lab";
-import { extractFunctionFromValue } from "../../../b_utils/src/parse/test-helpers";
+import { extractFunctionFromValue } from "../../../b_utils/src/parse/test-utils";
 
 function parseLab(input: string) {
   const func = extractFunctionFromValue(input);

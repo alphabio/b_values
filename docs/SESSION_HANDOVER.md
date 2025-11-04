@@ -1,45 +1,36 @@
-# Session 012: Color Round-trip Tests & Coverage Boost
+# Session 013: Public API & Property Layer
 
 **Date:** 2025-11-04
-**Focus:** Implement comprehensive round-trip tests and boost coverage to 89%+
+**Focus:** Complete generator coverage, refine architecture, implement property layer
 
 ---
 
 ## ✅ Accomplished
 
-**Phase 1: Planning & Architecture**
+**Phase 1: Architecture Audit**
 
-- Reviewed documentation and archived Session 011
-- Designed round-trip test layout (Option 1: co-located in b_values umbrella package)
-- Rationale: Integration tests belong in umbrella package, tests full pipeline (parse → IR → generate)
+- Reviewed Session 001 architecture and implementation plans
+- Audited current package structure and identified gaps
+- Discovered parsers exist but generators incomplete (angle, length, position missing)
+- Identified utils file naming issues (generic "helpers" names)
+- Clarified package separation of concerns
 
-**Phase 2: Round-trip Tests Implementation**
+**Phase 2: Quick Wins - File Naming** ✅
 
-- Created `packages/b_values/src/color/roundtrip.test.ts`
-- 34 comprehensive round-trip tests covering all 7 color spaces
-- Tests for: modern syntax, legacy comma syntax normalization, alpha channels, units, keywords, edge cases
-- Added dependencies: `@b/utils`, `css-tree`, `@types/css-tree` to b_values package
+- Renamed `packages/b_utils/src/parse/helpers.ts` → `css-value-parser.ts`
+- Renamed `packages/b_utils/src/parse/test-helpers.ts` → `test-utils.ts`
+- Updated all imports across packages
+- All tests passing (770 → 770)
 
-**Phase 3: Coverage Boost (81% → 89%+ Target Met!)**
+**Phase 3: Complete Generator Coverage** ✅
 
-- Added tests for `color-function.ts` (0% → 100%) - 11 tests
-- Added tests for `color.ts` dispatcher (0% → 100%) - 16 tests
-- Enhanced `helpers.ts` tests (48% → 94%) - var(), error cases, edge cases
-- Created 23 new test cases across 2 generator test files
-- **Coverage: 89.17% statements** ✅ (Target: 89%)
-
-**Phase 4: Test Helper Refactoring**
-
-- Moved `colorFunctionFromDeclaration` → generic `extractFunctionFromDeclaration`
-- New location: `packages/b_utils/src/parse/test-helpers.ts` (was color-specific)
-- Simplified implementation: parse directly with `context: "value"` (no fake declaration wrapper)
-- Now reusable for any CSS function (length, gradient, etc.)
-
-**Phase 5: Validation**
-
-- All 770 tests passing (up from 702, +68 new tests)
-- All quality checks passing: format ✅, lint ✅, typecheck ✅
-- Build successful ✅
+- Implemented `packages/b_generators/src/angle.ts`
+- Implemented `packages/b_generators/src/length.ts` (+ `generateLengthPercentage`)
+- Implemented `packages/b_generators/src/position.ts`
+- Added comprehensive tests for all 3 generators (27 new tests)
+- Updated exports in `packages/b_generators/src/index.ts`
+- All quality gates passing ✅
+- Tests: **797 passing** (up from 770, +27 new tests)
 
 ---
 
@@ -47,68 +38,64 @@
 
 **Working:**
 
-- 7 color space parsers (RGB, HSL, HWB, LAB, LCH, OKLab, OKLCH) ✅
-- 7 color space generators ✅
-- 34 round-trip tests validating bidirectional transformation ✅
-- 770 total tests passing (+68 from session start)
-- All quality gates green
+- ✅ All parsers: Color (7), Angle, Length, Position
+- ✅ All generators: Color (7), Angle, Length, Position
+- ✅ Parser/Generator symmetry restored!
+- ✅ 797 tests passing
+- ✅ All quality gates green
+- ✅ Clear file naming in utils
 
-**Coverage - EXCELLENT! ✅**
+**Architecture Clarified:**
 
-- Statements: **89.17%** (target: 89%)
-- Branches: 83.73%
-- Functions: 97.56%
-- Lines: 93.6%
+```
+@b/types        → Zod schemas (IR)
+@b/keywords     → Keyword enums
+@b/units        → Unit definitions
+@b/parsers      → CSS → IR (domain-specific)
+@b/generators   → IR → CSS (domain-specific) ✅ NOW COMPLETE
+@b/utils        → Shared utilities (generic CssValue handling)
+@b/properties   → Property-level API (next to implement)
+@b/values       → Public umbrella (re-exports all)
+```
 
 ---
 
 ## 🎯 Next Steps
 
-**Ready for:**
+**Phase 4: Property Layer Design** (NEXT)
 
-1. Property schemas implementation (color, length, etc.)
-2. More integration tests (length, position, gradient)
-3. Public API design for @b/values umbrella package
-4. Documentation
+1. Document public API structure
+   - Value-level API (currently available)
+   - Property-level API (to be designed)
+   - Multi-value handling pattern
+2. Design property schema system
+3. Implement `background-image` as pilot property
+   - Multi-value (comma-separated)
+   - Mix of gradient, url, keyword types
+   - Property schema pattern for others to follow
 
 ---
 
 ## 💡 Key Decisions
 
-**Round-trip Test Location:** `packages/b_values/src/color/roundtrip.test.ts`
+**Utils File Naming:**
 
-- Umbrella package is ideal for integration tests
-- Tests full pipeline: CSS string → Parse → IR → Generate → CSS string
-- Single source of truth per domain
-- Easy to expand for other value types
+- `css-value-parser.ts` - Generic CSS value parsing (numbers, dimensions, keywords, var())
+- `test-utils.ts` - Test helper utilities (extractFunctionFromValue)
 
-**Test Helper Refactored:**
+**Generator Implementations:**
 
-- `extractFunctionFromDeclaration` now generic (was `colorFunctionFromDeclaration`)
-- Location: `packages/b_utils/src/parse/test-helpers.ts`
-- Simplified: parses function directly without wrapping in fake declaration
-- Reusable for all CSS function types
+- All use `generateOk` (not `ok`) from `@b/types`
+- Follow same pattern as color generators
+- Return `GenerateResult` (non-generic type)
+- Simple string interpolation for value + unit
 
-**Test Coverage:**
+**Position2D Type:**
 
-- All 7 color spaces with multiple syntaxes
-- Legacy comma syntax normalization
-- Alpha channel handling (including omission of alpha=1)
-- Keywords (none)
-- Various units (deg, rad, turn, grad, %)
-- Edge cases (all none keywords, mixed units)
-- Error handling (null, undefined, invalid types, missing fields)
-
-**Test Pattern:**
-
-```typescript
-const input = "rgb(255 0 0)";
-const func = extractFunctionFromDeclaration(input);
-const parsed = parseRgbFunction(func);
-const generated = ColorGenerators.Rgb.generate(parsed.value);
-expect(generated.value).toBe(input);
-```
+- Uses `horizontal` / `vertical` fields (not x/y)
+- Union type: string keywords OR LengthPercentage objects
+- Generator handles both types with typeof checks
 
 ---
 
-**Status:** ✅ Session 012 Complete - Round-trip Tests & 89% Coverage Achieved!
+**Status:** ✅ Phase 3 Complete - Ready for Property Layer Design

@@ -1,7 +1,7 @@
-// b_path:: packages/b_utils/src/parse/color/helpers.test.ts
+// b_path:: packages/b_utils/src/parse/css-value-parser.test.ts
 import { describe, expect, it } from "vitest";
 import * as csstree from "css-tree";
-import { parseCssValueNode, getChildren, getValues } from "./helpers";
+import { parseCssValueNode, getChildren, getValues } from "./css-value-parser";
 
 describe("parseCssValueNode", () => {
   it("should parse a Number node", () => {
@@ -239,7 +239,7 @@ describe("getChildren", () => {
     if (func?.type === "Function") {
       const children = getChildren(func);
       expect(children.length).toBe(3);
-      expect(children.every((c) => c.type !== "WhiteSpace")).toBe(true);
+      expect(children.every((c: csstree.CssNode) => c.type !== "WhiteSpace")).toBe(true);
     }
   });
 });
@@ -266,7 +266,7 @@ describe("getValues", () => {
       const children = getChildren(func);
       const values = getValues(children);
       expect(values.length).toBe(4);
-      expect(values.every((v) => v.type !== "Operator")).toBe(true);
+      expect(values.every((v: csstree.CssNode) => v.type !== "Operator")).toBe(true);
     }
   });
 

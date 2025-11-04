@@ -1,7 +1,7 @@
 // b_path:: packages/b_utils/src/parse/color/hwb.test.ts
 import { describe, expect, it } from "vitest";
 import { parseHwbFunction } from "./hwb";
-import { extractFunctionFromValue } from "../../../b_utils/src/parse/test-helpers";
+import { extractFunctionFromValue } from "../../../b_utils/src/parse/test-utils";
 
 function parseHwb(input: string) {
   const func = extractFunctionFromValue(input);

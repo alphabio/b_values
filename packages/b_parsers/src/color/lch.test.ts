@@ -1,7 +1,7 @@
 // b_path:: packages/b_utils/src/parse/color/lch.test.ts
 import { describe, expect, it } from "vitest";
 import { parseLchFunction } from "./lch";
-import { extractFunctionFromValue } from "../../../b_utils/src/parse/test-helpers";
+import { extractFunctionFromValue } from "../../../b_utils/src/parse/test-utils";
 
 function parseLch(input: string) {
   const func = extractFunctionFromValue(input);
