@@ -2,7 +2,7 @@
 import type * as csstree from "css-tree";
 import { err, ok, type Result } from "@b/types";
 import type { LCHColor } from "@b/types";
-import { parseCssValueNode, getChildren, getValues } from "./helpers";
+import { parseCssValueNode, getChildren, getValues } from "@b/utils";
 
 /**
  * Parse lch() function

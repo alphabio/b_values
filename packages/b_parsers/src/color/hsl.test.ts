@@ -1,10 +1,10 @@
 // b_path:: packages/b_utils/src/parse/color/hsl.test.ts
 import { describe, expect, it } from "vitest";
 import { parseHslFunction } from "./hsl";
-import { colorFunctionFromDeclaration } from "./test-helpers";
+import { extractFunctionFromValue } from "../../../b_utils/src/parse/test-helpers";
 
 function parseHsl(input: string) {
-  const func = colorFunctionFromDeclaration(input);
+  const func = extractFunctionFromValue(input);
   return parseHslFunction(func);
 }
 
@@ -115,14 +115,14 @@ describe("parseHslFunction", () => {
 
   describe("Error cases", () => {
     it("should return error for wrong function name", () => {
-      const func = colorFunctionFromDeclaration("rgb(0 0 0)");
+      const func = extractFunctionFromValue("rgb(0 0 0)");
       const result = parseHslFunction(func);
       expect(result.ok).toBe(false);
       expect(result.error).toContain("Expected hsl()");
     });
 
     it("should return error for too few values", () => {
-      const func = colorFunctionFromDeclaration("hsl(180deg 50%)");
+      const func = extractFunctionFromValue("hsl(180deg 50%)");
       const result = parseHslFunction(func);
       expect(result.ok).toBe(false);
       expect(result.error).toContain("must have 3 or 4 values");

@@ -25,6 +25,7 @@
     "@b/keywords": "workspace:*",
     "@b/types": "workspace:*",
     "@b/units": "workspace:*",
+    "@b/utils": "workspace:*",
     "@types/css-tree": "catalog:",
     "css-tree": "catalog:",
     "zod": "catalog:"

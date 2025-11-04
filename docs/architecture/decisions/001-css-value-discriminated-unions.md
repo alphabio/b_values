@@ -1,8 +1,8 @@
 # ADR-001: CSS Value Representation with Discriminated Unions
 
-**Status:** Accepted  
-**Date:** 2025-11-04  
-**Deciders:** Session 008  
+**Status:** Accepted
+**Date:** 2025-11-04
+**Deciders:** Session 008
 **Context:** Building a spec-compliant CSS parser and generator system
 
 ---

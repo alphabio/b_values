@@ -1,10 +1,10 @@
 // b_path:: packages/b_utils/src/parse/color/lab.test.ts
 import { describe, expect, it } from "vitest";
 import { parseLabFunction } from "./lab";
-import { colorFunctionFromDeclaration } from "./test-helpers";
+import { extractFunctionFromValue } from "../../../b_utils/src/parse/test-helpers";
 
 function parseLab(input: string) {
-  const func = colorFunctionFromDeclaration(input);
+  const func = extractFunctionFromValue(input);
   return parseLabFunction(func);
 }
 
@@ -92,7 +92,7 @@ describe("parseLabFunction", () => {
 
 describe("parseLabFunction - Error cases", () => {
   it("should return error for wrong function name", () => {
-    const func = colorFunctionFromDeclaration("rgb(0 0 0)");
+    const func = extractFunctionFromValue("rgb(0 0 0)");
     const result = parseLabFunction(func);
     expect(result.ok).toBe(false);
     if (!result.ok) {
@@ -101,7 +101,7 @@ describe("parseLabFunction - Error cases", () => {
   });
 
   it("should return error for too few values", () => {
-    const func = colorFunctionFromDeclaration("lab(50% 25)");
+    const func = extractFunctionFromValue("lab(50% 25)");
     const result = parseLabFunction(func);
     expect(result.ok).toBe(false);
     if (!result.ok) {

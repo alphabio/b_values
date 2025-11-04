@@ -1,10 +1,10 @@
 // b_path:: packages/b_utils/src/parse/color/hwb.test.ts
 import { describe, expect, it } from "vitest";
 import { parseHwbFunction } from "./hwb";
-import { colorFunctionFromDeclaration } from "./test-helpers";
+import { extractFunctionFromValue } from "../../../b_utils/src/parse/test-helpers";
 
 function parseHwb(input: string) {
-  const func = colorFunctionFromDeclaration(input);
+  const func = extractFunctionFromValue(input);
   return parseHwbFunction(func);
 }
 
@@ -107,14 +107,14 @@ describe("parseHwbFunction", () => {
 
   describe("Error cases", () => {
     it("should return error for wrong function name", () => {
-      const func = colorFunctionFromDeclaration("rgb(0 0 0)");
+      const func = extractFunctionFromValue("rgb(0 0 0)");
       const result = parseHwbFunction(func);
       expect(result.ok).toBe(false);
       expect(result.error).toContain("Expected hwb()");
     });
 
     it("should return error for too few values", () => {
-      const func = colorFunctionFromDeclaration("hwb(120 20%)");
+      const func = extractFunctionFromValue("hwb(120 20%)");
       const result = parseHwbFunction(func);
       expect(result.ok).toBe(false);
       expect(result.error).toContain("must have 3 or 4 values");
