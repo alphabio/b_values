@@ -1,5 +1,0 @@
-.env.local
-.env
-.env.production
-generatedKeys.txt
-node_modules
