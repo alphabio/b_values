@@ -224,6 +224,26 @@ just lint      # Shows remaining issues
 - Third-party libraries
 - Trivial getters/setters
 
+**Test co-location:**
+
+Tests must be co-located with source files:
+
+```
+packages/b_types/src/
+├── result.ts          ← Implementation
+├── result.test.ts     ← Tests (same directory)
+├── color/
+│   ├── hex.ts         ← Implementation
+│   └── hex.test.ts    ← Tests (same directory)
+```
+
+**Benefits:**
+
+- Easy to find tests for any file
+- Encourages testing as you code
+- Clear relationship between code and tests
+- Simplifies imports (relative paths)
+
 **Test commands:**
 
 ```bash

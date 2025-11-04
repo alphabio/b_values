@@ -1,3 +1,8 @@
-// @b/types - Zod schemas for CSS value types and Result system
+/**
+ * b_types - Zod schemas and Result system
+ *
+ * @packageDocumentation
+ */
 
-export const placeholder = "types";
+// Result system
+export * from "./result";

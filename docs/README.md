@@ -1,16 +1,11 @@
 # 📚 Agent Documentation
 
-**Start here. Read everything. Then read `SESSION_HANDOVER.md`.**
+# IMPORTANT
 
----
+READ EVERY LINE OF THIS DOCUMENT CAREFULLY BEFORE PROCEEDING
+IT CONTAINS INFORMATION FOR HOW WE WILL WORK TOGETHER THROUGHOUT THE SESSION
 
-## 🚀 Quick Start
-
-1. **Read `SESSION_HANDOVER.md`** - current state, blockers, next steps
-2. **Read `CODE_QUALITY.md`** - non-negotiable standards
-3. **Archive previous session** (commands below)
-4. **Create new handover** (template below)
-5. **Confirm plan** with user → begin
+**Start here**
 
 ---
 
@@ -24,8 +19,6 @@ docs/
 ├── sessions/              ← Archived sessions (001/, 002/, ...)
 └── architecture/          ← Technical decisions (ADRs, patterns)
 ```
-
-**Key principle:** `SESSION_HANDOVER.md` is always current. Archive it at session start.
 
 ---
 
@@ -221,5 +214,13 @@ See `CODE_QUALITY.md` for full standards. Key points:
 **See `docs/sessions/001/` for architecture analysis.**
 
 ---
+
+## 🚀 Quick Start
+
+1. **Read `SESSION_HANDOVER.md`** - current state, blockers, next steps
+2. **Read `CODE_QUALITY.md`** - non-negotiable standards
+3. **Archive previous session** (commands below)
+4. **Create new handover** (template below)
+5. **Confirm plan** with user → begin
 
 **→ Now read `SESSION_HANDOVER.md` for current state 🚀**

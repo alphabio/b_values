@@ -1,3 +1,5 @@
 {
-  "extends": "../../tsconfig.json"
+	"$schema": "https://json.schemastore.org/tsconfig",
+	"extends": "@b/typescript-config/base.node.json",
+	"include": ["vite.config.ts"]
 }
