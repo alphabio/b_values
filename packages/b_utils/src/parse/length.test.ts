@@ -7,7 +7,6 @@ describe("parseLengthNode", () => {
   it("should parse px length", () => {
     const node: csstree.Dimension = {
       type: "Dimension",
-      loc: null,
       value: "100",
       unit: "px",
     };
@@ -21,7 +20,6 @@ describe("parseLengthNode", () => {
   it("should parse rem length", () => {
     const node: csstree.Dimension = {
       type: "Dimension",
-      loc: null,
       value: "2.5",
       unit: "rem",
     };
@@ -35,7 +33,6 @@ describe("parseLengthNode", () => {
   it("should parse em length", () => {
     const node: csstree.Dimension = {
       type: "Dimension",
-      loc: null,
       value: "1.5",
       unit: "em",
     };
@@ -49,7 +46,6 @@ describe("parseLengthNode", () => {
   it("should parse vw length", () => {
     const node: csstree.Dimension = {
       type: "Dimension",
-      loc: null,
       value: "50",
       unit: "vw",
     };
@@ -63,7 +59,6 @@ describe("parseLengthNode", () => {
   it("should reject invalid length value", () => {
     const node: csstree.Dimension = {
       type: "Dimension",
-      loc: null,
       value: "invalid",
       unit: "px",
     };
@@ -77,7 +72,6 @@ describe("parseLengthNode", () => {
   it("should reject invalid length unit", () => {
     const node: csstree.Dimension = {
       type: "Dimension",
-      loc: null,
       value: "100",
       unit: "deg",
     };
@@ -91,7 +85,6 @@ describe("parseLengthNode", () => {
   it("should reject non-dimension node", () => {
     const node: csstree.Identifier = {
       type: "Identifier",
-      loc: null,
       name: "auto",
     };
     const result = parseLengthNode(node);
@@ -106,7 +99,6 @@ describe("parseLengthPercentageNode", () => {
   it("should parse zero without unit", () => {
     const node: csstree.CssNode = {
       type: "Number",
-      loc: null,
       value: "0",
     };
     const result = parseLengthPercentageNode(node);
@@ -119,7 +111,6 @@ describe("parseLengthPercentageNode", () => {
   it("should reject non-zero unitless value", () => {
     const node: csstree.CssNode = {
       type: "Number",
-      loc: null,
       value: "10",
     };
     const result = parseLengthPercentageNode(node);
@@ -132,7 +123,6 @@ describe("parseLengthPercentageNode", () => {
   it("should parse px length-percentage", () => {
     const node: csstree.Dimension = {
       type: "Dimension",
-      loc: null,
       value: "100",
       unit: "px",
     };
@@ -146,7 +136,6 @@ describe("parseLengthPercentageNode", () => {
   it("should parse percentage", () => {
     const node: csstree.Percentage = {
       type: "Percentage",
-      loc: null,
       value: "50",
     };
     const result = parseLengthPercentageNode(node);
@@ -159,7 +148,6 @@ describe("parseLengthPercentageNode", () => {
   it("should parse rem length-percentage", () => {
     const node: csstree.Dimension = {
       type: "Dimension",
-      loc: null,
       value: "2",
       unit: "rem",
     };
@@ -173,7 +161,6 @@ describe("parseLengthPercentageNode", () => {
   it("should reject invalid dimension value", () => {
     const node: csstree.Dimension = {
       type: "Dimension",
-      loc: null,
       value: "invalid",
       unit: "px",
     };
@@ -187,7 +174,6 @@ describe("parseLengthPercentageNode", () => {
   it("should reject invalid percentage value", () => {
     const node: csstree.Percentage = {
       type: "Percentage",
-      loc: null,
       value: "invalid",
     };
     const result = parseLengthPercentageNode(node);
@@ -200,7 +186,6 @@ describe("parseLengthPercentageNode", () => {
   it("should reject invalid length unit", () => {
     const node: csstree.Dimension = {
       type: "Dimension",
-      loc: null,
       value: "100",
       unit: "deg",
     };
@@ -214,7 +199,6 @@ describe("parseLengthPercentageNode", () => {
   it("should reject invalid node type", () => {
     const node: csstree.Identifier = {
       type: "Identifier",
-      loc: null,
       name: "auto",
     };
     const result = parseLengthPercentageNode(node);
@@ -229,7 +213,6 @@ describe("parseNumberNode", () => {
   it("should parse integer", () => {
     const node: csstree.CssNode = {
       type: "Number",
-      loc: null,
       value: "42",
     };
     const result = parseNumberNode(node);
@@ -242,7 +225,6 @@ describe("parseNumberNode", () => {
   it("should parse decimal", () => {
     const node: csstree.CssNode = {
       type: "Number",
-      loc: null,
       value: "3.14",
     };
     const result = parseNumberNode(node);
@@ -255,7 +237,6 @@ describe("parseNumberNode", () => {
   it("should parse negative number", () => {
     const node: csstree.CssNode = {
       type: "Number",
-      loc: null,
       value: "-5",
     };
     const result = parseNumberNode(node);
@@ -268,7 +249,6 @@ describe("parseNumberNode", () => {
   it("should parse zero", () => {
     const node: csstree.CssNode = {
       type: "Number",
-      loc: null,
       value: "0",
     };
     const result = parseNumberNode(node);
@@ -281,7 +261,6 @@ describe("parseNumberNode", () => {
   it("should reject invalid number value", () => {
     const node: csstree.CssNode = {
       type: "Number",
-      loc: null,
       value: "invalid",
     };
     const result = parseNumberNode(node);
@@ -294,7 +273,6 @@ describe("parseNumberNode", () => {
   it("should reject non-number node", () => {
     const node: csstree.Identifier = {
       type: "Identifier",
-      loc: null,
       name: "auto",
     };
     const result = parseNumberNode(node);

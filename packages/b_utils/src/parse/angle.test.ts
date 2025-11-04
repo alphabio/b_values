@@ -7,7 +7,6 @@ describe("parseAngleNode", () => {
   it("should parse deg angle", () => {
     const node: csstree.Dimension = {
       type: "Dimension",
-      loc: null,
       value: "90",
       unit: "deg",
     };
@@ -21,7 +20,6 @@ describe("parseAngleNode", () => {
   it("should parse rad angle", () => {
     const node: csstree.Dimension = {
       type: "Dimension",
-      loc: null,
       value: "3.14",
       unit: "rad",
     };
@@ -35,7 +33,6 @@ describe("parseAngleNode", () => {
   it("should parse turn angle", () => {
     const node: csstree.Dimension = {
       type: "Dimension",
-      loc: null,
       value: "0.25",
       unit: "turn",
     };
@@ -49,7 +46,6 @@ describe("parseAngleNode", () => {
   it("should parse grad angle", () => {
     const node: csstree.Dimension = {
       type: "Dimension",
-      loc: null,
       value: "100",
       unit: "grad",
     };
@@ -63,7 +59,6 @@ describe("parseAngleNode", () => {
   it("should parse negative angle", () => {
     const node: csstree.Dimension = {
       type: "Dimension",
-      loc: null,
       value: "-45",
       unit: "deg",
     };
@@ -77,7 +72,6 @@ describe("parseAngleNode", () => {
   it("should reject invalid angle value", () => {
     const node: csstree.Dimension = {
       type: "Dimension",
-      loc: null,
       value: "invalid",
       unit: "deg",
     };
@@ -91,7 +85,6 @@ describe("parseAngleNode", () => {
   it("should reject invalid angle unit", () => {
     const node: csstree.Dimension = {
       type: "Dimension",
-      loc: null,
       value: "90",
       unit: "px",
     };
@@ -105,7 +98,6 @@ describe("parseAngleNode", () => {
   it("should reject non-dimension node", () => {
     const node: csstree.Identifier = {
       type: "Identifier",
-      loc: null,
       name: "auto",
     };
     const result = parseAngleNode(node);
