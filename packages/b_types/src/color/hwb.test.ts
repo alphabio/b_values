@@ -2,13 +2,15 @@
 import { describe, expect, it } from "vitest";
 import { hwbColorSchema } from "./hwb";
 
+const lit = (value: number) => ({ kind: "literal" as const, value });
+
 describe("hwbColorSchema", () => {
   it("validates opaque HWB colors", () => {
     const result = hwbColorSchema.safeParse({
       kind: "hwb",
-      h: 120,
-      w: 20,
-      b: 30,
+      h: lit(120),
+      w: lit(20),
+      b: lit(30),
     });
     expect(result.success).toBe(true);
   });
@@ -16,10 +18,10 @@ describe("hwbColorSchema", () => {
   it("validates HWB colors with alpha", () => {
     const result = hwbColorSchema.safeParse({
       kind: "hwb",
-      h: 120,
-      w: 20,
-      b: 30,
-      alpha: 0.5,
+      h: lit(120),
+      w: lit(20),
+      b: lit(30),
+      alpha: lit(0.5),
     });
     expect(result.success).toBe(true);
   });
@@ -27,9 +29,9 @@ describe("hwbColorSchema", () => {
   it("allows hue wrapping (negative values)", () => {
     const result = hwbColorSchema.safeParse({
       kind: "hwb",
-      h: -30,
-      w: 20,
-      b: 30,
+      h: lit(-30),
+      w: lit(20),
+      b: lit(30),
     });
     expect(result.success).toBe(true);
   });
@@ -37,9 +39,9 @@ describe("hwbColorSchema", () => {
   it("allows hue wrapping (values above 360)", () => {
     const result = hwbColorSchema.safeParse({
       kind: "hwb",
-      h: 420,
-      w: 20,
-      b: 30,
+      h: lit(420),
+      w: lit(20),
+      b: lit(30),
     });
     expect(result.success).toBe(true);
   });
@@ -47,9 +49,9 @@ describe("hwbColorSchema", () => {
   it("rejects wrong kind", () => {
     const result = hwbColorSchema.safeParse({
       kind: "hsl",
-      h: 120,
-      w: 20,
-      b: 30,
+      h: lit(120),
+      w: lit(20),
+      b: lit(30),
     });
     expect(result.success).toBe(false);
   });

@@ -2,13 +2,15 @@
 import { describe, expect, it } from "vitest";
 import { oklchColorSchema } from "./oklch";
 
+const lit = (value: number) => ({ kind: "literal" as const, value });
+
 describe("oklchColorSchema", () => {
   it("validates opaque OKLCH colors", () => {
     const result = oklchColorSchema.safeParse({
       kind: "oklch",
-      l: 0.5,
-      c: 0.2,
-      h: 180,
+      l: lit(0.5),
+      c: lit(0.2),
+      h: lit(180),
     });
     expect(result.success).toBe(true);
   });
@@ -16,10 +18,10 @@ describe("oklchColorSchema", () => {
   it("validates OKLCH colors with alpha", () => {
     const result = oklchColorSchema.safeParse({
       kind: "oklch",
-      l: 0.5,
-      c: 0.2,
-      h: 180,
-      alpha: 0.5,
+      l: lit(0.5),
+      c: lit(0.2),
+      h: lit(180),
+      alpha: lit(0.5),
     });
     expect(result.success).toBe(true);
   });
@@ -27,9 +29,9 @@ describe("oklchColorSchema", () => {
   it("allows hue wrapping (negative values)", () => {
     const result = oklchColorSchema.safeParse({
       kind: "oklch",
-      l: 0.5,
-      c: 0.2,
-      h: -30,
+      l: lit(0.5),
+      c: lit(0.2),
+      h: lit(-30),
     });
     expect(result.success).toBe(true);
   });
@@ -37,9 +39,9 @@ describe("oklchColorSchema", () => {
   it("allows hue wrapping (values above 360)", () => {
     const result = oklchColorSchema.safeParse({
       kind: "oklch",
-      l: 0.5,
-      c: 0.2,
-      h: 420,
+      l: lit(0.5),
+      c: lit(0.2),
+      h: lit(420),
     });
     expect(result.success).toBe(true);
   });
@@ -47,9 +49,9 @@ describe("oklchColorSchema", () => {
   it("rejects wrong kind", () => {
     const result = oklchColorSchema.safeParse({
       kind: "oklab",
-      l: 0.5,
-      c: 0.2,
-      h: 180,
+      l: lit(0.5),
+      c: lit(0.2),
+      h: lit(180),
     });
     expect(result.success).toBe(false);
   });

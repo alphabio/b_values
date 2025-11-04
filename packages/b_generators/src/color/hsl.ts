@@ -1,6 +1,7 @@
 // b_path:: packages/b_generators/src/color/hsl.ts
 import { type GenerateResult, generateErr, generateOk, createError } from "@b/types";
 import type { HSLColor } from "@b/types";
+import { cssValueToCss } from "@b/utils";
 
 /**
  * @see https://drafts.csswg.org/css-color/#the-hsl-notation
@@ -18,10 +19,10 @@ export function generate(color: HSLColor): GenerateResult {
 
   const { h, s, l, alpha } = color;
 
-  const hslPart = `${h} ${s}% ${l}%`;
+  const hslPart = `${cssValueToCss(h)} ${cssValueToCss(s)} ${cssValueToCss(l)}`;
 
-  if (alpha !== undefined && alpha < 1) {
-    return generateOk(`hsl(${hslPart} / ${alpha})`);
+  if (alpha !== undefined) {
+    return generateOk(`hsl(${hslPart} / ${cssValueToCss(alpha)})`);
   }
 
   return generateOk(`hsl(${hslPart})`);

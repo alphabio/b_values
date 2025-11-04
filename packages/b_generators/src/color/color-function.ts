@@ -1,6 +1,7 @@
 // b_path:: packages/b_generators/src/color/color-function.ts
 import { type GenerateResult, generateErr, generateOk, createError } from "@b/types";
 import type { ColorFunction } from "@b/types";
+import { cssValueToCss } from "@b/utils";
 
 /**
  * @see https://drafts.csswg.org/css-color/#color-function
@@ -22,12 +23,12 @@ export function generate(value: ColorFunction): GenerateResult {
 
   for (const channel of value.channels) {
     parts.push(" ");
-    parts.push(channel.toFixed(6).replace(/\.?0+$/, "") || "0");
+    parts.push(cssValueToCss(channel));
   }
 
   if (value.alpha !== undefined) {
     parts.push(" / ");
-    parts.push(value.alpha.toFixed(6).replace(/\.?0+$/, "") || "0");
+    parts.push(cssValueToCss(value.alpha));
   }
 
   parts.push(")");

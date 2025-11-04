@@ -1,6 +1,7 @@
 // b_path:: packages/b_generators/src/color/oklch.ts
 import { type GenerateResult, generateErr, generateOk, createError } from "@b/types";
 import type { OKLCHColor } from "@b/types";
+import { cssValueToCss } from "@b/utils";
 
 /**
  * @see https://drafts.csswg.org/css-color/#ok-lch
@@ -18,10 +19,10 @@ export function generate(color: OKLCHColor): GenerateResult {
 
   const { l, c, h, alpha } = color;
 
-  const oklchPart = `${l} ${c} ${h}`;
+  const oklchPart = `${cssValueToCss(l)} ${cssValueToCss(c)} ${cssValueToCss(h)}`;
 
-  if (alpha !== undefined && alpha < 1) {
-    return generateOk(`oklch(${oklchPart} / ${alpha})`);
+  if (alpha !== undefined) {
+    return generateOk(`oklch(${oklchPart} / ${cssValueToCss(alpha)})`);
   }
 
   return generateOk(`oklch(${oklchPart})`);

@@ -1,6 +1,7 @@
 // b_path:: packages/b_generators/src/color/oklab.ts
 import { type GenerateResult, generateErr, generateOk, createError } from "@b/types";
 import type { OKLabColor } from "@b/types";
+import { cssValueToCss } from "@b/utils";
 
 /**
  * @see https://drafts.csswg.org/css-color/#ok-lab
@@ -18,10 +19,10 @@ export function generate(color: OKLabColor): GenerateResult {
 
   const { l, a, b, alpha } = color;
 
-  const oklabPart = `${l} ${a} ${b}`;
+  const oklabPart = `${cssValueToCss(l)} ${cssValueToCss(a)} ${cssValueToCss(b)}`;
 
-  if (alpha !== undefined && alpha < 1) {
-    return generateOk(`oklab(${oklabPart} / ${alpha})`);
+  if (alpha !== undefined) {
+    return generateOk(`oklab(${oklabPart} / ${cssValueToCss(alpha)})`);
   }
 
   return generateOk(`oklab(${oklabPart})`);

@@ -1,6 +1,7 @@
 // b_path:: packages/b_generators/src/color/hwb.ts
 import { type GenerateResult, generateErr, generateOk, createError } from "@b/types";
 import type { HWBColor } from "@b/types";
+import { cssValueToCss } from "@b/utils";
 
 /**
  * @see https://drafts.csswg.org/css-color/#the-hwb-notation
@@ -18,10 +19,10 @@ export function generate(color: HWBColor): GenerateResult {
 
   const { h, w, b, alpha } = color;
 
-  let result = `hwb(${h} ${w}% ${b}%`;
+  let result = `hwb(${cssValueToCss(h)} ${cssValueToCss(w)} ${cssValueToCss(b)}`;
 
-  if (alpha !== undefined && alpha !== 1) {
-    result += ` / ${alpha}`;
+  if (alpha !== undefined) {
+    result += ` / ${cssValueToCss(alpha)}`;
   }
 
   result += ")";

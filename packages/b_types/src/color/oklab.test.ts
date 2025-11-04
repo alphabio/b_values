@@ -2,13 +2,15 @@
 import { describe, expect, it } from "vitest";
 import { oklabColorSchema } from "./oklab";
 
+const lit = (value: number) => ({ kind: "literal" as const, value });
+
 describe("oklabColorSchema", () => {
   it("validates opaque OKLab colors", () => {
     const result = oklabColorSchema.safeParse({
       kind: "oklab",
-      l: 0.5,
-      a: -0.2,
-      b: 0.3,
+      l: lit(0.5),
+      a: lit(-0.2),
+      b: lit(0.3),
     });
     expect(result.success).toBe(true);
   });
@@ -16,10 +18,10 @@ describe("oklabColorSchema", () => {
   it("validates OKLab colors with alpha", () => {
     const result = oklabColorSchema.safeParse({
       kind: "oklab",
-      l: 0.5,
-      a: -0.2,
-      b: 0.3,
-      alpha: 0.5,
+      l: lit(0.5),
+      a: lit(-0.2),
+      b: lit(0.3),
+      alpha: lit(0.5),
     });
     expect(result.success).toBe(true);
   });
@@ -27,9 +29,9 @@ describe("oklabColorSchema", () => {
   it("validates lightness at 0", () => {
     const result = oklabColorSchema.safeParse({
       kind: "oklab",
-      l: 0,
-      a: 0,
-      b: 0,
+      l: lit(0),
+      a: lit(0),
+      b: lit(0),
     });
     expect(result.success).toBe(true);
   });
@@ -37,9 +39,9 @@ describe("oklabColorSchema", () => {
   it("validates lightness at 1", () => {
     const result = oklabColorSchema.safeParse({
       kind: "oklab",
-      l: 1,
-      a: 0,
-      b: 0,
+      l: lit(1),
+      a: lit(0),
+      b: lit(0),
     });
     expect(result.success).toBe(true);
   });
@@ -47,9 +49,9 @@ describe("oklabColorSchema", () => {
   it("validates a at -0.4", () => {
     const result = oklabColorSchema.safeParse({
       kind: "oklab",
-      l: 0.5,
-      a: -0.4,
-      b: 0,
+      l: lit(0.5),
+      a: lit(-0.4),
+      b: lit(0),
     });
     expect(result.success).toBe(true);
   });
@@ -57,9 +59,9 @@ describe("oklabColorSchema", () => {
   it("validates a at 0.4", () => {
     const result = oklabColorSchema.safeParse({
       kind: "oklab",
-      l: 0.5,
-      a: 0.4,
-      b: 0,
+      l: lit(0.5),
+      a: lit(0.4),
+      b: lit(0),
     });
     expect(result.success).toBe(true);
   });
@@ -67,9 +69,9 @@ describe("oklabColorSchema", () => {
   it("validates b at -0.4", () => {
     const result = oklabColorSchema.safeParse({
       kind: "oklab",
-      l: 0.5,
-      a: 0,
-      b: -0.4,
+      l: lit(0.5),
+      a: lit(0),
+      b: lit(-0.4),
     });
     expect(result.success).toBe(true);
   });
@@ -77,9 +79,9 @@ describe("oklabColorSchema", () => {
   it("validates b at 0.4", () => {
     const result = oklabColorSchema.safeParse({
       kind: "oklab",
-      l: 0.5,
-      a: 0,
-      b: 0.4,
+      l: lit(0.5),
+      a: lit(0),
+      b: lit(0.4),
     });
     expect(result.success).toBe(true);
   });
@@ -87,9 +89,9 @@ describe("oklabColorSchema", () => {
   it("rejects wrong kind", () => {
     const result = oklabColorSchema.safeParse({
       kind: "oklch",
-      l: 0.5,
-      a: -0.2,
-      b: 0.3,
+      l: lit(0.5),
+      a: lit(-0.2),
+      b: lit(0.3),
     });
     expect(result.success).toBe(false);
   });

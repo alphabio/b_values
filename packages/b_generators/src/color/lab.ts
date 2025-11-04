@@ -1,6 +1,7 @@
 // b_path:: packages/b_generators/src/color/lab.ts
 import { type GenerateResult, generateErr, generateOk, createError } from "@b/types";
 import type { LABColor } from "@b/types";
+import { cssValueToCss } from "@b/utils";
 
 /**
  * @see https://drafts.csswg.org/css-color/#lab-colors
@@ -18,10 +19,10 @@ export function generate(color: LABColor): GenerateResult {
 
   const { l, a, b, alpha } = color;
 
-  const labPart = `${l} ${a} ${b}`;
+  const labPart = `${cssValueToCss(l)} ${cssValueToCss(a)} ${cssValueToCss(b)}`;
 
-  if (alpha !== undefined && alpha < 1) {
-    return generateOk(`lab(${labPart} / ${alpha})`);
+  if (alpha !== undefined) {
+    return generateOk(`lab(${labPart} / ${cssValueToCss(alpha)})`);
   }
 
   return generateOk(`lab(${labPart})`);
