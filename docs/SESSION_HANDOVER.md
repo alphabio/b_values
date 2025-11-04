@@ -81,6 +81,13 @@
 
 **Types complete! Ready for parsers & generators:**
 
+Remember:
+
+- Use b_value as an excellent source for reference
+- Do not blindly copy/paste
+- Always look for opportunities to improve the code/design
+- Think about layout/design before writing code
+
 1. **Port parsers** → `b_parsers`
    - Color parsers (all 11 color types)
    - Gradient parsers (linear, radial, conic)

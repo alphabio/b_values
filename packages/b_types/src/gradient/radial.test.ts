@@ -57,11 +57,11 @@ describe("radialGradientSchema", () => {
   it("validates gradient with color space", () => {
     const result = radialGradientSchema.parse({
       kind: "radial",
-      colorSpace: "oklch",
+      colorInterpolationMethod: { colorSpace: "oklch" },
       colorStops: [{ color: { kind: "named", name: "red" } }, { color: { kind: "named", name: "blue" } }],
       repeating: false,
     });
-    expect(result.colorSpace).toBe("oklch");
+    expect(result.colorInterpolationMethod?.colorSpace).toBe("oklch");
   });
 
   it("validates repeating radial gradient", () => {

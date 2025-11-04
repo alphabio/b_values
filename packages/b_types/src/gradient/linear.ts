@@ -1,7 +1,7 @@
 // b_path:: packages/b_types/src/gradient/linear.ts
 import { z } from "zod";
-import { colorInterpolationSchema } from "@b/keywords";
 import { colorStopListSchema } from "../color-stop";
+import { colorInterpolationMethodSchema } from "../color-interpolation-method";
 import { gradientDirectionSchema } from "./direction";
 
 /**
@@ -10,7 +10,7 @@ import { gradientDirectionSchema } from "./direction";
 export const linearGradientSchema = z.object({
   kind: z.literal("linear"),
   direction: gradientDirectionSchema.optional(),
-  colorSpace: colorInterpolationSchema.optional(),
+  colorInterpolationMethod: colorInterpolationMethodSchema.optional(),
   colorStops: colorStopListSchema,
   repeating: z.boolean(),
 });

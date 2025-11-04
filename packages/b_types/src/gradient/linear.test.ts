@@ -37,11 +37,11 @@ describe("linearGradientSchema", () => {
   it("validates gradient with color space", () => {
     const result = linearGradientSchema.parse({
       kind: "linear",
-      colorSpace: "oklch",
+      colorInterpolationMethod: { colorSpace: "oklch" },
       colorStops: [{ color: { kind: "named", name: "red" } }, { color: { kind: "named", name: "blue" } }],
       repeating: false,
     });
-    expect(result.colorSpace).toBe("oklch");
+    expect(result.colorInterpolationMethod?.colorSpace).toBe("oklch");
   });
 
   it("validates repeating gradient", () => {

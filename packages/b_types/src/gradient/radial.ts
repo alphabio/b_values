@@ -1,7 +1,8 @@
 // b_path:: packages/b_types/src/gradient/radial.ts
 import { z } from "zod";
-import { colorInterpolationSchema, radialShapeSchema } from "@b/keywords";
+import { radialShapeSchema } from "@b/keywords";
 import { colorStopListSchema } from "../color-stop";
+import { colorInterpolationMethodSchema } from "../color-interpolation-method";
 import { position2DSchema } from "../position";
 import { radialGradientSizeSchema } from "./radial-size";
 
@@ -13,7 +14,7 @@ export const radialGradientSchema = z.object({
   shape: radialShapeSchema.optional(),
   size: radialGradientSizeSchema.optional(),
   position: position2DSchema.optional(),
-  colorSpace: colorInterpolationSchema.optional(),
+  colorInterpolationMethod: colorInterpolationMethodSchema.optional(),
   colorStops: colorStopListSchema,
   repeating: z.boolean(),
 });

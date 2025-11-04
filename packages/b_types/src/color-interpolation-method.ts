@@ -1,3 +1,4 @@
+// b_path:: packages/b_types/src/color-interpolation-method.ts
 import { z } from "zod";
 import { hueInterpolationMethodSchema, polarColorSpaceSchema, rectangularColorSpaceSchema } from "@b/keywords";
 

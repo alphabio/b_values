@@ -1,3 +1,4 @@
+// b_path:: packages/b_types/src/color-interpolation-method.test.ts
 import { describe, expect, it } from "vitest";
 import { colorInterpolationMethodSchema } from "./color-interpolation-method";
 
