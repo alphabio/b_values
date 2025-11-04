@@ -1,0 +1,1 @@
+{"version":3,"sources":["../src/index.ts"],"names":[],"mappings":";;;AAEO,IAAM,WAAA,GAAc","file":"index.cjs","sourcesContent":["// @b/keywords - CSS keyword enums and validators\n\nexport const placeholder = \"keywords\";\n"]}

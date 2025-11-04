@@ -11,27 +11,13 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@b/b_components": "workspace:*",
-    "@b/b_server": "workspace:*",
-    "@b/b_store": "workspace:*",
-    "@b/ui": "workspace:*",
-    "@b/tailwind-config": "workspace:*",
-    "@convex-dev/auth": "catalog:",
-    "@tailwindcss/vite": "catalog:",
-    "@tanstack/react-router-devtools": "catalog:",
+    "@b/values": "workspace:*",
     "@tanstack/react-router": "catalog:",
-    "convex": "catalog:",
-    "framer-motion": "catalog:",
-    "howler": "catalog:",
-    "lucide-react": "catalog:",
-    "react-dom": "catalog:",
+    "@tanstack/react-router-devtools": "catalog:",
     "react": "catalog:",
-    "recharts": "catalog:",
-    "zustand": "catalog:"
+    "react-dom": "catalog:"
   },
   "devDependencies": {
     "@b/typescript-config": "workspace:*"
-  },
-  "peerDependencies": {},
-  "optionalDependencies": {}
+  }
 }
