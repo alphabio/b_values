@@ -1,0 +1,13 @@
+import { z } from "zod";
+
+/**
+ * @see https://developer.mozilla.org/en-US/docs/Web/CSS/gradient/radial-gradient
+ */
+export const radialSizeKeywordSchema = z.union([
+  z.literal("closest-side"),
+  z.literal("farthest-side"),
+  z.literal("closest-corner"),
+  z.literal("farthest-corner"),
+]);
+
+export type RadialSizeKeyword = z.infer<typeof radialSizeKeywordSchema>;

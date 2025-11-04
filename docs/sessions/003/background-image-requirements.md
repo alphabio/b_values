@@ -17,15 +17,13 @@ This establishes patterns for ALL CSS properties to follow.
 ## 📐 What background-image Supports
 
 ```css
-background-image: 
-  linear-gradient(30deg, #445 12%, transparent 12.5%),
-  radial-gradient(circle, red, blue),
-  conic-gradient(from 45deg, red, blue),
-  url("pattern.png"),
-  none;
+background-image:
+  linear-gradient(30deg, #445 12%, transparent 12.5%), radial-gradient(circle, red, blue),
+  conic-gradient(from 45deg, red, blue), url("pattern.png"), none;
 ```
 
 **Value types:**
+
 1. **Linear gradient** - `linear-gradient()`, `repeating-linear-gradient()`
 2. **Radial gradient** - `radial-gradient()`, `repeating-radial-gradient()`
 3. **Conic gradient** - `conic-gradient()`, `repeating-conic-gradient()`
@@ -39,6 +37,7 @@ background-image:
 ### **Direct Dependencies**
 
 **background-image parser uses:**
+
 - ✅ Result system (already ported)
 - Gradient parsers (linear, radial, conic)
 - URL parser
@@ -70,6 +69,7 @@ Each gradient needs:
 ### **Phase 1: Foundation Types** → `b_types`
 
 #### 1. Length/Angle Types (Zod schemas)
+
 ```typescript
 // Length: 10px, 2rem, 50%, etc.
 export const lengthSchema = z.object({
@@ -85,6 +85,7 @@ export const angleSchema = z.object({
 ```
 
 #### 2. Color Types (Zod schemas)
+
 ```typescript
 // Hex: #fff, #ff0000, #ff000080
 export const hexColorSchema = z.object({
@@ -104,16 +105,18 @@ export const namedColorSchema = z.object({
 ```
 
 #### 3. Color Stop Type (Zod schema)
+
 ```typescript
 export const colorStopSchema = z.object({
   color: colorSchema, // union of all color types
-  position: lengthOrPercentageSchema.optional()
+  position: lengthOrPercentageSchema.optional(),
 });
 
 export const colorStopListSchema = z.array(colorStopSchema).min(2);
 ```
 
 #### 4. Gradient Types (Zod schemas)
+
 ```typescript
 // Linear gradient
 export const linearGradientSchema = z.object({
@@ -121,7 +124,7 @@ export const linearGradientSchema = z.object({
   direction: gradientDirectionSchema.optional(),
   colorSpace: colorInterpolationSchema.optional(),
   colorStops: colorStopListSchema,
-  repeating: z.boolean()
+  repeating: z.boolean(),
 });
 
 // Radial gradient
@@ -132,7 +135,7 @@ export const radialGradientSchema = z.object({
   position: positionSchema.optional(),
   colorSpace: colorInterpolationSchema.optional(),
   colorStops: colorStopListSchema,
-  repeating: z.boolean()
+  repeating: z.boolean(),
 });
 
 // Conic gradient
@@ -142,7 +145,7 @@ export const conicGradientSchema = z.object({
   position: positionSchema.optional(),
   colorSpace: colorInterpolationSchema.optional(),
   colorStops: colorStopListSchema,
-  repeating: z.boolean()
+  repeating: z.boolean(),
 });
 
 // Union
@@ -150,10 +153,11 @@ export type Gradient = LinearGradient | RadialGradient | ConicGradient;
 ```
 
 #### 5. URL Type (Zod schema)
+
 ```typescript
 export const urlSchema = z.object({
   kind: z.literal("url"),
-  url: z.string()
+  url: z.string(),
 });
 ```
 
@@ -164,25 +168,28 @@ export const urlSchema = z.object({
 #### Required Keywords (Zod enums)
 
 1. **Color names**
+
    ```typescript
    export const namedColorSchema = z.enum([
-     "red", "blue", "green", "transparent", "currentColor",
+     "red",
+     "blue",
+     "green",
+     "transparent",
+     "currentColor",
      // ... ~150 total CSS color names
    ]);
    ```
 
 2. **Gradient direction keywords**
+
    ```typescript
-   export const gradientSideSchema = z.enum([
-     "top", "bottom", "left", "right"
-   ]);
-   
-   export const gradientCornerSchema = z.enum([
-     "top left", "top right", "bottom left", "bottom right"
-   ]);
+   export const gradientSideSchema = z.enum(["top", "bottom", "left", "right"]);
+
+   export const gradientCornerSchema = z.enum(["top left", "top right", "bottom left", "bottom right"]);
    ```
 
 3. **Color interpolation methods**
+
    ```typescript
    export const colorInterpolationSchema = z.enum([
      "srgb", "srgb-linear", "lab", "oklab", "xyz", "oklch", "lch", ...
@@ -190,10 +197,13 @@ export const urlSchema = z.object({
    ```
 
 4. **Radial gradient size keywords**
+
    ```typescript
    export const radialSizeKeywordSchema = z.enum([
-     "closest-side", "closest-corner",
-     "farthest-side", "farthest-corner"
+     "closest-side",
+     "closest-corner",
+     "farthest-side",
+     "farthest-corner",
    ]);
    ```
 
@@ -207,13 +217,28 @@ Unit definitions and validation:
 // Length units
 export const lengthUnits = [
   // Absolute
-  "px", "cm", "mm", "in", "pt", "pc",
+  "px",
+  "cm",
+  "mm",
+  "in",
+  "pt",
+  "pc",
   // Font-relative
-  "em", "rem", "ex", "ch", "lh", "rlh",
+  "em",
+  "rem",
+  "ex",
+  "ch",
+  "lh",
+  "rlh",
   // Viewport-relative
-  "vw", "vh", "vmin", "vmax", "vi", "vb",
+  "vw",
+  "vh",
+  "vmin",
+  "vmax",
+  "vi",
+  "vb",
   // Percentage
-  "%"
+  "%",
 ] as const;
 
 // Angle units
@@ -280,25 +305,23 @@ Property-level schema and parsing:
 // Property schema
 export const backgroundImagePropertySchema = z.object({
   property: z.literal("background-image"),
-  value: z.array(z.union([
-    linearGradientSchema,
-    radialGradientSchema,
-    conicGradientSchema,
-    urlSchema,
-    z.object({ kind: z.literal("none") })
-  ])),
-  important: z.boolean().optional()
+  value: z.array(
+    z.union([
+      linearGradientSchema,
+      radialGradientSchema,
+      conicGradientSchema,
+      urlSchema,
+      z.object({ kind: z.literal("none") }),
+    ])
+  ),
+  important: z.boolean().optional(),
 });
 
 // Property parser
-export function parseBackgroundImageProperty(
-  css: string
-): ParseResult<BackgroundImageProperty>;
+export function parseBackgroundImageProperty(css: string): ParseResult<BackgroundImageProperty>;
 
 // Property generator
-export function generateBackgroundImageProperty(
-  ir: BackgroundImageProperty
-): GenerateResult;
+export function generateBackgroundImageProperty(ir: BackgroundImageProperty): GenerateResult;
 ```
 
 ---
@@ -322,6 +345,7 @@ From b_value POC, skip these unless needed:
 ## 📊 Estimated Scope
 
 ### File Count (approximate)
+
 - Keywords: 3-5 files
 - Units: 2-3 files
 - Types: 15-20 files (colors, gradients, positions)
@@ -332,10 +356,12 @@ From b_value POC, skip these unless needed:
 **Total:** ~50-70 files
 
 ### Test Count (approximate)
+
 - Each module: 10-30 tests
 - **Total estimate:** 500-1000 tests
 
 ### Implementation Time (approximate)
+
 - Keywords: 1 session
 - Units: 1 session
 - Types: 2-3 sessions
@@ -350,6 +376,7 @@ From b_value POC, skip these unless needed:
 ## ✅ Success Criteria
 
 1. ✅ **Parse complex background-image**
+
    ```typescript
    const css = `linear-gradient(30deg, #445 12%, transparent 12.5%), 
                 radial-gradient(circle, red, blue), 
@@ -359,12 +386,14 @@ From b_value POC, skip these unless needed:
    ```
 
 2. ✅ **Generate back to CSS**
+
    ```typescript
    const generated = generateBackgroundImageProperty(result.value);
    // Round-trip: parse(generate(parse(css))) === parse(css)
    ```
 
 3. ✅ **Handle errors gracefully**
+
    ```typescript
    const bad = parseBackgroundImageProperty("invalid syntax!");
    // bad.ok === false, bad.issues contains helpful error
@@ -382,6 +411,7 @@ From b_value POC, skip these unless needed:
 **Start with:** Port Keywords → `b_keywords`
 
 **Why first:**
+
 - Smallest scope
 - No dependencies (except Zod)
 - Needed by everything else
