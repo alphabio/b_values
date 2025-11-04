@@ -1,6 +1,6 @@
 # 📚 Documentation Guide
 
-**Purpose:** Entry point for agents and developers working on this turborepo monorepo template.
+**Purpose:** Entry point for agents and developers.
 
 ---
 
@@ -9,7 +9,8 @@
 1. **Read this file** to understand the monorepo structure
 2. **Check `SESSION_HANDOVER.md`** for current project state
 3. **Review `CODE_QUALITY.md`** for standards and conventions
-4. **Begin work** - confirm action plan with user
+4. **Archive the previous session** (see below)
+5. **Begin work** - confirm action plan with user
 
 ---
 
@@ -45,7 +46,7 @@ docs/
 ## 🏗️ Monorepo Structure
 
 ```
-b_values/
+b_turbo_template/
 ├── apps/                              ← Applications
 │   └── basic/                         ← Example app (React + TanStack Router + Convex)
 │
@@ -468,9 +469,9 @@ just deps-catalog    # Update catalog only
 
 ---
 
-## 🎓 Context: What This Template Is
+## 🎓 Context: b_values Project
 
-A production-ready turborepo monorepo template featuring:
+A production-ready turborepo monorepo featuring:
 
 - **Modern React stack** - React 19, TypeScript, Vite, TanStack Router
 - **Shared packages** - Reusable components, configs, and utilities
@@ -478,13 +479,6 @@ A production-ready turborepo monorepo template featuring:
 - **Code quality** - Biome linting/formatting, pre-commit hooks
 - **Professional DX** - Fast builds, hot reload, comprehensive tooling
 - **Scalable architecture** - Add apps and packages as needed
-
-**Perfect for:**
-
-- Multi-app projects sharing common code
-- Component libraries with example apps
-- Micro-frontends architectures
-- Teams needing consistent tooling across projects
 
 ---
 

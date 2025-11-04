@@ -118,13 +118,13 @@ git checkout -b explore-session-003 $(cat docs/sessions/003/git-ref.txt)
 
 ## Purpose
 
-**For agents:** Complete snapshot of what happened in each session  
-**For teams:** Self-contained history with code reference  
+**For agents:** Complete snapshot of what happened in each session
+**For teams:** Self-contained history with code reference
 **For debugging:** Trace when changes were made with exact code state
 
 **Philosophy:** Each session folder is a time capsule - handover + artifacts + git ref.
 
 ---
 
-**Current session handover:** `../SESSION_HANDOVER.md` (one level up)  
+**Current session handover:** `../SESSION_HANDOVER.md` (one level up)
 **Structure guide:** Copy structure from previous session handover
