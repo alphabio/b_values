@@ -1,0 +1,26 @@
+pre-commit:
+  commands:
+    biome-check:
+      glob: "*.{js,ts,cjs,mjs,d.cts,d.mts,jsx,tsx,json,jsonc}"
+      run: pnpx @biomejs/biome check --write --no-errors-on-unmatched --files-ignore-unknown=true --colors=off {staged_files}
+      stage_fixed: true
+    prettier-md:
+      glob: "*.md"
+      run: pnpx prettier --write --log-level=silent {staged_files}
+      stage_fixed: true
+    markdownlint:
+      glob: "*.md"
+      run: pnpx markdownlint-cli2 --fix {staged_files}
+
+commit-msg:
+  commands:
+    commitlint:
+      run: pnpx commitlint --edit {1}
+
+pre-push:
+  commands:
+    check:
+      glob: "*.{js,ts,cjs,mjs,d.cts,d.mts,jsx,tsx,json,jsonc}"
+      run: pnpx @biomejs/biome check --no-errors-on-unmatched --files-ignore-unknown=true --colors=off {push_files}
+    typecheck:
+      run: pnpm typecheck

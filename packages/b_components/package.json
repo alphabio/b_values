@@ -1,0 +1,28 @@
+{
+  "name": "@b/b_components",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.tsx",
+  "types": "./src/index.tsx",
+  "exports": {
+    ".": "./src/index.tsx"
+  },
+  "scripts": {
+    "clean": "rimraf dist node_modules pnpm-lock.yaml",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@b/ui": "workspace:*",
+    "lucide-react": "catalog:",
+    "tailwind-merge": "catalog:"
+  },
+  "peerDependencies": {
+    "react": "catalog:",
+    "react-dom": "catalog:"
+  },
+  "devDependencies": {
+    "@b/typescript-config": "workspace:*"
+  },
+  "optionalDependencies": {}
+}

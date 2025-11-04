@@ -1,0 +1,16 @@
+{
+  "name": "@b/typescript-config",
+  "version": "0.0.0",
+  "private": true,
+  "license": "ISC",
+  "scripts": {
+    "clean": "rimraf dist node_modules pnpm-lock.yaml"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {},
+  "devDependencies": {},
+  "peerDependencies": {},
+  "optionalDependencies": {}
+}
