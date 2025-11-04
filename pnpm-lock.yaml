@@ -186,6 +186,9 @@ importers:
       '@b/units':
         specifier: workspace:*
         version: link:../b_units
+      '@b/utils':
+        specifier: workspace:*
+        version: link:../b_utils
       zod:
         specifier: 'catalog:'
         version: 4.1.12

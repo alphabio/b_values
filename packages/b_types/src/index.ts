@@ -6,6 +6,7 @@
  */
 
 export * from "./result";
+export * from "./values";
 export * from "./color";
 export * from "./angle";
 export * from "./length";

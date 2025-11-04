@@ -6,10 +6,10 @@ import { z } from "zod";
  */
 export const oklchColorSchema = z.object({
   kind: z.literal("oklch"),
-  l: z.number().min(0).max(1),
-  c: z.number().min(0).max(0.4),
+  l: z.number(),
+  c: z.number(),
   h: z.number(),
-  alpha: z.number().min(0).max(1).optional(),
+  alpha: z.number().optional(),
 });
 
 export type OKLCHColor = z.infer<typeof oklchColorSchema>;

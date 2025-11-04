@@ -6,10 +6,10 @@ import { z } from "zod";
  */
 export const oklabColorSchema = z.object({
   kind: z.literal("oklab"),
-  l: z.number().min(0).max(1),
-  a: z.number().min(-0.4).max(0.4),
-  b: z.number().min(-0.4).max(0.4),
-  alpha: z.number().min(0).max(1).optional(),
+  l: z.number(),
+  a: z.number(),
+  b: z.number(),
+  alpha: z.number().optional(),
 });
 
 export type OKLabColor = z.infer<typeof oklabColorSchema>;

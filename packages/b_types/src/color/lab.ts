@@ -6,10 +6,10 @@ import { z } from "zod";
  */
 export const labColorSchema = z.object({
   kind: z.literal("lab"),
-  l: z.number().min(0).max(100),
-  a: z.number().min(-125).max(125),
-  b: z.number().min(-125).max(125),
-  alpha: z.number().min(0).max(1).optional(),
+  l: z.number(),
+  a: z.number(),
+  b: z.number(),
+  alpha: z.number().optional(),
 });
 
 export type LABColor = z.infer<typeof labColorSchema>;

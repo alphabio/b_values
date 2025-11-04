@@ -1,8 +1,11 @@
 // b_path:: packages/b_generators/src/color/lch.ts
 import { type GenerateResult, generateErr, generateOk, createError } from "@b/types";
 import type { LCHColor } from "@b/types";
+import { cssValueToCss } from "@b/utils";
 
 /**
+ * Generates LCH color CSS from IR
+ * Supports literals, variables (var()), and keywords (none)
  * @see https://drafts.csswg.org/css-color/#lch-colors
  */
 export function generate(color: LCHColor): GenerateResult {
@@ -18,10 +21,10 @@ export function generate(color: LCHColor): GenerateResult {
 
   const { l, c, h, alpha } = color;
 
-  const lchPart = `${l} ${c} ${h}`;
+  const lchPart = `${cssValueToCss(l)} ${cssValueToCss(c)} ${cssValueToCss(h)}`;
 
-  if (alpha !== undefined && alpha < 1) {
-    return generateOk(`lch(${lchPart} / ${alpha})`);
+  if (alpha !== undefined) {
+    return generateOk(`lch(${lchPart} / ${cssValueToCss(alpha)})`);
   }
 
   return generateOk(`lch(${lchPart})`);

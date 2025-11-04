@@ -6,10 +6,10 @@ import { z } from "zod";
  */
 export const rgbColorSchema = z.object({
   kind: z.literal("rgb"),
-  r: z.number().min(0).max(255),
-  g: z.number().min(0).max(255),
-  b: z.number().min(0).max(255),
-  alpha: z.number().min(0).max(1).optional(),
+  r: z.number(),
+  g: z.number(),
+  b: z.number(),
+  alpha: z.number().optional(),
 });
 
 export type RGBColor = z.infer<typeof rgbColorSchema>;

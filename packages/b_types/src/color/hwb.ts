@@ -7,9 +7,9 @@ import { z } from "zod";
 export const hwbColorSchema = z.object({
   kind: z.literal("hwb"),
   h: z.number(),
-  w: z.number().min(0).max(100),
-  b: z.number().min(0).max(100),
-  alpha: z.number().min(0).max(1).optional(),
+  w: z.number(),
+  b: z.number(),
+  alpha: z.number().optional(),
 });
 
 export type HWBColor = z.infer<typeof hwbColorSchema>;
