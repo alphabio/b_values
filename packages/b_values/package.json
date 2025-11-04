@@ -25,10 +25,13 @@
     "@b/parsers": "workspace:*",
     "@b/properties": "workspace:*",
     "@b/types": "workspace:*",
-    "@b/units": "workspace:*"
+    "@b/units": "workspace:*",
+    "@b/utils": "workspace:*",
+    "css-tree": "catalog:"
   },
   "devDependencies": {
-    "@b/typescript-config": "workspace:*"
+    "@b/typescript-config": "workspace:*",
+    "@types/css-tree": "catalog:"
   },
   "publishConfig": {
     "access": "public"

@@ -1,10 +1,10 @@
 // b_path:: packages/b_utils/src/parse/color/oklab.test.ts
 import { describe, expect, it } from "vitest";
 import { parseOklabFunction } from "./oklab";
-import { extractFunctionFromDeclaration } from "./test-helpers";
+import { colorFunctionFromDeclaration } from "./test-helpers";
 
 function parseOklab(input: string) {
-  const func = extractFunctionFromDeclaration(input);
+  const func = colorFunctionFromDeclaration(input);
   return parseOklabFunction(func);
 }
 

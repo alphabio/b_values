@@ -1,10 +1,10 @@
 // b_path:: packages/b_utils/src/parse/color/lch.test.ts
 import { describe, expect, it } from "vitest";
 import { parseLchFunction } from "./lch";
-import { extractFunctionFromDeclaration } from "./test-helpers";
+import { colorFunctionFromDeclaration } from "./test-helpers";
 
 function parseLch(input: string) {
-  const func = extractFunctionFromDeclaration(input);
+  const func = colorFunctionFromDeclaration(input);
   return parseLchFunction(func);
 }
 
@@ -110,7 +110,7 @@ describe("parseLchFunction", () => {
 
 describe("parseLchFunction - Error cases", () => {
   it("should return error for wrong function name", () => {
-    const func = extractFunctionFromDeclaration("rgb(0 0 0)");
+    const func = colorFunctionFromDeclaration("rgb(0 0 0)");
     const result = parseLchFunction(func);
     expect(result.ok).toBe(false);
     if (!result.ok) {
@@ -119,7 +119,7 @@ describe("parseLchFunction - Error cases", () => {
   });
 
   it("should return error for too few values", () => {
-    const func = extractFunctionFromDeclaration("lch(50% 50)");
+    const func = colorFunctionFromDeclaration("lch(50% 50)");
     const result = parseLchFunction(func);
     expect(result.ok).toBe(false);
     if (!result.ok) {

@@ -5,7 +5,7 @@ import * as csstree from "css-tree";
  * Helper to safely extract a function node from a color declaration
  * Used in tests to avoid TypeScript errors with css-tree types
  */
-export function extractFunctionFromDeclaration(input: string): csstree.FunctionNode {
+export function colorFunctionFromDeclaration(input: string): csstree.FunctionNode {
   const ast = csstree.parse(`color: ${input}`, { context: "declarationList" });
 
   if (ast.type !== "DeclarationList") {

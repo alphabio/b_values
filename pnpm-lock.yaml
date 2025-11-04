@@ -325,10 +325,19 @@ importers:
       '@b/units':
         specifier: workspace:*
         version: link:../b_units
+      '@b/utils':
+        specifier: workspace:*
+        version: link:../b_utils
+      css-tree:
+        specifier: 'catalog:'
+        version: 3.1.0
     devDependencies:
       '@b/typescript-config':
         specifier: workspace:*
         version: link:../typescript-config
+      '@types/css-tree':
+        specifier: 'catalog:'
+        version: 2.3.11
 
   packages/typescript-config: {}
 

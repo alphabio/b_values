@@ -1,10 +1,10 @@
 // b_path:: packages/b_utils/src/parse/color/oklch.test.ts
 import { describe, expect, it } from "vitest";
 import { parseOklchFunction } from "./oklch";
-import { extractFunctionFromDeclaration } from "./test-helpers";
+import { colorFunctionFromDeclaration } from "./test-helpers";
 
 function parseOklch(input: string) {
-  const func = extractFunctionFromDeclaration(input);
+  const func = colorFunctionFromDeclaration(input);
   return parseOklchFunction(func);
 }
 

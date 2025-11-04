@@ -7,3 +7,4 @@ export * from "./lab";
 export * from "./lch";
 export * from "./oklab";
 export * from "./oklch";
+export * from "./test-helpers";

@@ -1,10 +1,10 @@
 // b_path:: packages/b_utils/src/parse/color/rgb.test.ts
 import { describe, expect, it } from "vitest";
 import { parseRgbFunction } from "./rgb";
-import { extractFunctionFromDeclaration } from "./test-helpers";
+import { colorFunctionFromDeclaration } from "./test-helpers";
 
 function parseRgb(input: string) {
-  const func = extractFunctionFromDeclaration(input);
+  const func = colorFunctionFromDeclaration(input);
   return parseRgbFunction(func);
 }
 
@@ -156,21 +156,21 @@ describe("parseRgbFunction", () => {
 
   describe("Error cases", () => {
     it("should return error for wrong function name", () => {
-      const func = extractFunctionFromDeclaration("hsl(0 0% 0%)");
+      const func = colorFunctionFromDeclaration("hsl(0 0% 0%)");
       const result = parseRgbFunction(func);
       expect(result.ok).toBe(false);
       expect(result.error).toContain("Expected rgb()");
     });
 
     it("should return error for too few values", () => {
-      const func = extractFunctionFromDeclaration("rgb(255 0)");
+      const func = colorFunctionFromDeclaration("rgb(255 0)");
       const result = parseRgbFunction(func);
       expect(result.ok).toBe(false);
       expect(result.error).toContain("must have 3 or 4 values");
     });
 
     it("should return error for too many values", () => {
-      const func = extractFunctionFromDeclaration("rgb(255 0 0 0.5 0.5)");
+      const func = colorFunctionFromDeclaration("rgb(255 0 0 0.5 0.5)");
       const result = parseRgbFunction(func);
       expect(result.ok).toBe(false);
       expect(result.error).toContain("must have 3 or 4 values");
