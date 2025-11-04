@@ -31,4 +31,6 @@ export const viewportLengthUnitSchema = z.union([
   z.literal("dvmax"),
 ]);
 
+export const VIEWPORT_LENGTH_UNITS = viewportLengthUnitSchema.options.map((option) => option.value);
+
 export type ViewportLengthUnit = z.infer<typeof viewportLengthUnitSchema>;

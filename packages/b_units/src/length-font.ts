@@ -19,4 +19,6 @@ export const fontLengthUnitSchema = z.union([
   z.literal("rlh"),
 ]);
 
+export const FONT_LENGTH_UNITS = fontLengthUnitSchema.options.map((option) => option.value);
+
 export type FontLengthUnit = z.infer<typeof fontLengthUnitSchema>;

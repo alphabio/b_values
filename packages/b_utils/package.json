@@ -1,0 +1,38 @@
+{
+  "name": "@b/utils",
+  "version": "0.1.0",
+  "description": "Shared utilities for parsing and generating CSS values",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./parse": "./src/parse/index.ts",
+    "./generate": "./src/generate/index.ts"
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "lint": "biome lint src",
+    "format": "biome format --write src",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@b/types": "workspace:*",
+    "@b/units": "workspace:*",
+    "css-tree": "catalog:"
+  },
+  "devDependencies": {
+    "@b/typescript-config": "workspace:*",
+    "@types/css-tree": "catalog:"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

@@ -6,4 +6,6 @@ import { z } from "zod";
  */
 export const percentageUnitSchema = z.literal("%");
 
+export const PERCENTAGE_UNIT = "%" as const;
+
 export type PercentageUnit = z.infer<typeof percentageUnitSchema>;

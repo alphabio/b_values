@@ -6,4 +6,6 @@ import { z } from "zod";
  */
 export const angleUnitSchema = z.union([z.literal("deg"), z.literal("grad"), z.literal("rad"), z.literal("turn")]);
 
+export const ANGLE_UNITS = angleUnitSchema.options.map((option) => option.value);
+
 export type AngleUnit = z.infer<typeof angleUnitSchema>;

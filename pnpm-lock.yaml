@@ -283,6 +283,25 @@ importers:
         specifier: workspace:*
         version: link:../typescript-config
 
+  packages/b_utils:
+    dependencies:
+      '@b/types':
+        specifier: workspace:*
+        version: link:../b_types
+      '@b/units':
+        specifier: workspace:*
+        version: link:../b_units
+      css-tree:
+        specifier: 'catalog:'
+        version: 3.1.0
+    devDependencies:
+      '@b/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
+      '@types/css-tree':
+        specifier: 'catalog:'
+        version: 2.3.11
+
   packages/b_values:
     dependencies:
       '@b/generators':

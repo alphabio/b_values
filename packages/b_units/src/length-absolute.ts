@@ -14,4 +14,6 @@ export const absoluteLengthUnitSchema = z.union([
   z.literal("pc"),
 ]);
 
+export const ABSOLUTE_LENGTH_UNITS = absoluteLengthUnitSchema.options.map((option) => option.value);
+
 export type AbsoluteLengthUnit = z.infer<typeof absoluteLengthUnitSchema>;
