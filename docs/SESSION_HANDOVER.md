@@ -1,197 +1,105 @@
-# Session 008: Review & Quality Gate
+# Session 009: CssValue Migration
 
 **Date:** 2025-11-04
-**Focus:** Comprehensive review of Session 007 work (color generators + b_utils)
+**Focus:** Complete CssValue migration for all color types and generators
 
 ---
 
-## ✅ Review Session Complete
+## 📊 Inherited State
 
-**Objective:** Thorough review before proceeding to color parsers
+**From Session 008:**
 
-### Review Checklist
-
-**1. Code Quality Review** ✅ Complete
-
-- [x] Review all color generator implementations
-- [x] Check for code duplication or opportunities to refactor
-- [x] Verify error handling patterns are consistent
-- [x] Ensure all generators follow the same structure
-- [x] Check for any TypeScript `any` types or shortcuts
-
-**2. Test Coverage Review** ✅ Complete
-
-- [x] Review existing test coverage (24 tests for 11 generators)
-- [x] Identify missing test cases (edge cases, boundaries, alpha)
-- [x] Plan additional tests before proceeding
-
-**3. Architecture Review** ✅ Complete
-
-- [x] Review b_utils structure - does it make sense?
-- [x] Check import/export patterns across packages
-- [x] Verify dependency graph is clean (no circular deps)
-- [x] Review error message quality and consistency
-
-**4. Documentation Review** ✅ Complete
-
-- [x] Check JSDoc comments for clarity
-- [x] Verify all functions have proper `@see` links
-- [x] Review naming conventions
-- [x] Check if any ADRs should be created
-
-**5. Performance & Design Review** ✅ Complete
-
-- [x] Look for potential performance issues
-- [x] Check string concatenation patterns
-- [x] Review object allocation patterns
-- [x] Consider if any utilities should be memoized
-
-**Full details:** See `docs/sessions/008/review-notes.md`
-
----
-
-## ✅ Accomplished
-
-- ✅ Session 007 archived successfully
-- ✅ Session 008 initialized
-- ✅ **Comprehensive review completed** → `docs/sessions/008/review-notes.md`
-  - Code quality: 9/10 (1 critical bug found)
-  - Test coverage: 6/10 (24/60+ tests)
-  - Architecture: 10/10 (exemplary)
-  - Documentation: 7/10 (adequate)
-  - Performance: No issues
-  - **Critical bug found:** Alpha handling inconsistency in 6 generators
-- ✅ **Discovered fundamental architecture issue**
-  - IR schemas were validating value ranges (wrong!)
-  - Can't represent valid CSS like `lch(55 var(--chroma) 90)`
-  - User insight: "We are a representation engine, not a validation engine"
-- ✅ **Implemented CssValue discriminated union pattern**
-  - Created `CssValue` foundation type in `b_types/src/values/`
-  - Supports: literals, variables (var()), keywords (none)
-  - 15 tests covering all CssValue variants
-  - Future-proof for calc(), env(), etc.
-- ✅ **Proof of concept: Updated LCH color type**
-  - Schema uses `cssValueSchema` for all components
-  - Generator uses `cssValueToCss()` utility
-  - 17 comprehensive tests (literals, variables, keywords, mixed)
-  - All tests passing ✅
-- ✅ **Created utilities**
-  - `cssValueToCss()` in `b_utils/src/generate/css-value.ts`
-  - Handles all CssValue variants recursively
-- ✅ **Documented architecture decision**
-  - ADR-001: CSS Value Representation with Discriminated Unions
-  - Complete rationale, examples, migration plan
-- ✅ **Test status**
-  - Was: 393 tests (360 passing, 48 failing validation)
-  - Now: 428 tests (385 passing, 43 failing old validation)
-  - Net: +35 new tests, +25 passing, -5 failing
-  - All quality gates passing (build ✅, typecheck ✅, lint ✅)
-
----
-
-## 📊 Current State
-
-**From Session 007:**
-
-- ✅ b_utils package created
-- ✅ Color generators implemented (11 types)
-- ✅ 393 tests passing (24 new color tests)
-- ✅ All quality gates passing
+- ✅ CssValue discriminated union pattern implemented (ADR-001)
+- ✅ LCH type fully migrated (proof of concept complete)
+- ✅ Extended CssValue with calc/min/max/clamp/url/attr/list
+- ✅ cssValueToCss() utility handles all variants
+- ✅ 428 tests (385 passing, 43 old validation tests to remove)
+- ✅ All quality gates passing (build, typecheck, lint)
 
 **Working:**
 
 - Build system (Turborepo + PNPM + tsup)
 - Type checking (strict TypeScript)
 - All quality gates passing
+- LCH fully migrated and tested (17 tests)
 
-**Needs Review:**
+**Needs Migration:**
 
-- Color generator implementations
-- b_utils architecture
-- Test coverage gaps
-- Documentation quality
-
----
-
-## 🎯 Next Steps
-
-**CHANGED PRIORITIES - Architecture Foundation First**
-
-The review revealed a fundamental issue that must be fixed before proceeding to parsers. We've started the migration.
-
-**Phase 1: Complete CssValue Migration (CURRENT - 2-3 hours)**
-
-1. ✅ LCH type updated (proof of concept complete)
-2. Update remaining 7 color types to use `CssValue`:
-   - RGB, HSL, HWB
-   - LAB, OKLAB, OKLCH
-   - ColorFunction
-3. Update all 11 color generators
-4. Update all color type tests (remove validation tests, add CssValue tests)
-5. Target: ~140 comprehensive new tests
-
-**Phase 2: Validation Cleanup (30 min)**
-
-1. Remove failing validation tests (43 tests)
-2. Document validation philosophy in ADR-002
-3. Update review notes to reflect corrected understanding
-
-**Phase 3: Original Alpha Bug Fix (15 min)**
-
-1. Fix alpha handling in generators (always output if defined)
-2. Add alpha=0 and alpha=1 test cases
-3. Verify consistency across all generators
-
-**Phase 4: Proceed to Parsers**
-
-- Color parsers implementation
-- Use CssValue from the start (no migration needed)
-- Round-trip testing with generators
-
-**Why this order:**
-
-- CssValue is foundational architecture
-- Can't parse CSS properly without it
-- Better to fix before writing parsers
-- LCH proof of concept validates the approach
+- 7 remaining color types using old number schemas
+- 11 color generators need updates for CssValue
+- 43 old validation tests need removal
 
 ---
 
-## 💡 Key Decisions
+## 🎯 Session Objectives
 
-- **Review protocol**: Mandatory review before proceeding to parsers
-- **Review scope**: Session 007 deliverables (b_utils + color generators)
-- **Review output**: Findings and action items in review notes
-- **CRITICAL ARCHITECTURE DECISION**: CssValue discriminated unions
-  - IR must represent **authored values**, not computed values
-  - Use discriminated unions: literal | variable | keyword
-  - No value range validation (representation engine, not validator)
-  - Documented in ADR-001
-- **Alpha handling**: Always output alpha if defined (not just < 1)
-- **Migration strategy**: LCH as proof of concept, then roll out to all types
+**Phase 1: Add Tests for New CssValue Types (1 hour)**
+
+1. Test calc() variants (calc, min, max, clamp)
+2. Test url() references
+3. Test attr() references
+4. Test list values
+5. Target: ~30-40 new tests
+
+**Phase 2: Migrate Remaining Color Types (2 hours)**
+
+1. RGB type → CssValue
+2. HSL type → CssValue
+3. HWB type → CssValue
+4. LAB type → CssValue
+5. OKLAB type → CssValue
+6. OKLCH type → CssValue
+7. ColorFunction type → CssValue
+
+**Phase 3: Update All Generators (1 hour)**
+
+1. Update all 11 color generators to use cssValueToCss()
+2. Fix alpha handling (always output if defined)
+3. Add comprehensive tests for each
+
+**Phase 4: Cleanup (30 min)**
+
+1. Remove 43 old validation tests
+2. Update review notes
+3. Final quality check
+
+**Target:** Complete migration in this session
 
 ---
 
-**Status:** ✅ Session 008 Complete - Architecture Revolution
+## ✅ Accomplished
 
-**Accomplished:**
-- ✅ Comprehensive review completed
-- ✅ Discovered fundamental architecture issue (can't represent var(), calc(), none)
-- ✅ Implemented CssValue discriminated unions (foundation + proof of concept)
-- ✅ LCH fully migrated (schema + generator + 17 tests passing)
-- ✅ ADR-001 documented
-- ✅ User extended CssValue with calc/min/max/clamp/url/attr/list
-- ✅ Updated cssValueToCss() utility for all new types
-- ✅ All quality gates passing
+- ✅ Session 008 archived successfully
+- ✅ Session 009 initialized
 
-**Commits:**
-- `316ce6f` - feat(b_generators): implement color generators (Session 007)
-- `e989ff8` - feat(types,utils,generators): implement CssValue discriminated unions (Session 008)
+---
 
-**Tests:** 428 total (385 passing, 43 old validation tests to remove)
+## 💡 Key Context
 
-**Next Agent:**
-1. Add tests for new CssValue types (calc, min/max, clamp, url, attr, list)
-2. Migrate remaining 7 color types to CssValue
-3. Update all 11 color generators
-4. Remove old validation tests
+**Architecture Decision (ADR-001):**
+
+- IR represents **authored values**, not computed values
+- CssValue discriminated union: `literal | variable | keyword | calc | ...`
+- No value range validation (representation engine, not validator)
+- Can represent `lch(55 var(--chroma) 90)` and `rgb(calc(100 + 20) 50 75)`
+
+**Migration Pattern (proven with LCH):**
+
+1. Update schema: `z.number()` → `cssValueSchema`
+2. Update generator: direct number → `cssValueToCss(value)`
+3. Update tests: add variable/keyword/calc variants
+4. Remove validation tests
+
+---
+
+## 🚀 Next Steps
+
+1. Add tests for calc/url/attr/list CssValue types
+2. Migrate RGB type (next after LCH)
+3. Migrate remaining 6 color types
+4. Update all generators
+5. Remove old validation tests
+
+---
+
+**Status:** 🟡 Ready to begin Phase 1
