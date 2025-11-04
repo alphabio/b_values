@@ -1,77 +1,77 @@
 {
-	// ---------- editor basics ----------
-	"editor.formatOnSave": true,
-	"editor.codeActionsOnSave": {
-		"source.organizeImports.biome": "always",
-		"source.fixAll.biome": "always"
-	},
-	"editor.defaultFormatter": "biomejs.biome",
-	"editor.tabSize": 2,
-	"editor.rulers": [120],
+  // ---------- editor basics ----------
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.organizeImports.biome": "always",
+    "source.fixAll.biome": "always"
+  },
+  "editor.defaultFormatter": "biomejs.biome",
+  "editor.tabSize": 2,
+  "editor.rulers": [120],
 
-	// ---------- file handling ----------
-	"files.trimTrailingWhitespace": true,
+  // ---------- file handling ----------
+  "files.trimTrailingWhitespace": true,
   "files.insertFinalNewline": true,
   "files.trimFinalNewlines": true,
 
-	// ---------- language overrides ----------
-	"[jsonc]": { "editor.defaultFormatter": "biomejs.biome" },
-	"[json]": { "editor.defaultFormatter": "biomejs.biome" },
-	"[javascript]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
-	"[typescript]": { "editor.defaultFormatter": "biomejs.biome" },
-	"[javascriptreact]": { "editor.defaultFormatter": "biomejs.biome" },
-	"[typescriptreact]": { "editor.defaultFormatter": "biomejs.biome" },
-	"[markdown]": {
-		"editor.defaultFormatter": "esbenp.prettier-vscode",
-		"editor.formatOnSave": true,
-		"editor.codeActionsOnSave": {
-			"source.fixAll.markdownlint": "explicit"
-		}
-	},
+  // ---------- language overrides ----------
+  "[jsonc]": { "editor.defaultFormatter": "biomejs.biome" },
+  "[json]": { "editor.defaultFormatter": "biomejs.biome" },
+  "[javascript]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+  "[typescript]": { "editor.defaultFormatter": "biomejs.biome" },
+  "[javascriptreact]": { "editor.defaultFormatter": "biomejs.biome" },
+  "[typescriptreact]": { "editor.defaultFormatter": "biomejs.biome" },
+  "[markdown]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.fixAll.markdownlint": "explicit"
+    }
+  },
   "[toml]": { "editor.defaultFormatter": "tamasfe.even-better-toml" },
   "[dotenv]": { "editor.defaultFormatter": "foxundermoon.shell-format" },
   "[ignore]": { "editor.defaultFormatter": "foxundermoon.shell-format" },
 
-	// ---------- TypeScript ergonomics ----------
+  // ---------- TypeScript ergonomics ----------
   "javascript.updateImportsOnFileMove.enabled": "always",
   "javascript.preferences.importModuleSpecifier": "relative",
-	"typescript.updateImportsOnFileMove.enabled": "always",
-	"typescript.preferences.importModuleSpecifier": "non-relative",
-	"typescript.preferences.preferTypeOnlyAutoImports": true,
-	"typescript.tsserver.maxTsServerMemory": 4096,
+  "typescript.updateImportsOnFileMove.enabled": "always",
+  "typescript.preferences.importModuleSpecifier": "non-relative",
+  "typescript.preferences.preferTypeOnlyAutoImports": true,
+  "typescript.tsserver.maxTsServerMemory": 4096,
 
-	// ---------- Tailwind ----------
-	"tailwindCSS.emmetCompletions": true,
-	"tailwindCSS.includeLanguages": {
-		"typescriptreact": "javascript"
-	},
-	"css.lint.unknownAtRules": "ignore",
-	// If using Prettier for tailwind class sorting ONLY:
-	// "[typescriptreact]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+  // ---------- Tailwind ----------
+  "tailwindCSS.emmetCompletions": true,
+  "tailwindCSS.includeLanguages": {
+    "typescriptreact": "javascript"
+  },
+  "css.lint.unknownAtRules": "ignore",
+  // If using Prettier for tailwind class sorting ONLY:
+  // "[typescriptreact]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
 
-	// ---------- Biome ----------
-	"biome.enabled": true,
-	"biome.requireConfiguration": false,
+  // ---------- Biome ----------
+  "biome.enabled": true,
+  "biome.requireConfiguration": false,
 
-	// ---------- UI polish ----------
-	"errorLens.enabled": true,
-	"errorLens.margin": "90",
-	"git.autofetch": true,
+  // ---------- UI polish ----------
+  "errorLens.enabled": true,
+  "errorLens.margin": "90",
+  "git.autofetch": true,
 
-	// copilot
-	"chat.agent.maxRequests": 300,
-	"chat.tools.terminal.enableAutoApprove": true,
-	"chat.tools.terminal.autoApprove": {
-		"rm": false,
-		"rmdir": false,
-		"del": false,
-		"kill": false,
-		"eval": false,
-		"chmod": false,
-		"chown": false,
-		"/^Remove-Item\\b/i": false
-	},
-	"[glsl]": {
-		"editor.defaultFormatter": "raczzalan.webgl-glsl-editor"
-	}
+  // copilot
+  "chat.agent.maxRequests": 300,
+  "chat.tools.terminal.enableAutoApprove": true,
+  "chat.tools.terminal.autoApprove": {
+    "rm": false,
+    "rmdir": false,
+    "del": false,
+    "kill": false,
+    "eval": false,
+    "chmod": false,
+    "chown": false,
+    "/^Remove-Item\\b/i": false
+  },
+  "[glsl]": {
+    "editor.defaultFormatter": "raczzalan.webgl-glsl-editor"
+  }
 }

@@ -9,7 +9,6 @@
 ## ✅ What Was Accomplished
 
 - Initialized project from b_turbo_template
-- Archived template session as 000-template
 - Created fresh SESSION_HANDOVER for b_values session 001
 - Cleaned up template packages (removed b_store, b_server, b_components, ui, tailwind-config)
 - Analyzed b_value codebase (849 TypeScript files)
@@ -60,7 +59,7 @@ b_value handles individual values (gradients, colors), but b_style needs to pars
    - `b_values` - Main umbrella export
 3. **Port b_value foundation**:
    - Keywords → b_keywords
-   - Types → b_types  
+   - Types → b_types
    - Units → b_units
    - Result system → b_types
 4. **Implement background-image** (all 4 contexts):

@@ -33,7 +33,7 @@ check:
 
 # ------------- Development -------------
 clean:
-    pnpm clean
+    pnpm clean:all
 
 # ------------- Dependencies -------------
 

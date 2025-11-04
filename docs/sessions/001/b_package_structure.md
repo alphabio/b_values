@@ -123,9 +123,7 @@ const css = Generate.Gradient.Linear.generate(linearGradientIR);
 import { Properties } from "@b/values";
 
 // Parse property declaration
-const result = Properties.BackgroundImage.parse(
-  "background-image: linear-gradient(red, blue), url(bg.png)"
-);
+const result = Properties.BackgroundImage.parse("background-image: linear-gradient(red, blue), url(bg.png)");
 // Returns: PropertyValue<BackgroundImageValue[]>
 
 // Generate property declaration
@@ -145,9 +143,7 @@ import { Properties } from "@b/values";
 const result = Properties.Declaration.parse("color: red");
 // Returns: { property: "color", value: ColorIR }
 
-const result2 = Properties.Declaration.parse(
-  "background-image: linear-gradient(...)"
-);
+const result2 = Properties.Declaration.parse("background-image: linear-gradient(...)");
 // Returns: { property: "background-image", value: [GradientIR] }
 ```
 
@@ -188,8 +184,7 @@ Use `apps/basic` as playground:
 import { Properties } from "@b/values";
 
 export default function BackgroundImageDemo() {
-  const css =
-    "background-image: linear-gradient(30deg, #445 12%, transparent 12.5%), url(pattern.png)";
+  const css = "background-image: linear-gradient(30deg, #445 12%, transparent 12.5%), url(pattern.png)";
 
   const parsed = Properties.BackgroundImage.parse(css);
 

@@ -123,9 +123,7 @@ update(ir, {
 #### 1. Value IR (existing)
 
 ```ts
-type ColorIR =
-  | { kind: "hex"; r: number; g: number; b: number }
-  | { kind: "named"; name: string };
+type ColorIR = { kind: "hex"; r: number; g: number; b: number } | { kind: "named"; name: string };
 // ...
 
 type GradientIR = {
@@ -268,7 +266,10 @@ div#el1 {
   background-color: #556;
   background-image: linear-gradient(...), linear-gradient(...);
   background-size: 80px 140px;
-  background-position: 0 0, 0 0, 40px 70px;
+  background-position:
+    0 0,
+    0 0,
+    40px 70px;
 }
 ```
 

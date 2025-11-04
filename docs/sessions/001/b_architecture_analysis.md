@@ -40,7 +40,13 @@ div#el1 {
   background-color: #556;
   background-image: linear-gradient(...), linear-gradient(...);
   background-size: 80px 140px;
-  background-position: 0 0, 0 0, 40px 70px, 40px 70px, 0 0, 40px 70px;
+  background-position:
+    0 0,
+    0 0,
+    40px 70px,
+    40px 70px,
+    0 0,
+    40px 70px;
 }
 ```
 
@@ -59,13 +65,11 @@ Each property has:
 ### Scope
 
 1. **CSS Value Types** (from b_value):
-
    - Colors, lengths, angles, gradients, etc.
    - Keywords per property
    - Units and percentages
 
 2. **CSS Property Schemas** (NEW):
-
    - Schema for EACH longhand property
    - Parse: property name + value string → typed IR
    - Generate: typed IR → CSS declaration
@@ -137,7 +141,6 @@ b_values/
 ### Migration Path
 
 1. **Phase 1**: Port b_value code into monorepo packages
-
    - `b_keywords` ← `src/core/keywords`
    - `b_types` ← `src/core/types`
    - `b_units` ← `src/core/units`
@@ -145,13 +148,11 @@ b_values/
    - `b_generators` ← `src/generate`
 
 2. **Phase 2**: Add property schemas (`b_properties`)
-
    - Schema for each longhand property
    - Multi-value handling (arrays)
    - Shorthand expansion logic
 
 3. **Phase 3**: Add context-aware parsing
-
    - Declaration parser
    - DeclarationList parser
    - Stylesheet parser (optional)

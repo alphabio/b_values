@@ -9,6 +9,8 @@
   ],
   "packageManager": "pnpm@10.2.0",
   "scripts": {
+    "clean": "rimraf dist node_modules pnpm-lock.yaml",
+    "clean:all": "pnpm -r exec rimraf dist node_modules pnpm-lock.yaml && pnpm run clean",
     "preinstall": "pnpx only-allow pnpm",
     "start": "node scripts/start.js",
     "build": "turbo run build",
@@ -16,7 +18,6 @@
     "typecheck": "turbo run typecheck",
     "lint": "pnpm run lint:md && biome lint --write --reporter=summary .",
     "lint:md": "markdownlint-cli2 --fix '**/*.md'",
-    "clean": "turbo run clean",
     "format": "pnpm run format:md && biome format --write . && biome check --write .",
     "format:md": "prettier --write '**/*.md' --log-level=silent",
     "check": "pnpm format && pnpm lint && pnpm typecheck",
