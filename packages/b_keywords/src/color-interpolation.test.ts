@@ -1,6 +1,6 @@
 // b_path:: packages/b_keywords/src/color-interpolation.test.ts
 import { describe, expect, it } from "vitest";
-import { colorInterpolationSchema } from "./color-interpolation";
+import { colorInterpolationSchema, hueInterpolationMethodSchema } from "./color-interpolation";
 
 describe("colorInterpolationSchema", () => {
   it("accepts rectangular color spaces", () => {
@@ -18,16 +18,23 @@ describe("colorInterpolationSchema", () => {
     expect(colorInterpolationSchema.parse("oklch")).toBe("oklch");
   });
 
-  it("accepts hue interpolation methods", () => {
-    expect(colorInterpolationSchema.parse("shorter")).toBe("shorter");
-    expect(colorInterpolationSchema.parse("longer")).toBe("longer");
-    expect(colorInterpolationSchema.parse("increasing")).toBe("increasing");
-    expect(colorInterpolationSchema.parse("decreasing")).toBe("decreasing");
-  });
-
   it("rejects invalid values", () => {
     expect(() => colorInterpolationSchema.parse("invalid")).toThrow();
     expect(() => colorInterpolationSchema.parse("")).toThrow();
     expect(() => colorInterpolationSchema.parse("rgb")).toThrow();
+  });
+});
+
+describe("hueInterpolationMethodSchema", () => {
+  it("accepts hue interpolation methods", () => {
+    expect(hueInterpolationMethodSchema.parse("shorter hue")).toBe("shorter hue");
+    expect(hueInterpolationMethodSchema.parse("longer hue")).toBe("longer hue");
+    expect(hueInterpolationMethodSchema.parse("increasing hue")).toBe("increasing hue");
+    expect(hueInterpolationMethodSchema.parse("decreasing hue")).toBe("decreasing hue");
+  });
+
+  it("rejects invalid values", () => {
+    expect(() => hueInterpolationMethodSchema.parse("shorter")).toThrow();
+    expect(() => hueInterpolationMethodSchema.parse("hue")).toThrow();
   });
 });

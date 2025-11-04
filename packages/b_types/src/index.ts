@@ -14,4 +14,5 @@ export * from "./length-percentage";
 export * from "./position";
 export * from "./url";
 export * from "./color-stop";
+export * from "./color-interpolation-method";
 export * from "./gradient";
