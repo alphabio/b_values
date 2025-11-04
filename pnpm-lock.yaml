@@ -30,18 +30,12 @@ catalogs:
     react-dom:
       specifier: ^19.2.0
       version: 19.2.0
-    tsup:
-      specifier: ^8.5.0
-      version: 8.5.0
     typescript:
       specifier: ~5.9.3
       version: 5.9.3
     vite:
       specifier: 7.1.12
       version: 7.1.12
-    vitest:
-      specifier: ^4.0.6
-      version: 4.0.6
     zod:
       specifier: ^4.1.12
       version: 4.1.12
@@ -128,6 +122,9 @@ importers:
       rimraf:
         specifier: ^6.1.0
         version: 6.1.0
+      tsup:
+        specifier: ^8.5.0
+        version: 8.5.0(@microsoft/api-extractor@7.54.0(@types/node@24.10.0))(@swc/core@1.15.0)(jiti@2.6.1)(postcss@8.5.6)(tsx@4.20.6)(typescript@5.9.3)
       turbo:
         specifier: ^2.6.0
         version: 2.6.0
@@ -196,15 +193,6 @@ importers:
       '@b/typescript-config':
         specifier: workspace:*
         version: link:../typescript-config
-      tsup:
-        specifier: 'catalog:'
-        version: 8.5.0(@microsoft/api-extractor@7.54.0(@types/node@24.10.0))(@swc/core@1.15.0)(jiti@2.6.1)(postcss@8.5.6)(tsx@4.20.6)(typescript@5.9.3)
-      typescript:
-        specifier: 'catalog:'
-        version: 5.9.3
-      vitest:
-        specifier: 'catalog:'
-        version: 4.0.6(@types/debug@4.1.12)(@types/node@24.10.0)(@vitest/ui@4.0.6)(jiti@2.6.1)(jsdom@27.1.0)(tsx@4.20.6)
 
   packages/b_keywords:
     dependencies:
@@ -215,15 +203,6 @@ importers:
       '@b/typescript-config':
         specifier: workspace:*
         version: link:../typescript-config
-      tsup:
-        specifier: 'catalog:'
-        version: 8.5.0(@microsoft/api-extractor@7.54.0(@types/node@24.10.0))(@swc/core@1.15.0)(jiti@2.6.1)(postcss@8.5.6)(tsx@4.20.6)(typescript@5.9.3)
-      typescript:
-        specifier: 'catalog:'
-        version: 5.9.3
-      vitest:
-        specifier: 'catalog:'
-        version: 4.0.6(@types/debug@4.1.12)(@types/node@24.10.0)(@vitest/ui@4.0.6)(jiti@2.6.1)(jsdom@27.1.0)(tsx@4.20.6)
 
   packages/b_parsers:
     dependencies:
@@ -249,15 +228,6 @@ importers:
       '@b/typescript-config':
         specifier: workspace:*
         version: link:../typescript-config
-      tsup:
-        specifier: 'catalog:'
-        version: 8.5.0(@microsoft/api-extractor@7.54.0(@types/node@24.10.0))(@swc/core@1.15.0)(jiti@2.6.1)(postcss@8.5.6)(tsx@4.20.6)(typescript@5.9.3)
-      typescript:
-        specifier: 'catalog:'
-        version: 5.9.3
-      vitest:
-        specifier: 'catalog:'
-        version: 4.0.6(@types/debug@4.1.12)(@types/node@24.10.0)(@vitest/ui@4.0.6)(jiti@2.6.1)(jsdom@27.1.0)(tsx@4.20.6)
 
   packages/b_properties:
     dependencies:
@@ -286,21 +256,15 @@ importers:
       '@b/typescript-config':
         specifier: workspace:*
         version: link:../typescript-config
-      tsup:
-        specifier: 'catalog:'
-        version: 8.5.0(@microsoft/api-extractor@7.54.0(@types/node@24.10.0))(@swc/core@1.15.0)(jiti@2.6.1)(postcss@8.5.6)(tsx@4.20.6)(typescript@5.9.3)
-      typescript:
-        specifier: 'catalog:'
-        version: 5.9.3
-      vitest:
-        specifier: 'catalog:'
-        version: 4.0.6(@types/debug@4.1.12)(@types/node@24.10.0)(@vitest/ui@4.0.6)(jiti@2.6.1)(jsdom@27.1.0)(tsx@4.20.6)
 
   packages/b_types:
     dependencies:
       '@b/keywords':
         specifier: workspace:*
         version: link:../b_keywords
+      '@b/units':
+        specifier: workspace:*
+        version: link:../b_units
       zod:
         specifier: 'catalog:'
         version: 4.1.12
@@ -308,15 +272,6 @@ importers:
       '@b/typescript-config':
         specifier: workspace:*
         version: link:../typescript-config
-      tsup:
-        specifier: 'catalog:'
-        version: 8.5.0(@microsoft/api-extractor@7.54.0(@types/node@24.10.0))(@swc/core@1.15.0)(jiti@2.6.1)(postcss@8.5.6)(tsx@4.20.6)(typescript@5.9.3)
-      typescript:
-        specifier: 'catalog:'
-        version: 5.9.3
-      vitest:
-        specifier: 'catalog:'
-        version: 4.0.6(@types/debug@4.1.12)(@types/node@24.10.0)(@vitest/ui@4.0.6)(jiti@2.6.1)(jsdom@27.1.0)(tsx@4.20.6)
 
   packages/b_units:
     dependencies:
@@ -327,15 +282,6 @@ importers:
       '@b/typescript-config':
         specifier: workspace:*
         version: link:../typescript-config
-      tsup:
-        specifier: 'catalog:'
-        version: 8.5.0(@microsoft/api-extractor@7.54.0(@types/node@24.10.0))(@swc/core@1.15.0)(jiti@2.6.1)(postcss@8.5.6)(tsx@4.20.6)(typescript@5.9.3)
-      typescript:
-        specifier: 'catalog:'
-        version: 5.9.3
-      vitest:
-        specifier: 'catalog:'
-        version: 4.0.6(@types/debug@4.1.12)(@types/node@24.10.0)(@vitest/ui@4.0.6)(jiti@2.6.1)(jsdom@27.1.0)(tsx@4.20.6)
 
   packages/b_values:
     dependencies:
@@ -361,12 +307,6 @@ importers:
       '@b/typescript-config':
         specifier: workspace:*
         version: link:../typescript-config
-      tsup:
-        specifier: 'catalog:'
-        version: 8.5.0(@microsoft/api-extractor@7.54.0(@types/node@24.10.0))(@swc/core@1.15.0)(jiti@2.6.1)(postcss@8.5.6)(tsx@4.20.6)(typescript@5.9.3)
-      typescript:
-        specifier: 'catalog:'
-        version: 5.9.3
 
   packages/typescript-config: {}
 

@@ -28,9 +28,7 @@
     "@b/units": "workspace:*"
   },
   "devDependencies": {
-    "@b/typescript-config": "workspace:*",
-    "tsup": "catalog:",
-    "typescript": "catalog:"
+    "@b/typescript-config": "workspace:*"
   },
   "publishConfig": {
     "access": "public"

@@ -24,6 +24,9 @@
   "dependencies": {
     "zod": "catalog:"
   },
+  "devDependencies": {
+    "@b/typescript-config": "workspace:*"
+  },
   "publishConfig": {
     "access": "public"
   }

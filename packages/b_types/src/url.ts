@@ -1,0 +1,11 @@
+import { z } from "zod";
+
+/**
+ * @see https://developer.mozilla.org/en-US/docs/Web/CSS/url
+ */
+export const urlSchema = z.object({
+  kind: z.literal("url"),
+  value: z.string(),
+});
+
+export type Url = z.infer<typeof urlSchema>;

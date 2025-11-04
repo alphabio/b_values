@@ -23,7 +23,11 @@
   },
   "dependencies": {
     "@b/keywords": "workspace:*",
+    "@b/units": "workspace:*",
     "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@b/typescript-config": "workspace:*"
   },
   "publishConfig": {
     "access": "public"
