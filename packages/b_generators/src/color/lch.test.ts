@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest";
 import type { LCHColor } from "@b/types";
 import * as LCH from "./lch";
 
+const lit = (value: number) => ({ kind: "literal" as const, value });
+
 describe("lch generator", () => {
   describe("literal values", () => {
     it("should generate opaque LCH color", () => {
@@ -236,6 +238,73 @@ describe("lch generator", () => {
       expect(result.ok).toBe(true);
       if (result.ok) {
         expect(result.value).toBe("lch(55 var(--chroma) none / 0.8)");
+      }
+    });
+
+    it("should generate with calc in hue", () => {
+      const color: LCHColor = {
+        kind: "lch",
+        l: { kind: "literal", value: 55 },
+        c: { kind: "variable", name: "--chroma" },
+        h: {
+          kind: "calc",
+          value: {
+            kind: "calc-operation",
+            operator: "+",
+            left: { kind: "literal", value: 90, unit: "deg" },
+            right: { kind: "literal", value: 10, unit: "deg" },
+          },
+        },
+      };
+      const result = LCH.generate(color);
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.value).toBe("lch(55 var(--chroma) calc(90deg + 10deg))");
+      }
+    });
+
+    it("should generate with calc and variable", () => {
+      const color: LCHColor = {
+        kind: "lch",
+        l: {
+          kind: "calc",
+          value: {
+            kind: "calc-operation",
+            operator: "*",
+            left: { kind: "variable", name: "--base-l" },
+            right: { kind: "literal", value: 1.2 },
+          },
+        },
+        c: { kind: "literal", value: 100 },
+        h: { kind: "literal", value: 90 },
+      };
+      const result = LCH.generate(color);
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.value).toBe("lch(calc(var(--base-l) * 1.2) 100 90)");
+      }
+    });
+
+    it("should generate with all CssValue types", () => {
+      const color: LCHColor = {
+        kind: "lch",
+        l: { kind: "variable", name: "--l" },
+        c: {
+          kind: "calc",
+          value: {
+            kind: "calc-operation",
+            operator: "+",
+            left: lit(50),
+            right: lit(10),
+          },
+        },
+        h: { kind: "keyword", value: "none" },
+        alpha: { kind: "variable", name: "--opacity" },
+      };
+      const result = LCH.generate(color);
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.value).toBe("lch(var(--l) calc(50 + 10) none / var(--opacity))");
       }
     });
   });

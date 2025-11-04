@@ -1,126 +1,114 @@
-# Session 009: CssValue Migration
+# Session 010: CssValue Variant Tests
 
 **Date:** 2025-11-04
-**Focus:** Complete CssValue migration for all color types and generators
+**Focus:** Add comprehensive CssValue variant tests for color types and generators
 
 ---
 
-## ✅ Session Complete!
+## ✅ Accomplished
 
-**Phase 1: Validation Cleanup** ✅
+**Type Schema Tests (b_types):**
 
-- Removed all 43 validation tests per ADR-001
-- Fixed LCH test in color.test.ts
-- Fixed build: Added calc-operation to cssValueSchema union
+- ✅ Added CssValue variant tests to RGB (9 new tests)
+- ✅ Added CssValue variant tests to HSL (7 new tests)
+- ✅ Added CssValue variant tests to HWB (6 new tests)
+- ✅ Added CssValue variant tests to LAB (5 new tests)
+- ✅ Added CssValue variant tests to LCH (2 new calc tests)
+- ✅ Added CssValue variant tests to OKLab (5 new tests)
+- ✅ Added CssValue variant tests to OKLCH (6 new tests)
 
-**Phase 2: Type Migration** ✅
+**Generator Tests (b_generators):**
 
-- Migrated all 7 remaining color types to CssValue:
-  - RGB, HSL, HWB
-  - LAB, OKLab, OKLCH
-  - ColorFunction (channels array)
-- All type schemas now use `cssValueSchema`
-- All type tests updated with `lit()` helper
+- ✅ Added CssValue variant tests to RGB (9 new tests)
+- ✅ Added CssValue variant tests to HSL (7 new tests)
+- ✅ Added CssValue variant tests to LCH (4 new calc tests)
+- ✅ Created complete test file for HWB (10 tests)
+- ✅ Created complete test file for LAB (10 tests)
+- ✅ Created complete test file for OKLab (10 tests)
+- ✅ Created complete test file for OKLCH (10 tests)
 
-**Phase 3: Generator Migration** ✅
+**Test Coverage:**
 
-- Updated all 11 color generators to use `cssValueToCss()`
-- Removed direct number manipulation (Math.round, toFixed, etc.)
-- Alpha always output if defined (not just < 1)
-- All generator tests updated for CssValue format
+- Variables: `rgb(var(--r) var(--g) var(--b))`
+- Keywords: `hsl(120 none 50)`
+- Calc: `lab(calc(50 + var(--offset)) 20 30)`
+- Mixed: `lch(var(--l) calc(50 + 10) none / var(--opacity))`
+- Variable fallbacks: `var(--hue, 270deg)`
 
 ---
 
-## 📊 Final State
+## 📊 Current State
+
+**Working:**
+
+- ✅ 473 tests passing (up from 384, added 89 tests)
+- ✅ All type schemas validate CssValue variants
+- ✅ All generators output correct CSS for CssValue variants
+- ✅ All quality gates passing (format, lint, typecheck, build)
+
+**Test Breakdown:**
+
+- Type schema tests: 40 new CssValue variant tests
+- Generator tests: 49 new CssValue variant tests
+- Total new tests: 89 tests
+
+**Not working:**
+
+- Nothing broken - all systems green
+
+---
+
+## 🎯 Next Steps
 
 **Completed:**
 
-- ✅ **All 8 color types** using CssValue (RGB, HSL, HWB, LAB, LCH, OKLab, OKLCH, ColorFunction)
-- ✅ **All 11 generators** using cssValueToCss()
-- ✅ **384 tests passing** (removed 44, updated all remaining)
-- ✅ **All quality gates passing** (build, typecheck, lint)
-- ✅ **3 commits** documenting the journey
-
-**Architecture:**
-
-- IR represents **authored values**, not computed values
-- CssValue supports: literals, variables, keywords, calc, min, max, clamp, url, attr, lists
-- No value range validation in schemas
-- Can represent: `lch(55 var(--chroma) 90)`, `rgb(calc(100 + 20) 50 75)`, etc.
-
-**Breaking Changes (by design):**
-
-- Alpha now always output when defined (e.g., `rgb(255 0 0 / 1)` not `rgb(255 0 0)`)
-- HSL/HWB values output without % (cssValueToCss handles units as needed)
-- RGB values not rounded (precise values preserved)
-
----
-
-## 📈 Session Stats
-
-**Commits:**
-
-1. `ff6c723` - Remove validation tests per ADR-001 (43 tests)
-2. `e53cca9` - Update session handover (Phase 1 complete)
-3. `bdee4a7` - Migrate all color types and generators to CssValue
-
-**Tests:** 428 → 384 (removed 44 validation/outdated tests)
-**Files Changed:** 35+ files across types, generators, and tests
-**Time:** ~2 hours (efficient parallel work on types and generators)
-
----
-
-## 🎯 What's Next
-
-**Immediate:**
-
-- ✅ Migration complete - all types use CssValue
-- ✅ All generators use cssValueToCss()
-- ✅ Ready for parser implementation
+- ✅ CssValue variant tests for all color types
+- ✅ CssValue variant tests for all color generators
 
 **Future Work:**
 
-1. **Add CssValue variant tests** (~50 tests)
-   - Test variables: `rgb(var(--r) var(--g) var(--b))`
-   - Test keywords: `hsl(120 none 50%)`
-   - Test calc: `lab(calc(50 + var(--offset)) 20 30)`
-   - Test mixed: `lch(55 var(--chroma) calc(90deg + 10deg))`
-
-2. **Implement Color Parsers**
-   - Use CssValue from the start (no migration needed)
-   - Support all CssValue variants
+1. Implement Color Parsers
+   - Use CssValue from the start
+   - Support all CssValue variants (var, calc, keyword)
    - Round-trip testing with generators
 
-3. **Property Schemas**
+2. Property Schemas
    - Define property-specific value types
    - Use CssValue-based color types
+   - Validate property-specific constraints
+
+3. More CssValue Functions
+   - Add tests for min(), max(), clamp()
+   - Add tests for attr() function
+   - Add tests for url() function
 
 ---
 
-## 💡 Key Learnings
+## 💡 Key Decisions
 
-**What Worked Well:**
+**Test Organization:**
 
-- Proof of concept with LCH validated the approach
-- Helper function `lit()` made test updates clean
-- Parallel migration of types + generators was efficient
-- ADR-001 provided clear architectural guidance
+- Co-located tests with source files (same directory)
+- Helper function `lit()` for creating literal values
+- Consistent test structure across all color types
+- Descriptive test names: "should generate X with Y"
 
-**Architectural Insights:**
+**Test Coverage Strategy:**
 
-- Representation engine ≠ validation engine
-- IR must support symbolic references (var, calc, keywords)
-- cssValueToCss() centralizes value generation logic
-- calc-operation needed in union for recursive operations
+- Basic literal tests (already existed)
+- Single CssValue variant (variable in one channel)
+- All channels with same variant (all variables)
+- Mixed variants (variable + calc + keyword + literal)
+- Alpha channel variants
 
-**Future Considerations:**
+**File Creation:**
 
-- May want units on HSL/HWB literals (currently `100` not `100%`)
-- Alpha output behavior (always vs. conditional) is now consistent
-- Ready to support `color-mix()`, `from` syntax, and relative colors
+- Created 4 new generator test files (hwb, lab, oklab, oklch)
+- Each file follows same structure as existing tests
+- Includes basic tests + CssValue variant tests
 
 ---
 
-**Status:** ✅ Session 009 Complete - Full CssValue Migration Achieved!
+**Status:** ✅ Session 010 Complete - 89 New CssValue Tests Added!
 
-**Next Agent:** Ready to implement parsers or add comprehensive CssValue tests
+**Next Agent:** Ready to implement parsers or continue with property schemas

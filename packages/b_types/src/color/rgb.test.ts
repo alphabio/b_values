@@ -57,4 +57,116 @@ describe("rgbColorSchema", () => {
     });
     expect(result.success).toBe(false);
   });
+
+  describe("CssValue variants", () => {
+    it("accepts variable in r channel", () => {
+      const result = rgbColorSchema.safeParse({
+        kind: "rgb",
+        r: { kind: "variable", name: "--red" },
+        g: lit(128),
+        b: lit(64),
+      });
+      expect(result.success).toBe(true);
+    });
+
+    it("accepts variables in all channels", () => {
+      const result = rgbColorSchema.safeParse({
+        kind: "rgb",
+        r: { kind: "variable", name: "--r" },
+        g: { kind: "variable", name: "--g" },
+        b: { kind: "variable", name: "--b" },
+      });
+      expect(result.success).toBe(true);
+    });
+
+    it("accepts variable with fallback", () => {
+      const result = rgbColorSchema.safeParse({
+        kind: "rgb",
+        r: {
+          kind: "variable",
+          name: "--red",
+          fallback: lit(255),
+        },
+        g: lit(128),
+        b: lit(64),
+      });
+      expect(result.success).toBe(true);
+    });
+
+    it("accepts keyword values", () => {
+      const result = rgbColorSchema.safeParse({
+        kind: "rgb",
+        r: { kind: "keyword", value: "none" },
+        g: lit(128),
+        b: lit(64),
+      });
+      expect(result.success).toBe(true);
+    });
+
+    it("accepts calc() expression", () => {
+      const result = rgbColorSchema.safeParse({
+        kind: "rgb",
+        r: {
+          kind: "calc",
+          value: {
+            kind: "calc-operation",
+            operator: "+",
+            left: lit(100),
+            right: lit(20),
+          },
+        },
+        g: lit(128),
+        b: lit(64),
+      });
+      expect(result.success).toBe(true);
+    });
+
+    it("accepts calc with variable", () => {
+      const result = rgbColorSchema.safeParse({
+        kind: "rgb",
+        r: {
+          kind: "calc",
+          value: {
+            kind: "calc-operation",
+            operator: "+",
+            left: lit(100),
+            right: { kind: "variable", name: "--offset" },
+          },
+        },
+        g: lit(128),
+        b: lit(64),
+      });
+      expect(result.success).toBe(true);
+    });
+
+    it("accepts mixed CssValue types", () => {
+      const result = rgbColorSchema.safeParse({
+        kind: "rgb",
+        r: { kind: "variable", name: "--r" },
+        g: {
+          kind: "calc",
+          value: {
+            kind: "calc-operation",
+            operator: "*",
+            left: lit(2),
+            right: lit(64),
+          },
+        },
+        b: { kind: "keyword", value: "none" },
+        alpha: { kind: "variable", name: "--alpha" },
+      });
+      expect(result.success).toBe(true);
+    });
+
+    it("accepts variable alpha", () => {
+      const result = rgbColorSchema.safeParse({
+        kind: "rgb",
+        r: lit(255),
+        g: lit(128),
+        b: lit(64),
+        alpha: { kind: "variable", name: "--opacity" },
+      });
+      expect(result.success).toBe(true);
+    });
+  });
 });

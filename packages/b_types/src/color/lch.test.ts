@@ -138,6 +138,44 @@ describe("lchColorSchema", () => {
       const result = lchColorSchema.safeParse(color);
       expect(result.success).toBe(true);
     });
+
+    it("validates calc expression in hue", () => {
+      const color: LCHColor = {
+        kind: "lch",
+        l: { kind: "literal", value: 55 },
+        c: { kind: "variable", name: "--chroma" },
+        h: {
+          kind: "calc",
+          value: {
+            kind: "calc-operation",
+            operator: "+",
+            left: { kind: "literal", value: 90, unit: "deg" },
+            right: { kind: "literal", value: 10, unit: "deg" },
+          },
+        },
+      };
+      const result = lchColorSchema.safeParse(color);
+      expect(result.success).toBe(true);
+    });
+
+    it("validates calc with variable", () => {
+      const color: LCHColor = {
+        kind: "lch",
+        l: {
+          kind: "calc",
+          value: {
+            kind: "calc-operation",
+            operator: "*",
+            left: { kind: "variable", name: "--base-l" },
+            right: { kind: "literal", value: 1.2 },
+          },
+        },
+        c: { kind: "literal", value: 50 },
+        h: { kind: "literal", value: 180 },
+      };
+      const result = lchColorSchema.safeParse(color);
+      expect(result.success).toBe(true);
+    });
   });
 
   describe("validation errors", () => {

@@ -95,4 +95,73 @@ describe("labColorSchema", () => {
     });
     expect(result.success).toBe(false);
   });
+
+  describe("CssValue variants", () => {
+    it("accepts variable in l channel", () => {
+      const result = labColorSchema.safeParse({
+        kind: "lab",
+        l: { kind: "variable", name: "--lightness" },
+        a: lit(-20),
+        b: lit(30),
+      });
+      expect(result.success).toBe(true);
+    });
+
+    it("accepts variables in all channels", () => {
+      const result = labColorSchema.safeParse({
+        kind: "lab",
+        l: { kind: "variable", name: "--l" },
+        a: { kind: "variable", name: "--a" },
+        b: { kind: "variable", name: "--b" },
+      });
+      expect(result.success).toBe(true);
+    });
+
+    it("accepts keyword values", () => {
+      const result = labColorSchema.safeParse({
+        kind: "lab",
+        l: lit(50),
+        a: { kind: "keyword", value: "none" },
+        b: lit(30),
+      });
+      expect(result.success).toBe(true);
+    });
+
+    it("accepts calc expression", () => {
+      const result = labColorSchema.safeParse({
+        kind: "lab",
+        l: {
+          kind: "calc",
+          value: {
+            kind: "calc-operation",
+            operator: "+",
+            left: lit(50),
+            right: { kind: "variable", name: "--offset" },
+          },
+        },
+        a: lit(-20),
+        b: lit(30),
+      });
+      expect(result.success).toBe(true);
+    });
+
+    it("accepts mixed CssValue types", () => {
+      const result = labColorSchema.safeParse({
+        kind: "lab",
+        l: { kind: "variable", name: "--l" },
+        a: {
+          kind: "calc",
+          value: {
+            kind: "calc-operation",
+            operator: "-",
+            left: lit(0),
+            right: lit(20),
+          },
+        },
+        b: { kind: "keyword", value: "none" },
+        alpha: { kind: "variable", name: "--opacity" },
+      });
+      expect(result.success).toBe(true);
+    });
+  });
 });

@@ -95,4 +95,73 @@ describe("oklabColorSchema", () => {
     });
     expect(result.success).toBe(false);
   });
+
+  describe("CssValue variants", () => {
+    it("accepts variable in l channel", () => {
+      const result = oklabColorSchema.safeParse({
+        kind: "oklab",
+        l: { kind: "variable", name: "--lightness" },
+        a: lit(-0.2),
+        b: lit(0.3),
+      });
+      expect(result.success).toBe(true);
+    });
+
+    it("accepts variables in all channels", () => {
+      const result = oklabColorSchema.safeParse({
+        kind: "oklab",
+        l: { kind: "variable", name: "--l" },
+        a: { kind: "variable", name: "--a" },
+        b: { kind: "variable", name: "--b" },
+      });
+      expect(result.success).toBe(true);
+    });
+
+    it("accepts keyword values", () => {
+      const result = oklabColorSchema.safeParse({
+        kind: "oklab",
+        l: lit(0.5),
+        a: { kind: "keyword", value: "none" },
+        b: lit(0.3),
+      });
+      expect(result.success).toBe(true);
+    });
+
+    it("accepts calc expression", () => {
+      const result = oklabColorSchema.safeParse({
+        kind: "oklab",
+        l: {
+          kind: "calc",
+          value: {
+            kind: "calc-operation",
+            operator: "+",
+            left: lit(0.5),
+            right: { kind: "variable", name: "--offset" },
+          },
+        },
+        a: lit(-0.2),
+        b: lit(0.3),
+      });
+      expect(result.success).toBe(true);
+    });
+
+    it("accepts mixed CssValue types", () => {
+      const result = oklabColorSchema.safeParse({
+        kind: "oklab",
+        l: { kind: "variable", name: "--l" },
+        a: {
+          kind: "calc",
+          value: {
+            kind: "calc-operation",
+            operator: "*",
+            left: lit(-0.1),
+            right: lit(2),
+          },
+        },
+        b: { kind: "keyword", value: "none" },
+        alpha: { kind: "variable", name: "--opacity" },
+      });
+      expect(result.success).toBe(true);
+    });
+  });
 });
