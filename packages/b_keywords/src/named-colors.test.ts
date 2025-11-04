@@ -1,3 +1,4 @@
+// b_path:: packages/b_keywords/src/named-colors.test.ts
 import { describe, expect, it } from "vitest";
 import { namedColorSchema } from "./named-colors";
 

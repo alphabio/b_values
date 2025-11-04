@@ -1,3 +1,4 @@
+// b_path:: packages/b_types/src/result/issue.test.ts
 import { describe, expect, it } from "vitest";
 import type { IssueCode } from "./issue";
 import { createError, createInfo, createWarning } from "./issue";

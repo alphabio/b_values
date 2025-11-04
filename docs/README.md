@@ -37,9 +37,10 @@ Document **only this session**. Don't duplicate history. Link to previous sessio
 PREV=$(find docs/sessions -maxdepth 1 -type d -name "[0-9]*" | wc -l | xargs)
 NEXT=$((PREV + 1))
 PREV_DIR="docs/sessions/$(printf "%03d" $PREV)"
+SESSION_DIR="docs/sessions/$(printf "%03d" $NEXT)"
 
 # Create new session directory
-mkdir -p "docs/sessions/$(printf "%03d" $NEXT)"
+mkdir -p "$SESSION_DIR"
 
 # Archive handover and git ref
 mv docs/SESSION_HANDOVER.md "$PREV_DIR/"
@@ -95,8 +96,8 @@ EOF
 ### During a Session
 
 - Update `SESSION_HANDOVER.md` as you go
-- Create analysis docs in session dir: `docs/sessions/NNN/*.md`
-- Promote lasting docs immediately: `mv docs/sessions/NNN/ADR-*.md docs/architecture/decisions/`
+- Create analysis docs in session dir: `$SESSION_DIR/*.md`
+- Promote lasting docs immediately: `mv $SESSION_DIR/ADR-*.md docs/architecture/decisions/`
 
 ### Ending a Session
 
@@ -172,8 +173,7 @@ ls -lt docs/sessions/            # Session history
 
 **Temp files:**
 
-- Use `/tmp/b_*` prefix for all temporary files
-- Examples: `/tmp/b_analysis.md`, `/tmp/b_script.sh`
+- Don't use `/tmp/` use your session dir `$SESSION_DIR/*.md`
 
 **Naming:**
 

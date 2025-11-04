@@ -1,3 +1,4 @@
+// b_path:: packages/b_types/src/result/core.ts
 /**
  * Core Result type for operations that may fail.
  *

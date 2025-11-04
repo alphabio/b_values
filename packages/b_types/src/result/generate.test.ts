@@ -1,3 +1,4 @@
+// b_path:: packages/b_types/src/result/generate.test.ts
 import { describe, expect, it } from "vitest";
 import { createError, createWarning } from "./issue";
 import { addGenerateIssue, combineGenerateResults, generateErr, generateOk } from "./generate";

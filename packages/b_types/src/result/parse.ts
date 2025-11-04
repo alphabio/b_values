@@ -1,3 +1,4 @@
+// b_path:: packages/b_types/src/result/parse.ts
 /**
  * ParseResult type for CSS → IR parsing operations.
  *

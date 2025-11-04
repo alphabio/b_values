@@ -1,14 +1,6 @@
 // b_path:: apps/basic/src/app/routes/__root.tsx
-import { ThemeProvider } from "@b/b_components";
-import { ConvexAuthProvider } from "@convex-dev/auth/react";
 import { Outlet, createRootRoute } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
-import { ConvexReactClient } from "convex/react";
-
-import { Footer } from "@/components/footer";
-import { Header } from "@/components/header";
-
-const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL as string);
 
 export const Route = createRootRoute({
   head: () => ({
@@ -44,19 +36,9 @@ export const Route = createRootRoute({
     ],
   }),
   component: () => (
-    <ThemeProvider defaultTheme="system" storageKey="app-theme">
-      <ConvexAuthProvider client={convex}>
-        <div className="relative">
-          <div className="fixed top-0 left-0 right-0 w-full z-10">
-            <Header />
-          </div>
-          <main className="min-h-[calc(100vh-5rem)]">
-            <Outlet />
-          </main>
-          <Footer />
-        </div>
-        <TanStackRouterDevtools position="bottom-right" />
-      </ConvexAuthProvider>
-    </ThemeProvider>
+    <div className="relative">
+      <Outlet />
+      <TanStackRouterDevtools position="bottom-right" />
+    </div>
   ),
 });

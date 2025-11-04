@@ -1,8 +1,9 @@
+// b_path:: packages/b_types/src/index.ts
 /**
  * b_types - Zod schemas and Result system
  *
  * @packageDocumentation
  */
 
-// Result system
 export * from "./result";
+export * from "./color";

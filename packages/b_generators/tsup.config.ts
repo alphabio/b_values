@@ -1,3 +1,4 @@
+// b_path:: packages/b_generators/tsup.config.ts
 import { defineConfig } from "tsup";
 
 export default defineConfig({

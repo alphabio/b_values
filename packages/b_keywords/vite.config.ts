@@ -1,4 +1,4 @@
-// b_path:: packages/b_store/vite.config.ts
+// b_path:: packages/b_keywords/vite.config.ts
 import { defineConfig } from "vite";
 
 import tsconfigPaths from "vite-tsconfig-paths";

@@ -3,15 +3,10 @@
   "version": "0.1.0",
   "description": "Zod schemas for CSS value types and Result system",
   "type": "module",
-  "main": "./dist/index.js",
-  "module": "./dist/index.mjs",
-  "types": "./dist/index.d.ts",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
   "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.js"
-    }
+    ".": "./src/index.ts"
   },
   "files": [
     "dist",
@@ -29,12 +24,6 @@
   "dependencies": {
     "@b/keywords": "workspace:*",
     "zod": "catalog:"
-  },
-  "devDependencies": {
-    "@b/typescript-config": "workspace:*",
-    "tsup": "catalog:",
-    "typescript": "catalog:",
-    "vitest": "catalog:"
   },
   "publishConfig": {
     "access": "public"

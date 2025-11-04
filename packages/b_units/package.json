@@ -29,12 +29,6 @@
   "dependencies": {
     "zod": "catalog:"
   },
-  "devDependencies": {
-    "@b/typescript-config": "workspace:*",
-    "tsup": "catalog:",
-    "typescript": "catalog:",
-    "vitest": "catalog:"
-  },
   "publishConfig": {
     "access": "public"
   }

@@ -1,3 +1,4 @@
+// b_path:: packages/b_types/src/result/generate.ts
 /**
  * GenerateResult type for IR → CSS generation operations.
  *

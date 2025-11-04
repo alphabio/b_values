@@ -1,3 +1,4 @@
+// b_path:: packages/b_types/src/result/index.ts
 /**
  * Result system for type-safe error handling.
  *

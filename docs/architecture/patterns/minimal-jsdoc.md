@@ -12,12 +12,7 @@
 /**
  * @see https://developer.mozilla.org/en-US/docs/Web/CSS/angle
  */
-export const angleUnitSchema = z.union([
-  z.literal("deg"),
-  z.literal("rad"),
-  z.literal("turn"),
-  z.literal("grad"),
-]);
+export const angleUnitSchema = z.union([z.literal("deg"), z.literal("rad"), z.literal("turn"), z.literal("grad")]);
 ```
 
 **Why:** MDN and W3C specs are authoritative, maintained, and comprehensive.
@@ -32,10 +27,10 @@ export const angleUnitSchema = z.union([
 // ❌ Bad - just noise
 /**
  * Angle unit schema.
- * 
+ *
  * Accepts valid angle units.
  * Can be deg, rad, turn, or grad.
- * 
+ *
  * @example
  * angleUnitSchema.parse("deg") // "deg"
  */
@@ -58,13 +53,13 @@ export const angleUnitSchema = z.union([...]);
 // ❌ Bad - too much text
 /**
  * CSS viewport-percentage length unit identifiers.
- * 
- * Viewport-percentage length units are relative to the size 
- * of the initial containing block. They provide different 
- * sizing strategies for responsive design across various 
+ *
+ * Viewport-percentage length units are relative to the size
+ * of the initial containing block. They provide different
+ * sizing strategies for responsive design across various
  * viewport states.
- * 
- * Includes default (large), small, large (explicit), 
+ *
+ * Includes default (large), small, large (explicit),
  * and dynamic viewport units.
  */
 ```
@@ -74,16 +69,19 @@ export const angleUnitSchema = z.union([...]);
 ## 🎯 Rationale
 
 **Token efficiency:**
+
 - Every JSDoc line costs tokens
 - LLMs read ALL documentation in files
 - Verbose docs slow down development
 
 **Maintenance burden:**
+
 - Code changes → docs become stale
 - Out-of-date docs are worse than no docs
 - MDN links never go stale
 
 **Readability:**
+
 - Good names > comments
 - `angleUnitSchema` is self-documenting
 - Type signatures show what's valid
@@ -116,5 +114,5 @@ export const lengthUnitSchema = z.union([...]);
 
 ---
 
-**Decision Date:** 2025-11-04  
+**Decision Date:** 2025-11-04
 **Session:** 004

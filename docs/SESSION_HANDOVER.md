@@ -1,27 +1,29 @@
-# Session 004: Keywords & Units Porting
+# Session 005: Types Porting
 
 **Date:** 2025-11-04
-**Focus:** Port keywords and units for background-image support
+**Focus:** Port color, gradient, and supporting types for background-image
 
 ---
 
 ## ✅ Accomplished
 
-- ✅ Session 003 archived successfully
-- ✅ Session 004 initialized
-- ✅ **Keywords implemented** → `b_keywords` (16/16 tests ✅)
-  - `named-colors.ts` - ~148 CSS named colors (4 tests)
-  - `color-interpolation.ts` - Color space interpolation keywords (4 tests)
-  - `gradient-direction.ts` - Side/corner keywords for linear gradients (4 tests)
-  - `radial-size.ts` - Size keywords for radial gradients (2 tests)
-  - `radial-shape.ts` - Shape keywords (circle/ellipse) (2 tests)
-- ✅ **Units implemented** → `b_units` (18/18 tests ✅)
-  - `angle.ts` - Angle units (deg, rad, turn, grad) (2 tests)
-  - `length-absolute.ts` - Absolute length units (px, cm, etc.) (2 tests)
-  - `length-font.ts` - Font-relative length units (em, rem, etc.) (3 tests)
-  - `length-viewport.ts` - Viewport-relative length units (vw, vh, etc.) (5 tests)
-  - `length.ts` - Union of all length units (4 tests)
-  - `percentage.ts` - Percentage unit (2 tests)
+- ✅ Session 004 archived successfully
+- ✅ Session 005 initialized
+- ✅ **Color types implemented** → `b_types/src/color/` (24 files, 209 tests ✅)
+  - `hex.ts` - Hex color type (#RRGGBB, #RRGGBBAA)
+  - `named.ts` - Named color type (uses @b/keywords)
+  - `rgb.ts` - RGB color space
+  - `hsl.ts` - HSL color space
+  - `hwb.ts` - HWB color space
+  - `lab.ts` - CIE LAB color space
+  - `lch.ts` - CIE LCH color space
+  - `oklab.ts` - OKLab color space
+  - `oklch.ts` - OKLCH color space
+  - `special.ts` - Special colors (transparent, currentcolor)
+  - `color-function.ts` - color() function with color spaces
+  - `color.ts` - Color union type
+  - `index.ts` - Barrel exports
+  - All files have co-located tests
 
 ---
 
@@ -32,21 +34,25 @@
 - Session 001: Architecture defined, 7-package structure planned
 - Session 002: All packages created and building successfully
 - Session 003: Result system implemented (79/79 tests ✅)
+- Session 004: Keywords and units ported (34 tests ✅)
 
 **Current Status:**
 
 - ✅ 7-package monorepo structure complete
 - ✅ All packages building
-- ✅ Result system implemented in `b_types`
-- 🎯 Ready to port keywords and units
+- ✅ Result system implemented in `b_types` (79 tests ✅)
+- ✅ Keywords implemented in `b_keywords` (16 tests ✅)
+- ✅ Units implemented in `b_units` (18 tests ✅)
+- 🎯 Ready to port types (colors, gradients, positions)
 
 **Working:**
 
 - Build system (Turborepo + PNPM + tsup)
 - Type checking (strict TypeScript)
-- Result system (79/79 tests ✅) - `b_types`
-- Keywords (16/16 tests ✅) - `b_keywords`
-- Units (18/18 tests ✅) - `b_units`
+- Result system (79 tests ✅) - `b_types`
+- Keywords (16 tests ✅) - `b_keywords`
+- Units (18 tests ✅) - `b_units`
+- **Color types (114 tests ✅)** - `b_types/src/color/`
 - Linting and formatting (Biome)
 - Git hooks (Lefthook)
 
@@ -54,7 +60,7 @@
 
 1. ✅ Keywords → b_keywords (DONE)
 2. ✅ Units → b_units (DONE)
-3. Types → b_types (colors, gradients, positions)
+3. 🎯 Types → b_types (colors ✅, gradients, positions) ← **IN PROGRESS**
 4. Parsers → b_parsers
 5. Generators → b_generators
 6. Properties → b_properties (background-image)
@@ -63,19 +69,25 @@
 
 ## 🎯 Next Steps
 
-1. **Port Types** → `b_types` (colors, gradients, positions)
-   - Color types (hex, rgb, hsl, named)
-   - Color stop types
-   - Gradient types (linear, radial, conic)
-   - Position types
+1. **Port Gradient Types** → `b_types`
+   - Color stop type (color + position)
+   - Linear gradient type
+   - Radial gradient type
+   - Conic gradient type
+   - Union gradient type
+
+2. **Port Supporting Types** → `b_types`
+   - Position type (for gradients)
    - URL type
+   - Image type (union of url + gradients)
 
-2. **Port Parsers** → `b_parsers`
-3. **Port Generators** → `b_generators`
-4. **Implement background-image property** → `b_properties`
-5. **Test in playground** → `apps/basic`
+3. **After types complete:**
+   - Port parsers → `b_parsers`
+   - Port generators → `b_generators`
+   - Implement background-image property → `b_properties`
+   - Test in playground → `apps/basic`
 
-**See:** `docs/sessions/003/background-image-requirements.md` for complete scope
+**Reference:** `docs/sessions/003/background-image-requirements.md` for complete scope
 
 ---
 
@@ -104,15 +116,14 @@
 - 18 tests passing
 - Build ✅ | Typecheck ✅ | Tests ✅
 
+### 🎯 b_types (In Progress)
+
+- Result system complete (79 tests ✅)
+- ✅ Color types complete (114 tests ✅)
+- Next: Gradient types, color stops, positions, URL
+
 ---
 
-**Status:** Session 004 complete. Keywords and units ported (34 tests ✅).
+**Status:** Session 005 in progress. Color types complete.
 
-**Next session should:**
-
-1. Port color types (hex, rgb, hsl, named) from POC
-2. Port gradient types (linear, radial, conic) from POC
-3. Port supporting types (color stops, positions, URL)
-4. Add comprehensive tests for all types
-
-See `docs/sessions/003/background-image-requirements.md` for detailed requirements.
+**Current task:** Port gradient types (linear, radial, conic) and supporting types.

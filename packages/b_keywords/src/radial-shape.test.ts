@@ -1,3 +1,4 @@
+// b_path:: packages/b_keywords/src/radial-shape.test.ts
 import { describe, expect, it } from "vitest";
 import { radialShapeSchema } from "./radial-shape";
 

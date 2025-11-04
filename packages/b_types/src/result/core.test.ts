@@ -1,3 +1,4 @@
+// b_path:: packages/b_types/src/result/core.test.ts
 import { describe, expect, it } from "vitest";
 import { andThen, err, fromZod, map, ok, unwrap, unwrapOr } from "./core";
 
