@@ -1,3 +1,4 @@
+// b_path:: packages/b_types/src/gradient/direction.test.ts
 import { describe, expect, it } from "vitest";
 import { gradientDirectionSchema } from "./direction";
 

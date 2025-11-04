@@ -1,3 +1,4 @@
+// b_path:: packages/b_types/src/gradient/index.ts
 export * from "./conic";
 export * from "./direction";
 export * from "./linear";

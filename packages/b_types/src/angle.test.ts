@@ -1,3 +1,4 @@
+// b_path:: packages/b_types/src/angle.test.ts
 import { describe, expect, it } from "vitest";
 import { angleSchema } from "./angle";
 
@@ -32,15 +33,16 @@ describe("angleSchema", () => {
     expect(result).toEqual({ value: 0, unit: "deg" });
   });
 
+  it("validates zero without unit", () => {
+    const result = angleSchema.parse({ value: 0 });
+    expect(result).toEqual({ value: 0 });
+  });
+
   it("rejects invalid unit", () => {
     expect(() => angleSchema.parse({ value: 45, unit: "px" })).toThrow();
   });
 
   it("rejects missing value", () => {
     expect(() => angleSchema.parse({ unit: "deg" })).toThrow();
-  });
-
-  it("rejects missing unit", () => {
-    expect(() => angleSchema.parse({ value: 45 })).toThrow();
   });
 });

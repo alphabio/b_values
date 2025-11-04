@@ -1,3 +1,4 @@
+// b_path:: packages/b_types/src/gradient/radial.ts
 import { z } from "zod";
 import { colorInterpolationSchema, radialShapeSchema } from "@b/keywords";
 import { colorStopListSchema } from "../color-stop";

@@ -1,3 +1,4 @@
+// b_path:: packages/b_types/src/gradient/index.test.ts
 import { describe, expect, it } from "vitest";
 import { gradientSchema } from "./index";
 

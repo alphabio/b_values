@@ -1,3 +1,4 @@
+// b_path:: packages/b_types/src/gradient/radial-size.ts
 import { z } from "zod";
 import { radialSizeKeywordSchema } from "@b/keywords";
 import { lengthPercentageSchema } from "../length-percentage";

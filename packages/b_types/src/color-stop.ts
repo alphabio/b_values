@@ -1,3 +1,4 @@
+// b_path:: packages/b_types/src/color-stop.ts
 import { z } from "zod";
 import { angleSchema } from "./angle";
 import { colorSchema } from "./color";

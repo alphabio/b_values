@@ -1,3 +1,4 @@
+// b_path:: packages/b_types/src/color-stop.test.ts
 import { describe, expect, it } from "vitest";
 import { colorStopListSchema, colorStopSchema } from "./color-stop";
 

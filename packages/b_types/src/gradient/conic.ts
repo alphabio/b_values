@@ -1,3 +1,4 @@
+// b_path:: packages/b_types/src/gradient/conic.ts
 import { z } from "zod";
 import { colorInterpolationSchema } from "@b/keywords";
 import { angleSchema } from "../angle";

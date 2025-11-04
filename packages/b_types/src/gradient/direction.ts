@@ -1,3 +1,4 @@
+// b_path:: packages/b_types/src/gradient/direction.ts
 import { z } from "zod";
 import { gradientCornerSchema, gradientSideSchema } from "@b/keywords";
 import { angleSchema } from "../angle";

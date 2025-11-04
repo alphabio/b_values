@@ -1,3 +1,4 @@
+// b_path:: packages/b_types/src/position.test.ts
 import { describe, expect, it } from "vitest";
 import { position2DSchema, positionValueSchema } from "./position";
 
