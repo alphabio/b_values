@@ -86,21 +86,33 @@
 - **Types first**: No `any`, no shortcuts
 - **Test co-location**: Tests next to implementation
 - **Pilot property**: `background-image` (multi-value, proven in POC)
+- **Minimal JSDoc**: Only MDN/W3C links (see `docs/architecture/patterns/minimal-jsdoc.md`)
 
 ---
 
 ## 📁 Package Status
 
 ### ✅ b_keywords (Complete)
+
 - 5 modules: named-colors, color-interpolation, gradient-direction, radial-size, radial-shape
 - 16 tests passing
 - Build ✅ | Typecheck ✅ | Tests ✅
 
 ### ✅ b_units (Complete)
+
 - 6 modules: angle, length-absolute, length-font, length-viewport, length, percentage
 - 18 tests passing
 - Build ✅ | Typecheck ✅ | Tests ✅
 
 ---
 
-**Status:** Keywords and units complete (34 tests ✅). Ready to port types next.
+**Status:** Session 004 complete. Keywords and units ported (34 tests ✅).
+
+**Next session should:**
+
+1. Port color types (hex, rgb, hsl, named) from POC
+2. Port gradient types (linear, radial, conic) from POC
+3. Port supporting types (color stops, positions, URL)
+4. Add comprehensive tests for all types
+
+See `docs/sessions/003/background-image-requirements.md` for detailed requirements.
