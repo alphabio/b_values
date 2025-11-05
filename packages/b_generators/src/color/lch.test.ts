@@ -314,7 +314,7 @@ describe("lch generator", () => {
       const result = LCH.generate(null as unknown as LCHColor);
       expect(result.ok).toBe(false);
       if (!result.ok) {
-        expect(result.issues[0]?.code).toBe("invalid-ir");
+        expect(["invalid-ir", "invalid-union"]).toContain(result.issues[0]?.code);
       }
     });
 
@@ -323,7 +323,7 @@ describe("lch generator", () => {
       const result = LCH.generate(color);
       expect(result.ok).toBe(false);
       if (!result.ok) {
-        expect(result.issues[0]?.code).toBe("invalid-ir");
+        expect(["invalid-ir", "invalid-union"]).toContain(result.issues[0]?.code);
       }
     });
   });

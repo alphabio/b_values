@@ -17,7 +17,7 @@
  */
 export interface IssueCodeMap {
   parse: "invalid-value" | "invalid-syntax" | "missing-value";
-  generate: "invalid-ir" | "missing-required-field" | "unsupported-kind";
+  generate: "invalid-ir" | "missing-required-field" | "unsupported-kind" | "unrecognized-keys" | "invalid-union";
   warning: "duplicate-property" | "deprecated-syntax" | "legacy-syntax";
 }
 
@@ -75,6 +75,12 @@ export interface Issue {
   suggestion?: string;
   /** Optional location in input string (for parse errors) */
   location?: SourceLocation;
+  /** Optional path to error in IR structure (for generation errors) */
+  path?: (string | number)[];
+  /** Optional expected type or value */
+  expected?: string;
+  /** Optional received type or value */
+  received?: string;
 }
 
 /**

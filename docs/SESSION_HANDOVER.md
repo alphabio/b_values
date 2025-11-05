@@ -1,130 +1,70 @@
-# Session 023: Architecture Refinement - Phases 3-4
+# Session 024: ADR 002 Phase 2 - Rich Generator Errors
 
 **Date:** 2025-11-05
-**Focus:** Structure cleanup and validation improvements
+**Focus:** Enhanced error messages with Zod context and "Did you mean?" suggestions
 
 ---
 
 ## ✅ Accomplished
 
-- [x] Session 023 initialized
-- [x] Session 022 archived (Multi-error reporting + Zod standardization complete)
-- [x] **Phase 3: Structure Cleanup** ✅ (COMPLETE)
-  - Removed redundant error wrapping in declaration parser
-  - Preserved original parse errors with rich issue details
-  - Updated test expectations
-  - All 944 tests passing ✅
-  - Commit: `a40737b`
-- [x] **Phase 4: Strict Validation** ✅ (COMPLETE)
-  - Added `.strict()` to all Zod schemas across b_types (24 files)
-  - Catches unknown properties in IR objects
-  - Prevents typos and malformed IR data
-  - All 944 tests passing ✅
-  - Commit: `c196315`
+- [x] Session 024 initialized
+- [x] Session 023 archived (Architecture refinement complete)
+- [x] ADR 002 implementation plan reviewed (1024 lines)
+- [x] **Phase 2: Rich Generator Errors** (IN PROGRESS)
+  - [x] Task 2.1: Enhanced Issue interface (added path, expected, received fields)
+  - [x] Task 2.4: Levenshtein distance for suggestions (with tests)
+  - [x] Task 2.2: Enhanced zodErrorToIssues utility (with context support)
+  - [ ] Task 2.3: Update all generators (NEXT)
+  - [ ] Task 2.5: Integration tests
 
 ---
 
 ## 📊 Current State
 
 **Working:**
-
-- ✅ All 944 tests passing
+- ✅ All 953 tests passing ✅ (+9 new tests)
 - ✅ All quality gates passing (typecheck, lint, build, format)
-- ✅ Phase 3 complete: Error wrapping removed
-- ✅ Phase 4 complete: Strict validation on all schemas
-- ✅ Better error handling: original issues preserved
-- ✅ Better validation: IR objects reject unknown properties
+- ✅ Enhanced Issue interface with path, expected, received fields
+- ✅ Levenshtein distance utility for "Did you mean?" suggestions
+- ✅ zodErrorToIssues enhanced with ZodErrorContext support
+- ✅ Better error messages with type information
 
-**Completed:**
-
-- ✅ All tasks from Session 022 action plan complete
-- ✅ Multi-error reporting (Session 022 Phase 1)
-- ✅ Zod standardization (Session 022 Phase 2)
-- ✅ Structure cleanup (Session 023 Phase 3)
-- ✅ Strict validation (Session 023 Phase 4)
+**In Progress:**
+- 🚀 Phase 2: Tasks 2.1, 2.2, 2.4 complete
+- 🎯 Next: Task 2.3 - Update all generators to use enhanced errors
 
 ---
 
 ## 🎯 Next Steps
 
-**Session 023 Complete!** 🎉
+**Phase 2 Implementation Order:**
 
-All planned architecture refinements from Session 022 action plan completed:
+1. **Task 2.1:** Enhance Issue interface (add optional fields)
+2. **Task 2.4:** Add Levenshtein distance utility (needed for Task 2.2)
+3. **Task 2.2:** Enhance zodErrorToIssues with context and suggestions
+4. **Task 2.3:** Update all generators to use enhanced errors
+5. **Task 2.5:** Add integration tests
 
-- ✅ Phase 1: Multi-error collection
-- ✅ Phase 2: Zod validation standardization
-- ✅ Phase 3: Structure cleanup
-- ✅ Phase 4: Strict validation
-
-**Optional Future Work:**
-
-- Could implement new property (e.g., opacity) as proof-of-concept
-- Could add more comprehensive integration tests
-- Could explore performance optimizations
-
-**Ready for next session or new feature development.**
+**Estimated Time:** 2-3 hours
+**Success Criteria:** Rich error messages with paths, suggestions, and context
 
 ---
 
 ## 💡 Key Decisions
 
-**Phase 3: Structure Cleanup**
+**Phase Order:**
 
-- Removed redundant error wrapping in `parseDeclaration()`
-- Now returns original parser errors directly
-- Maintains rich issue details from property parsers
-- Better developer experience: see actual parse errors
+- Phase 2 first (HIGHEST ROI, foundation ready)
+- Phase 1 second (source-aware parsers)
+- Phase 3 last (nested path propagation)
 
-**Phase 4: Strict Validation**
+**Core Philosophy:**
 
-- Added `.strict()` to 24 schema files in b_types
-- All z.object() definitions now reject unknown properties
-- Catches IR typos at validation time
-- Zero performance impact, better safety
-
-**Impact Summary:**
-
-- 🎯 Better DX: See all errors + original messages
-- 🔒 Better safety: Strict schemas prevent IR typos
-- 🧹 Cleaner code: No redundant error wrapping
-- ✅ Zero regressions: All 944 tests passing
+- We are a representation engine, not a validator
+- `ok: true` = can represent (even if semantically "invalid")
+- `ok: false` = cannot represent (syntax/schema error)
+- `issues` = helpful context (warnings don't affect `ok`)
 
 ---
 
-**Session 023 Complete!** 🎉
-
-**Time invested:** ~1 hour
-**Phases completed:** 2/2 (100%)
-**Tests:** 944/944 passing ✅
-**Quality gates:** All green ✅
-
-**Commits:**
-
-- `a40737b` - refactor(declarations): remove redundant error wrapping
-- `c196315` - feat(types): add strict validation to all Zod schemas
-
-**All architecture refinements from Session 022 action plan complete.**
-
----
-
-## 📋 ADR 002 Implementation Planning
-
-- [x] **ADR 002 Reviewed and Refined**
-  - Reviewed comprehensive feedback on error reporting strategy
-  - Created detailed implementation plan (23KB document)
-  - Defined 3 phases with clear dependencies and validation
-  - Estimated 7-10 hours total implementation time
-  - Commit: `78dda1e`
-
-**Key Refinements:**
-
-- **Phase 1:** Source-aware parsers (not re-parsing for efficiency)
-- **Phase 2:** Enhanced Zod errors with "Did you mean?" suggestions (HIGHEST priority)
-- **Phase 3:** Path propagation through nested calls
-
-**Documentation:**
-
-- ADR 002: `docs/architecture/decisions/002-rich-error-messaging.md`
-- Implementation Plan: `docs/sessions/023/ADR-002-IMPLEMENTATION-PLAN.md`
-
-**Next Action:** Ready to begin Phase 2 implementation (highest ROI for DX)
+**Ready to implement Phase 2** 🚀

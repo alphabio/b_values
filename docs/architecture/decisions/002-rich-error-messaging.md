@@ -11,8 +11,8 @@
 
 The current error handling system, based on a simple `Issue` structure (`{ code, message }`), is insufficient. It lacks the necessary detail to enable developers to quickly diagnose and fix problems.
 
-* **For CSS Parsing:** Errors lack source context. A message like "Invalid angle value" is not actionable without knowing *where* in the source CSS the invalid angle is located.
-* **For IR Generation:** Errors are often cryptic. When Zod validation fails on an IR object, a message like "Expected string, received undefined" doesn't pinpoint the *cause* of the error (e.g., a misspelled property name in the input IR).
+- **For CSS Parsing:** Errors lack source context. A message like "Invalid angle value" is not actionable without knowing _where_ in the source CSS the invalid angle is located.
+- **For IR Generation:** Errors are often cryptic. When Zod validation fails on an IR object, a message like "Expected string, received undefined" doesn't pinpoint the _cause_ of the error (e.g., a misspelled property name in the input IR).
 
 This ADR proposes a phased enhancement of the `Issue` structure and error reporting mechanisms to provide rich, actionable context for both parsing and generation failures.
 
@@ -55,9 +55,9 @@ export interface Issue {
 
   /** For type-related errors, the actual type or value received. */
   received?: string;
-  
+
   // --- Internal Fields (not exposed to users) ---
-  
+
   /** Internal: location in source for error formatting */
   _location?: { offset: number; length: number };
 }
@@ -78,6 +78,7 @@ export interface Issue {
 This avoids parsing the same string multiple times and keeps the source formatting logic contained at the API entry point.
 
 **Example:**
+
 ```typescript
 {
   code: "invalid-syntax",
@@ -105,11 +106,13 @@ This avoids parsing the same string multiple times and keeps the source formatti
 
 **`zodErrorToIssues` Enhancement:**
 This utility will be enhanced to populate the new `Issue` fields:
-* `path` from `zodIssue.path`
-* `expected`/`received` for `invalid_type` errors
-* `suggestion` for `unrecognized_keys` errors (e.g., "Unrecognized key(s): 'names'. Did you mean 'name'?"), with Levenshtein distance for typo detection.
+
+- `path` from `zodIssue.path`
+- `expected`/`received` for `invalid_type` errors
+- `suggestion` for `unrecognized_keys` errors (e.g., "Unrecognized key(s): 'names'. Did you mean 'name'?"), with Levenshtein distance for typo detection.
 
 **Example:**
+
 ```typescript
 {
   code: "unrecognized_keys",
@@ -134,6 +137,7 @@ This utility will be enhanced to populate the new `Issue` fields:
 2. **Prepend the Path:** When an error is created or a Zod error is translated, the `parentPath` is prepended to the `path` field of the resulting `Issue`.
 
 **Example:**
+
 ```typescript
 {
   code: "invalid_ir",
@@ -159,16 +163,16 @@ This utility will be enhanced to populate the new `Issue` fields:
 ### Risks & Mitigations
 
 1. **Implementation Complexity (Parser Context):** Threading source context through parsers can be complex.
-   * **Mitigation:** Focus on passing substring `offset` and `length` information at API boundaries only. The top-level function holds the full source and performs final formatting.
+   - **Mitigation:** Focus on passing substring `offset` and `length` information at API boundaries only. The top-level function holds the full source and performs final formatting.
 
 2. **Performance Overhead:** Error formatting could add latency.
-   * **Mitigation:** 
+   - **Mitigation:**
      - Format only on error path (success path unchanged)
      - Lightweight offset tracking during parsing
      - Zod validation is already fast and essential
 
 3. **Breaking Changes:** New `Issue` fields change the structure.
-   * **Mitigation:** All new fields are optional; existing code continues to work.
+   - **Mitigation:** All new fields are optional; existing code continues to work.
 
 ---
 
@@ -208,9 +212,9 @@ See detailed implementation plan: [`docs/sessions/023/ADR-002-IMPLEMENTATION-PLA
 
 ## 5. Timeline Estimate
 
-* **Phase 1:** 3-4 hours (infrastructure + proof of concept + rollout)
-* **Phase 2:** 2-3 hours (enhancement + Levenshtein + validation)
-* **Phase 3:** 2-3 hours (interface updates + call site updates)
+- **Phase 1:** 3-4 hours (infrastructure + proof of concept + rollout)
+- **Phase 2:** 2-3 hours (enhancement + Levenshtein + validation)
+- **Phase 3:** 2-3 hours (interface updates + call site updates)
 
 **Total:** 7-10 hours across 2-3 sessions
 
@@ -219,11 +223,13 @@ See detailed implementation plan: [`docs/sessions/023/ADR-002-IMPLEMENTATION-PLA
 ## 6. Success Criteria
 
 ### Quantitative
+
 - ✅ All 944+ tests pass after each phase
 - ✅ Zero performance regression on success path
 - Error messages contain 2-5x more actionable detail
 
 ### Qualitative
+
 - Errors show exact location in source (parsing)
 - Errors show full path to problem (generation)
 - Errors include "Did you mean X?" suggestions
@@ -233,12 +239,12 @@ See detailed implementation plan: [`docs/sessions/023/ADR-002-IMPLEMENTATION-PLA
 
 ## 7. References
 
-* Existing validation: `packages/b_utils/src/parse/validate.ts`
-* Issue structure: `packages/b_types/src/result/issue.ts`
-* Zod documentation: https://zod.dev
-* Implementation plan: `docs/sessions/023/ADR-002-IMPLEMENTATION-PLAN.md`
-* Session 022: Multi-error collection + Zod standardization
-* Session 023: Strict validation + structure cleanup
+- Existing validation: `packages/b_utils/src/parse/validate.ts`
+- Issue structure: `packages/b_types/src/result/issue.ts`
+- Zod documentation: https://zod.dev
+- Implementation plan: `docs/sessions/023/ADR-002-IMPLEMENTATION-PLAN.md`
+- Session 022: Multi-error collection + Zod standardization
+- Session 023: Strict validation + structure cleanup
 
 ---
 
@@ -247,11 +253,13 @@ See detailed implementation plan: [`docs/sessions/023/ADR-002-IMPLEMENTATION-PLA
 ### Parser Error (After Phase 1)
 
 **Input:**
+
 ```typescript
 parseDeclaration("color: #gg0000");
 ```
 
 **Output:**
+
 ```typescript
 {
   ok: false,
@@ -269,12 +277,14 @@ parseDeclaration("color: #gg0000");
 ### Generator Error (After Phase 2)
 
 **Input:**
+
 ```typescript
 const color = { kind: "rgb", r: lit(255), positon: lit(128) };
 RGB.generate(color);
 ```
 
 **Output:**
+
 ```typescript
 {
   ok: false,
@@ -292,22 +302,26 @@ RGB.generate(color);
 ### Nested Error (After Phase 3)
 
 **Input:**
+
 ```typescript
 generateDeclaration({
   property: "background-image",
   value: {
     kind: "layers",
-    layers: [{
-      kind: "linear-gradient",
-      colorStops: [
-        { color: { kind: "rgb", r: lit(255) } }  // Missing g, b
-      ]
-    }]
-  }
+    layers: [
+      {
+        kind: "linear-gradient",
+        colorStops: [
+          { color: { kind: "rgb", r: lit(255) } }, // Missing g, b
+        ],
+      },
+    ],
+  },
 });
 ```
 
 **Output:**
+
 ```typescript
 {
   ok: false,

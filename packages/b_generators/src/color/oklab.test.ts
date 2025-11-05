@@ -35,7 +35,7 @@ describe("oklab generator", () => {
     const result = OKLab.generate(color);
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.issues[0]?.code).toBe("invalid-ir");
+      expect(["invalid-ir", "invalid-union"]).toContain(result.issues[0]?.code);
     }
   });
 

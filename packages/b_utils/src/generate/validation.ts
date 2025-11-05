@@ -2,11 +2,29 @@
 
 import type { z } from "zod";
 import type { Issue } from "@b/types";
+import { findClosestMatch } from "../string/levenshtein";
 
 // Use Zod v4 core types (not deprecated)
 type ZodIssue = z.core.$ZodIssue;
 type ZodError = z.ZodError;
 type ZodIssueInvalidUnion = z.core.$ZodIssueInvalidUnion;
+type ZodIssueUnrecognizedKeys = z.core.$ZodIssueUnrecognizedKeys;
+
+/**
+ * Context for enhancing Zod error messages with domain-specific information.
+ *
+ * @public
+ */
+export interface ZodErrorContext {
+  /** Type name being validated (e.g., "RGBColor") */
+  typeName?: string;
+  /** CSS property name (e.g., "background-color") */
+  property?: string;
+  /** Parent path for nested structures */
+  parentPath?: (string | number)[];
+  /** Valid keys for this schema (for typo suggestions) */
+  validKeys?: string[];
+}
 
 /**
  * Format a path array into a human-readable string.
@@ -47,30 +65,33 @@ export function formatPath(path: (string | number)[]): string {
  * - Recursively traverses union errors to collect all failures
  * - Includes path context in error messages (e.g., "durations[0].unit: ...")
  * - Preserves path array for programmatic access
- * - Adds Zod error code as metadata for advanced filtering
+ * - Adds expected/received information for type errors
+ * - Provides "Did you mean?" suggestions for typos
  * - Filters out generic "Invalid input" messages
  *
  * @param zodError - Zod validation error from safeParse()
+ * @param context - Optional context for enhanced error messages
  * @returns Array of Issue objects with detailed error information and path context
  *
  * @example
  * ```typescript
  * import { zodErrorToIssues } from "@/utils/generate";
- * import { animationDurationSchema } from "@/core/types/animation";
+ * import { rgbColorSchema } from "@/core/types/color";
  *
- * const validation = animationDurationSchema.safeParse(input);
+ * const validation = rgbColorSchema.safeParse(input);
  * if (!validation.success) {
- *   const issues = zodErrorToIssues(validation.error);
- *   // issues[0].message: "durations[0].unit: Invalid input: expected \"s\""
- *   // issues[0].path: ["durations", 0, "unit"]
- *   // issues[0].metadata.zodCode: "invalid_literal"
+ *   const issues = zodErrorToIssues(validation.error, {
+ *     typeName: "RGBColor",
+ *     property: "background-color"
+ *   });
+ *   // Rich error with context, path, and suggestions
  *   return { ok: false, issues };
  * }
  * ```
  *
  * @public
  */
-export function zodErrorToIssues(zodError: ZodError): Issue[] {
+export function zodErrorToIssues(zodError: ZodError, context?: ZodErrorContext): Issue[] {
   const issues: Issue[] = [];
 
   function traverse(zodIssues: readonly ZodIssue[], parentPath: (string | number)[] = []): void {
@@ -84,15 +105,8 @@ export function zodErrorToIssues(zodError: ZodError): Issue[] {
             (p): p is string | number => typeof p === "string" || typeof p === "number",
           );
           const fullPath = [...parentPath, ...relativePath];
-          const pathStr = formatPath(fullPath);
-          const message = pathStr ? `${pathStr}: ${zodIssue.message}` : zodIssue.message;
 
-          issues.push({
-            code: "invalid-ir",
-            severity: "error",
-            message,
-          });
-          // Don't traverse into union branches - custom message is sufficient
+          issues.push(createIssue(zodIssue, fullPath, context));
           continue;
         }
 
@@ -120,19 +134,13 @@ export function zodErrorToIssues(zodError: ZodError): Issue[] {
           (p): p is string | number => typeof p === "string" || typeof p === "number",
         );
         const fullPath = [...parentPath, ...relativePath];
-        const pathStr = formatPath(fullPath);
-        const message = pathStr ? `${pathStr}: ${zodIssue.message}` : zodIssue.message;
 
-        issues.push({
-          code: "invalid-ir",
-          severity: "error",
-          message,
-        });
+        issues.push(createIssue(zodIssue, fullPath, context));
       }
     }
   }
 
-  traverse(zodError.issues);
+  traverse(zodError.issues, context?.parentPath);
 
   // Fallback if no specific errors found
   if (issues.length === 0) {
@@ -140,8 +148,134 @@ export function zodErrorToIssues(zodError: ZodError): Issue[] {
       code: "invalid-ir",
       severity: "error",
       message: "Invalid IR structure",
+      property: context?.property,
     });
   }
 
   return issues;
+}
+
+/**
+ * Create an Issue from a ZodIssue with enhanced context.
+ */
+function createIssue(zodIssue: ZodIssue, fullPath: (string | number)[], context?: ZodErrorContext): Issue {
+  const pathStr = formatPath(fullPath);
+  const message = formatZodMessage(zodIssue, pathStr, context);
+  const code = mapZodCode(zodIssue.code);
+
+  return {
+    code,
+    severity: "error",
+    message,
+    property: context?.property,
+    path: fullPath.length > 0 ? fullPath : undefined,
+    suggestion: generateSuggestion(zodIssue, context),
+    expected: extractExpected(zodIssue),
+    received: extractReceived(zodIssue),
+  };
+}
+
+/**
+ * Map Zod error codes to our IssueCode types.
+ */
+function mapZodCode(zodCode: string): Issue["code"] {
+  const mapping: Record<string, Issue["code"]> = {
+    invalid_type: "invalid-ir",
+    unrecognized_keys: "unrecognized-keys",
+    invalid_union: "invalid-union",
+    too_small: "missing-required-field",
+    too_big: "invalid-value",
+    invalid_literal: "invalid-value",
+    invalid_enum_value: "invalid-value",
+  };
+  return mapping[zodCode] ?? "invalid-ir";
+}
+
+/**
+ * Format Zod message with context.
+ */
+function formatZodMessage(issue: ZodIssue, pathStr: string, context?: ZodErrorContext): string {
+  const typeStr = context?.typeName ? ` in ${context.typeName}` : "";
+
+  switch (issue.code) {
+    case "invalid_type": {
+      const expected = "expected" in issue ? String(issue.expected) : "unknown";
+      const received = "received" in issue ? String(issue.received) : "unknown";
+
+      if (received === "undefined") {
+        return pathStr ? `Missing required field at '${pathStr}'${typeStr}` : `Missing required field${typeStr}`;
+      }
+      return pathStr
+        ? `Invalid type at '${pathStr}'${typeStr}: expected ${expected}, got ${received}`
+        : `Invalid type${typeStr}: expected ${expected}, got ${received}`;
+    }
+
+    case "unrecognized_keys": {
+      const keysIssue = issue as ZodIssueUnrecognizedKeys;
+      const keys = keysIssue.keys.map((k) => `'${String(k)}'`).join(", ");
+      return pathStr
+        ? `Unrecognized key(s) at '${pathStr}'${typeStr}: ${keys}`
+        : `Unrecognized key(s)${typeStr}: ${keys}`;
+    }
+
+    default:
+      return pathStr ? `${pathStr}: ${issue.message}` : issue.message;
+  }
+}
+
+/**
+ * Generate actionable suggestions for fixing errors.
+ */
+function generateSuggestion(issue: ZodIssue, context?: ZodErrorContext): string | undefined {
+  switch (issue.code) {
+    case "invalid_type": {
+      const expected = "expected" in issue ? String(issue.expected) : "unknown";
+      const received = "received" in issue ? String(issue.received) : "unknown";
+
+      if (received === "undefined") {
+        const field = issue.path[issue.path.length - 1];
+        const fieldStr = field ? String(field) : "This field";
+        return `'${fieldStr}' is required`;
+      }
+      return `Expected ${expected}, received ${received}`;
+    }
+
+    case "unrecognized_keys": {
+      const keysIssue = issue as ZodIssueUnrecognizedKeys;
+      const unknownKey = keysIssue.keys[0];
+      const unknownKeyStr = unknownKey ? String(unknownKey) : undefined;
+
+      if (unknownKeyStr && context?.validKeys) {
+        const suggestion = findClosestMatch(unknownKeyStr, context.validKeys);
+        if (suggestion) {
+          return `Did you mean '${suggestion}'?`;
+        }
+      }
+
+      return "Check for typos in key name";
+    }
+
+    default:
+      return undefined;
+  }
+}
+
+/**
+ * Extract expected value/type from ZodIssue.
+ */
+function extractExpected(issue: ZodIssue): string | undefined {
+  if ("expected" in issue) {
+    return String(issue.expected);
+  }
+  return undefined;
+}
+
+/**
+ * Extract received value/type from ZodIssue.
+ */
+function extractReceived(issue: ZodIssue): string | undefined {
+  if ("received" in issue) {
+    return String(issue.received);
+  }
+  return undefined;
 }
