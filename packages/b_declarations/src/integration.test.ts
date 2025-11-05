@@ -78,7 +78,7 @@ describe("Declaration Layer Integration", () => {
     expect(result.ok).toBe(false);
     if (result.ok) return;
 
-    expect(result.error).toContain("Unknown CSS property");
+    expect(result.issues[0]?.message).toContain("Unknown CSS property");
   });
 
   it("should verify property is registered", () => {

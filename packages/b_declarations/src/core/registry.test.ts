@@ -1,7 +1,7 @@
 // b_path:: packages/b_declarations/src/core/registry.test.ts
 import { describe, expect, it, beforeEach } from "vitest";
 import { propertyRegistry, defineProperty } from "./registry";
-import { ok, type Result } from "@b/types";
+import { parseOk, type ParseResult } from "@b/types";
 
 describe("PropertyRegistry", () => {
   beforeEach(() => {
@@ -12,7 +12,7 @@ describe("PropertyRegistry", () => {
     const definition = defineProperty({
       name: "color",
       syntax: "<color>",
-      parser: (value: string): Result<string, string> => ok(value),
+      parser: (value: string): ParseResult<string> => parseOk(value),
       inherited: true,
       initial: "black",
     });
@@ -30,7 +30,7 @@ describe("PropertyRegistry", () => {
     defineProperty({
       name: "color",
       syntax: "<color>",
-      parser: (value: string): Result<string, string> => ok(value),
+      parser: (value: string): ParseResult<string> => parseOk(value),
       inherited: true,
       initial: "black",
     });
@@ -38,7 +38,7 @@ describe("PropertyRegistry", () => {
     defineProperty({
       name: "background",
       syntax: "<background>",
-      parser: (value: string): Result<string, string> => ok(value),
+      parser: (value: string): ParseResult<string> => parseOk(value),
       inherited: false,
       initial: "transparent",
     });
@@ -53,7 +53,7 @@ describe("PropertyRegistry", () => {
     defineProperty({
       name: "color",
       syntax: "<color>",
-      parser: (value: string): Result<string, string> => ok(value),
+      parser: (value: string): ParseResult<string> => parseOk(value),
       inherited: true,
       initial: "black",
     });

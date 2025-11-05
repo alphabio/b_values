@@ -43,7 +43,7 @@ describe("CSS-wide keywords", () => {
       const result = parseCSSWideKeyword("red");
       expect(result.ok).toBe(false);
       if (result.ok) return;
-      expect(result.error).toContain("Not a CSS-wide keyword");
+      expect(result.issues[0]?.message).toContain("Not a CSS-wide keyword");
     });
   });
 });

@@ -211,7 +211,7 @@ describe("background-image property", () => {
       const result = parseBackgroundImage(input);
       expect(result.ok).toBe(false);
       if (result.ok) return;
-      expect(result.error).toContain("Invalid linear-gradient");
+      expect(result.issues[0]?.message).toContain("Invalid linear-gradient");
     });
   });
 
@@ -268,7 +268,7 @@ describe("background-image property", () => {
       const result = parseBackgroundImage("invalid-value");
       expect(result.ok).toBe(false);
       if (result.ok) return;
-      expect(result.error).toContain("Unsupported image type");
+      expect(result.issues[0]?.message).toContain("Unsupported image type");
     });
   });
 });
@@ -279,7 +279,7 @@ describe("rgb colors in gradients", () => {
     const result = parseBackgroundImage(input);
 
     if (!result.ok) {
-      console.log("Error parsing:", result.error);
+      console.log("Error parsing:", result.issues[0]?.message);
     }
 
     expect(result.ok).toBe(true);

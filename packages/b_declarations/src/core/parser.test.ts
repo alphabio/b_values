@@ -2,7 +2,7 @@
 import { describe, expect, it, beforeEach } from "vitest";
 import { parseDeclaration } from "./parser";
 import { propertyRegistry, defineProperty } from "./registry";
-import { ok, err, type Result } from "@b/types";
+import { parseOk, parseErr, createError, type ParseResult } from "@b/types";
 
 describe("parseDeclaration", () => {
   beforeEach(() => {
@@ -14,7 +14,7 @@ describe("parseDeclaration", () => {
       defineProperty({
         name: "color",
         syntax: "<color>",
-        parser: (value: string): Result<string, string> => ok(value.trim()),
+        parser: (value: string): ParseResult<string> => parseOk(value.trim()),
         inherited: true,
         initial: "black",
       });
@@ -33,7 +33,7 @@ describe("parseDeclaration", () => {
       defineProperty({
         name: "color",
         syntax: "<color>",
-        parser: (value: string): Result<string, string> => ok(value.trim()),
+        parser: (value: string): ParseResult<string> => parseOk(value.trim()),
         inherited: true,
         initial: "black",
       });
@@ -51,7 +51,7 @@ describe("parseDeclaration", () => {
       defineProperty({
         name: "background-image",
         syntax: "<image>",
-        parser: (value: string): Result<string, string> => ok(value.trim()),
+        parser: (value: string): ParseResult<string> => parseOk(value.trim()),
         inherited: false,
         initial: "none",
       });
@@ -73,7 +73,7 @@ background-image: url(image.png);
       expect(result.ok).toBe(false);
       if (result.ok) return;
 
-      expect(result.error).toContain("missing colon");
+      expect(result.issues[0]?.message).toContain("missing colon");
     });
 
     it("should fail for string with empty property", () => {
@@ -82,7 +82,7 @@ background-image: url(image.png);
       expect(result.ok).toBe(false);
       if (result.ok) return;
 
-      expect(result.error).toContain("empty property");
+      expect(result.issues[0]?.message).toContain("empty property");
     });
 
     it("should fail for string with empty value", () => {
@@ -91,7 +91,7 @@ background-image: url(image.png);
       expect(result.ok).toBe(false);
       if (result.ok) return;
 
-      expect(result.error).toContain("empty value");
+      expect(result.issues[0]?.message).toContain("empty value");
     });
   });
 
@@ -100,7 +100,7 @@ background-image: url(image.png);
       defineProperty({
         name: "color",
         syntax: "<color>",
-        parser: (value: string): Result<string, string> => ok(value.trim()),
+        parser: (value: string): ParseResult<string> => parseOk(value.trim()),
         inherited: true,
         initial: "black",
       });
@@ -126,14 +126,14 @@ background-image: url(image.png);
       expect(result.ok).toBe(false);
       if (result.ok) return;
 
-      expect(result.error).toContain("Unknown CSS property");
+      expect(result.issues[0]?.message).toContain("Unknown CSS property");
     });
 
     it("should fail when property parser fails", () => {
       defineProperty({
         name: "test-prop",
         syntax: "<test>",
-        parser: (): Result<never, string> => err("Parser error"),
+        parser: (): ParseResult<never> => parseErr(createError("invalid-value", "Parser error")),
         inherited: false,
         initial: "none",
       });
@@ -143,7 +143,7 @@ background-image: url(image.png);
       expect(result.ok).toBe(false);
       if (result.ok) return;
 
-      expect(result.error).toContain("Failed to parse test-prop");
+      expect(result.issues[0]?.message).toContain("Failed to parse test-prop");
     });
   });
 });
