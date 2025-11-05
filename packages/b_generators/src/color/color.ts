@@ -1,5 +1,5 @@
 // b_path:: packages/b_generators/src/color/color.ts
-import { type GenerateResult, generateErr, createError } from "@b/types";
+import { type GenerateResult, type GenerateContext, generateErr, createError } from "@b/types";
 import type * as Type from "@b/types";
 import * as ColorFunction from "./color-function";
 import * as Hex from "./hex";
@@ -16,7 +16,7 @@ import * as Special from "./special";
 /**
  * @see https://drafts.csswg.org/css-color/#typedef-color
  */
-export function generate(color: Type.Color): GenerateResult {
+export function generate(color: Type.Color, context?: GenerateContext): GenerateResult {
   if (!color || typeof color !== "object" || !("kind" in color)) {
     return generateErr(
       createError("missing-required-field", "Invalid color IR: missing 'kind' field", {
@@ -30,10 +30,10 @@ export function generate(color: Type.Color): GenerateResult {
       return Hex.generate(color);
 
     case "named":
-      return Named.generate(color);
+      return Named.generate(color, context);
 
     case "rgb":
-      return Rgb.generate(color);
+      return Rgb.generate(color, context);
 
     case "hsl":
       return Hsl.generate(color);

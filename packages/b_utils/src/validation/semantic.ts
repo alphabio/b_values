@@ -31,6 +31,7 @@ export function checkLiteralRange(
     field: string;
     unit?: string;
     typeName?: string;
+    parentPath?: (string | number)[];
   },
 ): Issue | undefined {
   // Only validate literals
@@ -46,7 +47,7 @@ export function checkLiteralRange(
       `${context.field} value ${numericValue}${unit} is out of valid range ${min}-${max}${unit}${typeInfo}`,
       {
         suggestion: `Use a value between ${min}${unit} and ${max}${unit}`,
-        path: [context.field],
+        path: [...(context.parentPath ?? []), context.field],
       },
     );
   }
@@ -73,16 +74,21 @@ export function checkLiteralRange(
  *
  * @public
  */
-export function checkRGBComponent(value: CssValue, field: string, typeName?: string): Issue | undefined {
+export function checkRGBComponent(
+  value: CssValue,
+  field: string,
+  typeName?: string,
+  parentPath?: (string | number)[],
+): Issue | undefined {
   if (value.kind !== "literal") return undefined;
 
   // Percentage (0-100%)
   if (value.unit === "%") {
-    return checkLiteralRange(value, 0, 100, { field, unit: "%", typeName });
+    return checkLiteralRange(value, 0, 100, { field, unit: "%", typeName, parentPath });
   }
 
   // Integer (0-255)
-  return checkLiteralRange(value, 0, 255, { field, typeName });
+  return checkLiteralRange(value, 0, 255, { field, typeName, parentPath });
 }
 
 /**
@@ -104,16 +110,21 @@ export function checkRGBComponent(value: CssValue, field: string, typeName?: str
  *
  * @public
  */
-export function checkAlpha(value: CssValue, field: string, typeName?: string): Issue | undefined {
+export function checkAlpha(
+  value: CssValue,
+  field: string,
+  typeName?: string,
+  parentPath?: (string | number)[],
+): Issue | undefined {
   if (value.kind !== "literal") return undefined;
 
   // Percentage (0-100%)
   if (value.unit === "%") {
-    return checkLiteralRange(value, 0, 100, { field, unit: "%", typeName });
+    return checkLiteralRange(value, 0, 100, { field, unit: "%", typeName, parentPath });
   }
 
   // Number (0-1)
-  return checkLiteralRange(value, 0, 1, { field, typeName });
+  return checkLiteralRange(value, 0, 1, { field, typeName, parentPath });
 }
 
 /**

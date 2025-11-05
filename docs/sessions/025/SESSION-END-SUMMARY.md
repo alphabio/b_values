@@ -11,6 +11,7 @@
 ### Phase 2: Semantic Validation - COMPLETE ✅
 
 **Created:**
+
 - Semantic validation foundation (6 validators, 33 tests)
 - Updated all 7 color generators with range warnings
 - Enhanced `createWarning()` signatures to accept path
@@ -18,14 +19,16 @@
 - All quality gates green
 
 **Result:**
+
 ```typescript
-RGB.generate({ r: lit(-255), g: lit(255), b: lit(255) })
+RGB.generate({ r: lit(-255), g: lit(255), b: lit(255) });
 // → { ok: true, value: "rgb(-255 255 255)", issues: [warning about -255] }
 ```
 
 ### Phase 3: Warning Propagation - STARTED ⚡
 
 **User discovered critical issue:**
+
 ```typescript
 // Nested structure (gradient with rgb color)
 background-image: radial-gradient(..., rgb(-255 255 255), ...)
@@ -35,6 +38,7 @@ background-image: radial-gradient(..., rgb(-255 255 255), ...)
 **Root cause:** Gradient generators weren't propagating warnings from nested color generators.
 
 **What I Fixed:**
+
 1. ✅ `color-stop.ts` - Propagates color warnings
 2. ✅ `radial.ts` - Collects all nested issues
 3. ✅ `linear.ts` - Collects all nested issues
@@ -42,16 +46,17 @@ background-image: radial-gradient(..., rgb(-255 255 255), ...)
 5. ✅ `background-image/generator.ts` - Collects all layer issues
 
 **Pattern Applied:**
+
 ```typescript
 export function generate(ir): GenerateResult {
   const allIssues: Type.Issue[] = [];
-  
+
   // For each nested generator call:
   const result = NestedGenerator.generate(nested);
   if (!result.ok) return result;
   parts.push(result.value);
-  allIssues.push(...result.issues);  // ← Collect warnings!
-  
+  allIssues.push(...result.issues); // ← Collect warnings!
+
   return { ok: true, value: css, issues: allIssues };
 }
 ```
@@ -74,6 +79,7 @@ export function generate(ir): GenerateResult {
 ### 1. Validate Warning Propagation
 
 Test the user's exact example:
+
 ```typescript
 generateDeclaration({
   property: "background-image",
@@ -98,7 +104,7 @@ it("should propagate warnings through nested structures", () => {
     property: "background-image",
     ir: /* gradient with invalid RGB */
   });
-  
+
   expect(result.ok).toBe(true);
   expect(result.issues).toHaveLength(1);
   expect(result.issues[0]).toMatchObject({
@@ -111,6 +117,7 @@ it("should propagate warnings through nested structures", () => {
 ### 3. Document The Pattern
 
 Create documentation for future generators showing:
+
 - How to collect nested warnings
 - Why it's important
 - The `allIssues` pattern
@@ -118,6 +125,7 @@ Create documentation for future generators showing:
 ### 4. Consider Path Context
 
 Should nested warnings include full path?
+
 ```typescript
 // Current: path: ["r"]
 // Future?: path: ["layers", 0, "gradient", "colorStops", 0, "color", "r"]
@@ -128,17 +136,20 @@ Should nested warnings include full path?
 ## 📝 Files Changed This Session
 
 **New (3):**
+
 - `b_utils/src/validation/semantic.ts`
 - `b_utils/src/validation/semantic.test.ts`
 - `b_utils/src/validation/index.ts`
 
 **Modified - Phase 2 (10):**
+
 - Color generators: rgb, hsl, hwb, lab, lch, oklab, oklch
 - `b_types/src/result/issue.ts`
 - `b_utils/src/index.ts`
 - `b_generators/src/color/rgb.test.ts`
 
 **Modified - Phase 3 (5):**
+
 - `gradient/color-stop.ts`
 - `gradient/radial.ts`
 - `gradient/linear.ts`
@@ -152,17 +163,20 @@ Should nested warnings include full path?
 ## 💡 Key Insights
 
 ### Pattern Success
+
 - Semantic validators work perfectly
 - Separation of concerns (schema vs semantic) is clean
 - Will scale to 100s of properties
 
 ### Pattern Gap Found
+
 - Warnings work in leaf generators
 - But get lost in composite/nested generators
 - This is CRITICAL for real-world usage
 - Phase 3 is essential, not optional
 
 ### Solution Clear
+
 - Collect `allIssues: Issue[]` array
 - Push nested generator issues: `allIssues.push(...result.issues)`
 - Return with CSS: `{ ok: true, value, issues: allIssues }`
@@ -177,6 +191,7 @@ Should nested warnings include full path?
 **Why:** User found this immediately in real usage. If warnings don't propagate, Phase 2's value is limited.
 
 **Time Estimate:** 30-60 minutes
+
 - Validate end-to-end
 - Add integration tests
 - Document pattern

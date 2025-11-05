@@ -9,7 +9,7 @@ export * from "./registry";
 
 === File: packages/b_declarations/src/core/registry.ts ===
 // b_path:: packages/b_declarations/src/core/registry.ts
-import type { PropertyDefinition } from "./types";
+import type { PropertyDefinition } from "../types";
 
 /**
  * Property registry - maps CSS property names to their definitions.
@@ -146,7 +146,11 @@ export function generateDeclaration<TProperty extends RegisteredProperty>(
   // Format as CSS declaration: "property: value"
   const declaration = `${property}: ${generateResult.value}`;
 
-  return generateOk(declaration, property);
+  // Preserve issues from the generator result
+  return {
+    ...generateOk(declaration, property),
+    issues: generateResult.issues,
+  };
 }
 
 
@@ -154,9 +158,11 @@ export function generateDeclaration<TProperty extends RegisteredProperty>(
 // b_path:: packages/b_declarations/src/index.ts
 // @b/declarations - CSS declaration schemas and parsers
 
-export * from "./types";
 export * from "./core";
+export * from "./types";
 export * from "./utils";
+export * from "./parser";
+export * from "./generator";
 export * from "./properties";
 
 
@@ -296,23 +302,31 @@ export function generateBackgroundImage(ir: BackgroundImageIR): GenerateResult {
 
   // Generate each layer
   const layerStrings: string[] = [];
+  const allIssues: import("@b/types").Issue[] = [];
 
-  for (const layer of ir.layers) {
-    const layerResult = generateImageLayer(layer);
+  for (let i = 0; i < ir.layers.length; i++) {
+    const layer = ir.layers[i];
+    const layerResult = generateImageLayer(layer, ["layers", i]);
     if (!layerResult.ok) {
       return layerResult;
     }
     layerStrings.push(layerResult.value);
+    allIssues.push(...layerResult.issues);
   }
 
   // Join with comma and space
-  return generateOk(layerStrings.join(", "), "background-image");
+  return {
+    ok: true,
+    value: layerStrings.join(", "),
+    property: "background-image",
+    issues: allIssues,
+  };
 }
 
 /**
  * Generate a single image layer.
  */
-function generateImageLayer(layer: ImageLayer): GenerateResult {
+function generateImageLayer(layer: ImageLayer, parentPath: (string | number)[]): GenerateResult {
   switch (layer.kind) {
     case "none":
       return generateOk("none", "background-image");
@@ -322,7 +336,10 @@ function generateImageLayer(layer: ImageLayer): GenerateResult {
       return generateOk(`url(${layer.url})`, "background-image");
 
     case "gradient": {
-      return Generators.Gradient.generate(layer.gradient);
+      return Generators.Gradient.generate(layer.gradient, {
+        parentPath: [...parentPath, "gradient"],
+        property: "background-image",
+      });
     }
 
     default:
@@ -338,10 +355,10 @@ function generateImageLayer(layer: ImageLayer): GenerateResult {
 
 === File: packages/b_declarations/src/properties/background-image/index.ts ===
 // b_path:: packages/b_declarations/src/properties/background-image/index.ts
-export * from "./types";
-export * from "./parser";
-export * from "./generator";
 export * from "./definition";
+export * from "./generator";
+export * from "./parser";
+export * from "./types";
 
 
 === File: packages/b_declarations/src/properties/background-image/parser.ts ===
@@ -759,7 +776,7 @@ export function generate(value: ColorFunction): GenerateResult {
 
 === File: packages/b_generators/src/color/color.ts ===
 // b_path:: packages/b_generators/src/color/color.ts
-import { type GenerateResult, generateErr, createError } from "@b/types";
+import { type GenerateResult, type GenerateContext, generateErr, createError } from "@b/types";
 import type * as Type from "@b/types";
 import * as ColorFunction from "./color-function";
 import * as Hex from "./hex";
@@ -776,7 +793,7 @@ import * as Special from "./special";
 /**
  * @see https://drafts.csswg.org/css-color/#typedef-color
  */
-export function generate(color: Type.Color): GenerateResult {
+export function generate(color: Type.Color, context?: GenerateContext): GenerateResult {
   if (!color || typeof color !== "object" || !("kind" in color)) {
     return generateErr(
       createError("missing-required-field", "Invalid color IR: missing 'kind' field", {
@@ -790,10 +807,10 @@ export function generate(color: Type.Color): GenerateResult {
       return Hex.generate(color);
 
     case "named":
-      return Named.generate(color);
+      return Named.generate(color, context);
 
     case "rgb":
-      return Rgb.generate(color);
+      return Rgb.generate(color, context);
 
     case "hsl":
       return Hsl.generate(color);
@@ -853,54 +870,101 @@ export function generate(color: HexColor): GenerateResult {
 
 === File: packages/b_generators/src/color/hsl.ts ===
 // b_path:: packages/b_generators/src/color/hsl.ts
-import { type GenerateResult, generateErr, generateOk, hslColorSchema } from "@b/types";
-import { cssValueToCss, zodErrorToIssues } from "@b/utils";
+import { type GenerateResult, addGenerateIssue, generateErr, generateOk, hslColorSchema } from "@b/types";
+import { checkAlpha, checkHue, checkPercentage, collectWarnings, cssValueToCss, zodErrorToIssues } from "@b/utils";
 
 /**
  * @see https://drafts.csswg.org/css-color/#the-hsl-notation
  */
 export function generate(color: unknown): GenerateResult {
+  // 1. Schema validation (structure errors)
   const validation = hslColorSchema.safeParse(color);
   if (!validation.success) {
-    return generateErr(zodErrorToIssues(validation.error), "hsl-color");
+    return generateErr(
+      zodErrorToIssues(validation.error, {
+        typeName: "HSLColor",
+        property: "color",
+      }),
+      "hsl-color",
+    );
   }
 
   const { h, s, l, alpha } = validation.data;
 
+  // 2. Semantic validation (range warnings)
+  const warnings = collectWarnings(
+    checkHue(h, "h", "HSLColor"),
+    checkPercentage(s, "s", "HSLColor"),
+    checkPercentage(l, "l", "HSLColor"),
+    alpha ? checkAlpha(alpha, "alpha", "HSLColor") : undefined,
+  );
+
+  // 3. Generate CSS
   const hslPart = `${cssValueToCss(h)} ${cssValueToCss(s)} ${cssValueToCss(l)}`;
 
+  let result: GenerateResult;
   if (alpha !== undefined) {
-    return generateOk(`hsl(${hslPart} / ${cssValueToCss(alpha)})`);
+    result = generateOk(`hsl(${hslPart} / ${cssValueToCss(alpha)})`);
+  } else {
+    result = generateOk(`hsl(${hslPart})`);
   }
 
-  return generateOk(`hsl(${hslPart})`);
+  // 4. Attach warnings
+  for (const warning of warnings) {
+    result = addGenerateIssue(result, warning);
+  }
+
+  return result;
 }
 
 
 === File: packages/b_generators/src/color/hwb.ts ===
 // b_path:: packages/b_generators/src/color/hwb.ts
-import { type GenerateResult, generateErr, generateOk, hwbColorSchema } from "@b/types";
-import { cssValueToCss, zodErrorToIssues } from "@b/utils";
+import { type GenerateResult, addGenerateIssue, generateErr, generateOk, hwbColorSchema } from "@b/types";
+import { checkAlpha, checkHue, checkPercentage, collectWarnings, cssValueToCss, zodErrorToIssues } from "@b/utils";
 
 /**
  * @see https://drafts.csswg.org/css-color/#the-hwb-notation
  */
 export function generate(color: unknown): GenerateResult {
+  // 1. Schema validation (structure errors)
   const validation = hwbColorSchema.safeParse(color);
   if (!validation.success) {
-    return generateErr(zodErrorToIssues(validation.error), "hwb-color");
+    return generateErr(
+      zodErrorToIssues(validation.error, {
+        typeName: "HWBColor",
+        property: "color",
+      }),
+      "hwb-color",
+    );
   }
 
   const { h, w, b, alpha } = validation.data;
 
-  let result = `hwb(${cssValueToCss(h)} ${cssValueToCss(w)} ${cssValueToCss(b)}`;
+  // 2. Semantic validation (range warnings)
+  const warnings = collectWarnings(
+    checkHue(h, "h", "HWBColor"),
+    checkPercentage(w, "w", "HWBColor"),
+    checkPercentage(b, "b", "HWBColor"),
+    alpha ? checkAlpha(alpha, "alpha", "HWBColor") : undefined,
+  );
+
+  // 3. Generate CSS
+  let css = `hwb(${cssValueToCss(h)} ${cssValueToCss(w)} ${cssValueToCss(b)}`;
 
   if (alpha !== undefined) {
-    result += ` / ${cssValueToCss(alpha)}`;
+    css += ` / ${cssValueToCss(alpha)}`;
   }
 
-  result += ")";
-  return generateOk(result);
+  css += ")";
+  let result = generateOk(css);
+
+  // 4. Attach warnings
+  for (const warning of warnings) {
+    result = addGenerateIssue(result, warning);
+  }
+
+  return result;
 }
 
 
@@ -922,34 +986,58 @@ export * from "./color";
 
 === File: packages/b_generators/src/color/lab.ts ===
 // b_path:: packages/b_generators/src/color/lab.ts
-import { type GenerateResult, generateErr, generateOk, labColorSchema } from "@b/types";
-import { cssValueToCss, zodErrorToIssues } from "@b/utils";
+import { type GenerateResult, addGenerateIssue, generateErr, generateOk, labColorSchema } from "@b/types";
+import { checkAlpha, checkLiteralRange, collectWarnings, cssValueToCss, zodErrorToIssues } from "@b/utils";
 
 /**
  * @see https://drafts.csswg.org/css-color/#lab-colors
  */
 export function generate(color: unknown): GenerateResult {
+  // 1. Schema validation (structure errors)
   const validation = labColorSchema.safeParse(color);
   if (!validation.success) {
-    return generateErr(zodErrorToIssues(validation.error), "lab-color");
+    return generateErr(
+      zodErrorToIssues(validation.error, {
+        typeName: "LABColor",
+        property: "color",
+      }),
+      "lab-color",
+    );
   }
 
   const { l, a, b, alpha } = validation.data;
 
+  // 2. Semantic validation (range warnings)
+  const warnings = collectWarnings(
+    checkLiteralRange(l, 0, 100, { field: "l", typeName: "LABColor" }),
+    checkLiteralRange(a, -125, 125, { field: "a", typeName: "LABColor" }),
+    checkLiteralRange(b, -125, 125, { field: "b", typeName: "LABColor" }),
+    alpha ? checkAlpha(alpha, "alpha", "LABColor") : undefined,
+  );
+
+  // 3. Generate CSS
   const labPart = `${cssValueToCss(l)} ${cssValueToCss(a)} ${cssValueToCss(b)}`;
 
+  let result: GenerateResult;
   if (alpha !== undefined) {
-    return generateOk(`lab(${labPart} / ${cssValueToCss(alpha)})`);
+    result = generateOk(`lab(${labPart} / ${cssValueToCss(alpha)})`);
+  } else {
+    result = generateOk(`lab(${labPart})`);
   }
 
-  return generateOk(`lab(${labPart})`);
+  // 4. Attach warnings
+  for (const warning of warnings) {
+    result = addGenerateIssue(result, warning);
+  }
+
+  return result;
 }
 
 
 === File: packages/b_generators/src/color/lch.ts ===
 // b_path:: packages/b_generators/src/color/lch.ts
-import { type GenerateResult, generateErr, generateOk, lchColorSchema } from "@b/types";
-import { cssValueToCss, zodErrorToIssues } from "@b/utils";
+import { type GenerateResult, addGenerateIssue, generateErr, generateOk, lchColorSchema } from "@b/types";
+import { checkAlpha, checkHue, checkLiteralRange, collectWarnings, cssValueToCss, zodErrorToIssues } from "@b/utils";
 
 /**
  * Generates LCH color CSS from IR
@@ -957,123 +1045,265 @@ import { cssValueToCss, zodErrorToIssues } from "@b/utils";
  * @see https://drafts.csswg.org/css-color/#lch-colors
  */
 export function generate(color: unknown): GenerateResult {
+  // 1. Schema validation (structure errors)
   const validation = lchColorSchema.safeParse(color);
   if (!validation.success) {
-    return generateErr(zodErrorToIssues(validation.error), "lch-color");
+    return generateErr(
+      zodErrorToIssues(validation.error, {
+        typeName: "LCHColor",
+        property: "color",
+      }),
+      "lch-color",
+    );
   }
 
   const { l, c, h, alpha } = validation.data;
 
+  // 2. Semantic validation (range warnings)
+  const warnings = collectWarnings(
+    checkLiteralRange(l, 0, 100, { field: "l", typeName: "LCHColor" }),
+    checkLiteralRange(c, 0, 150, { field: "c", typeName: "LCHColor" }),
+    checkHue(h, "h", "LCHColor"),
+    alpha ? checkAlpha(alpha, "alpha", "LCHColor") : undefined,
+  );
+
+  // 3. Generate CSS
   const lchPart = `${cssValueToCss(l)} ${cssValueToCss(c)} ${cssValueToCss(h)}`;
 
+  let result: GenerateResult;
   if (alpha !== undefined) {
-    return generateOk(`lch(${lchPart} / ${cssValueToCss(alpha)})`);
+    result = generateOk(`lch(${lchPart} / ${cssValueToCss(alpha)})`);
+  } else {
+    result = generateOk(`lch(${lchPart})`);
   }
 
-  return generateOk(`lch(${lchPart})`);
+  // 4. Attach warnings
+  for (const warning of warnings) {
+    result = addGenerateIssue(result, warning);
+  }
+
+  return result;
 }
 
 
 === File: packages/b_generators/src/color/named.ts ===
 // b_path:: packages/b_generators/src/color/named.ts
-import { namedColorSchema } from "@b/keywords";
-import { type GenerateResult, generateOk } from "@b/types";
-import type { NamedColor } from "@b/types";
-import { zodErrorToIssues } from "@b/utils";
+import { namedColorsMap } from "@b/keywords";
+import { type GenerateResult, type GenerateContext, generateOk, generateErr, addGenerateIssue } from "@b/types";
+import { findClosestMatch, zodErrorToIssues } from "@b/utils";
+import { z } from "zod";
+
+// Relaxed schema for generation - accepts any string for name
+const namedColorGeneratorSchema = z
+  .object({
+    kind: z.literal("named"),
+    name: z.string(), // Accept any string, we'll validate semantically
+  })
+  .strict();
+
 /**
  * @see https://drafts.csswg.org/css-color/#named-colors
  */
-export function generate(color: NamedColor): GenerateResult {
-  const validation = namedColorSchema.safeParse(color.name);
+export function generate(color: unknown, context?: GenerateContext): GenerateResult {
+  // 1. Schema validation - validate object structure (not semantic color name)
+  const validation = namedColorGeneratorSchema.safeParse(color);
 
   if (!validation.success) {
-    const issues = zodErrorToIssues(validation.error);
-    return {
-      property: `color[named]: ${color.name}`,
-      ok: false,
-      issues,
-    };
+    return generateErr(
+      zodErrorToIssues(validation.error, {
+        typeName: "NamedColor",
+        property: context?.property ?? "color",
+        parentPath: context?.parentPath,
+      }),
+      "named-color",
+    );
   }
 
-  return generateOk(color.name);
+  const validated = validation.data;
+
+  // 2. Semantic validation - check if it's a known color
+  // We can always represent a named color, even if it's not valid
+  // Following our philosophy: ok = canRepresent(input), not isValidCSS(input)
+  const colorName = validated.name;
+  let result = generateOk(colorName);
+
+  // Check if it's a known color name
+  const isKnownColor = namedColorsMap.includes(colorName);
+
+  if (!isKnownColor) {
+    const closestMatch = findClosestMatch(colorName, namedColorsMap);
+
+    result = addGenerateIssue(result, {
+      code: "invalid-value",
+      severity: "warning",
+      message: `Unknown named color '${colorName}'`,
+      property: context?.property ?? "color",
+      suggestion: closestMatch ? `Did you mean '${closestMatch}'?` : "Use a valid CSS named color",
+      expected: "Valid named color (e.g., red, blue, green, etc.)",
+      received: colorName,
+      path: [...(context?.parentPath ?? []), "name"],
+    });
+  }
+
+  return result;
 }
 
 
 === File: packages/b_generators/src/color/oklab.ts ===
 // b_path:: packages/b_generators/src/color/oklab.ts
-import { type GenerateResult, generateErr, generateOk, oklabColorSchema } from "@b/types";
-import { cssValueToCss, zodErrorToIssues } from "@b/utils";
+import { type GenerateResult, addGenerateIssue, generateErr, generateOk, oklabColorSchema } from "@b/types";
+import { checkAlpha, checkLiteralRange, collectWarnings, cssValueToCss, zodErrorToIssues } from "@b/utils";
 
 /**
  * @see https://drafts.csswg.org/css-color/#ok-lab
  */
 export function generate(color: unknown): GenerateResult {
+  // 1. Schema validation (structure errors)
   const validation = oklabColorSchema.safeParse(color);
   if (!validation.success) {
-    return generateErr(zodErrorToIssues(validation.error), "oklab-color");
+    return generateErr(
+      zodErrorToIssues(validation.error, {
+        typeName: "OKLABColor",
+        property: "color",
+      }),
+      "oklab-color",
+    );
   }
 
   const { l, a, b, alpha } = validation.data;
 
+  // 2. Semantic validation (range warnings)
+  const warnings = collectWarnings(
+    checkLiteralRange(l, 0, 1, { field: "l", typeName: "OKLABColor" }),
+    checkLiteralRange(a, -0.4, 0.4, { field: "a", typeName: "OKLABColor" }),
+    checkLiteralRange(b, -0.4, 0.4, { field: "b", typeName: "OKLABColor" }),
+    alpha ? checkAlpha(alpha, "alpha", "OKLABColor") : undefined,
+  );
+
+  // 3. Generate CSS
   const oklabPart = `${cssValueToCss(l)} ${cssValueToCss(a)} ${cssValueToCss(b)}`;
 
+  let result: GenerateResult;
   if (alpha !== undefined) {
-    return generateOk(`oklab(${oklabPart} / ${cssValueToCss(alpha)})`);
+    result = generateOk(`oklab(${oklabPart} / ${cssValueToCss(alpha)})`);
+  } else {
+    result = generateOk(`oklab(${oklabPart})`);
   }
 
-  return generateOk(`oklab(${oklabPart})`);
+  // 4. Attach warnings
+  for (const warning of warnings) {
+    result = addGenerateIssue(result, warning);
+  }
+
+  return result;
 }
 
 
 === File: packages/b_generators/src/color/oklch.ts ===
 // b_path:: packages/b_generators/src/color/oklch.ts
-import { type GenerateResult, generateErr, generateOk, oklchColorSchema } from "@b/types";
-import { cssValueToCss, zodErrorToIssues } from "@b/utils";
+import { type GenerateResult, addGenerateIssue, generateErr, generateOk, oklchColorSchema } from "@b/types";
+import { checkAlpha, checkHue, checkLiteralRange, collectWarnings, cssValueToCss, zodErrorToIssues } from "@b/utils";
 
 /**
  * @see https://drafts.csswg.org/css-color/#ok-lch
  */
 export function generate(color: unknown): GenerateResult {
+  // 1. Schema validation (structure errors)
   const validation = oklchColorSchema.safeParse(color);
   if (!validation.success) {
-    return generateErr(zodErrorToIssues(validation.error), "oklch-color");
+    return generateErr(
+      zodErrorToIssues(validation.error, {
+        typeName: "OKLCHColor",
+        property: "color",
+      }),
+      "oklch-color",
+    );
   }
 
   const { l, c, h, alpha } = validation.data;
 
+  // 2. Semantic validation (range warnings)
+  const warnings = collectWarnings(
+    checkLiteralRange(l, 0, 1, { field: "l", typeName: "OKLCHColor" }),
+    checkLiteralRange(c, 0, 0.4, { field: "c", typeName: "OKLCHColor" }),
+    checkHue(h, "h", "OKLCHColor"),
+    alpha ? checkAlpha(alpha, "alpha", "OKLCHColor") : undefined,
+  );
+
+  // 3. Generate CSS
   const oklchPart = `${cssValueToCss(l)} ${cssValueToCss(c)} ${cssValueToCss(h)}`;
 
+  let result: GenerateResult;
   if (alpha !== undefined) {
-    return generateOk(`oklch(${oklchPart} / ${cssValueToCss(alpha)})`);
+    result = generateOk(`oklch(${oklchPart} / ${cssValueToCss(alpha)})`);
+  } else {
+    result = generateOk(`oklch(${oklchPart})`);
   }
 
-  return generateOk(`oklch(${oklchPart})`);
+  // 4. Attach warnings
+  for (const warning of warnings) {
+    result = addGenerateIssue(result, warning);
+  }
+
+  return result;
 }
 
 
 === File: packages/b_generators/src/color/rgb.ts ===
 // b_path:: packages/b_generators/src/color/rgb.ts
-import { type GenerateResult, generateErr, generateOk, rgbColorSchema } from "@b/types";
-import { cssValueToCss, zodErrorToIssues } from "@b/utils";
+import {
+  type GenerateResult,
+  type GenerateContext,
+  addGenerateIssue,
+  generateErr,
+  generateOk,
+  rgbColorSchema,
+} from "@b/types";
+import { checkAlpha, checkRGBComponent, collectWarnings, cssValueToCss, zodErrorToIssues } from "@b/utils";
 
 /**
  * @see https://drafts.csswg.org/css-color/#rgb-functions
  */
-export function generate(color: unknown): GenerateResult {
+export function generate(color: unknown, context?: GenerateContext): GenerateResult {
+  // 1. Schema validation (structure errors)
   const validation = rgbColorSchema.safeParse(color);
   if (!validation.success) {
-    return generateErr(zodErrorToIssues(validation.error), "rgb-color");
+    return generateErr(
+      zodErrorToIssues(validation.error, {
+        typeName: "RGBColor",
+        property: context?.property ?? "color",
+        parentPath: context?.parentPath,
+      }),
+      "rgb-color",
+    );
   }
 
   const { r, g, b, alpha } = validation.data;
 
+  // 2. Semantic validation (range warnings) with path context
+  const warnings = collectWarnings(
+    checkRGBComponent(r, "r", "RGBColor", context?.parentPath),
+    checkRGBComponent(g, "g", "RGBColor", context?.parentPath),
+    checkRGBComponent(b, "b", "RGBColor", context?.parentPath),
+    alpha ? checkAlpha(alpha, "alpha", "RGBColor", context?.parentPath) : undefined,
+  );
+
+  // 3. Generate CSS
   const rgbPart = `${cssValueToCss(r)} ${cssValueToCss(g)} ${cssValueToCss(b)}`;
 
+  let result: GenerateResult;
   if (alpha !== undefined) {
-    return generateOk(`rgb(${rgbPart} / ${cssValueToCss(alpha)})`);
+    result = generateOk(`rgb(${rgbPart} / ${cssValueToCss(alpha)})`);
+  } else {
+    result = generateOk(`rgb(${rgbPart})`);
   }
 
-  return generateOk(`rgb(${rgbPart})`);
+  // 4. Attach warnings
+  for (const warning of warnings) {
+    result = addGenerateIssue(result, warning);
+  }
+
+  return result;
 }
 
 
@@ -1101,7 +1331,7 @@ export function generate(color: SpecialColor): GenerateResult {
 
 === File: packages/b_generators/src/gradient/color-stop.ts ===
 // b_path:: packages/b_generators/src/gradient/color-stop.ts
-import { generateErr, generateOk, createError, type GenerateResult } from "@b/types";
+import { generateErr, createError, type GenerateResult, type GenerateContext } from "@b/types";
 import type * as Type from "@b/types";
 import * as Color from "../color";
 import * as Angle from "../angle";
@@ -1128,13 +1358,17 @@ import * as Length from "../length";
  * // => "blue 50%"
  * ```
  */
-export function generate(colorStop: Type.ColorStop): GenerateResult {
-  const colorResult = Color.generate(colorStop.color);
+export function generate(colorStop: Type.ColorStop, context?: GenerateContext): GenerateResult {
+  const colorResult = Color.generate(colorStop.color, {
+    parentPath: [...(context?.parentPath ?? []), "color"],
+    property: context?.property,
+  });
   if (!colorResult.ok) {
     return colorResult;
   }
 
   let css = colorResult.value;
+  const issues = [...colorResult.issues];
 
   if (colorStop.position) {
     const pos = colorStop.position;
@@ -1156,7 +1390,11 @@ export function generate(colorStop: Type.ColorStop): GenerateResult {
     }
   }
 
-  return generateOk(css);
+  return {
+    ok: true,
+    value: css,
+    issues,
+  };
 }
 
 /**
@@ -1180,7 +1418,7 @@ function generatePosition(position: Type.LengthPercentage | Type.Angle): Generat
 
 === File: packages/b_generators/src/gradient/conic.ts ===
 // b_path:: packages/b_generators/src/gradient/conic.ts
-import { generateOk, type GenerateResult } from "@b/types";
+import { generateOk, type GenerateResult, type GenerateContext } from "@b/types";
 import type * as Type from "@b/types";
 import * as Angle from "../angle";
 import * as Position from "../position";
@@ -1252,21 +1490,24 @@ function generateColorInterpolation(method: Type.ColorInterpolationMethod): Gene
  * // => "conic-gradient(at center center, red, blue)"
  * ```
  */
-export function generate(ir: Type.ConicGradient): GenerateResult {
+export function generate(ir: Type.ConicGradient, _context?: GenerateContext): GenerateResult {
   const functionName = ir.repeating ? "repeating-conic-gradient" : "conic-gradient";
   const parts: string[] = [];
   const firstPart: string[] = [];
+  const allIssues: Type.Issue[] = [];
 
   if (ir.fromAngle) {
     const angleResult = Angle.generate(ir.fromAngle);
     if (!angleResult.ok) return angleResult;
     firstPart.push(`from ${angleResult.value}`);
+    allIssues.push(...angleResult.issues);
   }
 
   if (ir.position) {
     const posResult = Position.generate(ir.position);
     if (!posResult.ok) return posResult;
     firstPart.push(`at ${posResult.value}`);
+    allIssues.push(...posResult.issues);
   }
 
   if (firstPart.length > 0) {
@@ -1277,15 +1518,21 @@ export function generate(ir: Type.ConicGradient): GenerateResult {
     const interpResult = generateColorInterpolation(ir.colorInterpolationMethod);
     if (!interpResult.ok) return interpResult;
     parts.push(interpResult.value);
+    allIssues.push(...interpResult.issues);
   }
 
   for (const stop of ir.colorStops) {
     const stopResult = ColorStop.generate(stop);
     if (!stopResult.ok) return stopResult;
     parts.push(stopResult.value);
+    allIssues.push(...stopResult.issues);
   }
 
-  return generateOk(`${functionName}(${parts.join(", ")})`);
+  return {
+    ok: true,
+    value: `${functionName}(${parts.join(", ")})`,
+    issues: allIssues,
+  };
 }
 
 
@@ -1296,7 +1543,7 @@ export * as Linear from "./linear";
 export * as Radial from "./radial";
 export * as Conic from "./conic";
 
-import { createError, generateErr, type GenerateResult, type Gradient } from "@b/types";
+import { createError, generateErr, type GenerateResult, type GenerateContext, type Gradient } from "@b/types";
 import * as Linear from "./linear";
 import * as Radial from "./radial";
 import * as Conic from "./conic";
@@ -1305,14 +1552,14 @@ import * as Conic from "./conic";
  * Generate CSS string for any gradient type.
  * Routes to the appropriate gradient generator based on kind.
  */
-export function generate(gradient: Gradient): GenerateResult {
+export function generate(gradient: Gradient, context?: GenerateContext): GenerateResult {
   switch (gradient.kind) {
     case "linear":
-      return Linear.generate(gradient);
+      return Linear.generate(gradient, context);
     case "radial":
-      return Radial.generate(gradient);
+      return Radial.generate(gradient, context);
     case "conic":
-      return Conic.generate(gradient);
+      return Conic.generate(gradient, context);
     default:
       return generateErr(
         createError("unsupported-kind", `Unsupported gradient kind: ${(gradient as { kind: string }).kind}`),
@@ -1323,7 +1570,7 @@ export function generate(gradient: Gradient): GenerateResult {
 
 === File: packages/b_generators/src/gradient/linear.ts ===
 // b_path:: packages/b_generators/src/gradient/linear.ts
-import { generateOk, type GenerateResult } from "@b/types";
+import { generateOk, type GenerateResult, type GenerateContext } from "@b/types";
 import type * as Type from "@b/types";
 import * as Angle from "../angle";
 import * as ColorStop from "./color-stop";
@@ -1430,36 +1677,44 @@ function generateColorInterpolation(method: Type.ColorInterpolationMethod): Gene
  * // => "linear-gradient(in oklch, red, blue)"
  * ```
  */
-export function generate(ir: Type.LinearGradient): GenerateResult {
+export function generate(ir: Type.LinearGradient, _context?: GenerateContext): GenerateResult {
   const functionName = ir.repeating ? "repeating-linear-gradient" : "linear-gradient";
   const parts: string[] = [];
+  const allIssues: Type.Issue[] = [];
 
   if (ir.direction) {
     const dirResult = generateDirection(ir.direction);
 
     if (!dirResult.ok) return dirResult;
     parts.push(dirResult.value);
+    allIssues.push(...dirResult.issues);
   }
 
   if (ir.colorInterpolationMethod) {
     const interpResult = generateColorInterpolation(ir.colorInterpolationMethod);
     if (!interpResult.ok) return interpResult;
     parts.push(interpResult.value);
+    allIssues.push(...interpResult.issues);
   }
 
   for (const stop of ir.colorStops) {
     const stopResult = ColorStop.generate(stop);
     if (!stopResult.ok) return stopResult;
     parts.push(stopResult.value);
+    allIssues.push(...stopResult.issues);
   }
 
-  return generateOk(`${functionName}(${parts.join(", ")})`);
+  return {
+    ok: true,
+    value: `${functionName}(${parts.join(", ")})`,
+    issues: allIssues,
+  };
 }
 
 
 === File: packages/b_generators/src/gradient/radial.ts ===
 // b_path:: packages/b_generators/src/gradient/radial.ts
-import { generateOk, type GenerateResult } from "@b/types";
+import { generateOk, type GenerateResult, type GenerateContext } from "@b/types";
 import type * as Type from "@b/types";
 import * as Position from "../position";
 import * as Length from "../length";
@@ -1558,10 +1813,11 @@ function generateColorInterpolation(method: Type.ColorInterpolationMethod): Gene
  * // => "radial-gradient(at center top, red, blue)"
  * ```
  */
-export function generate(ir: Type.RadialGradient): GenerateResult {
+export function generate(ir: Type.RadialGradient, context?: GenerateContext): GenerateResult {
   const functionName = ir.repeating ? "repeating-radial-gradient" : "radial-gradient";
   const parts: string[] = [];
   const firstPart: string[] = [];
+  const allIssues: Type.Issue[] = [];
 
   if (ir.shape) {
     firstPart.push(ir.shape);
@@ -1571,12 +1827,14 @@ export function generate(ir: Type.RadialGradient): GenerateResult {
     const sizeResult = generateSize(ir.size);
     if (!sizeResult.ok) return sizeResult;
     firstPart.push(sizeResult.value);
+    allIssues.push(...sizeResult.issues);
   }
 
   if (ir.position) {
     const posResult = Position.generate(ir.position);
     if (!posResult.ok) return posResult;
     firstPart.push(`at ${posResult.value}`);
+    allIssues.push(...posResult.issues);
   }
 
   if (firstPart.length > 0) {
@@ -1587,15 +1845,25 @@ export function generate(ir: Type.RadialGradient): GenerateResult {
     const interpResult = generateColorInterpolation(ir.colorInterpolationMethod);
     if (!interpResult.ok) return interpResult;
     parts.push(interpResult.value);
+    allIssues.push(...interpResult.issues);
   }
 
-  for (const stop of ir.colorStops) {
-    const stopResult = ColorStop.generate(stop);
+  for (let i = 0; i < ir.colorStops.length; i++) {
+    const stop = ir.colorStops[i];
+    const stopResult = ColorStop.generate(stop, {
+      parentPath: [...(context?.parentPath ?? []), "colorStops", i],
+      property: context?.property,
+    });
     if (!stopResult.ok) return stopResult;
     parts.push(stopResult.value);
+    allIssues.push(...stopResult.issues);
   }
 
-  return generateOk(`${functionName}(${parts.join(", ")})`);
+  return {
+    ok: true,
+    value: `${functionName}(${parts.join(", ")})`,
+    issues: allIssues,
+  };
 }
 
 
@@ -1926,7 +2194,7 @@ export const namedColors = [
   z.literal("yellowgreen"),
 ];
 
-const namedColorsMap = namedColors.flatMap(getLiteralValues);
+export const namedColorsMap = namedColors.flatMap(getLiteralValues);
 
 export const namedColorSchema = z.union(namedColors, {
   error: () =>
@@ -4594,6 +4862,26 @@ export function andThen<T, U, E>(result: Result<T, E>, fn: (value: T) => Result<
 import type { Issue } from "./issue";
 
 /**
+ * Context for generation to enable path propagation through nested calls.
+ *
+ * @example
+ * ```typescript
+ * const context: GenerateContext = {
+ *   parentPath: ["layers", 0, "gradient", "colorStops", 0],
+ *   property: "background-image"
+ * };
+ * ```
+ *
+ * @public
+ */
+export interface GenerateContext {
+  /** Path from root to current position in IR tree */
+  parentPath?: (string | number)[];
+  /** CSS property being generated */
+  property?: string;
+}
+
+/**
  * Result of generating CSS from intermediate representation.
  *
  * A discriminated union that ensures type safety:
@@ -4738,6 +5026,36 @@ export function combineGenerateResults(results: GenerateResult[], separator = ",
   };
 }
 
+/**
+ * Prepend parent path to all issues in a result.
+ *
+ * Used when calling nested generators to maintain full path context.
+ *
+ * @example
+ * ```typescript
+ * const colorResult = Color.generate(color);
+ * const withPath = prependPathToIssues(colorResult, ["colorStops", 0, "color"]);
+ * // Issues now have full path from parent context
+ * ```
+ *
+ * @public
+ */
+export function prependPathToIssues(result: GenerateResult, pathPrefix: (string | number)[]): GenerateResult {
+  if (pathPrefix.length === 0) {
+    return result;
+  }
+
+  const issues = result.issues.map((issue) => ({
+    ...issue,
+    path: [...pathPrefix, ...(issue.path ?? [])],
+  }));
+
+  return {
+    ...result,
+    issues,
+  };
+}
+
 
 === File: packages/b_types/src/result/index.ts ===
 // b_path:: packages/b_types/src/result/index.ts
@@ -4780,7 +5098,7 @@ export * from "./generate";
  */
 export interface IssueCodeMap {
   parse: "invalid-value" | "invalid-syntax" | "missing-value";
-  generate: "invalid-ir" | "missing-required-field" | "unsupported-kind";
+  generate: "invalid-ir" | "missing-required-field" | "unsupported-kind" | "unrecognized-keys" | "invalid-union";
   warning: "duplicate-property" | "deprecated-syntax" | "legacy-syntax";
 }
 
@@ -4838,6 +5156,12 @@ export interface Issue {
   suggestion?: string;
   /** Optional location in input string (for parse errors) */
   location?: SourceLocation;
+  /** Optional path to error in IR structure (for generation errors) */
+  path?: (string | number)[];
+  /** Optional expected type or value */
+  expected?: string;
+  /** Optional received type or value */
+  received?: string;
 }
 
 /**
@@ -4857,6 +5181,9 @@ export function createError(
     property?: string;
     suggestion?: string;
     location?: SourceLocation;
+    path?: (string | number)[];
+    expected?: string;
+    received?: string;
   },
 ): Issue {
   return {
@@ -4886,6 +5213,9 @@ export function createWarning(
     property?: string;
     suggestion?: string;
     location?: SourceLocation;
+    path?: (string | number)[];
+    expected?: string;
+    received?: string;
   },
 ): Issue {
   return {
@@ -4913,6 +5243,9 @@ export function createInfo(
     property?: string;
     suggestion?: string;
     location?: SourceLocation;
+    path?: (string | number)[];
+    expected?: string;
+    received?: string;
   },
 ): Issue {
   return {
@@ -5563,11 +5896,31 @@ export * from "./validation";
 
 import type { z } from "zod";
 import type { Issue } from "@b/types";
+import { findClosestMatch } from "../string/levenshtein";
 
 // Use Zod v4 core types (not deprecated)
 type ZodIssue = z.core.$ZodIssue;
 type ZodError = z.ZodError;
 type ZodIssueInvalidUnion = z.core.$ZodIssueInvalidUnion;
+type ZodIssueUnrecognizedKeys = z.core.$ZodIssueUnrecognizedKeys;
+
+/**
+ * Context for enhancing Zod error messages with domain-specific information.
+ *
+ * @public
+ */
+export interface ZodErrorContext {
+  /** Type name being validated (e.g., "RGBColor") */
+  typeName?: string;
+  /** CSS property name (e.g., "background-color") */
+  property?: string;
+  /** Parent path for nested structures */
+  parentPath?: (string | number)[];
+  /** Valid keys for this schema (for typo suggestions) */
+  validKeys?: string[];
+  /** The actual value that was received (for union errors) */
+  receivedValue?: unknown;
+}
 
 /**
  * Format a path array into a human-readable string.
@@ -5608,30 +5961,33 @@ export function formatPath(path: (string | number)[]): string {
  * - Recursively traverses union errors to collect all failures
  * - Includes path context in error messages (e.g., "durations[0].unit: ...")
  * - Preserves path array for programmatic access
- * - Adds Zod error code as metadata for advanced filtering
+ * - Adds expected/received information for type errors
+ * - Provides "Did you mean?" suggestions for typos
  * - Filters out generic "Invalid input" messages
  *
  * @param zodError - Zod validation error from safeParse()
+ * @param context - Optional context for enhanced error messages
  * @returns Array of Issue objects with detailed error information and path context
  *
  * @example
  * ```typescript
  * import { zodErrorToIssues } from "@/utils/generate";
- * import { animationDurationSchema } from "@/core/types/animation";
+ * import { rgbColorSchema } from "@/core/types/color";
  *
- * const validation = animationDurationSchema.safeParse(input);
+ * const validation = rgbColorSchema.safeParse(input);
  * if (!validation.success) {
- *   const issues = zodErrorToIssues(validation.error);
- *   // issues[0].message: "durations[0].unit: Invalid input: expected \"s\""
- *   // issues[0].path: ["durations", 0, "unit"]
- *   // issues[0].metadata.zodCode: "invalid_literal"
+ *   const issues = zodErrorToIssues(validation.error, {
+ *     typeName: "RGBColor",
+ *     property: "background-color"
+ *   });
+ *   // Rich error with context, path, and suggestions
  *   return { ok: false, issues };
  * }
  * ```
  *
  * @public
  */
-export function zodErrorToIssues(zodError: ZodError): Issue[] {
+export function zodErrorToIssues(zodError: ZodError, context?: ZodErrorContext): Issue[] {
   const issues: Issue[] = [];
 
   function traverse(zodIssues: readonly ZodIssue[], parentPath: (string | number)[] = []): void {
@@ -5645,15 +6001,8 @@ export function zodErrorToIssues(zodError: ZodError): Issue[] {
             (p): p is string | number => typeof p === "string" || typeof p === "number",
           );
           const fullPath = [...parentPath, ...relativePath];
-          const pathStr = formatPath(fullPath);
-          const message = pathStr ? `${pathStr}: ${zodIssue.message}` : zodIssue.message;
 
-          issues.push({
-            code: "invalid-ir",
-            severity: "error",
-            message,
-          });
-          // Don't traverse into union branches - custom message is sufficient
+          issues.push(createIssue(zodIssue, fullPath, context));
           continue;
         }
 
@@ -5681,19 +6030,13 @@ export function zodErrorToIssues(zodError: ZodError): Issue[] {
           (p): p is string | number => typeof p === "string" || typeof p === "number",
         );
         const fullPath = [...parentPath, ...relativePath];
-        const pathStr = formatPath(fullPath);
-        const message = pathStr ? `${pathStr}: ${zodIssue.message}` : zodIssue.message;
 
-        issues.push({
-          code: "invalid-ir",
-          severity: "error",
-          message,
-        });
+        issues.push(createIssue(zodIssue, fullPath, context));
       }
     }
   }
 
-  traverse(zodError.issues);
+  traverse(zodError.issues, context?.parentPath);
 
   // Fallback if no specific errors found
   if (issues.length === 0) {
@@ -5701,10 +6044,170 @@ export function zodErrorToIssues(zodError: ZodError): Issue[] {
       code: "invalid-ir",
       severity: "error",
       message: "Invalid IR structure",
+      property: context?.property,
     });
   }
 
   return issues;
+}
+
+/**
+ * Create an Issue from a ZodIssue with enhanced context.
+ */
+function createIssue(zodIssue: ZodIssue, fullPath: (string | number)[], context?: ZodErrorContext): Issue {
+  const pathStr = formatPath(fullPath);
+  const message = formatZodMessage(zodIssue, pathStr, context);
+  const code = mapZodCode(zodIssue.code);
+
+  return {
+    code,
+    severity: "error",
+    message,
+    property: context?.property,
+    path: fullPath.length > 0 ? fullPath : undefined,
+    suggestion: generateSuggestion(zodIssue, context),
+    expected: extractExpected(zodIssue, context),
+    received: extractReceived(zodIssue, context),
+  };
+}
+
+/**
+ * Map Zod error codes to our IssueCode types.
+ */
+function mapZodCode(zodCode: string): Issue["code"] {
+  const mapping: Record<string, Issue["code"]> = {
+    invalid_type: "invalid-ir",
+    unrecognized_keys: "unrecognized-keys",
+    invalid_union: "invalid-union",
+    too_small: "missing-required-field",
+    too_big: "invalid-value",
+    invalid_literal: "invalid-value",
+    invalid_enum_value: "invalid-value",
+  };
+  return mapping[zodCode] ?? "invalid-ir";
+}
+
+/**
+ * Format Zod message with context.
+ */
+function formatZodMessage(issue: ZodIssue, pathStr: string, context?: ZodErrorContext): string {
+  const typeStr = context?.typeName ? ` in ${context.typeName}` : "";
+
+  switch (issue.code) {
+    case "invalid_type": {
+      const expected = "expected" in issue ? String(issue.expected) : "unknown";
+      const received = "received" in issue ? String(issue.received) : "unknown";
+
+      if (received === "undefined") {
+        return pathStr ? `Missing required field at '${pathStr}'${typeStr}` : `Missing required field${typeStr}`;
+      }
+      return pathStr
+        ? `Invalid type at '${pathStr}'${typeStr}: expected ${expected}, got ${received}`
+        : `Invalid type${typeStr}: expected ${expected}, got ${received}`;
+    }
+
+    case "unrecognized_keys": {
+      const keysIssue = issue as ZodIssueUnrecognizedKeys;
+      const keys = keysIssue.keys.map((k) => `'${String(k)}'`).join(", ");
+      return pathStr
+        ? `Unrecognized key(s) at '${pathStr}'${typeStr}: ${keys}`
+        : `Unrecognized key(s)${typeStr}: ${keys}`;
+    }
+
+    default:
+      return pathStr ? `${pathStr}: ${issue.message}` : issue.message;
+  }
+}
+
+/**
+ * Generate actionable suggestions for fixing errors.
+ */
+function generateSuggestion(issue: ZodIssue, context?: ZodErrorContext): string | undefined {
+  switch (issue.code) {
+    case "invalid_type": {
+      const expected = "expected" in issue ? String(issue.expected) : "unknown";
+      const received = "received" in issue ? String(issue.received) : "unknown";
+
+      if (received === "undefined") {
+        const field = issue.path[issue.path.length - 1];
+        const fieldStr = field ? String(field) : "This field";
+        return `'${fieldStr}' is required`;
+      }
+      return `Expected ${expected}, received ${received}`;
+    }
+
+    case "unrecognized_keys": {
+      const keysIssue = issue as ZodIssueUnrecognizedKeys;
+      const unknownKey = keysIssue.keys[0];
+      const unknownKeyStr = unknownKey ? String(unknownKey) : undefined;
+
+      if (unknownKeyStr && context?.validKeys) {
+        const suggestion = findClosestMatch(unknownKeyStr, context.validKeys);
+        if (suggestion) {
+          return `Did you mean '${suggestion}'?`;
+        }
+      }
+
+      return "Check for typos in key name";
+    }
+
+    case "invalid_union": {
+      // For union errors, try to suggest closest match
+      if (context?.receivedValue && context?.validKeys && context.validKeys.length > 0) {
+        const receivedStr = String(context.receivedValue);
+        const suggestion = findClosestMatch(receivedStr, context.validKeys);
+        if (suggestion) {
+          return `Did you mean '${suggestion}'?`;
+        }
+      }
+
+      // Fallback: show first few valid options
+      if (context?.validKeys && context.validKeys.length > 0) {
+        const preview = context.validKeys.slice(0, 5).join(", ");
+        const more = context.validKeys.length > 5 ? `... (${context.validKeys.length - 5} more)` : "";
+        return `Must be one of: ${preview}${more}`;
+      }
+
+      return undefined;
+    }
+
+    default:
+      return undefined;
+  }
+}
+
+/**
+ * Extract expected value/type from ZodIssue.
+ */
+function extractExpected(issue: ZodIssue, context?: ZodErrorContext): string | undefined {
+  if ("expected" in issue) {
+    return String(issue.expected);
+  }
+
+  // For union errors, show valid options if available
+  if (issue.code === "invalid_union" && context?.validKeys && context.validKeys.length > 0) {
+    const preview = context.validKeys.slice(0, 3).join(" | ");
+    const more = context.validKeys.length > 3 ? ` | ... (${context.validKeys.length} total)` : "";
+    return preview + more;
+  }
+
+  return undefined;
+}
+
+/**
+ * Extract received value/type from ZodIssue.
+ */
+function extractReceived(issue: ZodIssue, context?: ZodErrorContext): string | undefined {
+  if ("received" in issue) {
+    return String(issue.received);
+  }
+
+  // For union errors, use the received value from context if available
+  if (issue.code === "invalid_union" && context?.receivedValue !== undefined) {
+    return String(context.receivedValue);
+  }
+
+  return undefined;
 }
 
 
@@ -5770,6 +6273,8 @@ export function joinCssValuesWithSpaces(values: string[]): string {
 // b_path:: packages/b_utils/src/index.ts
 export * from "./generate";
 export * from "./parse";
+export * from "./string";
+export * from "./validation";
 
 
 === File: packages/b_utils/src/parse/css-value-parser.ts ===
@@ -6382,6 +6887,334 @@ function formatErrorDisplay(
   }
 
   return result;
+}
+
+
+=== File: packages/b_utils/src/string/index.ts ===
+// b_path:: packages/b_utils/src/string/index.ts
+
+export * from "./levenshtein";
+
+
+=== File: packages/b_utils/src/string/levenshtein.ts ===
+// b_path:: packages/b_utils/src/string/levenshtein.ts
+
+/**
+ * Calculate Levenshtein distance between two strings.
+ * Used for "Did you mean X?" suggestions.
+ *
+ * @param a - First string
+ * @param b - Second string
+ * @returns Minimum number of single-character edits (insertions, deletions, substitutions)
+ *
+ * @example
+ * ```typescript
+ * levenshteinDistance("kitten", "sitting"); // 3
+ * levenshteinDistance("hello", "hello"); // 0
+ * ```
+ *
+ * @see https://en.wikipedia.org/wiki/Levenshtein_distance
+ *
+ * @public
+ */
+export function levenshteinDistance(a: string, b: string): number {
+  const matrix: number[][] = [];
+
+  // Initialize first column and row
+  for (let i = 0; i <= b.length; i++) {
+    matrix[i] = [i];
+  }
+  for (let j = 0; j <= a.length; j++) {
+    matrix[0][j] = j;
+  }
+
+  // Fill in the rest
+  for (let i = 1; i <= b.length; i++) {
+    for (let j = 1; j <= a.length; j++) {
+      if (b[i - 1] === a[j - 1]) {
+        matrix[i][j] = matrix[i - 1][j - 1];
+      } else {
+        matrix[i][j] = Math.min(
+          matrix[i - 1][j - 1] + 1, // substitution
+          matrix[i][j - 1] + 1, // insertion
+          matrix[i - 1][j] + 1, // deletion
+        );
+      }
+    }
+  }
+
+  return matrix[b.length][a.length];
+}
+
+/**
+ * Find closest match from a list of valid options.
+ * Returns undefined if no close match found.
+ *
+ * @param input - The string to match
+ * @param validOptions - List of valid options
+ * @param maxDistance - Maximum distance to consider (default: 3)
+ * @returns Closest matching string, or undefined if none found within maxDistance
+ *
+ * @example
+ * ```typescript
+ * const colors = ["red", "blue", "green"];
+ * findClosestMatch("gren", colors); // "green"
+ * findClosestMatch("xyz", colors); // undefined
+ * ```
+ *
+ * @public
+ */
+export function findClosestMatch(input: string, validOptions: string[], maxDistance = 3): string | undefined {
+  let closestMatch: string | undefined;
+  let minDistance = Number.POSITIVE_INFINITY;
+
+  for (const option of validOptions) {
+    const distance = levenshteinDistance(input.toLowerCase(), option.toLowerCase());
+
+    if (distance < minDistance && distance <= maxDistance) {
+      minDistance = distance;
+      closestMatch = option;
+    }
+  }
+
+  return closestMatch;
+}
+
+
+=== File: packages/b_utils/src/validation/index.ts ===
+// b_path:: packages/b_utils/src/validation/index.ts
+
+export {
+  checkAlpha,
+  checkHue,
+  checkLiteralRange,
+  checkPercentage,
+  checkRGBComponent,
+  collectWarnings,
+} from "./semantic";
+
+
+=== File: packages/b_utils/src/validation/semantic.ts ===
+// b_path:: packages/b_utils/src/validation/semantic.ts
+
+import type { CssValue, Issue } from "@b/types";
+import { createWarning } from "@b/types";
+
+/**
+ * Check if a literal value is in expected range.
+ * Returns warning if out of range, undefined if OK or not applicable.
+ *
+ * Only validates literal values - returns undefined for variables, calc, etc.
+ *
+ * @param value - CssValue to check
+ * @param min - Minimum valid value (inclusive)
+ * @param max - Maximum valid value (inclusive)
+ * @param context - Context for error message
+ * @returns Warning issue if out of range, undefined otherwise
+ *
+ * @example
+ * ```typescript
+ * const warning = checkLiteralRange(lit(300), 0, 255, { field: "r", typeName: "RGBColor" });
+ * // Returns warning: "r value 300 is out of valid range 0-255 in RGBColor"
+ * ```
+ *
+ * @public
+ */
+export function checkLiteralRange(
+  value: CssValue,
+  min: number,
+  max: number,
+  context: {
+    field: string;
+    unit?: string;
+    typeName?: string;
+    parentPath?: (string | number)[];
+  },
+): Issue | undefined {
+  // Only validate literals
+  if (value.kind !== "literal") return undefined;
+
+  const numericValue = value.value;
+
+  if (numericValue < min || numericValue > max) {
+    const unit = context.unit ?? value.unit ?? "";
+    const typeInfo = context.typeName ? ` in ${context.typeName}` : "";
+    return createWarning(
+      "invalid-value",
+      `${context.field} value ${numericValue}${unit} is out of valid range ${min}-${max}${unit}${typeInfo}`,
+      {
+        suggestion: `Use a value between ${min}${unit} and ${max}${unit}`,
+        path: [...(context.parentPath ?? []), context.field],
+      },
+    );
+  }
+
+  return undefined;
+}
+
+/**
+ * Check RGB component (0-255 for integers, 0-100 for percentages).
+ *
+ * @param value - CssValue to check
+ * @param field - Field name (e.g., "r", "g", "b")
+ * @param typeName - Optional type name for error messages
+ * @returns Warning issue if out of range, undefined otherwise
+ *
+ * @example
+ * ```typescript
+ * checkRGBComponent(lit(-255), "r", "RGBColor");
+ * // Returns warning
+ *
+ * checkRGBComponent(lit(50, "%"), "r", "RGBColor");
+ * // Returns undefined (valid percentage)
+ * ```
+ *
+ * @public
+ */
+export function checkRGBComponent(
+  value: CssValue,
+  field: string,
+  typeName?: string,
+  parentPath?: (string | number)[],
+): Issue | undefined {
+  if (value.kind !== "literal") return undefined;
+
+  // Percentage (0-100%)
+  if (value.unit === "%") {
+    return checkLiteralRange(value, 0, 100, { field, unit: "%", typeName, parentPath });
+  }
+
+  // Integer (0-255)
+  return checkLiteralRange(value, 0, 255, { field, typeName, parentPath });
+}
+
+/**
+ * Check alpha value (0-1 for numbers, 0-100% for percentages).
+ *
+ * @param value - CssValue to check
+ * @param field - Field name (e.g., "alpha")
+ * @param typeName - Optional type name for error messages
+ * @returns Warning issue if out of range, undefined otherwise
+ *
+ * @example
+ * ```typescript
+ * checkAlpha(lit(1.5), "alpha", "RGBColor");
+ * // Returns warning
+ *
+ * checkAlpha(lit(50, "%"), "alpha", "RGBColor");
+ * // Returns undefined (valid percentage)
+ * ```
+ *
+ * @public
+ */
+export function checkAlpha(
+  value: CssValue,
+  field: string,
+  typeName?: string,
+  parentPath?: (string | number)[],
+): Issue | undefined {
+  if (value.kind !== "literal") return undefined;
+
+  // Percentage (0-100%)
+  if (value.unit === "%") {
+    return checkLiteralRange(value, 0, 100, { field, unit: "%", typeName, parentPath });
+  }
+
+  // Number (0-1)
+  return checkLiteralRange(value, 0, 1, { field, typeName, parentPath });
+}
+
+/**
+ * Check hue value (0-360 degrees, wraps around).
+ * Note: Hue can technically be any value (wraps), but warn if unreasonable.
+ *
+ * @param value - CssValue to check
+ * @param field - Field name (e.g., "h")
+ * @param typeName - Optional type name for error messages
+ * @returns Warning issue if unusual, undefined otherwise
+ *
+ * @example
+ * ```typescript
+ * checkHue(lit(720), "h", "HSLColor");
+ * // Returns warning (unusually large)
+ *
+ * checkHue(lit(180), "h", "HSLColor");
+ * // Returns undefined (valid)
+ * ```
+ *
+ * @public
+ */
+export function checkHue(value: CssValue, field: string, typeName?: string): Issue | undefined {
+  if (value.kind !== "literal") return undefined;
+
+  const typeInfo = typeName ? ` in ${typeName}` : "";
+
+  // Allow any degree unit
+  if (value.unit && !["deg", "rad", "grad", "turn"].includes(value.unit)) {
+    return createWarning("invalid-value", `${field} has unsupported unit '${value.unit}'${typeInfo}`, {
+      suggestion: "Use deg, rad, grad, or turn units for hue",
+      path: [field],
+    });
+  }
+
+  // Warn if way outside 0-360 (even though it wraps)
+  if (value.unit === "deg" || !value.unit) {
+    if (value.value < -360 || value.value > 720) {
+      return createWarning("invalid-value", `${field} value ${value.value}deg is unusually large${typeInfo}`, {
+        suggestion: "Hue typically ranges from 0-360 degrees",
+        path: [field],
+      });
+    }
+  }
+
+  return undefined;
+}
+
+/**
+ * Check percentage (0-100%).
+ *
+ * @param value - CssValue to check
+ * @param field - Field name (e.g., "s", "l")
+ * @param typeName - Optional type name for error messages
+ * @returns Warning issue if out of range, undefined otherwise
+ *
+ * @example
+ * ```typescript
+ * checkPercentage(lit(150, "%"), "s", "HSLColor");
+ * // Returns warning
+ *
+ * checkPercentage(lit(50, "%"), "s", "HSLColor");
+ * // Returns undefined (valid)
+ * ```
+ *
+ * @public
+ */
+export function checkPercentage(value: CssValue, field: string, typeName?: string): Issue | undefined {
+  if (value.kind !== "literal") return undefined;
+
+  return checkLiteralRange(value, 0, 100, { field, unit: "%", typeName });
+}
+
+/**
+ * Collect all warnings from validators.
+ * Filters out undefined values.
+ *
+ * @param validators - Array of validation results
+ * @returns Array of Issues (warnings only)
+ *
+ * @example
+ * ```typescript
+ * const warnings = collectWarnings(
+ *   checkRGBComponent(r, "r"),
+ *   checkRGBComponent(g, "g"),
+ *   checkRGBComponent(b, "b"),
+ * );
+ * ```
+ *
+ * @public
+ */
+export function collectWarnings(...validators: (Issue | undefined)[]): Issue[] {
+  return validators.filter((issue): issue is Issue => issue !== undefined);
 }
 
 

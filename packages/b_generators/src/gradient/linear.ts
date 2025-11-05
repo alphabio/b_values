@@ -1,5 +1,5 @@
 // b_path:: packages/b_generators/src/gradient/linear.ts
-import { generateOk, type GenerateResult } from "@b/types";
+import { generateOk, type GenerateResult, type GenerateContext } from "@b/types";
 import type * as Type from "@b/types";
 import * as Angle from "../angle";
 import * as ColorStop from "./color-stop";
@@ -106,7 +106,7 @@ function generateColorInterpolation(method: Type.ColorInterpolationMethod): Gene
  * // => "linear-gradient(in oklch, red, blue)"
  * ```
  */
-export function generate(ir: Type.LinearGradient): GenerateResult {
+export function generate(ir: Type.LinearGradient, _context?: GenerateContext): GenerateResult {
   const functionName = ir.repeating ? "repeating-linear-gradient" : "linear-gradient";
   const parts: string[] = [];
   const allIssues: Type.Issue[] = [];

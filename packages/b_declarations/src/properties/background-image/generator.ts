@@ -19,8 +19,9 @@ export function generateBackgroundImage(ir: BackgroundImageIR): GenerateResult {
   const layerStrings: string[] = [];
   const allIssues: import("@b/types").Issue[] = [];
 
-  for (const layer of ir.layers) {
-    const layerResult = generateImageLayer(layer);
+  for (let i = 0; i < ir.layers.length; i++) {
+    const layer = ir.layers[i];
+    const layerResult = generateImageLayer(layer, ["layers", i]);
     if (!layerResult.ok) {
       return layerResult;
     }
@@ -40,7 +41,7 @@ export function generateBackgroundImage(ir: BackgroundImageIR): GenerateResult {
 /**
  * Generate a single image layer.
  */
-function generateImageLayer(layer: ImageLayer): GenerateResult {
+function generateImageLayer(layer: ImageLayer, parentPath: (string | number)[]): GenerateResult {
   switch (layer.kind) {
     case "none":
       return generateOk("none", "background-image");
@@ -50,7 +51,10 @@ function generateImageLayer(layer: ImageLayer): GenerateResult {
       return generateOk(`url(${layer.url})`, "background-image");
 
     case "gradient": {
-      return Generators.Gradient.generate(layer.gradient);
+      return Generators.Gradient.generate(layer.gradient, {
+        parentPath: [...parentPath, "gradient"],
+        property: "background-image",
+      });
     }
 
     default:

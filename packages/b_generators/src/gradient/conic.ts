@@ -1,5 +1,5 @@
 // b_path:: packages/b_generators/src/gradient/conic.ts
-import { generateOk, type GenerateResult } from "@b/types";
+import { generateOk, type GenerateResult, type GenerateContext } from "@b/types";
 import type * as Type from "@b/types";
 import * as Angle from "../angle";
 import * as Position from "../position";
@@ -71,7 +71,7 @@ function generateColorInterpolation(method: Type.ColorInterpolationMethod): Gene
  * // => "conic-gradient(at center center, red, blue)"
  * ```
  */
-export function generate(ir: Type.ConicGradient): GenerateResult {
+export function generate(ir: Type.ConicGradient, _context?: GenerateContext): GenerateResult {
   const functionName = ir.repeating ? "repeating-conic-gradient" : "conic-gradient";
   const parts: string[] = [];
   const firstPart: string[] = [];

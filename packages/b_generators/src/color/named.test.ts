@@ -22,11 +22,23 @@ describe("named color generator", () => {
     }
   });
 
-  it("should validate against color keyword schema", () => {
+  it("should generate invalid color name with warning", () => {
     // @ts-expect-error testing invalid color name
     const color: NamedColor = { kind: "named", name: "notacolor" };
     const result = Named.generate(color);
-    expect(result.ok).toBe(false);
+
+    // We CAN represent this (ok: true), but with a warning
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    expect(result.value).toBe("notacolor");
+    expect(result.issues).toHaveLength(1);
+    expect(result.issues[0]).toMatchObject({
+      code: "invalid-value",
+      severity: "warning",
+      message: expect.stringContaining("Unknown named color"),
+      suggestion: expect.any(String),
+    });
   });
 
   it("should generate rebeccapurple", () => {

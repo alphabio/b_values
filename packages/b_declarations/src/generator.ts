@@ -75,5 +75,9 @@ export function generateDeclaration<TProperty extends RegisteredProperty>(
   // Format as CSS declaration: "property: value"
   const declaration = `${property}: ${generateResult.value}`;
 
-  return generateOk(declaration, property);
+  // Preserve issues from the generator result
+  return {
+    ...generateOk(declaration, property),
+    issues: generateResult.issues,
+  };
 }

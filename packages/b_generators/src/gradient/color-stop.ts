@@ -1,5 +1,5 @@
 // b_path:: packages/b_generators/src/gradient/color-stop.ts
-import { generateErr, generateOk, createError, type GenerateResult } from "@b/types";
+import { generateErr, createError, type GenerateResult, type GenerateContext } from "@b/types";
 import type * as Type from "@b/types";
 import * as Color from "../color";
 import * as Angle from "../angle";
@@ -26,19 +26,17 @@ import * as Length from "../length";
  * // => "blue 50%"
  * ```
  */
-export function generate(colorStop: Type.ColorStop): GenerateResult {
-  const colorResult = Color.generate(colorStop.color);
+export function generate(colorStop: Type.ColorStop, context?: GenerateContext): GenerateResult {
+  const colorResult = Color.generate(colorStop.color, {
+    parentPath: [...(context?.parentPath ?? []), "color"],
+    property: context?.property,
+  });
   if (!colorResult.ok) {
     return colorResult;
   }
 
   let css = colorResult.value;
-  let result = generateOk(css);
-
-  // Propagate warnings from color
-  for (const issue of colorResult.issues) {
-    result = { ...result, issues: [...result.issues, issue] };
-  }
+  const issues = [...colorResult.issues];
 
   if (colorStop.position) {
     const pos = colorStop.position;
@@ -60,8 +58,11 @@ export function generate(colorStop: Type.ColorStop): GenerateResult {
     }
   }
 
-  result = { ...result, value: css };
-  return result;
+  return {
+    ok: true,
+    value: css,
+    issues,
+  };
 }
 
 /**

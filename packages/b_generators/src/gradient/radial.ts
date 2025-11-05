@@ -1,5 +1,5 @@
 // b_path:: packages/b_generators/src/gradient/radial.ts
-import { generateOk, type GenerateResult } from "@b/types";
+import { generateOk, type GenerateResult, type GenerateContext } from "@b/types";
 import type * as Type from "@b/types";
 import * as Position from "../position";
 import * as Length from "../length";
@@ -98,7 +98,7 @@ function generateColorInterpolation(method: Type.ColorInterpolationMethod): Gene
  * // => "radial-gradient(at center top, red, blue)"
  * ```
  */
-export function generate(ir: Type.RadialGradient): GenerateResult {
+export function generate(ir: Type.RadialGradient, context?: GenerateContext): GenerateResult {
   const functionName = ir.repeating ? "repeating-radial-gradient" : "radial-gradient";
   const parts: string[] = [];
   const firstPart: string[] = [];
@@ -133,8 +133,12 @@ export function generate(ir: Type.RadialGradient): GenerateResult {
     allIssues.push(...interpResult.issues);
   }
 
-  for (const stop of ir.colorStops) {
-    const stopResult = ColorStop.generate(stop);
+  for (let i = 0; i < ir.colorStops.length; i++) {
+    const stop = ir.colorStops[i];
+    const stopResult = ColorStop.generate(stop, {
+      parentPath: [...(context?.parentPath ?? []), "colorStops", i],
+      property: context?.property,
+    });
     if (!stopResult.ok) return stopResult;
     parts.push(stopResult.value);
     allIssues.push(...stopResult.issues);

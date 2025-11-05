@@ -29,45 +29,54 @@ import * as decl from "@b/declarations";
 
 // // import * as exp from "b_short";
 
-console.log(
-  decl.generateDeclaration({
-    property: "background-image",
-    ir: {
-      kind: "layers",
-      layers: [
-        {
-          kind: "gradient",
-          gradient: {
-            kind: "radial",
-            repeating: false,
-            shape: "circle",
-            size: { kind: "keyword", value: "closest-side" },
-            position: {
-              horizontal: { value: 0, unit: "%" },
-              vertical: { value: 0, unit: "%" },
-            },
-            colorStops: [
-              {
-                color: {
-                  kind: "rgb",
-                  r: { kind: "literal", value: -255 },
-                  g: { kind: "literal", value: 255 },
-                  b: { kind: "literal", value: 255 },
-                },
-              },
-              {
-                color: {
-                  kind: "named",
-                  name: "red",
-                },
-              },
-            ],
+const result = decl.generateDeclaration({
+  property: "background-image",
+  ir: {
+    kind: "layers",
+    layers: [
+      {
+        kind: "gradient",
+        gradient: {
+          kind: "radial",
+          repeating: false,
+          shape: "circle",
+          size: { kind: "keyword", value: "closest-side" },
+          position: {
+            horizontal: { value: 0, unit: "%" },
+            vertical: { value: 0, unit: "%" },
           },
+          colorStops: [
+            {
+              color: {
+                kind: "rgb",
+                r: { kind: "literal", value: -255 },
+                g: { kind: "literal", value: 255 },
+                b: { kind: "literal", value: 255 },
+              },
+            },
+            {
+              color: {
+                kind: "named",
+                // @ts-expect-error - Testing invalid named color
+                name: "reds",
+              },
+            },
+          ],
         },
-      ],
-    },
-  })
-);
+      },
+    ],
+  },
+});
+
+console.log({
+  ok: result.ok,
+  value: result.value,
+  property: result.property,
+  issues: result.issues,
+});
+
+console.log("\nRGB warning path:", result.issues[0]?.path);
+console.log("Named color warning path:", result.issues[1]?.path);
 
 // // console.log(
 // //   decl.parseDeclaration(

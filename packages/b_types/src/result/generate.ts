@@ -8,6 +8,26 @@
 import type { Issue } from "./issue";
 
 /**
+ * Context for generation to enable path propagation through nested calls.
+ *
+ * @example
+ * ```typescript
+ * const context: GenerateContext = {
+ *   parentPath: ["layers", 0, "gradient", "colorStops", 0],
+ *   property: "background-image"
+ * };
+ * ```
+ *
+ * @public
+ */
+export interface GenerateContext {
+  /** Path from root to current position in IR tree */
+  parentPath?: (string | number)[];
+  /** CSS property being generated */
+  property?: string;
+}
+
+/**
  * Result of generating CSS from intermediate representation.
  *
  * A discriminated union that ensures type safety:
@@ -149,5 +169,35 @@ export function combineGenerateResults(results: GenerateResult[], separator = ",
   return {
     ok: false,
     issues: allIssues,
+  };
+}
+
+/**
+ * Prepend parent path to all issues in a result.
+ *
+ * Used when calling nested generators to maintain full path context.
+ *
+ * @example
+ * ```typescript
+ * const colorResult = Color.generate(color);
+ * const withPath = prependPathToIssues(colorResult, ["colorStops", 0, "color"]);
+ * // Issues now have full path from parent context
+ * ```
+ *
+ * @public
+ */
+export function prependPathToIssues(result: GenerateResult, pathPrefix: (string | number)[]): GenerateResult {
+  if (pathPrefix.length === 0) {
+    return result;
+  }
+
+  const issues = result.issues.map((issue) => ({
+    ...issue,
+    path: [...pathPrefix, ...(issue.path ?? [])],
+  }));
+
+  return {
+    ...result,
+    issues,
   };
 }

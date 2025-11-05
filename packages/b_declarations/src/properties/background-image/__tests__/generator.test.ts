@@ -416,6 +416,100 @@ describe("generateBackgroundImage", () => {
     });
   });
 
+  describe("warning propagation", () => {
+    it("should propagate semantic warnings from nested color generators", () => {
+      const ir: BackgroundImageIR = {
+        kind: "layers",
+        layers: [
+          {
+            kind: "gradient",
+            gradient: {
+              kind: "radial",
+              repeating: false,
+              shape: "circle",
+              size: { kind: "keyword", value: "closest-side" },
+              position: {
+                horizontal: { value: 0, unit: "%" },
+                vertical: { value: 0, unit: "%" },
+              },
+              colorStops: [
+                {
+                  color: {
+                    kind: "rgb",
+                    r: { kind: "literal", value: -255 },
+                    g: { kind: "literal", value: 255 },
+                    b: { kind: "literal", value: 255 },
+                  },
+                },
+                {
+                  color: {
+                    kind: "named",
+                    name: "red",
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      };
+
+      const result = generateBackgroundImage(ir);
+
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      expect(result.value).toContain("rgb(-255 255 255)");
+      expect(result.issues).toHaveLength(1);
+      expect(result.issues[0]).toMatchObject({
+        code: "invalid-value",
+        severity: "warning",
+        message: expect.stringContaining("r value -255 is out of valid range 0-255"),
+        path: ["layers", 0, "gradient", "colorStops", 0, "color", "r"],
+      });
+    });
+
+    it("should propagate multiple warnings from multiple color stops", () => {
+      const ir: BackgroundImageIR = {
+        kind: "layers",
+        layers: [
+          {
+            kind: "gradient",
+            gradient: {
+              kind: "linear",
+              repeating: false,
+              colorStops: [
+                {
+                  color: {
+                    kind: "rgb",
+                    r: { kind: "literal", value: -100 },
+                    g: { kind: "literal", value: 300 },
+                    b: { kind: "literal", value: 128 },
+                  },
+                },
+                {
+                  color: {
+                    kind: "rgb",
+                    r: { kind: "literal", value: 128 },
+                    g: { kind: "literal", value: 128 },
+                    b: { kind: "literal", value: -50 },
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      };
+
+      const result = generateBackgroundImage(ir);
+
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      expect(result.issues).toHaveLength(3);
+      expect(result.issues[0]?.code).toBe("invalid-value");
+      expect(result.issues[1]?.code).toBe("invalid-value");
+      expect(result.issues[2]?.code).toBe("invalid-value");
+    });
+  });
+
   describe("edge cases", () => {
     it("should handle empty layers array gracefully", () => {
       const ir: BackgroundImageIR = {
