@@ -1,6 +1,6 @@
 // b_path:: packages/b_parsers/src/utils/ast/functions.ts
 import * as csstree from "css-tree";
-import { err, ok, type Result } from "@b/types";
+import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
 
 /**
  * Find a function node by name in a CSS AST.
@@ -23,7 +23,7 @@ import { err, ok, type Result } from "@b/types";
 export function findFunctionNode(
   ast: csstree.CssNode,
   functionNames: string | string[],
-): Result<csstree.FunctionNode, string> {
+): ParseResult<csstree.FunctionNode> {
   const names = Array.isArray(functionNames) ? functionNames : [functionNames];
   const lowerNames = names.map((name) => name.toLowerCase());
   let foundNode: csstree.FunctionNode | null = null;
@@ -39,12 +39,14 @@ export function findFunctionNode(
     });
 
     if (!foundNode) {
-      return err(`No function found with name(s): ${names.join(", ")}`);
+      return parseErr(createError("missing-value", `No function found with name(s): ${names.join(", ")}`));
     }
 
-    return ok(foundNode);
+    return parseOk(foundNode);
   } catch (e) {
-    return err(`Failed to search AST: ${e instanceof Error ? e.message : String(e)}`);
+    return parseErr(
+      createError("invalid-syntax", `Failed to search AST: ${e instanceof Error ? e.message : String(e)}`),
+    );
   }
 }
 
@@ -63,14 +65,13 @@ export function findFunctionNode(
  * }
  * ```
  */
-export function parseCssString(
-  css: string,
-  context: "value" | "declaration" = "value",
-): Result<csstree.CssNode, string> {
+export function parseCssString(css: string, context: "value" | "declaration" = "value"): ParseResult<csstree.CssNode> {
   try {
     const ast = csstree.parse(css, { context });
-    return ok(ast);
+    return parseOk(ast);
   } catch (e) {
-    return err(`Failed to parse CSS: ${e instanceof Error ? e.message : String(e)}`);
+    return parseErr(
+      createError("invalid-syntax", `Failed to parse CSS: ${e instanceof Error ? e.message : String(e)}`),
+    );
   }
 }

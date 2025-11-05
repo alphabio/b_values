@@ -1,5 +1,5 @@
 // b_path:: packages/b_declarations/src/core/parser.ts
-import { ok, err, type Result } from "@b/types";
+import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
 import { propertyRegistry } from "./registry";
 import type { CSSDeclaration, DeclarationResult } from "./types";
 
@@ -21,7 +21,7 @@ import type { CSSDeclaration, DeclarationResult } from "./types";
  * });
  * ```
  */
-export function parseDeclaration(input: string | CSSDeclaration): Result<DeclarationResult, string> {
+export function parseDeclaration(input: string | CSSDeclaration): ParseResult<DeclarationResult> {
   let property: string;
   let value: string;
 
@@ -42,17 +42,17 @@ export function parseDeclaration(input: string | CSSDeclaration): Result<Declara
   const definition = propertyRegistry.get(property);
 
   if (!definition) {
-    return err(`Unknown CSS property: ${property}`);
+    return parseErr(createError("invalid-value", `Unknown CSS property: ${property}`));
   }
 
   // Parse the value using the property's parser
   const parseResult = definition.parser(value);
 
   if (!parseResult.ok) {
-    return err(`Failed to parse ${property}: ${parseResult.error}`);
+    return parseErr(createError("invalid-value", `Failed to parse ${property}: ${parseResult.issues[0]?.message}`));
   }
 
-  return ok({
+  return parseOk({
     property,
     ir: parseResult.value,
     original: value,
@@ -65,7 +65,7 @@ export function parseDeclaration(input: string | CSSDeclaration): Result<Declara
  *
  * @internal
  */
-function parseDeclarationString(input: string): Result<CSSDeclaration, string> {
+function parseDeclarationString(input: string): ParseResult<CSSDeclaration> {
   const trimmed = input.trim();
 
   // Remove trailing semicolon if present
@@ -75,19 +75,19 @@ function parseDeclarationString(input: string): Result<CSSDeclaration, string> {
   const colonIndex = cleaned.indexOf(":");
 
   if (colonIndex === -1) {
-    return err(`Invalid CSS declaration: missing colon in "${input}"`);
+    return parseErr(createError("invalid-syntax", `Invalid CSS declaration: missing colon in "${input}"`));
   }
 
   const property = cleaned.slice(0, colonIndex).trim();
   const value = cleaned.slice(colonIndex + 1).trim();
 
   if (!property) {
-    return err(`Invalid CSS declaration: empty property in "${input}"`);
+    return parseErr(createError("missing-value", `Invalid CSS declaration: empty property in "${input}"`));
   }
 
   if (!value) {
-    return err(`Invalid CSS declaration: empty value in "${input}"`);
+    return parseErr(createError("missing-value", `Invalid CSS declaration: empty value in "${input}"`));
   }
 
-  return ok({ property, value });
+  return parseOk({ property, value });
 }

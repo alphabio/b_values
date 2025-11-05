@@ -1,5 +1,5 @@
 // b_path:: packages/b_declarations/src/properties/background-image/parser.ts
-import { ok, err, type Result } from "@b/types";
+import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
 import * as Parsers from "@b/parsers";
 import { isCSSWideKeyword, parseCSSWideKeyword, splitByComma } from "../../utils";
 import type { BackgroundImageIR, ImageLayer } from "./types";
@@ -16,14 +16,14 @@ import type { BackgroundImageIR, ImageLayer } from "./types";
  * 2. Splits comma-separated layers
  * 3. Delegates each layer to appropriate VALUE parser
  */
-export function parseBackgroundImage(value: string): Result<BackgroundImageIR, string> {
+export function parseBackgroundImage(value: string): ParseResult<BackgroundImageIR> {
   const trimmed = value.trim();
 
   // Handle CSS-wide keywords
   if (isCSSWideKeyword(trimmed)) {
     const keywordResult = parseCSSWideKeyword(trimmed);
     if (keywordResult.ok) {
-      return ok({
+      return parseOk({
         kind: "keyword",
         value: keywordResult.value,
       });
@@ -32,7 +32,7 @@ export function parseBackgroundImage(value: string): Result<BackgroundImageIR, s
 
   // Handle 'none' keyword
   if (trimmed.toLowerCase() === "none") {
-    return ok({
+    return parseOk({
       kind: "keyword",
       value: "none",
     });
@@ -55,7 +55,9 @@ export function parseBackgroundImage(value: string): Result<BackgroundImageIR, s
     if (layer.startsWith("url(")) {
       const urlResult = Parsers.Url.parseUrl(layer);
       if (!urlResult.ok) {
-        return err(`Invalid url() in background-image: ${urlResult.issues[0]?.message}`);
+        return parseErr(
+          createError("invalid-value", `Invalid url() in background-image: ${urlResult.issues[0]?.message}`),
+        );
       }
       layers.push({
         kind: "url",
@@ -68,7 +70,12 @@ export function parseBackgroundImage(value: string): Result<BackgroundImageIR, s
     if (layer.startsWith("linear-gradient(") || layer.startsWith("repeating-linear-gradient(")) {
       const gradientResult = Parsers.Gradient.Linear.parse(layer);
       if (!gradientResult.ok) {
-        return err(`Invalid linear-gradient in background-image: ${gradientResult.error}`);
+        return parseErr(
+          createError(
+            "invalid-value",
+            `Invalid linear-gradient in background-image: ${gradientResult.issues[0]?.message}`,
+          ),
+        );
       }
       layers.push({
         kind: "gradient",
@@ -81,7 +88,12 @@ export function parseBackgroundImage(value: string): Result<BackgroundImageIR, s
     if (layer.startsWith("radial-gradient(") || layer.startsWith("repeating-radial-gradient(")) {
       const gradientResult = Parsers.Gradient.Radial.parse(layer);
       if (!gradientResult.ok) {
-        return err(`Invalid radial-gradient in background-image: ${gradientResult.error}`);
+        return parseErr(
+          createError(
+            "invalid-value",
+            `Invalid radial-gradient in background-image: ${gradientResult.issues[0]?.message}`,
+          ),
+        );
       }
       layers.push({
         kind: "gradient",
@@ -94,7 +106,12 @@ export function parseBackgroundImage(value: string): Result<BackgroundImageIR, s
     if (layer.startsWith("conic-gradient(") || layer.startsWith("repeating-conic-gradient(")) {
       const gradientResult = Parsers.Gradient.Conic.parse(layer);
       if (!gradientResult.ok) {
-        return err(`Invalid conic-gradient in background-image: ${gradientResult.error}`);
+        return parseErr(
+          createError(
+            "invalid-value",
+            `Invalid conic-gradient in background-image: ${gradientResult.issues[0]?.message}`,
+          ),
+        );
       }
       layers.push({
         kind: "gradient",
@@ -109,10 +126,10 @@ export function parseBackgroundImage(value: string): Result<BackgroundImageIR, s
     // - cross-fade()
     // - element()
 
-    return err(`Unsupported image type in background-image: ${layer}`);
+    return parseErr(createError("invalid-value", `Unsupported image type in background-image: ${layer}`));
   }
 
-  return ok({
+  return parseOk({
     kind: "layers",
     layers,
   });

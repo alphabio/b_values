@@ -141,11 +141,13 @@ packages/b_declarations/src/
 **Pattern established:** Clear methodology for remaining conversions
 
 **Commits made:**
+
 1. Quick wins (gradient throwing + hex parser)
 2. Atomic parsers batch 1 (angle, length, position, url)
 3. Color parsers + CssValue parser
 
 **Remaining work:**
+
 - 4 gradient parsers (list-based, multi-error)
 - 1 utils/ast/functions.ts
 - Declaration layer updates

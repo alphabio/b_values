@@ -1,6 +1,6 @@
 // b_path:: packages/b_parsers/src/gradient/linear.ts
 import type * as csstree from "css-tree";
-import { err, ok, type Result } from "@b/types";
+import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
 import type * as Type from "@b/types";
 import { parseAngleNode } from "../angle";
 import * as ColorStop from "./color-stop";
@@ -12,18 +12,18 @@ import * as Utils from "../utils";
 function parseDirection(
   nodes: csstree.CssNode[],
   startIdx: number,
-): Result<{ direction: Type.GradientDirection; nextIdx: number }, string> {
+): ParseResult<{ direction: Type.GradientDirection; nextIdx: number }> {
   let idx = startIdx;
   const node = nodes[idx];
 
   if (!node) {
-    return err("Expected direction value");
+    return parseErr(createError("missing-value", "Expected direction value"));
   }
 
   if (node.type === "Dimension" || node.type === "Number") {
     const angleResult = parseAngleNode(node);
     if (angleResult.ok) {
-      return ok({
+      return parseOk({
         direction: {
           kind: "angle",
           value: angleResult.value,
@@ -37,7 +37,7 @@ function parseDirection(
     idx++;
     const firstKeyword = nodes[idx];
     if (!firstKeyword || firstKeyword.type !== "Identifier") {
-      return err("Expected side or corner keyword after 'to'");
+      return parseErr(createError("invalid-syntax", "Expected side or corner keyword after 'to'"));
     }
 
     const first = firstKeyword.name.toLowerCase();
@@ -48,7 +48,7 @@ function parseDirection(
       const second = secondKeyword.name.toLowerCase();
       const corner = `${first} ${second}`;
       if (["top left", "top right", "bottom left", "bottom right"].includes(corner)) {
-        return ok({
+        return parseOk({
           direction: {
             kind: "to-corner",
             value: corner as "top left" | "top right" | "bottom left" | "bottom right",
@@ -59,7 +59,7 @@ function parseDirection(
     }
 
     if (["top", "right", "bottom", "left"].includes(first)) {
-      return ok({
+      return parseOk({
         direction: {
           kind: "to-side",
           value: first as "top" | "right" | "bottom" | "left",
@@ -68,10 +68,10 @@ function parseDirection(
       });
     }
 
-    return err(`Invalid direction keyword: ${first}`);
+    return parseErr(createError("invalid-value", `Invalid direction keyword: ${first}`));
   }
 
-  return err("Invalid direction syntax");
+  return parseErr(createError("invalid-syntax", "Invalid direction syntax"));
 }
 
 /**
@@ -79,17 +79,19 @@ function parseDirection(
  *
  * @see https://developer.mozilla.org/en-US/docs/Web/CSS/gradient/linear-gradient
  */
-export function fromFunction(fn: csstree.FunctionNode): Result<Type.LinearGradient, string> {
+export function fromFunction(fn: csstree.FunctionNode): ParseResult<Type.LinearGradient> {
   const functionName = fn.name.toLowerCase();
   const isRepeating = functionName === "repeating-linear-gradient";
 
   if (!isRepeating && functionName !== "linear-gradient") {
-    return err(`Expected linear-gradient or repeating-linear-gradient, got: ${functionName}`);
+    return parseErr(
+      createError("invalid-value", `Expected linear-gradient or repeating-linear-gradient, got: ${functionName}`),
+    );
   }
 
   const children = fn.children.toArray();
   if (children.length === 0) {
-    return err("linear-gradient requires at least 2 color stops");
+    return parseErr(createError("missing-value", "linear-gradient requires at least 2 color stops"));
   }
 
   let direction: Type.GradientDirection | undefined;
@@ -153,20 +155,26 @@ export function fromFunction(fn: csstree.FunctionNode): Result<Type.LinearGradie
   const stopGroups = Utils.Ast.splitNodesByComma(children, { startIndex: idx });
 
   const colorStops: Type.ColorStop[] = [];
+  const issues: Type.Issue[] = [];
+
   for (const stopNodes of stopGroups) {
     const stopResult = ColorStop.fromNodes(stopNodes);
     if (stopResult.ok) {
       colorStops.push(stopResult.value);
     } else {
-      return err(`Invalid color stop: ${stopResult.error}`);
+      issues.push(...stopResult.issues);
     }
   }
 
-  if (colorStops.length < 2) {
-    return err("linear-gradient requires at least 2 color stops");
+  if (issues.length > 0) {
+    return { ok: false, issues };
   }
 
-  return ok({
+  if (colorStops.length < 2) {
+    return parseErr(createError("invalid-value", "linear-gradient requires at least 2 color stops"));
+  }
+
+  return parseOk({
     kind: "linear",
     direction,
     colorInterpolationMethod,
@@ -180,7 +188,7 @@ export function fromFunction(fn: csstree.FunctionNode): Result<Type.LinearGradie
  *
  * @see https://developer.mozilla.org/en-US/docs/Web/CSS/gradient/linear-gradient
  */
-export function parse(css: string): Result<Type.LinearGradient, string> {
+export function parse(css: string): ParseResult<Type.LinearGradient> {
   const astResult = Utils.Ast.parseCssString(css, "value");
   if (!astResult.ok) {
     return astResult;

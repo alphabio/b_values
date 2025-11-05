@@ -41,6 +41,7 @@
     "Texel",
     "TTFB",
     "Turborepo",
+    "typechecks",
     "vercel",
     "vite",
     "webgl",

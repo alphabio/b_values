@@ -1,6 +1,6 @@
 // b_path:: packages/b_parsers/src/gradient/conic.ts
 import type * as csstree from "css-tree";
-import { err, ok, type Result } from "@b/types";
+import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
 import type * as Type from "@b/types";
 import { parseAngleNode } from "../angle";
 import { parsePosition2D } from "../position";
@@ -12,17 +12,19 @@ import * as Utils from "../utils";
  *
  * @see https://developer.mozilla.org/en-US/docs/Web/CSS/gradient/conic-gradient
  */
-export function fromFunction(fn: csstree.FunctionNode): Result<Type.ConicGradient, string> {
+export function fromFunction(fn: csstree.FunctionNode): ParseResult<Type.ConicGradient> {
   const functionName = fn.name.toLowerCase();
   const isRepeating = functionName === "repeating-conic-gradient";
 
   if (!isRepeating && functionName !== "conic-gradient") {
-    return err(`Expected conic-gradient or repeating-conic-gradient, got: ${functionName}`);
+    return parseErr(
+      createError("invalid-value", `Expected conic-gradient or repeating-conic-gradient, got: ${functionName}`),
+    );
   }
 
   const children = fn.children.toArray();
   if (children.length === 0) {
-    return err("conic-gradient requires at least 2 color stops");
+    return parseErr(createError("missing-value", "conic-gradient requires at least 2 color stops"));
   }
 
   let fromAngle: Type.Angle | undefined;
@@ -108,20 +110,26 @@ export function fromFunction(fn: csstree.FunctionNode): Result<Type.ConicGradien
   const stopGroups = Utils.Ast.splitNodesByComma(children, { startIndex: idx });
 
   const colorStops: Type.ColorStop[] = [];
+  const issues: Type.Issue[] = [];
+
   for (const stopNodes of stopGroups) {
     const stopResult = ColorStop.fromNodes(stopNodes);
     if (stopResult.ok) {
       colorStops.push(stopResult.value);
     } else {
-      return err(`Invalid color stop: ${stopResult.error}`);
+      issues.push(...stopResult.issues);
     }
   }
 
-  if (colorStops.length < 2) {
-    return err("conic-gradient requires at least 2 color stops");
+  if (issues.length > 0) {
+    return { ok: false, issues };
   }
 
-  return ok({
+  if (colorStops.length < 2) {
+    return parseErr(createError("invalid-value", "conic-gradient requires at least 2 color stops"));
+  }
+
+  return parseOk({
     kind: "conic",
     fromAngle,
     position,
@@ -136,7 +144,7 @@ export function fromFunction(fn: csstree.FunctionNode): Result<Type.ConicGradien
  *
  * @see https://developer.mozilla.org/en-US/docs/Web/CSS/gradient/conic-gradient
  */
-export function parse(css: string): Result<Type.ConicGradient, string> {
+export function parse(css: string): ParseResult<Type.ConicGradient> {
   const astResult = Utils.Ast.parseCssString(css, "value");
   if (!astResult.ok) {
     return astResult;

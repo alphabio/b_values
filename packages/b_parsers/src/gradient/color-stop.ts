@@ -1,6 +1,6 @@
 // b_path:: packages/b_parsers/src/gradient/color-stop.ts
 import type * as csstree from "css-tree";
-import { err, ok, type Result } from "@b/types";
+import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
 import type * as Type from "@b/types";
 import * as Color from "../color";
 
@@ -9,23 +9,23 @@ import * as Color from "../color";
  *
  * @see https://developer.mozilla.org/en-US/docs/Web/CSS/gradient/linear-gradient#color-stops
  */
-export function fromNodes(nodes: csstree.CssNode[]): Result<Type.ColorStop, string> {
+export function fromNodes(nodes: csstree.CssNode[]): ParseResult<Type.ColorStop> {
   if (nodes.length === 0) {
-    return err("Color stop requires at least a color value");
+    return parseErr(createError("missing-value", "Color stop requires at least a color value"));
   }
 
   const firstNode = nodes[0];
   if (!firstNode) {
-    return err("Color stop requires at least a color value");
+    return parseErr(createError("missing-value", "Color stop requires at least a color value"));
   }
 
   const colorResult = Color.parseNode(firstNode);
   if (!colorResult.ok) {
-    return err(`Invalid color value: ${colorResult.issues[0]?.message}`);
+    return parseErr(createError("invalid-value", `Invalid color value: ${colorResult.issues[0]?.message}`));
   }
 
   if (nodes.length === 1) {
-    return ok({ color: colorResult.value });
+    return parseOk({ color: colorResult.value });
   }
 
   const positions: (Type.LengthPercentage | Type.Angle)[] = [];
@@ -47,7 +47,12 @@ export function fromNodes(nodes: csstree.CssNode[]): Result<Type.ColorStop, stri
         positions.push({ value: 0, unit: "px" });
         continue;
       }
-      return err(`Unitless numbers (other than 0) are not valid for color stop positions: ${posNode.value}`);
+      return parseErr(
+        createError(
+          "invalid-value",
+          `Unitless numbers (other than 0) are not valid for color stop positions: ${posNode.value}`,
+        ),
+      );
     }
 
     if (posNode.type === "Dimension") {
@@ -62,21 +67,21 @@ export function fromNodes(nodes: csstree.CssNode[]): Result<Type.ColorStop, stri
       continue;
     }
 
-    return err(`Invalid position type: ${posNode.type}`);
+    return parseErr(createError("invalid-value", `Invalid position type: ${posNode.type}`));
   }
 
   if (positions.length === 0) {
-    return ok({ color: colorResult.value });
+    return parseOk({ color: colorResult.value });
   }
 
   if (positions.length === 1) {
-    return ok({
+    return parseOk({
       color: colorResult.value,
       position: positions[0],
     });
   }
 
-  return ok({
+  return parseOk({
     color: colorResult.value,
     position: [positions[0], positions[1]] as [Type.LengthPercentage | Type.Angle, Type.LengthPercentage | Type.Angle],
   });

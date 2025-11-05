@@ -1,6 +1,6 @@
 // b_path:: packages/b_parsers/src/gradient/radial.ts
 import type * as csstree from "css-tree";
-import { err, ok, type Result } from "@b/types";
+import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
 import type * as Type from "@b/types";
 import type { RadialShape, RadialSizeKeyword } from "@b/keywords";
 import { parseLengthPercentageNode } from "../length";
@@ -14,21 +14,18 @@ import * as Utils from "../utils";
 function parseShapeAndSize(
   nodes: csstree.CssNode[],
   startIdx: number,
-): Result<
-  {
-    shape?: RadialShape;
-    size?: Type.RadialGradientSize;
-    nextIdx: number;
-  },
-  string
-> {
+): ParseResult<{
+  shape?: RadialShape;
+  size?: Type.RadialGradientSize;
+  nextIdx: number;
+}> {
   let idx = startIdx;
   let shape: RadialShape | undefined;
   let size: Type.RadialGradientSize | undefined;
 
   const node = nodes[idx];
   if (!node) {
-    return ok({ nextIdx: idx });
+    return parseOk({ nextIdx: idx });
   }
 
   if (node.type === "Identifier") {
@@ -118,7 +115,7 @@ function parseShapeAndSize(
     }
   }
 
-  return ok({ shape, size, nextIdx: idx });
+  return parseOk({ shape, size, nextIdx: idx });
 }
 
 /**
@@ -126,17 +123,19 @@ function parseShapeAndSize(
  *
  * @see https://developer.mozilla.org/en-US/docs/Web/CSS/gradient/radial-gradient
  */
-export function fromFunction(fn: csstree.FunctionNode): Result<Type.RadialGradient, string> {
+export function fromFunction(fn: csstree.FunctionNode): ParseResult<Type.RadialGradient> {
   const functionName = fn.name.toLowerCase();
   const isRepeating = functionName === "repeating-radial-gradient";
 
   if (!isRepeating && functionName !== "radial-gradient") {
-    return err(`Expected radial-gradient or repeating-radial-gradient, got: ${functionName}`);
+    return parseErr(
+      createError("invalid-value", `Expected radial-gradient or repeating-radial-gradient, got: ${functionName}`),
+    );
   }
 
   const children = fn.children.toArray();
   if (children.length === 0) {
-    return err("radial-gradient requires at least 2 color stops");
+    return parseErr(createError("missing-value", "radial-gradient requires at least 2 color stops"));
   }
 
   let shape: RadialShape | undefined;
@@ -217,20 +216,26 @@ export function fromFunction(fn: csstree.FunctionNode): Result<Type.RadialGradie
   const stopGroups = Utils.Ast.splitNodesByComma(children, { startIndex: idx });
 
   const colorStops: Type.ColorStop[] = [];
+  const issues: Type.Issue[] = [];
+
   for (const stopNodes of stopGroups) {
     const stopResult = ColorStop.fromNodes(stopNodes);
     if (stopResult.ok) {
       colorStops.push(stopResult.value);
     } else {
-      return err(`Invalid color stop: ${stopResult.error}`);
+      issues.push(...stopResult.issues);
     }
   }
 
-  if (colorStops.length < 2) {
-    return err("radial-gradient requires at least 2 color stops");
+  if (issues.length > 0) {
+    return { ok: false, issues };
   }
 
-  return ok({
+  if (colorStops.length < 2) {
+    return parseErr(createError("invalid-value", "radial-gradient requires at least 2 color stops"));
+  }
+
+  return parseOk({
     kind: "radial",
     shape,
     size,
@@ -246,7 +251,7 @@ export function fromFunction(fn: csstree.FunctionNode): Result<Type.RadialGradie
  *
  * @see https://developer.mozilla.org/en-US/docs/Web/CSS/gradient/radial-gradient
  */
-export function parse(css: string): Result<Type.RadialGradient, string> {
+export function parse(css: string): ParseResult<Type.RadialGradient> {
   const astResult = Utils.Ast.parseCssString(css, "value");
   if (!astResult.ok) {
     return astResult;

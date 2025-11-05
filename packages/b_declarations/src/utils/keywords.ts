@@ -1,5 +1,5 @@
 // b_path:: packages/b_declarations/src/utils/keywords.ts
-import { ok, err, type Result } from "@b/types";
+import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
 
 /**
  * CSS-wide keywords that apply to all properties.
@@ -19,12 +19,12 @@ export function isCSSWideKeyword(value: string): value is CSSWideKeyword {
 /**
  * Parse a CSS-wide keyword.
  */
-export function parseCSSWideKeyword(value: string): Result<CSSWideKeyword, string> {
+export function parseCSSWideKeyword(value: string): ParseResult<CSSWideKeyword> {
   const normalized = value.trim().toLowerCase();
 
   if (isCSSWideKeyword(normalized)) {
-    return ok(normalized);
+    return parseOk(normalized);
   }
 
-  return err(`Not a CSS-wide keyword: ${value}`);
+  return parseErr(createError("invalid-value", `Not a CSS-wide keyword: ${value}`));
 }
