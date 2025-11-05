@@ -33,6 +33,14 @@
   - ✅ b_utils: css-value-parser.ts (parseCssValueNode)
   - Updated all test files to use `.issues[0]?.message` instead of `.error`
   - All 913 tests passing ✅
+- [x] **Phase 1.3: Converted remaining 11 parsers to ParseResult** 🎉
+  - ✅ 4 gradient parsers (linear, radial, conic, color-stop) with multi-error reporting
+  - ✅ utils/ast/functions.ts (findFunctionNode, parseCssString)
+  - ✅ b_declarations core/parser.ts (parseDeclaration, parseDeclarationString)
+  - ✅ b_declarations background-image/parser.ts
+  - ✅ b_declarations utils/keywords.ts (parseCSSWideKeyword)
+  - ✅ Updated all test files (6 files) to use ParseResult pattern
+  - All 913 tests passing ✅
 
 ---
 
@@ -40,49 +48,43 @@
 
 **Working:**
 
-- ✅ Session 020 initialized
-- ✅ b_declarations package refactored with modular architecture
-  - `core/` - Framework (types, registry, parser, generator)
-  - `properties/background-image/` - Complete implementation (types, parser, generator, definition, tests)
-  - 16 implementation files total
-- ✅ Generator system fully implemented
-  - `core/generator.ts` with type-safe generics
-  - `generateDeclaration()` function working
-  - Property-level generators (e.g., `generateBackgroundImage()`)
-- ✅ **Phase 1.2: 12/23 atomic parsers converted to ParseResult** 🎉
-  - All atomic value parsers now use structured errors
-  - Color parsers fully converted (7 parsers)
-  - b_utils CssValue parser converted
-  - Consistent error handling across all basic parsers
+- ✅ **Phase 1 COMPLETE: All parsers converted to ParseResult** 🎉
+  - 23/23 parsers now use structured error handling
+  - Consistent parseOk/parseErr with createError() pattern
+  - Multi-error reporting in list parsers (gradients)
+  - Fail-fast in atomic parsers (colors, lengths, etc.)
 - ✅ All quality gates passing
   - Typecheck: ✅
   - Tests: 913/913 passing ✅
   - Build: ✅
+  - Lint: ✅
 
 **Package Structure:**
 
 ```
 packages/b_declarations/src/
 ├── core/                    # Framework
-│   ├── types.ts
+│   ├── types.ts            # ✅ Updated to ParseResult
 │   ├── registry.ts
-│   ├── parser.ts
-│   ├── generator.ts         # ✅ NEW
+│   ├── parser.ts           # ✅ Updated to ParseResult
+│   ├── generator.ts
 │   └── index.ts
 ├── properties/
 │   └── background-image/    # Complete property module
 │       ├── types.ts
-│       ├── parser.ts
-│       ├── generator.ts     # ✅ NEW
+│       ├── parser.ts        # ✅ Updated to ParseResult
+│       ├── generator.ts
 │       ├── definition.ts
 │       ├── index.ts
 │       └── __tests__/
 └── utils/
+    ├── keywords.ts          # ✅ Updated to ParseResult
+    └── split.ts
 ```
 
 **Known Issues:**
 
-- None! Quick wins completed ✅
+- None! Phase 1 complete ✅
 
 **Not working:**
 
@@ -92,32 +94,25 @@ packages/b_declarations/src/
 
 ## 🎯 Next Steps
 
-**Action Plan Created:** `docs/sessions/020/ACTION_PLAN.md`
+**Action Plan:** `docs/sessions/020/ACTION_PLAN.md`
 
-### Phase 1: Error Handling Unification (~2.5 hours)
+### ✅ Phase 1: Error Handling Unification (COMPLETE)
 
-1. ✅ **Quick Win 1:** Fix gradient generator throwing (DONE - 5 mins)
-2. ✅ **Quick Win 2:** Fix hex parser (#f00 shorthand support) (DONE - 10 mins)
-3. ✅ **Atomic parsers:** Convert 12/23 parsers to ParseResult (DONE - 50 mins)
-   - ✅ 4 basic parsers (angle, length x3, position x3, url)
-   - ✅ 7 color parsers (rgb, hsl, hwb, lab, lch, oklab, oklch)
-   - ✅ 1 color dispatcher (color.ts x2)
-   - ✅ 1 utils parser (b_utils css-value-parser)
-4. 🔄 **List parsers:** Convert remaining 11/23 parsers (NEXT - est. 1-1.5 hours)
-   - 4 gradient parsers (multi-error reporting pattern)
-   - 1 utils/ast/functions.ts
-   - Declaration layer updates
+1. ✅ Quick Win 1: Fix gradient generator throwing
+2. ✅ Quick Win 2: Fix hex parser (#f00 shorthand support)
+3. ✅ Atomic parsers: Convert 12/23 parsers to ParseResult
+4. ✅ List parsers: Convert remaining 11/23 parsers
+5. ✅ Test updates: All test files updated
 
-### Phase 2: Reduce Boilerplate (~1.75 hours)
+### 🔄 Phase 2: Reduce Boilerplate (NEXT - est. 1.75 hours)
 
-4. Use Zod validation in 7 color generators
-5. Extract color interpolation utility
-6. Refactor generator helpers
+1. Use Zod validation in 7 color generators
+2. Extract color interpolation utility
+3. Refactor generator helpers
 
-### Phase 3: Feature Completeness (DONE in Quick Wins)
+### Phase 3: Feature Completeness (DONE)
 
-**Total Estimated Time:** ~5 hours
-**Strategy:** Start with quick wins, then systematic mechanical changes
+✅ All quick wins completed in Phase 1
 
 ---
 
@@ -128,30 +123,30 @@ packages/b_declarations/src/
 - Generator field made optional in `PropertyDefinition` to avoid breaking existing properties
 - Type-safe generics used throughout for property names and IR types
 - **Atomic parsers use fail-fast strategy** - return immediately on first error
-- **List parsers will use multi-error reporting** - collect all errors before returning
+- **List parsers use multi-error reporting** - collect all errors using `issues.push(...stopResult.issues)`
 - Standardized on `parseOk`/`parseErr` with `createError()` for structured errors
-- Test updates: `.error` → `.issues[0]?.message` and `.toBe()` → `.toContain()` for robustness
+- Test pattern: `.error` → `.issues[0]?.message` for error message access
+- PropertyDefinition interface now uses `ParseResult<T>` instead of `Result<T, string>`
 
 ---
 
 **Session 020 Progress** 🚀
 
-**Time invested:** ~60 minutes
-**Parsers converted:** 12/23 (52% complete)
-**Pattern established:** Clear methodology for remaining conversions
+**Time invested:** ~90 minutes
+**Phase 1 Status:** ✅ COMPLETE (100%)
+**Pattern established:** Multi-error reporting for lists, fail-fast for atomics
 
 **Commits made:**
 
 1. Quick wins (gradient throwing + hex parser)
 2. Atomic parsers batch 1 (angle, length, position, url)
 3. Color parsers + CssValue parser
+4. Gradient parsers + declarations layer
+5. Test updates
 
-**Remaining work:**
+**Next session focus:**
 
-- 4 gradient parsers (list-based, multi-error)
-- 1 utils/ast/functions.ts
-- Declaration layer updates
-- Phase 2: Boilerplate reduction
-- Phase 3: Feature completeness (already done in quick wins)
+- Phase 2: Boilerplate reduction (Zod validation, extract utilities)
+- Estimate: 1.75 hours
 
 **Break time!** ☕
