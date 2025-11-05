@@ -23,6 +23,16 @@
   - Made regex case-insensitive (accepts #FF5733 and #ff5733)
   - Updated tests to validate new behavior
   - All tests passing ✅
+- [x] **Phase 1.2: Converted 12/23 atomic parsers to ParseResult** ✅
+  - ✅ angle.ts (parseAngleNode)
+  - ✅ length.ts (parseLengthNode, parseLengthPercentageNode, parseNumberNode)
+  - ✅ position.ts (parsePositionValueNode, parsePosition2D, parseAtPosition)
+  - ✅ url.ts (parseUrl)
+  - ✅ rgb.ts, hsl.ts, hwb.ts, lab.ts, lch.ts, oklab.ts, oklch.ts (all 7 color parsers)
+  - ✅ color.ts (parseNode, parse)
+  - ✅ b_utils: css-value-parser.ts (parseCssValueNode)
+  - Updated all test files to use `.issues[0]?.message` instead of `.error`
+  - All 913 tests passing ✅
 
 ---
 
@@ -39,9 +49,14 @@
   - `core/generator.ts` with type-safe generics
   - `generateDeclaration()` function working
   - Property-level generators (e.g., `generateBackgroundImage()`)
+- ✅ **Phase 1.2: 12/23 atomic parsers converted to ParseResult** 🎉
+  - All atomic value parsers now use structured errors
+  - Color parsers fully converted (7 parsers)
+  - b_utils CssValue parser converted
+  - Consistent error handling across all basic parsers
 - ✅ All quality gates passing
   - Typecheck: ✅
-  - Tests: 54/54 passing ✅
+  - Tests: 913/913 passing ✅
   - Build: ✅
 
 **Package Structure:**
@@ -81,12 +96,17 @@ packages/b_declarations/src/
 
 ### Phase 1: Error Handling Unification (~2.5 hours)
 
-1. ✅ **Quick Win 1:** Fix gradient generator throwing (5 mins) - BLOCKING
-2. ✅ **Quick Win 2:** Fix hex parser (#f00 shorthand support) (10 mins)
-3. Convert 23 parsers from `Result<T, string>` to `ParseResult<T>` (2 hours)
-   - 15 atomic parsers (fail-fast)
-   - 4 list parsers (multi-error reporting)
-   - 4 utility/declaration parsers
+1. ✅ **Quick Win 1:** Fix gradient generator throwing (DONE - 5 mins)
+2. ✅ **Quick Win 2:** Fix hex parser (#f00 shorthand support) (DONE - 10 mins)
+3. ✅ **Atomic parsers:** Convert 12/23 parsers to ParseResult (DONE - 50 mins)
+   - ✅ 4 basic parsers (angle, length x3, position x3, url)
+   - ✅ 7 color parsers (rgb, hsl, hwb, lab, lch, oklab, oklch)
+   - ✅ 1 color dispatcher (color.ts x2)
+   - ✅ 1 utils parser (b_utils css-value-parser)
+4. 🔄 **List parsers:** Convert remaining 11/23 parsers (NEXT - est. 1-1.5 hours)
+   - 4 gradient parsers (multi-error reporting pattern)
+   - 1 utils/ast/functions.ts
+   - Declaration layer updates
 
 ### Phase 2: Reduce Boilerplate (~1.75 hours)
 
@@ -107,16 +127,29 @@ packages/b_declarations/src/
 - Each property is self-contained module with 5 files (types, parser, generator, definition, index)
 - Generator field made optional in `PropertyDefinition` to avoid breaking existing properties
 - Type-safe generics used throughout for property names and IR types
+- **Atomic parsers use fail-fast strategy** - return immediately on first error
+- **List parsers will use multi-error reporting** - collect all errors before returning
+- Standardized on `parseOk`/`parseErr` with `createError()` for structured errors
+- Test updates: `.error` → `.issues[0]?.message` and `.toBe()` → `.toContain()` for robustness
 
 ---
 
-**Session 020 Initialized** 🚀
+**Session 020 Progress** 🚀
 
-**Previous Session:** Session 019 goals were largely completed:
+**Time invested:** ~60 minutes
+**Parsers converted:** 12/23 (52% complete)
+**Pattern established:** Clear methodology for remaining conversions
 
-- ✅ Created generator.ts
-- ✅ Added generator field to PropertyDefinition
-- ✅ background-image generator implemented
-- ✅ Tests passing
-- 📝 ADR for migration path - deferred
-- 🔄 gradient/index.ts fix - still pending (wrapped with try/catch)
+**Commits made:**
+1. Quick wins (gradient throwing + hex parser)
+2. Atomic parsers batch 1 (angle, length, position, url)
+3. Color parsers + CssValue parser
+
+**Remaining work:**
+- 4 gradient parsers (list-based, multi-error)
+- 1 utils/ast/functions.ts
+- Declaration layer updates
+- Phase 2: Boilerplate reduction
+- Phase 3: Feature completeness (already done in quick wins)
+
+**Break time!** ☕
