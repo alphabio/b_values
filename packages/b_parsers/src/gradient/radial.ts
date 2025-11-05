@@ -177,40 +177,11 @@ export function fromFunction(fn: csstree.FunctionNode): ParseResult<Type.RadialG
 
   idx = Utils.Ast.skipComma(children, idx);
 
-  if (idx < children.length) {
-    const node = children[idx];
-    if (node?.type === "Identifier" && node.name.toLowerCase() === "in") {
-      idx++;
-      const spaceNode = children[idx];
-      if (spaceNode?.type === "Identifier") {
-        const space = spaceNode.name.toLowerCase();
-        colorInterpolationMethod = { colorSpace: space } as Type.ColorInterpolationMethod;
-        idx++;
-
-        const hueNode = children[idx];
-        if (hueNode?.type === "Identifier") {
-          const hueWord1 = hueNode.name.toLowerCase();
-          if (
-            hueWord1 === "longer" ||
-            hueWord1 === "shorter" ||
-            hueWord1 === "increasing" ||
-            hueWord1 === "decreasing"
-          ) {
-            idx++;
-            const hueNode2 = children[idx];
-            if (hueNode2?.type === "Identifier" && hueNode2.name.toLowerCase() === "hue") {
-              colorInterpolationMethod = {
-                colorSpace: space,
-                hueInterpolationMethod: `${hueWord1} hue`,
-              } as Type.ColorInterpolationMethod;
-              idx++;
-            }
-          }
-        }
-      }
-
-      idx = Utils.Ast.skipComma(children, idx);
-    }
+  const interpolationResult = Utils.parseColorInterpolationMethod(children, idx);
+  if (interpolationResult) {
+    colorInterpolationMethod = interpolationResult.method;
+    idx = interpolationResult.nextIndex;
+    idx = Utils.Ast.skipComma(children, idx);
   }
 
   const stopGroups = Utils.Ast.splitNodesByComma(children, { startIndex: idx });
