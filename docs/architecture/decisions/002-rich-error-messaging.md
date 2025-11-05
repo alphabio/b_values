@@ -1,398 +1,322 @@
-# ADR 002: Rich Error Messaging for Parsing and Generation
+# ADR 002: Rich, Actionable Error Reporting
 
-**Status:** Proposed
+**Status:** Approved
 **Date:** 2025-11-05
-**Context:** Session 021 - Phase 2 Error Handling Improvements
+**Reviewers:** Development Team, Session 023
+**Context:** Session 021-023 - Error Handling Improvements
 
 ---
 
-## Context
+## 1. Context
 
-Currently, our error handling system uses a basic `Issue` structure with `code` and `message` fields:
+The current error handling system, based on a simple `Issue` structure (`{ code, message }`), is insufficient. It lacks the necessary detail to enable developers to quickly diagnose and fix problems.
 
-```typescript
-interface Issue {
-  code: string; // e.g., "invalid-ir", "missing-required-field"
-  message: string; // Human-readable description
-}
-```
+* **For CSS Parsing:** Errors lack source context. A message like "Invalid angle value" is not actionable without knowing *where* in the source CSS the invalid angle is located.
+* **For IR Generation:** Errors are often cryptic. When Zod validation fails on an IR object, a message like "Expected string, received undefined" doesn't pinpoint the *cause* of the error (e.g., a misspelled property name in the input IR).
 
-This approach has limitations:
-
-1. **Parsers** - When CSS parsing fails, users don't get visual context showing exactly where in their CSS the error occurred
-2. **Generators** - When IR generation fails, users don't get the full path to the problematic field or hints on how to fix it
-3. **No Integration** - We have a rich validation system in `packages/b_utils/src/parse/validate.ts` that provides excellent error formatting (line numbers, visual pointers, context windows), but it's not integrated into our parser error handling
-
-### Current State
-
-**Parsing errors:**
-
-```typescript
-// User sees:
-{ code: "parse-error", message: "Invalid angle value" }
-
-// But they need:
-//   3 | .class {
-//   4 |   transform: rotate(45degrees);
-//       -----------------------^^^^^^^^
-//   5 | }
-```
-
-**Generation errors (with new Zod validation):**
-
-```typescript
-// User sees:
-{ code: "invalid-ir", message: "Invalid RGBColor: g: Expected" }
-
-// But they need:
-{
-  code: "invalid-ir",
-  message: "Invalid RGBColor",
-  path: ["backgroundColor", "value", "g"],
-  hint: "Expected CssValue object with kind, value fields",
-  received: "undefined"
-}
-```
+This ADR proposes a phased enhancement of the `Issue` structure and error reporting mechanisms to provide rich, actionable context for both parsing and generation failures.
 
 ---
 
-## Decision
+## 2. Decision
 
-We will enhance our error system to provide rich, actionable error messages for both parsing and generation failures.
+We will evolve our `Issue` structure and error reporting pipelines to provide developers with precise, contextual, and actionable feedback.
 
-### Phase 1: Integrate Parser Validation (High Priority)
+### The Unified `Issue` Structure
 
-**Goal:** Use existing `validate()` function from `packages/b_utils/src/parse/validate.ts` in all CSS parsers.
-
-**Benefits:**
-
-- Already implemented and tested
-- Beautiful error formatting with:
-  - Line numbers and context window (±2 lines)
-  - Visual pointers (^^^) at exact error location
-  - Smart line truncation for long lines
-  - Intelligent whitespace handling
-
-**Integration Points:**
-
-1. **Declaration-level parsing** (`packages/b_declarations`)
-
-   ```typescript
-   // Before:
-   parseDeclaration("background-image: invalid");
-   // Returns: { ok: false, issues: [{ code: "parse-error", message: "..." }] }
-
-   // After:
-   parseDeclaration("background-image: invalid");
-   // Returns: {
-   //   ok: false,
-   //   issues: [{
-   //     code: "parse-error",
-   //     message: "Invalid gradient syntax",
-   //     formattedError: `
-   //       1 | background-image: linear-gradient(45deg red, blue);
-   //           -------------------^^^^^^^^^^^^^^^^^
-   //     `
-   //   }]
-   // }
-   ```
-
-2. **Property-level parsing** (`packages/b_parsers`)
-   - Currently parsers work on AST nodes (not raw CSS strings)
-   - Need to preserve original CSS context for error reporting
-   - Option A: Thread original CSS through parser chain
-   - Option B: Regenerate CSS from AST for error context (lossy)
-
-**Implementation:**
+The core of this decision is to unify around a more expressive `Issue` interface. All new fields will be optional to maintain backward compatibility.
 
 ```typescript
-// packages/b_types/src/result/parse.ts
+// Proposed structure in packages/b_types/src/result/issue.ts
 export interface Issue {
-  code: string;
+  code: IssueCode;
+  severity: "error" | "warning" | "info";
   message: string;
-  formattedError?: string; // NEW: Rich formatted error with visual context
-  path?: string[]; // NEW: Path to error location in structure
-}
 
-// packages/b_declarations/src/core/parser.ts
-import { validate } from "@b/utils/parse/validate";
+  // --- Context Fields ---
 
-export function parseDeclaration(css: string): ParseResult<Declaration> {
-  // First, validate with rich error formatting
-  const validation = validate(css);
+  /** The CSS property associated with this issue, if applicable. */
+  property?: string;
 
-  if (!validation.ok || validation.warnings.length > 0) {
-    const issues: Issue[] = [];
+  /** A structured path to the problematic field within the IR. */
+  path?: (string | number)[];
 
-    // Add syntax errors with context
-    for (const error of validation.errors) {
-      issues.push(createError("syntax-error", error.message));
-    }
+  /** A developer-friendly hint on how to resolve the issue. */
+  suggestion?: string;
 
-    // Add property validation errors with formatted display
-    for (const warning of validation.warnings) {
-      issues.push({
-        code: "invalid-property-value",
-        message: `Invalid value for '${warning.property}'`,
-        formattedError: warning.formattedWarning,
-      });
-    }
+  /**
+   * For CSS parsing errors, a pre-formatted string containing the source line,
+   * context, and a pointer (^^^) to the error location.
+   */
+  sourceContext?: string;
 
-    return parseErr(...issues);
-  }
+  /** For type-related errors, the expected type or value. */
+  expected?: string;
 
-  // Continue with normal parsing...
+  /** For type-related errors, the actual type or value received. */
+  received?: string;
+  
+  // --- Internal Fields (not exposed to users) ---
+  
+  /** Internal: location in source for error formatting */
+  _location?: { offset: number; length: number };
 }
 ```
 
-### Phase 2: Rich Generator Error Context (Medium Priority)
+### Phase 1: Rich Parser Errors (High Priority)
 
-**Goal:** Leverage Zod's detailed error information to provide full paths and actionable hints.
+**Goal:** Integrate rich error formatting directly into the parsing pipeline with source-aware parsers.
 
-**Current Zod Output:**
+**Refined Strategy:** The current `validate()` function is excellent for linting a whole stylesheet, but calling it for every single property value is inefficient. A better approach is to enhance our core parsers to be **source-aware**.
 
-```typescript
-{
-  issues: [
-    {
-      code: "invalid_type",
-      expected: "object",
-      received: "undefined",
-      path: ["g"],
-      message: "Required",
-    },
-  ];
-}
-```
+1. **Thread Source Context:** When `parseDeclaration` is called with a string, it should pass both the **value string** and track the **offset** in the original declaration string down to property-specific parsers.
 
-**Enhanced Generator Errors:**
+2. **Report Errors with Location:** If a lower-level parser fails, it should include the offset and length of the problematic substring in the error's internal `_location` field.
 
-```typescript
-// packages/b_generators/src/color/rgb.ts
-export function generate(color: RGBColor): GenerateResult {
-  const validation = rgbColorSchema.safeParse(color);
+3. **Format at the Top:** The top-level `parseDeclaration` function catches these errors and uses a utility (derived from `validate.ts`) to generate the `sourceContext` string just before returning the final `ParseResult`.
 
-  if (!validation.success) {
-    const issues = validation.error.issues.map((zodIssue) => {
-      const path = zodIssue.path.map(String);
-      const hint = getHintForZodError(zodIssue, "RGBColor");
-
-      return {
-        code: mapZodCodeToIssueCode(zodIssue.code),
-        message: `Invalid RGBColor at ${path.join(".")}`,
-        path: path,
-        hint: hint,
-        received: zodIssue.received,
-        expected: zodIssue.expected,
-      };
-    });
-
-    return generateErr(...issues);
-  }
-
-  // Continue...
-}
-
-// Helper function
-function getHintForZodError(issue: ZodIssue, typeName: string): string {
-  switch (issue.code) {
-    case "invalid_type":
-      if (issue.received === "undefined") {
-        return `'${issue.path.join(".")}' is required in ${typeName}`;
-      }
-      return `Expected ${issue.expected}, got ${issue.received}`;
-
-    case "invalid_union":
-      return `Value must be one of: ${issue.unionErrors.map((e) => e.issues[0]?.expected).join(", ")}`;
-
-    default:
-      return issue.message;
-  }
-}
-```
-
-**Enhanced Issue Structure:**
-
-```typescript
-// packages/b_types/src/result/issue.ts
-export interface Issue {
-  code: string; // Error type
-  message: string; // Human-readable summary
-
-  // NEW: Rich context
-  path?: string[]; // Path to error in data structure
-  hint?: string; // Actionable suggestion for fixing
-  formattedError?: string; // Visual error display (for parsing)
-
-  // NEW: Type information
-  expected?: string; // Expected type/value
-  received?: string; // Actual type/value
-}
-```
-
-### Phase 3: Path Context in Nested Structures (Low Priority)
-
-**Goal:** Track full path context through nested property parsing.
+This avoids parsing the same string multiple times and keeps the source formatting logic contained at the API entry point.
 
 **Example:**
-
 ```typescript
-// User's IR:
 {
-  backgroundImage: [
-    {
-      kind: "linear-gradient",
-      colorStops: [
-        { color: { kind: "rgb", r: lit(255) /* missing g, b */ } }
-      ]
-    }
-  ]
-}
-
-// Error with full path:
-{
-  code: "invalid-ir",
-  message: "Invalid RGB color",
-  path: ["backgroundImage", 0, "colorStops", 0, "color", "g"],
-  hint: "RGB colors require 'r', 'g', and 'b' fields",
-  received: "undefined",
-  expected: "CssValue"
+  code: "invalid-syntax",
+  message: "Invalid hex color: must be 3, 4, 6, or 8 hex characters.",
+  property: "color",
+  sourceContext:
+    "  1 | .my-class {\n" +
+    "  2 |   color: #gg0000;\n" +
+    "    |          ^^^^^^^\n" +
+    "  3 | }"
 }
 ```
 
-**Implementation:** Thread path context through parser/generator chains.
+### Phase 2: Rich Generator Errors (HIGHEST Priority)
+
+**Goal:** Translate Zod `SafeParseError` objects into our rich `Issue` format. This has the highest ROI for improving the generator DX.
+
+**Strategy:**
+
+1. **Centralize Translation:** We use and enhance the `zodErrorToIssues` function in `b_utils`. This function is the single source of truth for converting a `ZodError` into an `Issue[]` array.
+
+2. **Enforce Strictness:** All IR object schemas in `b_types` **must** use `.strict()`. ✅ **Complete (Session 023)**. This is non-negotiable as it's the primary mechanism for catching typos (e.g., `names` instead of `name`).
+
+3. **Generator Implementation:** All `generate` functions begin with a `safeParse` call and use `zodErrorToIssues` to create the error result if validation fails. ✅ **Pattern established (Session 022)**.
+
+**`zodErrorToIssues` Enhancement:**
+This utility will be enhanced to populate the new `Issue` fields:
+* `path` from `zodIssue.path`
+* `expected`/`received` for `invalid_type` errors
+* `suggestion` for `unrecognized_keys` errors (e.g., "Unrecognized key(s): 'names'. Did you mean 'name'?"), with Levenshtein distance for typo detection.
+
+**Example:**
+```typescript
+{
+  code: "unrecognized_keys",
+  message: "Unrecognized key(s) in object: 'positon'",
+  property: "background-image",
+  path: [ "ir", "positon" ],
+  suggestion: "Did you mean 'position'?",
+  severity: "error"
+}
+```
+
+### Phase 3: Path Propagation in Nested Calls (Medium Priority)
+
+**Goal:** Ensure that error paths are correctly composed when parsers or generators call each other.
+
+**Example Scenario:** `generateDeclaration` calls `generateBackgroundImage`, which calls `Generators.Gradient.generate`, which calls `Generators.Color.generate`. If the color is invalid, the path needs to be correctly assembled.
+
+**Strategy:**
+
+1. **Pass Down a `parentPath`:** Functions in the call chain accept an optional `GenerateContext` parameter containing `parentPath: (string | number)[]`.
+
+2. **Prepend the Path:** When an error is created or a Zod error is translated, the `parentPath` is prepended to the `path` field of the resulting `Issue`.
+
+**Example:**
+```typescript
+{
+  code: "invalid_ir",
+  message: "ir.layers[0].gradient.colorStops[1].color.g: Required",
+  path: [ "ir", "layers", 0, "gradient", "colorStops", 1, "color", "g" ],
+  expected: "CssValue",
+  received: "undefined",
+  severity: "error"
+}
+```
 
 ---
 
-## Consequences
+## 3. Consequences
 
 ### Positive
 
-1. **Better DX** - Developers get precise, actionable error messages
-2. **Faster debugging** - Visual context shows exact error location
-3. **Type safety** - Zod integration provides rich type information
-4. **Consistency** - Same error format across parsing and generation
-5. **Low effort** - Phase 1 reuses existing validation infrastructure
+1. **Superior Developer Experience:** Errors are no longer questions; they are answers that pinpoint the exact location and nature of a problem.
+2. **Reduced Debugging Time:** Visual context for parsers and deep paths for generators eliminate guesswork.
+3. **Improved Maintainability:** A single, robust `Issue` structure simplifies error handling logic throughout the codebase.
+4. **Actionable Suggestions:** "Did you mean X?" suggestions catch common typos automatically.
 
-### Negative
+### Risks & Mitigations
 
-1. **Breaking change** - Issue structure changes (mitigated: optional fields)
-2. **Performance** - Additional validation step (mitigated: only on error path)
-3. **Complexity** - Need to track context through call chains
-4. **Memory** - Storing formatted errors increases memory (mitigated: only when needed)
+1. **Implementation Complexity (Parser Context):** Threading source context through parsers can be complex.
+   * **Mitigation:** Focus on passing substring `offset` and `length` information at API boundaries only. The top-level function holds the full source and performs final formatting.
 
-### Neutral
+2. **Performance Overhead:** Error formatting could add latency.
+   * **Mitigation:** 
+     - Format only on error path (success path unchanged)
+     - Lightweight offset tracking during parsing
+     - Zod validation is already fast and essential
 
-1. **Migration** - Existing code continues to work (new fields are optional)
-2. **Testing** - Need to update test assertions (already doing this in Session 021)
-
----
-
-## Implementation Plan
-
-### Immediate (Session 021 continuation)
-
-1. ✅ Fix test assertions to expect `"invalid-ir"` with Zod messages
-2. ✅ Complete Phase 2 Task 2.1 (Zod validation in generators)
-
-### Short-term (Next session)
-
-1. Add optional `formattedError` field to `Issue` interface
-2. Integrate `validate()` function in `parseDeclaration()`
-3. Update declaration parser tests to verify rich errors
-4. Document error format in user-facing docs
-
-### Medium-term (Future session)
-
-1. Enhance generator error context with Zod details
-2. Add `path`, `hint`, `expected`, `received` fields
-3. Create helper functions for Zod → Issue mapping
-4. Add path tracking through nested structures
-
-### Long-term (Future enhancement)
-
-1. Error recovery suggestions
-2. Interactive error fixing (suggest valid values)
-3. Error severity levels (error vs warning)
-4. Error aggregation and deduplication
+3. **Breaking Changes:** New `Issue` fields change the structure.
+   * **Mitigation:** All new fields are optional; existing code continues to work.
 
 ---
 
-## Examples
+## 4. Implementation Plan
+
+See detailed implementation plan: [`docs/sessions/023/ADR-002-IMPLEMENTATION-PLAN.md`](../../sessions/023/ADR-002-IMPLEMENTATION-PLAN.md)
+
+### Immediate Actions
+
+1. ✅ **Enhance `Issue` Type:** Update the interface in `b_types` with new optional fields
+2. ✅ **Solidify Phase 2 Foundation (Session 022-023):**
+   - Add `.strict()` to **all** Zod object schemas in `b_types`
+   - Establish pattern: `safeParse` → `zodErrorToIssues` in generators
+
+### Short-Term (Next 1-2 Sessions)
+
+1. **Complete Phase 2:**
+   - Enhance `zodErrorToIssues` with rich context (path, suggestion, expected/received)
+   - Implement Levenshtein distance for "Did you mean" suggestions
+   - Update all generators to use enhanced error translation
+
+2. **Implement Phase 1:**
+   - Create `formatSourceContext()` utility (derived from `validate.ts`)
+   - Update `parseDeclaration` to be source-aware (track offsets)
+   - Update property parsers to include location in errors
+   - Format `sourceContext` at API boundary
+
+### Medium-Term
+
+1. **Implement Phase 3:**
+   - Add `GenerateContext` parameter to generators
+   - Thread `parentPath` through nested calls
+   - Update error creation to prepend parent paths
+   - Write integration tests for deeply nested errors
+
+---
+
+## 5. Timeline Estimate
+
+* **Phase 1:** 3-4 hours (infrastructure + proof of concept + rollout)
+* **Phase 2:** 2-3 hours (enhancement + Levenshtein + validation)
+* **Phase 3:** 2-3 hours (interface updates + call site updates)
+
+**Total:** 7-10 hours across 2-3 sessions
+
+---
+
+## 6. Success Criteria
+
+### Quantitative
+- ✅ All 944+ tests pass after each phase
+- ✅ Zero performance regression on success path
+- Error messages contain 2-5x more actionable detail
+
+### Qualitative
+- Errors show exact location in source (parsing)
+- Errors show full path to problem (generation)
+- Errors include "Did you mean X?" suggestions
+- Users can fix errors without reading source code
+
+---
+
+## 7. References
+
+* Existing validation: `packages/b_utils/src/parse/validate.ts`
+* Issue structure: `packages/b_types/src/result/issue.ts`
+* Zod documentation: https://zod.dev
+* Implementation plan: `docs/sessions/023/ADR-002-IMPLEMENTATION-PLAN.md`
+* Session 022: Multi-error collection + Zod standardization
+* Session 023: Strict validation + structure cleanup
+
+---
+
+## 8. Appendix: Examples
 
 ### Parser Error (After Phase 1)
 
+**Input:**
 ```typescript
-const css = `
-  color: #gg0000;
-  margin: 10px;
-`;
+parseDeclaration("color: #gg0000");
+```
 
-const result = parseDeclaration(css);
-
-// Result:
+**Output:**
+```typescript
 {
   ok: false,
   issues: [{
-    code: "invalid-property-value",
-    message: "Invalid value for 'color'",
-    formattedError: `
-      1 | color: #gg0000;
-          -------^^^^^^^^
-      2 | margin: 10px;
-    `
+    code: "invalid-syntax",
+    message: "Invalid hex color: must be 3, 4, 6, or 8 hex characters",
+    property: "color",
+    sourceContext:
+      "  1 | color: #gg0000;\n" +
+      "    |        ^^^^^^^\n"
   }]
 }
 ```
 
 ### Generator Error (After Phase 2)
 
+**Input:**
 ```typescript
-const color: RGBColor = { kind: "rgb", r: lit(255) } as RGBColor;
-const result = RGB.generate(color);
+const color = { kind: "rgb", r: lit(255), positon: lit(128) };
+RGB.generate(color);
+```
 
-// Result:
+**Output:**
+```typescript
 {
   ok: false,
   issues: [{
-    code: "missing-required-field",
-    message: "Invalid RGBColor at g",
-    path: ["g"],
-    hint: "'g' is required in RGBColor",
-    expected: "CssValue",
-    received: "undefined"
+    code: "unrecognized_keys",
+    message: "Unrecognized key(s) in object: 'positon'",
+    path: ["positon"],
+    suggestion: "Did you mean 'position'?",
+    expected: "Valid keys: kind, r, g, b, alpha",
+    severity: "error"
   }]
 }
 ```
 
 ### Nested Error (After Phase 3)
 
+**Input:**
 ```typescript
-const decl = {
+generateDeclaration({
   property: "background-image",
   value: {
-    kind: "list",
-    values: [
-      {
-        kind: "linear-gradient",
-        colorStops: [
-          { color: { kind: "rgb", r: lit(255) } } // missing g, b
-        ]
-      }
-    ]
+    kind: "layers",
+    layers: [{
+      kind: "linear-gradient",
+      colorStops: [
+        { color: { kind: "rgb", r: lit(255) } }  // Missing g, b
+      ]
+    }]
   }
-};
+});
+```
 
-const result = generateDeclaration(decl);
-
-// Result:
+**Output:**
+```typescript
 {
   ok: false,
   issues: [{
-    code: "invalid-ir",
-    message: "Invalid RGB color in gradient color stop",
-    path: ["value", "values", 0, "colorStops", 0, "color", "g"],
-    hint: "RGB colors require 'r', 'g', and 'b' fields with CssValue objects",
+    code: "missing-required-field",
+    message: "Missing required field at value.layers[0].colorStops[0].color.g",
+    property: "background-image",
+    path: ["value", "layers", 0, "colorStops", 0, "color", "g"],
+    suggestion: "'g' is required in RGBColor",
     expected: "CssValue",
     received: "undefined"
   }]
@@ -401,19 +325,4 @@ const result = generateDeclaration(decl);
 
 ---
 
-## References
-
-- Existing validation: `packages/b_utils/src/parse/validate.ts`
-- Issue structure: `packages/b_types/src/result/issue.ts`
-- Zod documentation: https://zod.dev
-- Session 021 test failure analysis: `docs/sessions/021/test-failure-analysis.md`
-
----
-
-## Notes
-
-- This ADR captures the long-term vision for error messaging
-- Implementation will be gradual across multiple sessions
-- Phase 1 has the highest ROI (reuses existing infrastructure)
-- Phase 2 and 3 can be prioritized based on user feedback
-- Consider exposing error formatting options (context window size, max line width) in API
+**This ADR represents our commitment to exceptional developer experience through clear, actionable error messages.**
