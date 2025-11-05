@@ -3,10 +3,18 @@ import { describe, expect, it } from "vitest";
 import { hexColorSchema } from "./hex";
 
 describe("hexColorSchema", () => {
-  it("validates 6-digit hex colors", () => {
+  it("validates 6-digit hex colors (uppercase)", () => {
     const result = hexColorSchema.safeParse({
       kind: "hex",
       value: "#FF5733",
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("validates 6-digit hex colors (lowercase)", () => {
+    const result = hexColorSchema.safeParse({
+      kind: "hex",
+      value: "#ff5733",
     });
     expect(result.success).toBe(true);
   });
@@ -19,28 +27,20 @@ describe("hexColorSchema", () => {
     expect(result.success).toBe(true);
   });
 
-  it("rejects lowercase hex", () => {
-    const result = hexColorSchema.safeParse({
-      kind: "hex",
-      value: "#ff5733",
-    });
-    expect(result.success).toBe(false);
-  });
-
-  it("rejects 3-digit shorthand", () => {
+  it("validates 3-digit shorthand", () => {
     const result = hexColorSchema.safeParse({
       kind: "hex",
       value: "#F57",
     });
-    expect(result.success).toBe(false);
+    expect(result.success).toBe(true);
   });
 
-  it("rejects 4-digit shorthand", () => {
+  it("validates 4-digit shorthand with alpha", () => {
     const result = hexColorSchema.safeParse({
       kind: "hex",
       value: "#F578",
     });
-    expect(result.success).toBe(false);
+    expect(result.success).toBe(true);
   });
 
   it("rejects invalid characters", () => {

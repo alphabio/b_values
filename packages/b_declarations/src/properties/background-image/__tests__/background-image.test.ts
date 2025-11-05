@@ -68,8 +68,10 @@ describe("background-image property", () => {
 
       // Round-trip validation
       const gradient = result.value.layers[0].gradient;
-      const generated = Generators.Gradient.generate(gradient);
-      const reparsed = parseBackgroundImage(generated);
+      const generateResult = Generators.Gradient.generate(gradient);
+      expect(generateResult.ok).toBe(true);
+      if (!generateResult.ok) return;
+      const reparsed = parseBackgroundImage(generateResult.value);
       expect(reparsed.ok).toBe(true);
     });
 
@@ -85,8 +87,10 @@ describe("background-image property", () => {
 
       // Round-trip validation
       const gradient = result.value.layers[0].gradient;
-      const generated = Generators.Gradient.generate(gradient);
-      const reparsed = parseBackgroundImage(generated);
+      const generateResult = Generators.Gradient.generate(gradient);
+      expect(generateResult.ok).toBe(true);
+      if (!generateResult.ok) return;
+      const reparsed = parseBackgroundImage(generateResult.value);
       expect(reparsed.ok).toBe(true);
     });
 
@@ -102,8 +106,10 @@ describe("background-image property", () => {
 
       // Round-trip validation
       const gradient = result.value.layers[0].gradient;
-      const generated = Generators.Gradient.generate(gradient);
-      const reparsed = parseBackgroundImage(generated);
+      const generateResult = Generators.Gradient.generate(gradient);
+      expect(generateResult.ok).toBe(true);
+      if (!generateResult.ok) return;
+      const reparsed = parseBackgroundImage(generateResult.value);
       expect(reparsed.ok).toBe(true);
     });
 
@@ -119,8 +125,10 @@ describe("background-image property", () => {
 
       // Round-trip validation
       const gradient = result.value.layers[0].gradient;
-      const generated = Generators.Gradient.generate(gradient);
-      const reparsed = parseBackgroundImage(generated);
+      const generateResult = Generators.Gradient.generate(gradient);
+      expect(generateResult.ok).toBe(true);
+      if (!generateResult.ok) return;
+      const reparsed = parseBackgroundImage(generateResult.value);
       expect(reparsed.ok).toBe(true);
     });
 
@@ -136,8 +144,10 @@ describe("background-image property", () => {
 
       // Round-trip validation
       const gradient = result.value.layers[0].gradient;
-      const generated = Generators.Gradient.generate(gradient);
-      const reparsed = parseBackgroundImage(generated);
+      const generateResult = Generators.Gradient.generate(gradient);
+      expect(generateResult.ok).toBe(true);
+      if (!generateResult.ok) return;
+      const reparsed = parseBackgroundImage(generateResult.value);
       expect(reparsed.ok).toBe(true);
     });
 
@@ -153,8 +163,10 @@ describe("background-image property", () => {
 
       // Round-trip validation
       const gradient = result.value.layers[0].gradient;
-      const generated = Generators.Gradient.generate(gradient);
-      const reparsed = parseBackgroundImage(generated);
+      const generateResult = Generators.Gradient.generate(gradient);
+      expect(generateResult.ok).toBe(true);
+      if (!generateResult.ok) return;
+      const reparsed = parseBackgroundImage(generateResult.value);
       expect(reparsed.ok).toBe(true);
     });
 

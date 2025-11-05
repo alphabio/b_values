@@ -4,7 +4,7 @@ export * as Linear from "./linear";
 export * as Radial from "./radial";
 export * as Conic from "./conic";
 
-import type { Gradient, GenerateResult } from "@b/types";
+import { createError, generateErr, type GenerateResult, type Gradient } from "@b/types";
 import * as Linear from "./linear";
 import * as Radial from "./radial";
 import * as Conic from "./conic";
@@ -12,26 +12,18 @@ import * as Conic from "./conic";
 /**
  * Generate CSS string for any gradient type.
  * Routes to the appropriate gradient generator based on kind.
- *
- * @throws {Error} If generation fails (should not happen with valid IR)
  */
-export function generate(gradient: Gradient): string {
-  let result: GenerateResult;
+export function generate(gradient: Gradient): GenerateResult {
   switch (gradient.kind) {
     case "linear":
-      result = Linear.generate(gradient);
-      break;
+      return Linear.generate(gradient);
     case "radial":
-      result = Radial.generate(gradient);
-      break;
+      return Radial.generate(gradient);
     case "conic":
-      result = Conic.generate(gradient);
-      break;
+      return Conic.generate(gradient);
+    default:
+      return generateErr(
+        createError("unsupported-kind", `Unsupported gradient kind: ${(gradient as { kind: string }).kind}`),
+      );
   }
-
-  if (!result.ok) {
-    throw new Error(`Failed to generate gradient: ${result.issues.map((i) => i.message).join(", ")}`);
-  }
-
-  return result.value;
 }

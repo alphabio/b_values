@@ -43,18 +43,8 @@ function generateImageLayer(layer: ImageLayer): GenerateResult {
       return generateOk(`url(${layer.url})`, "background-image");
 
     case "gradient": {
-      // Gradient.generate returns string, not GenerateResult
-      try {
-        const gradientString = Generators.Gradient.generate(layer.gradient);
-        return generateOk(gradientString, "background-image");
-      } catch (error) {
-        return generateErr(
-          createError("invalid-ir", `Failed to generate gradient: ${error}`, {
-            property: "background-image",
-          }),
-          "background-image",
-        );
-      }
+      // Gradient.generate now returns GenerateResult directly
+      return Generators.Gradient.generate(layer.gradient);
     }
 
     default:
