@@ -3,9 +3,7 @@
 
 // Core
 export * from "./types";
-export * from "./registry";
-export * from "./parser";
-export * from "./generator";
+export * from "./core";
 
 // Utilities
 export * from "./utils";

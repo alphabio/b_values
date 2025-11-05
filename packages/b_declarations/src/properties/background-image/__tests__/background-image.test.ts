@@ -1,6 +1,6 @@
-// b_path:: packages/b_declarations/src/properties/background-image.test.ts
+// b_path:: packages/b_declarations/src/properties/background-image/__tests__/background-image.test.ts
 import { describe, expect, it } from "vitest";
-import { parseBackgroundImage } from "./background-image";
+import { parseBackgroundImage } from "../parser";
 import * as Generators from "@b/generators";
 
 describe("background-image property", () => {

@@ -1,4 +1,4 @@
-// b_path:: packages/b_declarations/src/registry.test.ts
+// b_path:: packages/b_declarations/src/core/registry.test.ts
 import { describe, expect, it, beforeEach } from "vitest";
 import { propertyRegistry, defineProperty } from "./registry";
 import { ok, type Result } from "@b/types";

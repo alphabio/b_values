@@ -1,27 +1,8 @@
-// b_path:: packages/b_declarations/src/properties/background-image.ts
-import { ok, err, type Result, type Gradient } from "@b/types";
+// b_path:: packages/b_declarations/src/properties/background-image/parser.ts
+import { ok, err, type Result } from "@b/types";
 import * as Parsers from "@b/parsers";
-import { defineProperty } from "../registry";
-import { isCSSWideKeyword, parseCSSWideKeyword, splitByComma } from "../utils";
-
-/**
- * Background image value IR.
- * Can be a list of image layers.
- */
-export type BackgroundImageIR = { kind: "keyword"; value: string } | { kind: "layers"; layers: ImageLayer[] };
-
-/**
- * Single image layer - can be various <image> types.
- *
- * <image> =
- *   <url> |
- *   <gradient> |
- *   <image()> |
- *   <image-set()> |
- *   <cross-fade()> |
- *   <element()>
- */
-export type ImageLayer = { kind: "url"; url: string } | { kind: "gradient"; gradient: Gradient } | { kind: "none" };
+import { isCSSWideKeyword, parseCSSWideKeyword, splitByComma } from "../../utils";
+import type { BackgroundImageIR, ImageLayer } from "./types";
 
 /**
  * Parse a background-image value.
@@ -136,14 +117,3 @@ export function parseBackgroundImage(value: string): Result<BackgroundImageIR, s
     layers,
   });
 }
-
-/**
- * background-image property definition.
- */
-export const backgroundImageProperty = defineProperty({
-  name: "background-image",
-  syntax: "<bg-image>#",
-  parser: parseBackgroundImage,
-  inherited: false,
-  initial: "none",
-});

@@ -17,6 +17,7 @@ Based on comprehensive audit (see `docs/sessions/019/AUDIT.md`):
 6. 📝 Document migration path for parsers (ADR)
 
 **Audit Reference:** Full analysis in `docs/sessions/019/AUDIT.md` covering:
+
 - Mixed Result type systems (OLD vs NEW)
 - 30+ affected files across b_parsers and b_declarations
 - Phased migration strategy
@@ -31,6 +32,7 @@ Based on comprehensive audit (see `docs/sessions/019/AUDIT.md`):
   - Implemented `generateDeclarationObject()` for JSON serialization
   - Uses proper `GenerateResult` API with issues tracking
   - Includes helpful error messages and suggestions
+  - **Added type-safe generics** for property names and IR types
 - [x] Updated `PropertyDefinition` to include `generator` field
   - Added optional `generator?: (ir: T) => GenerateResult` field
   - Added `PropertyGenerator<T>` type alias
@@ -43,26 +45,29 @@ Based on comprehensive audit (see `docs/sessions/019/AUDIT.md`):
 ## 📊 Current State
 
 **Working:**
+
 - ✅ Session 019 initiated
-- ✅ Comprehensive audit completed  
+- ✅ Comprehensive audit completed
 - ✅ Previous session (018) archived
 - ✅ `generator.ts` created with proper `GenerateResult` API
 - ✅ `PropertyDefinition` updated with `generator` field
 - ✅ All typechecks passing
 
 **Next up:**
+
 - Fix `gradient/index.ts` error throwing
 - Add generator for background-image property
 - Add tests
 
 **Blockers:**
+
 - None
 
 ---
 
 ## 🎯 Next Steps
 
-1. Implement `generator.ts` 
+1. Implement `generator.ts`
 2. Update `PropertyDefinition` type
 3. Fix gradient/index.ts
 4. Create background-image generator

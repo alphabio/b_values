@@ -7,7 +7,7 @@
     "apps/*",
     "packages/*"
   ],
-  "packageManager": "pnpm@10.2.0",
+  "packageManager": "pnpm@10.20.0",
   "scripts": {
     "clean": "rimraf dist node_modules pnpm-lock.yaml",
     "clean:all": "pnpm -r exec rimraf dist node_modules pnpm-lock.yaml && pnpm run clean",

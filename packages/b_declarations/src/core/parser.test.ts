@@ -1,4 +1,4 @@
-// b_path:: packages/b_declarations/src/parser.test.ts
+// b_path:: packages/b_declarations/src/core/parser.test.ts
 import { describe, expect, it, beforeEach } from "vitest";
 import { parseDeclaration } from "./parser";
 import { propertyRegistry, defineProperty } from "./registry";

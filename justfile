@@ -76,8 +76,7 @@ path_helper:
     b_path_helper --execute --relative
 
 llm_txt:
-    b_llm_txt packages/b_fluid-sim/src --recursive > docs/b_fluid-sim.txt
-    b_llm_txt apps/explore/src/app/routes/displacement --recursive > docs/b_explore.txt
+    b_llm_txt packages --recursive > docs.llm/b_source.txt
 
 
-llm: path_helper
+llm: path_helper llm_txt

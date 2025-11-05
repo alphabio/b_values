@@ -1,8 +1,42 @@
 // b_path:: packages/b_values/src/me.ts
 // DO NOT DELETE THIS FILE. IT IS BY THE USER FOR ADHOC TESTING PURPOSES ONLY.
 
-// import * as decl from "@b/declarations";
+import * as decl from "@b/declarations";
 // import * as exp from "b_short";
+
+console.log(
+  decl.generateDeclaration({
+    property: "background-image",
+    ir: {
+      kind: "layers",
+      layers: [
+        {
+          kind: "gradient",
+          gradient: {
+            kind: "radial",
+            repeating: false,
+            shape: "circle",
+            size: { kind: "keyword", value: "closest-side" },
+            position: {
+              horizontal: { value: 0, unit: "%" },
+              vertical: { value: 0, unit: "%" },
+            },
+            colorStops: [
+              {
+                color: {
+                  kind: "rgb",
+                  r: { kind: "literal", value: 255 },
+                  g: { kind: "literal", value: 255 },
+                  b: { kind: "literal", value: 255 },
+                },
+              },
+            ],
+          },
+        },
+      ],
+    },
+  }),
+);
 
 // console.log(
 //   decl.parseDeclaration(

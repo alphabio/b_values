@@ -1,10 +1,13 @@
 // b_path:: packages/b_declarations/src/integration.test.ts
 import { describe, expect, it } from "vitest";
-import { parseDeclaration } from "./parser";
-import { backgroundImageProperty } from "./properties/background-image";
+import { parseDeclaration } from "./core/parser";
+import { backgroundImage } from "./properties/background-image";
 
 describe("Declaration Layer Integration", () => {
   it("should parse CSS declaration string", () => {
+    // Import triggers registration
+    expect(backgroundImage).toBeDefined();
+
     const result = parseDeclaration("background-image: url(image.png);");
 
     expect(result.ok).toBe(true);
@@ -79,6 +82,6 @@ describe("Declaration Layer Integration", () => {
   });
 
   it("should verify property is registered", () => {
-    expect(backgroundImageProperty.name).toBe("background-image");
+    expect(backgroundImage.name).toBe("background-image");
   });
 });

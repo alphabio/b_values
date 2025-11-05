@@ -1,4 +1,4 @@
-// b_path:: packages/b_declarations/src/parser.ts
+// b_path:: packages/b_declarations/src/core/parser.ts
 import { ok, err, type Result } from "@b/types";
 import { propertyRegistry } from "./registry";
 import type { CSSDeclaration, DeclarationResult } from "./types";
