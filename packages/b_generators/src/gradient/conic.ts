@@ -71,7 +71,7 @@ function generateColorInterpolation(method: Type.ColorInterpolationMethod): Gene
  * // => "conic-gradient(at center center, red, blue)"
  * ```
  */
-export function generate(ir: Type.ConicGradient, _context?: GenerateContext): GenerateResult {
+export function generate(ir: Type.ConicGradient, context?: GenerateContext): GenerateResult {
   const functionName = ir.repeating ? "repeating-conic-gradient" : "conic-gradient";
   const parts: string[] = [];
   const firstPart: string[] = [];
@@ -102,8 +102,12 @@ export function generate(ir: Type.ConicGradient, _context?: GenerateContext): Ge
     allIssues.push(...interpResult.issues);
   }
 
-  for (const stop of ir.colorStops) {
-    const stopResult = ColorStop.generate(stop);
+  for (let i = 0; i < ir.colorStops.length; i++) {
+    const stop = ir.colorStops[i];
+    const stopResult = ColorStop.generate(stop, {
+      parentPath: [...(context?.parentPath ?? []), "colorStops", i],
+      property: context?.property,
+    });
     if (!stopResult.ok) return stopResult;
     parts.push(stopResult.value);
     allIssues.push(...stopResult.issues);

@@ -1,6 +1,6 @@
 // b_path:: packages/b_parsers/src/color/lch.ts
 import type * as csstree from "css-tree";
-import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
+import { createError, parseErr, parseOk, forwardParseErr, type ParseResult } from "@b/types";
 import type { LCHColor } from "@b/types";
 import { parseCssValueNode, getChildren, getValues } from "@b/utils";
 
@@ -20,13 +20,13 @@ export function parseLchFunction(node: csstree.FunctionNode): ParseResult<LCHCol
   }
 
   const lResult = parseCssValueNode(values[0]);
-  if (!lResult.ok) return lResult as ParseResult<LCHColor>;
+  if (!lResult.ok) return forwardParseErr<LCHColor>(lResult);
 
   const cResult = parseCssValueNode(values[1]);
-  if (!cResult.ok) return cResult as ParseResult<LCHColor>;
+  if (!cResult.ok) return forwardParseErr<LCHColor>(cResult);
 
   const hResult = parseCssValueNode(values[2]);
-  if (!hResult.ok) return hResult as ParseResult<LCHColor>;
+  if (!hResult.ok) return forwardParseErr<LCHColor>(hResult);
 
   const lch: LCHColor = {
     kind: "lch",
@@ -37,7 +37,7 @@ export function parseLchFunction(node: csstree.FunctionNode): ParseResult<LCHCol
 
   if (values.length === 4) {
     const alphaResult = parseCssValueNode(values[3]);
-    if (!alphaResult.ok) return alphaResult as ParseResult<LCHColor>;
+    if (!alphaResult.ok) return forwardParseErr<LCHColor>(alphaResult);
     lch.alpha = alphaResult.value;
   }
 

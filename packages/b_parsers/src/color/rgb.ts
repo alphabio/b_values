@@ -1,6 +1,6 @@
 // b_path:: packages/b_parsers/src/color/rgb.ts
 import type * as csstree from "css-tree";
-import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
+import { createError, parseErr, parseOk, forwardParseErr, type ParseResult } from "@b/types";
 import type { RGBColor } from "@b/types";
 import { parseCssValueNode, getChildren, getValues } from "@b/utils";
 
@@ -21,13 +21,13 @@ export function parseRgbFunction(node: csstree.FunctionNode): ParseResult<RGBCol
   }
 
   const rResult = parseCssValueNode(values[0]);
-  if (!rResult.ok) return rResult as ParseResult<RGBColor>;
+  if (!rResult.ok) return forwardParseErr<RGBColor>(rResult);
 
   const gResult = parseCssValueNode(values[1]);
-  if (!gResult.ok) return gResult as ParseResult<RGBColor>;
+  if (!gResult.ok) return forwardParseErr<RGBColor>(gResult);
 
   const bResult = parseCssValueNode(values[2]);
-  if (!bResult.ok) return bResult as ParseResult<RGBColor>;
+  if (!bResult.ok) return forwardParseErr<RGBColor>(bResult);
 
   const rgb: RGBColor = {
     kind: "rgb",
@@ -38,7 +38,7 @@ export function parseRgbFunction(node: csstree.FunctionNode): ParseResult<RGBCol
 
   if (values.length === 4) {
     const alphaResult = parseCssValueNode(values[3]);
-    if (!alphaResult.ok) return alphaResult as ParseResult<RGBColor>;
+    if (!alphaResult.ok) return forwardParseErr<RGBColor>(alphaResult);
     rgb.alpha = alphaResult.value;
   }
 

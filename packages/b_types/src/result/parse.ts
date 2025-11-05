@@ -10,37 +10,36 @@ import type { Issue } from "./issue";
 /**
  * Result of parsing CSS to intermediate representation.
  *
- * A discriminated union that ensures type safety:
- * - When `ok: true`, `value` is guaranteed to be present (type T)
- * - When `ok: false`, `value` is normally undefined, but can be partially present (type T)
- *   for multi-error collection scenarios
+ * Represents one of three states:
+ * 1. **Success**: `ok: true`, `value` contains parsed data (type T)
+ * 2. **Total failure**: `ok: false`, `value` is `undefined`, parsing failed early (fail-fast)
+ * 3. **Partial success**: `ok: false`, `value` contains partial data (type T), some items parsed (multi-error)
  *
- * Issues array allows warnings + success (parser can succeed with warnings).
- * When `ok: false`, issues contains all collected errors.
+ * When `ok: false`:
+ * - `issues` contains at least one error
+ * - `value` is `undefined` for fail-fast parsers (e.g., single value parsing)
+ * - `value` contains partial result for multi-error parsers (e.g., list parsing where some items succeeded)
  *
- * @example
+ * Issues array allows warnings even on success. Parsers can succeed with warnings.
+ *
+ * @example Fail-fast parser (single angle)
  * ```typescript
- * import { parseOk, parseErr } from "@b/types";
+ * const result = parseAngle("invalid");
+ * // { ok: false, value: undefined, issues: [error] }
+ * ```
  *
- * // Success
- * const result = parseOk({ kind: "hex", value: "#FF0000" });
- * if (result.ok) {
- *   console.log(result.value); // ColorIR
- * }
+ * @example Multi-error parser (background-image layers)
+ * ```typescript
+ * const result = parseBackgroundImage("url(a.png), invalid, url(b.png)");
+ * // { ok: false, value: { kind: 'layers', layers: [valid1, valid3] }, issues: [error] }
+ * // Two layers parsed successfully, one failed
+ * ```
  *
- * // Error (no partial value)
- * const error = parseErr("invalid-value", "Invalid hex color");
- * if (!error.ok) {
- *   console.log(error.issues[0].message);
- * }
- *
- * // Error with partial value (multi-error collection)
- * // Must use explicit type annotation for type safety
- * const partial: ParseResult<BackgroundImageIR> = {
- *   ok: false,
- *   value: { kind: "layers", layers: [successfulLayer1, successfulLayer2] },
- *   issues: [error1, error2, error3]
- * };
+ * @example Success with warnings
+ * ```typescript
+ * const result = parseColor("rgb(300 100 50)");
+ * // { ok: true, value: rgbIR, issues: [warning] }
+ * // Valid RGB syntax, but value out of range (warning)
  * ```
  *
  * @public
@@ -116,6 +115,32 @@ export function addIssue<T>(result: ParseResult<T>, issue: Issue): ParseResult<T
   return {
     ...result,
     issues: [...result.issues, issue],
+  };
+}
+
+/**
+ * Creates a new ParseResult failure from an existing one, preserving issues
+ * but ensuring the new result has the correct (undefined) value type.
+ *
+ * Use this when an early parse step fails and you need to forward the error
+ * to the parent parser's return type without using `as` casts.
+ *
+ * @example
+ * ```typescript
+ * function parseHSL(node: CssValue): ParseResult<HSLColor> {
+ *   const hResult = parseComponentH(node);
+ *   if (!hResult.ok) return forwardParseErr<HSLColor>(hResult);
+ *   // ...
+ * }
+ * ```
+ *
+ * @public
+ */
+export function forwardParseErr<T>(failedResult: ParseResult<unknown>): ParseResult<T> {
+  return {
+    ok: false,
+    issues: failedResult.issues,
+    property: failedResult.property,
   };
 }
 

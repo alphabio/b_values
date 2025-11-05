@@ -1,6 +1,6 @@
 // b_path:: packages/b_parsers/src/color/hwb.ts
 import type * as csstree from "css-tree";
-import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
+import { createError, parseErr, parseOk, forwardParseErr, type ParseResult } from "@b/types";
 import type { HWBColor } from "@b/types";
 import { parseCssValueNode, getChildren, getValues } from "@b/utils";
 
@@ -20,13 +20,13 @@ export function parseHwbFunction(node: csstree.FunctionNode): ParseResult<HWBCol
   }
 
   const hResult = parseCssValueNode(values[0]);
-  if (!hResult.ok) return hResult as ParseResult<HWBColor>;
+  if (!hResult.ok) return forwardParseErr<HWBColor>(hResult);
 
   const wResult = parseCssValueNode(values[1]);
-  if (!wResult.ok) return wResult as ParseResult<HWBColor>;
+  if (!wResult.ok) return forwardParseErr<HWBColor>(wResult);
 
   const bResult = parseCssValueNode(values[2]);
-  if (!bResult.ok) return bResult as ParseResult<HWBColor>;
+  if (!bResult.ok) return forwardParseErr<HWBColor>(bResult);
 
   const hwb: HWBColor = {
     kind: "hwb",
@@ -37,7 +37,7 @@ export function parseHwbFunction(node: csstree.FunctionNode): ParseResult<HWBCol
 
   if (values.length === 4) {
     const alphaResult = parseCssValueNode(values[3]);
-    if (!alphaResult.ok) return alphaResult as ParseResult<HWBColor>;
+    if (!alphaResult.ok) return forwardParseErr<HWBColor>(alphaResult);
     hwb.alpha = alphaResult.value;
   }
 

@@ -1,5 +1,5 @@
 // b_path:: packages/b_generators/src/color/named.ts
-import { namedColorsMap } from "@b/keywords";
+import { namedColorsValues } from "@b/keywords";
 import { type GenerateResult, type GenerateContext, generateOk, generateErr, addGenerateIssue } from "@b/types";
 import { findClosestMatch, zodErrorToIssues } from "@b/utils";
 import { z } from "zod";
@@ -39,10 +39,10 @@ export function generate(color: unknown, context?: GenerateContext): GenerateRes
   let result = generateOk(colorName);
 
   // Check if it's a known color name
-  const isKnownColor = namedColorsMap.includes(colorName);
+  const isKnownColor = namedColorsValues.includes(colorName);
 
   if (!isKnownColor) {
-    const closestMatch = findClosestMatch(colorName, namedColorsMap);
+    const closestMatch = findClosestMatch(colorName, namedColorsValues);
 
     result = addGenerateIssue(result, {
       code: "invalid-value",

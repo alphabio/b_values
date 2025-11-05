@@ -1,6 +1,6 @@
 // b_path:: packages/b_parsers/src/position.ts
 import type * as csstree from "css-tree";
-import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
+import { createError, parseErr, parseOk, forwardParseErr, type ParseResult } from "@b/types";
 import type * as Type from "@b/types";
 import { parseLengthPercentageNode } from "./length";
 
@@ -51,7 +51,7 @@ export function parsePosition2D(
 
   const firstValue = parsePositionValueNode(firstNode);
   if (!firstValue.ok) {
-    return firstValue as ParseResult<{ position: Type.Position2D; nextIdx: number }>;
+    return forwardParseErr<{ position: Type.Position2D; nextIdx: number }>(firstValue);
   }
   positionValues.push(firstValue.value);
   idx++;

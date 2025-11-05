@@ -1,6 +1,6 @@
 // b_path:: packages/b_parsers/src/gradient/conic.ts
 import type * as csstree from "css-tree";
-import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
+import { createError, parseErr, parseOk, forwardParseErr, type ParseResult } from "@b/types";
 import type * as Type from "@b/types";
 import { parseAngleNode } from "../angle";
 import { parsePosition2D } from "../position";
@@ -118,12 +118,12 @@ export function fromFunction(fn: csstree.FunctionNode): ParseResult<Type.ConicGr
 export function parse(css: string): ParseResult<Type.ConicGradient> {
   const astResult = Utils.Ast.parseCssString(css, "value");
   if (!astResult.ok) {
-    return astResult as ParseResult<Type.ConicGradient>;
+    return forwardParseErr<Type.ConicGradient>(astResult);
   }
 
   const funcResult = Utils.Ast.findFunctionNode(astResult.value, ["conic-gradient", "repeating-conic-gradient"]);
   if (!funcResult.ok) {
-    return funcResult as ParseResult<Type.ConicGradient>;
+    return forwardParseErr<Type.ConicGradient>(funcResult);
   }
 
   return fromFunction(funcResult.value);

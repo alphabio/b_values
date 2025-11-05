@@ -1,6 +1,6 @@
 // b_path:: packages/b_parsers/src/gradient/linear.ts
 import type * as csstree from "css-tree";
-import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
+import { createError, parseErr, parseOk, forwardParseErr, type ParseResult } from "@b/types";
 import type * as Type from "@b/types";
 import { parseAngleNode } from "../angle";
 import * as ColorStop from "./color-stop";
@@ -162,12 +162,12 @@ export function fromFunction(fn: csstree.FunctionNode): ParseResult<Type.LinearG
 export function parse(css: string): ParseResult<Type.LinearGradient> {
   const astResult = Utils.Ast.parseCssString(css, "value");
   if (!astResult.ok) {
-    return astResult as ParseResult<Type.LinearGradient>;
+    return forwardParseErr<Type.LinearGradient>(astResult);
   }
 
   const funcResult = Utils.Ast.findFunctionNode(astResult.value, ["linear-gradient", "repeating-linear-gradient"]);
   if (!funcResult.ok) {
-    return funcResult as ParseResult<Type.LinearGradient>;
+    return forwardParseErr<Type.LinearGradient>(funcResult);
   }
 
   return fromFunction(funcResult.value);

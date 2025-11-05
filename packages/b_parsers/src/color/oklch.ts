@@ -1,6 +1,6 @@
 // b_path:: packages/b_parsers/src/color/oklch.ts
 import type * as csstree from "css-tree";
-import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
+import { createError, parseErr, parseOk, forwardParseErr, type ParseResult } from "@b/types";
 import type { OKLCHColor } from "@b/types";
 import { parseCssValueNode, getChildren, getValues } from "@b/utils";
 
@@ -20,13 +20,13 @@ export function parseOklchFunction(node: csstree.FunctionNode): ParseResult<OKLC
   }
 
   const lResult = parseCssValueNode(values[0]);
-  if (!lResult.ok) return lResult as ParseResult<OKLCHColor>;
+  if (!lResult.ok) return forwardParseErr<OKLCHColor>(lResult);
 
   const cResult = parseCssValueNode(values[1]);
-  if (!cResult.ok) return cResult as ParseResult<OKLCHColor>;
+  if (!cResult.ok) return forwardParseErr<OKLCHColor>(cResult);
 
   const hResult = parseCssValueNode(values[2]);
-  if (!hResult.ok) return hResult as ParseResult<OKLCHColor>;
+  if (!hResult.ok) return forwardParseErr<OKLCHColor>(hResult);
 
   const oklch: OKLCHColor = {
     kind: "oklch",
@@ -37,7 +37,7 @@ export function parseOklchFunction(node: csstree.FunctionNode): ParseResult<OKLC
 
   if (values.length === 4) {
     const alphaResult = parseCssValueNode(values[3]);
-    if (!alphaResult.ok) return alphaResult as ParseResult<OKLCHColor>;
+    if (!alphaResult.ok) return forwardParseErr<OKLCHColor>(alphaResult);
     oklch.alpha = alphaResult.value;
   }
 

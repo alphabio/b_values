@@ -1088,7 +1088,7 @@ export function generate(color: unknown): GenerateResult {
 
 === File: packages/b_generators/src/color/named.ts ===
 // b_path:: packages/b_generators/src/color/named.ts
-import { namedColorsMap } from "@b/keywords";
+import { namedColorsValues } from "@b/keywords";
 import { type GenerateResult, type GenerateContext, generateOk, generateErr, addGenerateIssue } from "@b/types";
 import { findClosestMatch, zodErrorToIssues } from "@b/utils";
 import { z } from "zod";
@@ -1128,10 +1128,10 @@ export function generate(color: unknown, context?: GenerateContext): GenerateRes
   let result = generateOk(colorName);
 
   // Check if it's a known color name
-  const isKnownColor = namedColorsMap.includes(colorName);
+  const isKnownColor = namedColorsValues.includes(colorName);
 
   if (!isKnownColor) {
-    const closestMatch = findClosestMatch(colorName, namedColorsMap);
+    const closestMatch = findClosestMatch(colorName, namedColorsValues);
 
     result = addGenerateIssue(result, {
       code: "invalid-value",
@@ -1490,7 +1490,7 @@ function generateColorInterpolation(method: Type.ColorInterpolationMethod): Gene
  * // => "conic-gradient(at center center, red, blue)"
  * ```
  */
-export function generate(ir: Type.ConicGradient, _context?: GenerateContext): GenerateResult {
+export function generate(ir: Type.ConicGradient, context?: GenerateContext): GenerateResult {
   const functionName = ir.repeating ? "repeating-conic-gradient" : "conic-gradient";
   const parts: string[] = [];
   const firstPart: string[] = [];
@@ -1521,8 +1521,12 @@ export function generate(ir: Type.ConicGradient, _context?: GenerateContext): Ge
     allIssues.push(...interpResult.issues);
   }
 
-  for (const stop of ir.colorStops) {
-    const stopResult = ColorStop.generate(stop);
+  for (let i = 0; i < ir.colorStops.length; i++) {
+    const stop = ir.colorStops[i];
+    const stopResult = ColorStop.generate(stop, {
+      parentPath: [...(context?.parentPath ?? []), "colorStops", i],
+      property: context?.property,
+    });
     if (!stopResult.ok) return stopResult;
     parts.push(stopResult.value);
     allIssues.push(...stopResult.issues);
@@ -1677,7 +1681,7 @@ function generateColorInterpolation(method: Type.ColorInterpolationMethod): Gene
  * // => "linear-gradient(in oklch, red, blue)"
  * ```
  */
-export function generate(ir: Type.LinearGradient, _context?: GenerateContext): GenerateResult {
+export function generate(ir: Type.LinearGradient, context?: GenerateContext): GenerateResult {
   const functionName = ir.repeating ? "repeating-linear-gradient" : "linear-gradient";
   const parts: string[] = [];
   const allIssues: Type.Issue[] = [];
@@ -1697,8 +1701,12 @@ export function generate(ir: Type.LinearGradient, _context?: GenerateContext): G
     allIssues.push(...interpResult.issues);
   }
 
-  for (const stop of ir.colorStops) {
-    const stopResult = ColorStop.generate(stop);
+  for (let i = 0; i < ir.colorStops.length; i++) {
+    const stop = ir.colorStops[i];
+    const stopResult = ColorStop.generate(stop, {
+      parentPath: [...(context?.parentPath ?? []), "colorStops", i],
+      property: context?.property,
+    });
     if (!stopResult.ok) return stopResult;
     parts.push(stopResult.value);
     allIssues.push(...stopResult.issues);
@@ -2194,14 +2202,11 @@ export const namedColors = [
   z.literal("yellowgreen"),
 ];
 
-export const namedColorsMap = namedColors.flatMap(getLiteralValues);
+export const namedColorsValues = namedColors.flatMap(getLiteralValues);
 
-export const namedColorSchema = z.union(namedColors, {
-  error: () =>
-    `Expected a named color (@see b_keywords/src/named-colors.ts): ${namedColorsMap.slice(0, 12).join(" | ")}..`,
-});
-
-// export const namedColorSchema = z.union();
+// Zod union schema for named colors
+// Context for better error messages is provided at validation sites
+export const namedColorSchema = z.union(namedColors);
 
 export type NamedColor = z.infer<typeof namedColorSchema>;
 
@@ -2464,7 +2469,7 @@ export function parse(value: string): ParseResult<Type.Color> {
 === File: packages/b_parsers/src/color/hsl.ts ===
 // b_path:: packages/b_parsers/src/color/hsl.ts
 import type * as csstree from "css-tree";
-import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
+import { createError, parseErr, parseOk, forwardParseErr, type ParseResult } from "@b/types";
 import type { HSLColor } from "@b/types";
 import { parseCssValueNode, getChildren, getValues } from "@b/utils";
 
@@ -2484,13 +2489,13 @@ export function parseHslFunction(node: csstree.FunctionNode): ParseResult<HSLCol
   }
 
   const hResult = parseCssValueNode(values[0]);
-  if (!hResult.ok) return hResult as ParseResult<HSLColor>;
+  if (!hResult.ok) return forwardParseErr<HSLColor>(hResult);
 
   const sResult = parseCssValueNode(values[1]);
-  if (!sResult.ok) return sResult as ParseResult<HSLColor>;
+  if (!sResult.ok) return forwardParseErr<HSLColor>(sResult);
 
   const lResult = parseCssValueNode(values[2]);
-  if (!lResult.ok) return lResult as ParseResult<HSLColor>;
+  if (!lResult.ok) return forwardParseErr<HSLColor>(lResult);
 
   const hsl: HSLColor = {
     kind: "hsl",
@@ -2501,7 +2506,7 @@ export function parseHslFunction(node: csstree.FunctionNode): ParseResult<HSLCol
 
   if (values.length === 4) {
     const alphaResult = parseCssValueNode(values[3]);
-    if (!alphaResult.ok) return alphaResult as ParseResult<HSLColor>;
+    if (!alphaResult.ok) return forwardParseErr<HSLColor>(alphaResult);
     hsl.alpha = alphaResult.value;
   }
 
@@ -2512,7 +2517,7 @@ export function parseHslFunction(node: csstree.FunctionNode): ParseResult<HSLCol
 === File: packages/b_parsers/src/color/hwb.ts ===
 // b_path:: packages/b_parsers/src/color/hwb.ts
 import type * as csstree from "css-tree";
-import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
+import { createError, parseErr, parseOk, forwardParseErr, type ParseResult } from "@b/types";
 import type { HWBColor } from "@b/types";
 import { parseCssValueNode, getChildren, getValues } from "@b/utils";
 
@@ -2532,13 +2537,13 @@ export function parseHwbFunction(node: csstree.FunctionNode): ParseResult<HWBCol
   }
 
   const hResult = parseCssValueNode(values[0]);
-  if (!hResult.ok) return hResult as ParseResult<HWBColor>;
+  if (!hResult.ok) return forwardParseErr<HWBColor>(hResult);
 
   const wResult = parseCssValueNode(values[1]);
-  if (!wResult.ok) return wResult as ParseResult<HWBColor>;
+  if (!wResult.ok) return forwardParseErr<HWBColor>(wResult);
 
   const bResult = parseCssValueNode(values[2]);
-  if (!bResult.ok) return bResult as ParseResult<HWBColor>;
+  if (!bResult.ok) return forwardParseErr<HWBColor>(bResult);
 
   const hwb: HWBColor = {
     kind: "hwb",
@@ -2549,7 +2554,7 @@ export function parseHwbFunction(node: csstree.FunctionNode): ParseResult<HWBCol
 
   if (values.length === 4) {
     const alphaResult = parseCssValueNode(values[3]);
-    if (!alphaResult.ok) return alphaResult as ParseResult<HWBColor>;
+    if (!alphaResult.ok) return forwardParseErr<HWBColor>(alphaResult);
     hwb.alpha = alphaResult.value;
   }
 
@@ -2573,7 +2578,7 @@ export * from "./oklch";
 === File: packages/b_parsers/src/color/lab.ts ===
 // b_path:: packages/b_parsers/src/color/lab.ts
 import type * as csstree from "css-tree";
-import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
+import { createError, parseErr, parseOk, forwardParseErr, type ParseResult } from "@b/types";
 import type { LABColor } from "@b/types";
 import { parseCssValueNode, getChildren, getValues } from "@b/utils";
 
@@ -2593,13 +2598,13 @@ export function parseLabFunction(node: csstree.FunctionNode): ParseResult<LABCol
   }
 
   const lResult = parseCssValueNode(values[0]);
-  if (!lResult.ok) return lResult as ParseResult<LABColor>;
+  if (!lResult.ok) return forwardParseErr<LABColor>(lResult);
 
   const aResult = parseCssValueNode(values[1]);
-  if (!aResult.ok) return aResult as ParseResult<LABColor>;
+  if (!aResult.ok) return forwardParseErr<LABColor>(aResult);
 
   const bResult = parseCssValueNode(values[2]);
-  if (!bResult.ok) return bResult as ParseResult<LABColor>;
+  if (!bResult.ok) return forwardParseErr<LABColor>(bResult);
 
   const lab: LABColor = {
     kind: "lab",
@@ -2610,7 +2615,7 @@ export function parseLabFunction(node: csstree.FunctionNode): ParseResult<LABCol
 
   if (values.length === 4) {
     const alphaResult = parseCssValueNode(values[3]);
-    if (!alphaResult.ok) return alphaResult as ParseResult<LABColor>;
+    if (!alphaResult.ok) return forwardParseErr<LABColor>(alphaResult);
     lab.alpha = alphaResult.value;
   }
 
@@ -2621,7 +2626,7 @@ export function parseLabFunction(node: csstree.FunctionNode): ParseResult<LABCol
 === File: packages/b_parsers/src/color/lch.ts ===
 // b_path:: packages/b_parsers/src/color/lch.ts
 import type * as csstree from "css-tree";
-import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
+import { createError, parseErr, parseOk, forwardParseErr, type ParseResult } from "@b/types";
 import type { LCHColor } from "@b/types";
 import { parseCssValueNode, getChildren, getValues } from "@b/utils";
 
@@ -2641,13 +2646,13 @@ export function parseLchFunction(node: csstree.FunctionNode): ParseResult<LCHCol
   }
 
   const lResult = parseCssValueNode(values[0]);
-  if (!lResult.ok) return lResult as ParseResult<LCHColor>;
+  if (!lResult.ok) return forwardParseErr<LCHColor>(lResult);
 
   const cResult = parseCssValueNode(values[1]);
-  if (!cResult.ok) return cResult as ParseResult<LCHColor>;
+  if (!cResult.ok) return forwardParseErr<LCHColor>(cResult);
 
   const hResult = parseCssValueNode(values[2]);
-  if (!hResult.ok) return hResult as ParseResult<LCHColor>;
+  if (!hResult.ok) return forwardParseErr<LCHColor>(hResult);
 
   const lch: LCHColor = {
     kind: "lch",
@@ -2658,7 +2663,7 @@ export function parseLchFunction(node: csstree.FunctionNode): ParseResult<LCHCol
 
   if (values.length === 4) {
     const alphaResult = parseCssValueNode(values[3]);
-    if (!alphaResult.ok) return alphaResult as ParseResult<LCHColor>;
+    if (!alphaResult.ok) return forwardParseErr<LCHColor>(alphaResult);
     lch.alpha = alphaResult.value;
   }
 
@@ -2669,7 +2674,7 @@ export function parseLchFunction(node: csstree.FunctionNode): ParseResult<LCHCol
 === File: packages/b_parsers/src/color/oklab.ts ===
 // b_path:: packages/b_parsers/src/color/oklab.ts
 import type * as csstree from "css-tree";
-import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
+import { createError, parseErr, parseOk, forwardParseErr, type ParseResult } from "@b/types";
 import type { OKLabColor } from "@b/types";
 import { parseCssValueNode, getChildren, getValues } from "@b/utils";
 
@@ -2689,13 +2694,13 @@ export function parseOklabFunction(node: csstree.FunctionNode): ParseResult<OKLa
   }
 
   const lResult = parseCssValueNode(values[0]);
-  if (!lResult.ok) return lResult as ParseResult<OKLabColor>;
+  if (!lResult.ok) return forwardParseErr<OKLabColor>(lResult);
 
   const aResult = parseCssValueNode(values[1]);
-  if (!aResult.ok) return aResult as ParseResult<OKLabColor>;
+  if (!aResult.ok) return forwardParseErr<OKLabColor>(aResult);
 
   const bResult = parseCssValueNode(values[2]);
-  if (!bResult.ok) return bResult as ParseResult<OKLabColor>;
+  if (!bResult.ok) return forwardParseErr<OKLabColor>(bResult);
 
   const oklab: OKLabColor = {
     kind: "oklab",
@@ -2706,7 +2711,7 @@ export function parseOklabFunction(node: csstree.FunctionNode): ParseResult<OKLa
 
   if (values.length === 4) {
     const alphaResult = parseCssValueNode(values[3]);
-    if (!alphaResult.ok) return alphaResult as ParseResult<OKLabColor>;
+    if (!alphaResult.ok) return forwardParseErr<OKLabColor>(alphaResult);
     oklab.alpha = alphaResult.value;
   }
 
@@ -2717,7 +2722,7 @@ export function parseOklabFunction(node: csstree.FunctionNode): ParseResult<OKLa
 === File: packages/b_parsers/src/color/oklch.ts ===
 // b_path:: packages/b_parsers/src/color/oklch.ts
 import type * as csstree from "css-tree";
-import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
+import { createError, parseErr, parseOk, forwardParseErr, type ParseResult } from "@b/types";
 import type { OKLCHColor } from "@b/types";
 import { parseCssValueNode, getChildren, getValues } from "@b/utils";
 
@@ -2737,13 +2742,13 @@ export function parseOklchFunction(node: csstree.FunctionNode): ParseResult<OKLC
   }
 
   const lResult = parseCssValueNode(values[0]);
-  if (!lResult.ok) return lResult as ParseResult<OKLCHColor>;
+  if (!lResult.ok) return forwardParseErr<OKLCHColor>(lResult);
 
   const cResult = parseCssValueNode(values[1]);
-  if (!cResult.ok) return cResult as ParseResult<OKLCHColor>;
+  if (!cResult.ok) return forwardParseErr<OKLCHColor>(cResult);
 
   const hResult = parseCssValueNode(values[2]);
-  if (!hResult.ok) return hResult as ParseResult<OKLCHColor>;
+  if (!hResult.ok) return forwardParseErr<OKLCHColor>(hResult);
 
   const oklch: OKLCHColor = {
     kind: "oklch",
@@ -2754,7 +2759,7 @@ export function parseOklchFunction(node: csstree.FunctionNode): ParseResult<OKLC
 
   if (values.length === 4) {
     const alphaResult = parseCssValueNode(values[3]);
-    if (!alphaResult.ok) return alphaResult as ParseResult<OKLCHColor>;
+    if (!alphaResult.ok) return forwardParseErr<OKLCHColor>(alphaResult);
     oklch.alpha = alphaResult.value;
   }
 
@@ -2765,7 +2770,7 @@ export function parseOklchFunction(node: csstree.FunctionNode): ParseResult<OKLC
 === File: packages/b_parsers/src/color/rgb.ts ===
 // b_path:: packages/b_parsers/src/color/rgb.ts
 import type * as csstree from "css-tree";
-import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
+import { createError, parseErr, parseOk, forwardParseErr, type ParseResult } from "@b/types";
 import type { RGBColor } from "@b/types";
 import { parseCssValueNode, getChildren, getValues } from "@b/utils";
 
@@ -2786,13 +2791,13 @@ export function parseRgbFunction(node: csstree.FunctionNode): ParseResult<RGBCol
   }
 
   const rResult = parseCssValueNode(values[0]);
-  if (!rResult.ok) return rResult as ParseResult<RGBColor>;
+  if (!rResult.ok) return forwardParseErr<RGBColor>(rResult);
 
   const gResult = parseCssValueNode(values[1]);
-  if (!gResult.ok) return gResult as ParseResult<RGBColor>;
+  if (!gResult.ok) return forwardParseErr<RGBColor>(gResult);
 
   const bResult = parseCssValueNode(values[2]);
-  if (!bResult.ok) return bResult as ParseResult<RGBColor>;
+  if (!bResult.ok) return forwardParseErr<RGBColor>(bResult);
 
   const rgb: RGBColor = {
     kind: "rgb",
@@ -2803,7 +2808,7 @@ export function parseRgbFunction(node: csstree.FunctionNode): ParseResult<RGBCol
 
   if (values.length === 4) {
     const alphaResult = parseCssValueNode(values[3]);
-    if (!alphaResult.ok) return alphaResult as ParseResult<RGBColor>;
+    if (!alphaResult.ok) return forwardParseErr<RGBColor>(alphaResult);
     rgb.alpha = alphaResult.value;
   }
 
@@ -2905,7 +2910,7 @@ export function fromNodes(nodes: csstree.CssNode[]): ParseResult<Type.ColorStop>
 === File: packages/b_parsers/src/gradient/conic.ts ===
 // b_path:: packages/b_parsers/src/gradient/conic.ts
 import type * as csstree from "css-tree";
-import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
+import { createError, parseErr, parseOk, forwardParseErr, type ParseResult } from "@b/types";
 import type * as Type from "@b/types";
 import { parseAngleNode } from "../angle";
 import { parsePosition2D } from "../position";
@@ -3023,12 +3028,12 @@ export function fromFunction(fn: csstree.FunctionNode): ParseResult<Type.ConicGr
 export function parse(css: string): ParseResult<Type.ConicGradient> {
   const astResult = Utils.Ast.parseCssString(css, "value");
   if (!astResult.ok) {
-    return astResult as ParseResult<Type.ConicGradient>;
+    return forwardParseErr<Type.ConicGradient>(astResult);
   }
 
   const funcResult = Utils.Ast.findFunctionNode(astResult.value, ["conic-gradient", "repeating-conic-gradient"]);
   if (!funcResult.ok) {
-    return funcResult as ParseResult<Type.ConicGradient>;
+    return forwardParseErr<Type.ConicGradient>(funcResult);
   }
 
   return fromFunction(funcResult.value);
@@ -3046,7 +3051,7 @@ export * as Conic from "./conic";
 === File: packages/b_parsers/src/gradient/linear.ts ===
 // b_path:: packages/b_parsers/src/gradient/linear.ts
 import type * as csstree from "css-tree";
-import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
+import { createError, parseErr, parseOk, forwardParseErr, type ParseResult } from "@b/types";
 import type * as Type from "@b/types";
 import { parseAngleNode } from "../angle";
 import * as ColorStop from "./color-stop";
@@ -3208,12 +3213,12 @@ export function fromFunction(fn: csstree.FunctionNode): ParseResult<Type.LinearG
 export function parse(css: string): ParseResult<Type.LinearGradient> {
   const astResult = Utils.Ast.parseCssString(css, "value");
   if (!astResult.ok) {
-    return astResult as ParseResult<Type.LinearGradient>;
+    return forwardParseErr<Type.LinearGradient>(astResult);
   }
 
   const funcResult = Utils.Ast.findFunctionNode(astResult.value, ["linear-gradient", "repeating-linear-gradient"]);
   if (!funcResult.ok) {
-    return funcResult as ParseResult<Type.LinearGradient>;
+    return forwardParseErr<Type.LinearGradient>(funcResult);
   }
 
   return fromFunction(funcResult.value);
@@ -3223,7 +3228,7 @@ export function parse(css: string): ParseResult<Type.LinearGradient> {
 === File: packages/b_parsers/src/gradient/radial.ts ===
 // b_path:: packages/b_parsers/src/gradient/radial.ts
 import type * as csstree from "css-tree";
-import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
+import { createError, parseErr, parseOk, forwardParseErr, type ParseResult } from "@b/types";
 import type * as Type from "@b/types";
 import type { RadialShape, RadialSizeKeyword } from "@b/keywords";
 import { parseLengthPercentageNode } from "../length";
@@ -3448,12 +3453,12 @@ export function fromFunction(fn: csstree.FunctionNode): ParseResult<Type.RadialG
 export function parse(css: string): ParseResult<Type.RadialGradient> {
   const astResult = Utils.Ast.parseCssString(css, "value");
   if (!astResult.ok) {
-    return astResult as ParseResult<Type.RadialGradient>;
+    return forwardParseErr<Type.RadialGradient>(astResult);
   }
 
   const funcResult = Utils.Ast.findFunctionNode(astResult.value, ["radial-gradient", "repeating-radial-gradient"]);
   if (!funcResult.ok) {
-    return funcResult as ParseResult<Type.RadialGradient>;
+    return forwardParseErr<Type.RadialGradient>(funcResult);
   }
 
   return fromFunction(funcResult.value);
@@ -3569,7 +3574,7 @@ export function parseNumberNode(node: csstree.CssNode): ParseResult<number> {
 === File: packages/b_parsers/src/position.ts ===
 // b_path:: packages/b_parsers/src/position.ts
 import type * as csstree from "css-tree";
-import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
+import { createError, parseErr, parseOk, forwardParseErr, type ParseResult } from "@b/types";
 import type * as Type from "@b/types";
 import { parseLengthPercentageNode } from "./length";
 
@@ -3620,7 +3625,7 @@ export function parsePosition2D(
 
   const firstValue = parsePositionValueNode(firstNode);
   if (!firstValue.ok) {
-    return firstValue as ParseResult<{ position: Type.Position2D; nextIdx: number }>;
+    return forwardParseErr<{ position: Type.Position2D; nextIdx: number }>(firstValue);
   }
   positionValues.push(firstValue.value);
   idx++;
@@ -5270,37 +5275,36 @@ import type { Issue } from "./issue";
 /**
  * Result of parsing CSS to intermediate representation.
  *
- * A discriminated union that ensures type safety:
- * - When `ok: true`, `value` is guaranteed to be present (type T)
- * - When `ok: false`, `value` is normally undefined, but can be partially present (type T)
- *   for multi-error collection scenarios
+ * Represents one of three states:
+ * 1. **Success**: `ok: true`, `value` contains parsed data (type T)
+ * 2. **Total failure**: `ok: false`, `value` is `undefined`, parsing failed early (fail-fast)
+ * 3. **Partial success**: `ok: false`, `value` contains partial data (type T), some items parsed (multi-error)
  *
- * Issues array allows warnings + success (parser can succeed with warnings).
- * When `ok: false`, issues contains all collected errors.
+ * When `ok: false`:
+ * - `issues` contains at least one error
+ * - `value` is `undefined` for fail-fast parsers (e.g., single value parsing)
+ * - `value` contains partial result for multi-error parsers (e.g., list parsing where some items succeeded)
  *
- * @example
+ * Issues array allows warnings even on success. Parsers can succeed with warnings.
+ *
+ * @example Fail-fast parser (single angle)
  * ```typescript
- * import { parseOk, parseErr } from "@b/types";
+ * const result = parseAngle("invalid");
+ * // { ok: false, value: undefined, issues: [error] }
+ * ```
  *
- * // Success
- * const result = parseOk({ kind: "hex", value: "#FF0000" });
- * if (result.ok) {
- *   console.log(result.value); // ColorIR
- * }
+ * @example Multi-error parser (background-image layers)
+ * ```typescript
+ * const result = parseBackgroundImage("url(a.png), invalid, url(b.png)");
+ * // { ok: false, value: { kind: 'layers', layers: [valid1, valid3] }, issues: [error] }
+ * // Two layers parsed successfully, one failed
+ * ```
  *
- * // Error (no partial value)
- * const error = parseErr("invalid-value", "Invalid hex color");
- * if (!error.ok) {
- *   console.log(error.issues[0].message);
- * }
- *
- * // Error with partial value (multi-error collection)
- * // Must use explicit type annotation for type safety
- * const partial: ParseResult<BackgroundImageIR> = {
- *   ok: false,
- *   value: { kind: "layers", layers: [successfulLayer1, successfulLayer2] },
- *   issues: [error1, error2, error3]
- * };
+ * @example Success with warnings
+ * ```typescript
+ * const result = parseColor("rgb(300 100 50)");
+ * // { ok: true, value: rgbIR, issues: [warning] }
+ * // Valid RGB syntax, but value out of range (warning)
  * ```
  *
  * @public
@@ -5376,6 +5380,32 @@ export function addIssue<T>(result: ParseResult<T>, issue: Issue): ParseResult<T
   return {
     ...result,
     issues: [...result.issues, issue],
+  };
+}
+
+/**
+ * Creates a new ParseResult failure from an existing one, preserving issues
+ * but ensuring the new result has the correct (undefined) value type.
+ *
+ * Use this when an early parse step fails and you need to forward the error
+ * to the parent parser's return type without using `as` casts.
+ *
+ * @example
+ * ```typescript
+ * function parseHSL(node: CssValue): ParseResult<HSLColor> {
+ *   const hResult = parseComponentH(node);
+ *   if (!hResult.ok) return forwardParseErr<HSLColor>(hResult);
+ *   // ...
+ * }
+ * ```
+ *
+ * @public
+ */
+export function forwardParseErr<T>(failedResult: ParseResult<unknown>): ParseResult<T> {
+  return {
+    ok: false,
+    issues: failedResult.issues,
+    property: failedResult.property,
   };
 }
 

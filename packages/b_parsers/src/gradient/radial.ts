@@ -1,6 +1,6 @@
 // b_path:: packages/b_parsers/src/gradient/radial.ts
 import type * as csstree from "css-tree";
-import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
+import { createError, parseErr, parseOk, forwardParseErr, type ParseResult } from "@b/types";
 import type * as Type from "@b/types";
 import type { RadialShape, RadialSizeKeyword } from "@b/keywords";
 import { parseLengthPercentageNode } from "../length";
@@ -225,12 +225,12 @@ export function fromFunction(fn: csstree.FunctionNode): ParseResult<Type.RadialG
 export function parse(css: string): ParseResult<Type.RadialGradient> {
   const astResult = Utils.Ast.parseCssString(css, "value");
   if (!astResult.ok) {
-    return astResult as ParseResult<Type.RadialGradient>;
+    return forwardParseErr<Type.RadialGradient>(astResult);
   }
 
   const funcResult = Utils.Ast.findFunctionNode(astResult.value, ["radial-gradient", "repeating-radial-gradient"]);
   if (!funcResult.ok) {
-    return funcResult as ParseResult<Type.RadialGradient>;
+    return forwardParseErr<Type.RadialGradient>(funcResult);
   }
 
   return fromFunction(funcResult.value);

@@ -159,13 +159,10 @@ export const namedColors = [
   z.literal("yellowgreen"),
 ];
 
-export const namedColorsMap = namedColors.flatMap(getLiteralValues);
+export const namedColorsValues = namedColors.flatMap(getLiteralValues);
 
-export const namedColorSchema = z.union(namedColors, {
-  error: () =>
-    `Expected a named color (@see b_keywords/src/named-colors.ts): ${namedColorsMap.slice(0, 12).join(" | ")}..`,
-});
-
-// export const namedColorSchema = z.union();
+// Zod union schema for named colors
+// Context for better error messages is provided at validation sites
+export const namedColorSchema = z.union(namedColors);
 
 export type NamedColor = z.infer<typeof namedColorSchema>;

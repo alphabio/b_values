@@ -1,6 +1,6 @@
 // b_path:: packages/b_parsers/src/color/lab.ts
 import type * as csstree from "css-tree";
-import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
+import { createError, parseErr, parseOk, forwardParseErr, type ParseResult } from "@b/types";
 import type { LABColor } from "@b/types";
 import { parseCssValueNode, getChildren, getValues } from "@b/utils";
 
@@ -20,13 +20,13 @@ export function parseLabFunction(node: csstree.FunctionNode): ParseResult<LABCol
   }
 
   const lResult = parseCssValueNode(values[0]);
-  if (!lResult.ok) return lResult as ParseResult<LABColor>;
+  if (!lResult.ok) return forwardParseErr<LABColor>(lResult);
 
   const aResult = parseCssValueNode(values[1]);
-  if (!aResult.ok) return aResult as ParseResult<LABColor>;
+  if (!aResult.ok) return forwardParseErr<LABColor>(aResult);
 
   const bResult = parseCssValueNode(values[2]);
-  if (!bResult.ok) return bResult as ParseResult<LABColor>;
+  if (!bResult.ok) return forwardParseErr<LABColor>(bResult);
 
   const lab: LABColor = {
     kind: "lab",
@@ -37,7 +37,7 @@ export function parseLabFunction(node: csstree.FunctionNode): ParseResult<LABCol
 
   if (values.length === 4) {
     const alphaResult = parseCssValueNode(values[3]);
-    if (!alphaResult.ok) return alphaResult as ParseResult<LABColor>;
+    if (!alphaResult.ok) return forwardParseErr<LABColor>(alphaResult);
     lab.alpha = alphaResult.value;
   }
 
