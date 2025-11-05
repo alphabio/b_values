@@ -10,7 +10,10 @@ export function generate(color: NamedColor): GenerateResult {
   const validation = namedColorSchema.safeParse(color.name);
 
   if (!validation.success) {
-    const issues = zodErrorToIssues(validation.error);
+    const issues = zodErrorToIssues(validation.error, {
+      typeName: "NamedColor",
+      property: "color",
+    });
     return {
       property: `color[named]: ${color.name}`,
       ok: false,

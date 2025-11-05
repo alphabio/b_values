@@ -8,7 +8,13 @@ import { cssValueToCss, zodErrorToIssues } from "@b/utils";
 export function generate(color: unknown): GenerateResult {
   const validation = oklchColorSchema.safeParse(color);
   if (!validation.success) {
-    return generateErr(zodErrorToIssues(validation.error), "oklch-color");
+    return generateErr(
+      zodErrorToIssues(validation.error, {
+        typeName: "OKLCHColor",
+        property: "color",
+      }),
+      "oklch-color",
+    );
   }
 
   const { l, c, h, alpha } = validation.data;

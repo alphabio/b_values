@@ -8,7 +8,13 @@ import { cssValueToCss, zodErrorToIssues } from "@b/utils";
 export function generate(color: unknown): GenerateResult {
   const validation = labColorSchema.safeParse(color);
   if (!validation.success) {
-    return generateErr(zodErrorToIssues(validation.error), "lab-color");
+    return generateErr(
+      zodErrorToIssues(validation.error, {
+        typeName: "LABColor",
+        property: "color",
+      }),
+      "lab-color",
+    );
   }
 
   const { l, a, b, alpha } = validation.data;

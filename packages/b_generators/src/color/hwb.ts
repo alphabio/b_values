@@ -8,7 +8,13 @@ import { cssValueToCss, zodErrorToIssues } from "@b/utils";
 export function generate(color: unknown): GenerateResult {
   const validation = hwbColorSchema.safeParse(color);
   if (!validation.success) {
-    return generateErr(zodErrorToIssues(validation.error), "hwb-color");
+    return generateErr(
+      zodErrorToIssues(validation.error, {
+        typeName: "HWBColor",
+        property: "color",
+      }),
+      "hwb-color",
+    );
   }
 
   const { h, w, b, alpha } = validation.data;

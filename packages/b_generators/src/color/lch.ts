@@ -10,7 +10,13 @@ import { cssValueToCss, zodErrorToIssues } from "@b/utils";
 export function generate(color: unknown): GenerateResult {
   const validation = lchColorSchema.safeParse(color);
   if (!validation.success) {
-    return generateErr(zodErrorToIssues(validation.error), "lch-color");
+    return generateErr(
+      zodErrorToIssues(validation.error, {
+        typeName: "LCHColor",
+        property: "color",
+      }),
+      "lch-color",
+    );
   }
 
   const { l, c, h, alpha } = validation.data;
