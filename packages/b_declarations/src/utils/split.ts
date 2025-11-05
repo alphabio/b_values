@@ -1,9 +1,9 @@
 // b_path:: packages/b_declarations/src/utils/split.ts
 /**
  * Split a CSS value by comma, respecting nested functions.
- * 
+ *
  * @example
- * splitByComma("url(a.png), linear-gradient(red, blue)") 
+ * splitByComma("url(a.png), linear-gradient(red, blue)")
  * // ["url(a.png)", "linear-gradient(red, blue)"]
  */
 export function splitByComma(value: string): string[] {

@@ -86,9 +86,7 @@ describe("background-image property", () => {
     });
 
     it("should parse mixed layers", () => {
-      const result = parseBackgroundImage(
-        "url(image.png), linear-gradient(red, blue)"
-      );
+      const result = parseBackgroundImage("url(image.png), linear-gradient(red, blue)");
       expect(result.ok).toBe(true);
       if (!result.ok) return;
       expect(result.value.kind).toBe("layers");

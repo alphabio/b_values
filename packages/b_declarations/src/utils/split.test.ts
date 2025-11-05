@@ -34,12 +34,7 @@ describe("splitByComma", () => {
   });
 
   it("should handle complex gradient", () => {
-    const result = splitByComma(
-      "linear-gradient(to right, red, blue), radial-gradient(circle, yellow, green)"
-    );
-    expect(result).toEqual([
-      "linear-gradient(to right, red, blue)",
-      "radial-gradient(circle, yellow, green)",
-    ]);
+    const result = splitByComma("linear-gradient(to right, red, blue), radial-gradient(circle, yellow, green)");
+    expect(result).toEqual(["linear-gradient(to right, red, blue)", "radial-gradient(circle, yellow, green)"]);
   });
 });

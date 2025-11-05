@@ -3,7 +3,11 @@
 
 import * as decl from "@b/declarations";
 
-console.log(decl.parseDeclaration("color: lch(52.2345% 23.45 345.6 / 0.5);"));
+console.log(
+  decl.parseDeclaration(
+    "background-image: radial-gradient(rgba(255,255,255,0) 0, rgba(255,255,255,.15) 30%, rgba(255,255,255,.3) 32%, rgba(255,255,255,0) 33%) 0 0",
+  ).value?.ir,
+);
 
 // import * as gen from "@b/generators";
 

@@ -8,14 +8,12 @@ import { isCSSWideKeyword, parseCSSWideKeyword, splitByComma } from "../utils";
  * Background image value IR.
  * Can be a list of image layers.
  */
-export type BackgroundImageIR =
-  | { kind: "keyword"; value: string }
-  | { kind: "layers"; layers: ImageLayer[] };
+export type BackgroundImageIR = { kind: "keyword"; value: string } | { kind: "layers"; layers: ImageLayer[] };
 
 /**
  * Single image layer - can be various <image> types.
- * 
- * <image> = 
+ *
+ * <image> =
  *   <url> |
  *   <gradient> |
  *   <image()> |
@@ -30,11 +28,11 @@ export type ImageLayer =
 
 /**
  * Parse a background-image value.
- * 
+ *
  * Property syntax: background-image = <bg-image>#
  * Where <bg-image> = <image> | none
  * And <image> = <url> | <gradient> | <image()> | etc.
- * 
+ *
  * This parser:
  * 1. Handles CSS-wide keywords (inherit, initial, etc.)
  * 2. Splits comma-separated layers

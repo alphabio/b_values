@@ -4,9 +4,9 @@ import type { Url } from "@b/types";
 
 /**
  * Parse a CSS url() function.
- * 
+ *
  * @see https://developer.mozilla.org/en-US/docs/Web/CSS/url
- * 
+ *
  * @example
  * ```ts
  * parseUrl("url(image.png)")

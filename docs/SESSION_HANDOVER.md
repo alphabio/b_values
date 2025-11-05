@@ -1,24 +1,47 @@
-# Session 015: Continue Declaration Layer
+# Session 016: Gradient Parsers Implementation
 
 **Date:** 2025-11-05  
-**Git ref:** `688e149`
+**Focus:** Implement gradient parsers in @b/parsers
 
 ---
 
-## ✅ Session 014 Summary
+## ✅ Accomplished
 
-- Renamed `@b/properties` → `@b/declarations`
-- Implemented Phase 1: registry, parser, keywords, URL delegation
-- Created `parseUrl()` in `@b/parsers`
-- Implemented `background-image` with proper layer separation
-- 44 tests passing ✅
+- Archived session 015
+- Ready to implement gradient parsers
 
 ---
 
-## 🎯 Next: Gradient Parsers
+## 📊 Current State
 
-1. Implement gradient parsers in `@b/parsers`
-2. Connect to `background-image` 
+**Working:**
+- ✅ `@b/declarations` package structure
+- ✅ Registry and parser framework
+- ✅ `parseUrl()` implementation
+- ✅ `background-image` property with URL support
+- ✅ 44 tests passing
+
+**Not working:**
+- ⚠️ Gradient parsers not yet implemented
+- ⚠️ Only URL values supported in background-image
+
+---
+
+## 🎯 Next Steps
+
+1. Implement gradient parsers in `@b/parsers`:
+   - `parseLinearGradient()`
+   - `parseRadialGradient()`
+   - `parseConicGradient()`
+   - `parseRepeatingLinearGradient()`
+   - `parseRepeatingRadialGradient()`
+   - `parseRepeatingConicGradient()`
+2. Connect gradient parsers to `background-image` declaration
 3. Add more properties (color, background-color)
 
-**Architecture is solid - declarations delegate to value parsers!**
+---
+
+## 💡 Key Decisions
+
+- Architecture from session 014 is solid: declarations delegate to value parsers
+- Separation of concerns: parsers in `@b/parsers`, declarations in `@b/declarations`
