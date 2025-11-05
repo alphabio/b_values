@@ -9,14 +9,16 @@ import { radialGradientSizeSchema } from "./radial-size";
 /**
  * @see https://developer.mozilla.org/en-US/docs/Web/CSS/gradient/radial-gradient
  */
-export const radialGradientSchema = z.object({
-  kind: z.literal("radial"),
-  shape: radialShapeSchema.optional(),
-  size: radialGradientSizeSchema.optional(),
-  position: position2DSchema.optional(),
-  colorInterpolationMethod: colorInterpolationMethodSchema.optional(),
-  colorStops: colorStopListSchema,
-  repeating: z.boolean(),
-});
+export const radialGradientSchema = z
+  .object({
+    kind: z.literal("radial"),
+    shape: radialShapeSchema.optional(),
+    size: radialGradientSizeSchema.optional(),
+    position: position2DSchema.optional(),
+    colorInterpolationMethod: colorInterpolationMethodSchema.optional(),
+    colorStops: colorStopListSchema,
+    repeating: z.boolean(),
+  })
+  .strict();
 
 export type RadialGradient = z.infer<typeof radialGradientSchema>;

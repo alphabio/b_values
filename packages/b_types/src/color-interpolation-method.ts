@@ -6,13 +6,17 @@ import { hueInterpolationMethodSchema, polarColorSpaceSchema, rectangularColorSp
  * @see https://developer.mozilla.org/en-US/docs/Web/CSS/color-interpolation-method
  */
 export const colorInterpolationMethodSchema = z.union([
-  z.object({
-    colorSpace: rectangularColorSpaceSchema,
-  }),
-  z.object({
-    colorSpace: polarColorSpaceSchema,
-    hueInterpolationMethod: hueInterpolationMethodSchema.optional(),
-  }),
+  z
+    .object({
+      colorSpace: rectangularColorSpaceSchema,
+    })
+    .strict(),
+  z
+    .object({
+      colorSpace: polarColorSpaceSchema,
+      hueInterpolationMethod: hueInterpolationMethodSchema.optional(),
+    })
+    .strict(),
 ]);
 
 export type ColorInterpolationMethod = z.infer<typeof colorInterpolationMethodSchema>;

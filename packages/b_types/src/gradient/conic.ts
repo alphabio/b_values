@@ -8,13 +8,15 @@ import { position2DSchema } from "../position";
 /**
  * @see https://developer.mozilla.org/en-US/docs/Web/CSS/gradient/conic-gradient
  */
-export const conicGradientSchema = z.object({
-  kind: z.literal("conic"),
-  fromAngle: angleSchema.optional(),
-  position: position2DSchema.optional(),
-  colorInterpolationMethod: colorInterpolationMethodSchema.optional(),
-  colorStops: colorStopListSchema,
-  repeating: z.boolean(),
-});
+export const conicGradientSchema = z
+  .object({
+    kind: z.literal("conic"),
+    fromAngle: angleSchema.optional(),
+    position: position2DSchema.optional(),
+    colorInterpolationMethod: colorInterpolationMethodSchema.optional(),
+    colorStops: colorStopListSchema,
+    repeating: z.boolean(),
+  })
+  .strict();
 
 export type ConicGradient = z.infer<typeof conicGradientSchema>;

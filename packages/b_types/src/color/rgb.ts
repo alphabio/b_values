@@ -7,12 +7,14 @@ import { cssValueSchema } from "../values";
  * Supports literals, variables (var()), keywords (none), and relative color syntax
  * @see https://developer.mozilla.org/en-US/docs/Web/CSS/color_value/rgb
  */
-export const rgbColorSchema = z.object({
-  kind: z.literal("rgb"),
-  r: cssValueSchema,
-  g: cssValueSchema,
-  b: cssValueSchema,
-  alpha: cssValueSchema.optional(),
-});
+export const rgbColorSchema = z
+  .object({
+    kind: z.literal("rgb"),
+    r: cssValueSchema,
+    g: cssValueSchema,
+    b: cssValueSchema,
+    alpha: cssValueSchema.optional(),
+  })
+  .strict();
 
 export type RGBColor = z.infer<typeof rgbColorSchema>;

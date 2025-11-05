@@ -16,15 +16,17 @@ export type AnglePercentage = z.infer<typeof anglePercentageSchema>;
 /**
  * @see https://developer.mozilla.org/en-US/docs/Web/CSS/gradient/linear-gradient#color-stops
  */
-export const colorStopSchema = z.object({
-  color: colorSchema,
-  position: z
-    .union([
-      z.union([lengthPercentageSchema, angleSchema]),
-      z.tuple([z.union([lengthPercentageSchema, angleSchema]), z.union([lengthPercentageSchema, angleSchema])]),
-    ])
-    .optional(),
-});
+export const colorStopSchema = z
+  .object({
+    color: colorSchema,
+    position: z
+      .union([
+        z.union([lengthPercentageSchema, angleSchema]),
+        z.tuple([z.union([lengthPercentageSchema, angleSchema]), z.union([lengthPercentageSchema, angleSchema])]),
+      ])
+      .optional(),
+  })
+  .strict();
 
 export type ColorStop = z.infer<typeof colorStopSchema>;
 

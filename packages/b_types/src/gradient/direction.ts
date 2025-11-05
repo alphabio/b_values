@@ -7,18 +7,24 @@ import { angleSchema } from "../angle";
  * @see https://developer.mozilla.org/en-US/docs/Web/CSS/gradient/linear-gradient
  */
 export const gradientDirectionSchema = z.union([
-  z.object({
-    kind: z.literal("angle"),
-    value: angleSchema,
-  }),
-  z.object({
-    kind: z.literal("to-side"),
-    value: gradientSideSchema,
-  }),
-  z.object({
-    kind: z.literal("to-corner"),
-    value: gradientCornerSchema,
-  }),
+  z
+    .object({
+      kind: z.literal("angle"),
+      value: angleSchema,
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal("to-side"),
+      value: gradientSideSchema,
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal("to-corner"),
+      value: gradientCornerSchema,
+    })
+    .strict(),
 ]);
 
 export type GradientDirection = z.infer<typeof gradientDirectionSchema>;

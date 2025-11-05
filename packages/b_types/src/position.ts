@@ -10,9 +10,11 @@ export const positionValueSchema = z.union([positionKeywordSchema, lengthPercent
 
 export type PositionValue = z.infer<typeof positionValueSchema>;
 
-export const position2DSchema = z.object({
-  horizontal: positionValueSchema,
-  vertical: positionValueSchema,
-});
+export const position2DSchema = z
+  .object({
+    horizontal: positionValueSchema,
+    vertical: positionValueSchema,
+  })
+  .strict();
 
 export type Position2D = z.infer<typeof position2DSchema>;

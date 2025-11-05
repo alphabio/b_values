@@ -5,9 +5,11 @@ import { lengthUnitSchema } from "@b/units";
 /**
  * @see https://developer.mozilla.org/en-US/docs/Web/CSS/length
  */
-export const lengthSchema = z.object({
-  value: z.number(),
-  unit: lengthUnitSchema,
-});
+export const lengthSchema = z
+  .object({
+    value: z.number(),
+    unit: lengthUnitSchema,
+  })
+  .strict();
 
 export type Length = z.infer<typeof lengthSchema>;

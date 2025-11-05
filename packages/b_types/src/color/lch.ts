@@ -7,12 +7,14 @@ import { cssValueSchema } from "../values";
  * Supports literals, variables (var()), keywords (none), and relative color syntax
  * @see https://drafts.csswg.org/css-color/#lch-colors
  */
-export const lchColorSchema = z.object({
-  kind: z.literal("lch"),
-  l: cssValueSchema,
-  c: cssValueSchema,
-  h: cssValueSchema,
-  alpha: cssValueSchema.optional(),
-});
+export const lchColorSchema = z
+  .object({
+    kind: z.literal("lch"),
+    l: cssValueSchema,
+    c: cssValueSchema,
+    h: cssValueSchema,
+    alpha: cssValueSchema.optional(),
+  })
+  .strict();
 
 export type LCHColor = z.infer<typeof lchColorSchema>;

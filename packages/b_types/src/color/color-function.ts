@@ -7,21 +7,23 @@ import { cssValueSchema } from "../values";
  * Supports literals, variables (var()), keywords (none), and relative color syntax
  * @see https://developer.mozilla.org/en-US/docs/Web/CSS/color_value/color
  */
-export const colorFunctionSchema = z.object({
-  kind: z.literal("color"),
-  colorSpace: z.enum([
-    "srgb",
-    "srgb-linear",
-    "display-p3",
-    "a98-rgb",
-    "prophoto-rgb",
-    "rec2020",
-    "xyz",
-    "xyz-d50",
-    "xyz-d65",
-  ]),
-  channels: z.tuple([cssValueSchema, cssValueSchema, cssValueSchema]),
-  alpha: cssValueSchema.optional(),
-});
+export const colorFunctionSchema = z
+  .object({
+    kind: z.literal("color"),
+    colorSpace: z.enum([
+      "srgb",
+      "srgb-linear",
+      "display-p3",
+      "a98-rgb",
+      "prophoto-rgb",
+      "rec2020",
+      "xyz",
+      "xyz-d50",
+      "xyz-d65",
+    ]),
+    channels: z.tuple([cssValueSchema, cssValueSchema, cssValueSchema]),
+    alpha: cssValueSchema.optional(),
+  })
+  .strict();
 
 export type ColorFunction = z.infer<typeof colorFunctionSchema>;

@@ -7,12 +7,14 @@ import { cssValueSchema } from "../values";
  * Supports literals, variables (var()), keywords (none), and relative color syntax
  * @see https://developer.mozilla.org/en-US/docs/Web/CSS/color_value/hsl
  */
-export const hslColorSchema = z.object({
-  kind: z.literal("hsl"),
-  h: cssValueSchema,
-  s: cssValueSchema,
-  l: cssValueSchema,
-  alpha: cssValueSchema.optional(),
-});
+export const hslColorSchema = z
+  .object({
+    kind: z.literal("hsl"),
+    h: cssValueSchema,
+    s: cssValueSchema,
+    l: cssValueSchema,
+    alpha: cssValueSchema.optional(),
+  })
+  .strict();
 
 export type HSLColor = z.infer<typeof hslColorSchema>;

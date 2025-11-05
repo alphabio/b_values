@@ -7,12 +7,14 @@ import { cssValueSchema } from "../values";
  * Supports literals, variables (var()), keywords (none), and relative color syntax
  * @see https://developer.mozilla.org/en-US/docs/Web/CSS/color_value/oklab
  */
-export const oklabColorSchema = z.object({
-  kind: z.literal("oklab"),
-  l: cssValueSchema,
-  a: cssValueSchema,
-  b: cssValueSchema,
-  alpha: cssValueSchema.optional(),
-});
+export const oklabColorSchema = z
+  .object({
+    kind: z.literal("oklab"),
+    l: cssValueSchema,
+    a: cssValueSchema,
+    b: cssValueSchema,
+    alpha: cssValueSchema.optional(),
+  })
+  .strict();
 
 export type OKLabColor = z.infer<typeof oklabColorSchema>;

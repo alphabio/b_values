@@ -10,9 +10,11 @@ import { z } from "zod";
  *
  * @see https://developer.mozilla.org/en-US/docs/Web/CSS/hex-color
  */
-export const hexColorSchema = z.object({
-  kind: z.literal("hex"),
-  value: z.string().regex(/^#([0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/i),
-});
+export const hexColorSchema = z
+  .object({
+    kind: z.literal("hex"),
+    value: z.string().regex(/^#([0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/i),
+  })
+  .strict();
 
 export type HexColor = z.infer<typeof hexColorSchema>;

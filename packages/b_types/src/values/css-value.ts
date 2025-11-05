@@ -6,11 +6,13 @@ import { getLiteralValues } from "@b/keywords";
  * Represents a literal numeric value with optional unit
  * @see https://drafts.csswg.org/css-values-4/#numeric-types
  */
-export const literalValueSchema = z.object({
-  kind: z.literal("literal"),
-  value: z.number(),
-  unit: z.string().optional(),
-});
+export const literalValueSchema = z
+  .object({
+    kind: z.literal("literal"),
+    value: z.number(),
+    unit: z.string().optional(),
+  })
+  .strict();
 
 /**
  * Represents a CSS custom property reference (var() function)
@@ -20,30 +22,36 @@ export const variableReferenceSchema: z.ZodType<{
   kind: "variable";
   name: string;
   fallback?: CssValue;
-}> = z.object({
-  kind: z.literal("variable"),
-  name: z.string(),
-  fallback: z.lazy((): z.ZodType<CssValue> => cssValueSchema).optional(),
-});
+}> = z
+  .object({
+    kind: z.literal("variable"),
+    name: z.string(),
+    fallback: z.lazy((): z.ZodType<CssValue> => cssValueSchema).optional(),
+  })
+  .strict();
 
 /**
  * Represents a CSS keyword value
  * @see https://drafts.csswg.org/css-values-4/#keywords
  */
-export const keywordValueSchema = z.object({
-  kind: z.literal("keyword"),
-  value: z.string(),
-});
+export const keywordValueSchema = z
+  .object({
+    kind: z.literal("keyword"),
+    value: z.string(),
+  })
+  .strict();
 
 export const listValueSchema: z.ZodType<{
   kind: "list";
   separator: " " | ",";
   values: CssValue[];
-}> = z.object({
-  kind: z.literal("list"),
-  separator: z.enum([" ", ","]),
-  values: z.array(z.lazy((): z.ZodType<CssValue> => cssValueSchema)),
-});
+}> = z
+  .object({
+    kind: z.literal("list"),
+    separator: z.enum([" ", ","]),
+    values: z.array(z.lazy((): z.ZodType<CssValue> => cssValueSchema)),
+  })
+  .strict();
 
 // Represents a single operation within a calc() expression
 export const calcOperationSchema: z.ZodType<{
@@ -52,32 +60,38 @@ export const calcOperationSchema: z.ZodType<{
   // The operands can be any valid CSS value, including another operation
   left: CssValue;
   right: CssValue;
-}> = z.object({
-  kind: z.literal("calc-operation"),
-  operator: z.enum(["+", "-", "*", "/"]),
-  // Use z.lazy() for the recursive definition
-  left: z.lazy((): z.ZodType<CssValue> => cssValueSchema),
-  right: z.lazy((): z.ZodType<CssValue> => cssValueSchema),
-});
+}> = z
+  .object({
+    kind: z.literal("calc-operation"),
+    operator: z.enum(["+", "-", "*", "/"]),
+    // Use z.lazy() for the recursive definition
+    left: z.lazy((): z.ZodType<CssValue> => cssValueSchema),
+    right: z.lazy((): z.ZodType<CssValue> => cssValueSchema),
+  })
+  .strict();
 
 // A top-level calc() function just holds the root operation/value
 export const calcFunctionSchema: z.ZodType<{
   kind: "calc";
   value: CssValue;
-}> = z.object({
-  kind: z.literal("calc"),
-  // The value inside can be a simple literal or a complex operation tree
-  value: z.lazy((): z.ZodType<CssValue> => cssValueSchema),
-});
+}> = z
+  .object({
+    kind: z.literal("calc"),
+    // The value inside can be a simple literal or a complex operation tree
+    value: z.lazy((): z.ZodType<CssValue> => cssValueSchema),
+  })
+  .strict();
 
 // For min() and max()
 export const minmaxFunctionSchema: z.ZodType<{
   kind: "min" | "max";
   values: CssValue[];
-}> = z.object({
-  kind: z.union([z.literal("min"), z.literal("max")]),
-  values: z.array(z.lazy((): z.ZodType<CssValue> => cssValueSchema)),
-});
+}> = z
+  .object({
+    kind: z.union([z.literal("min"), z.literal("max")]),
+    values: z.array(z.lazy((): z.ZodType<CssValue> => cssValueSchema)),
+  })
+  .strict();
 
 // For clamp()
 export const clampFunctionSchema: z.ZodType<{
@@ -85,30 +99,36 @@ export const clampFunctionSchema: z.ZodType<{
   min: CssValue;
   preferred: CssValue;
   max: CssValue;
-}> = z.object({
-  kind: z.literal("clamp"),
-  // clamp() always has 3 arguments: min, preferred, max
-  min: z.lazy((): z.ZodType<CssValue> => cssValueSchema),
-  preferred: z.lazy((): z.ZodType<CssValue> => cssValueSchema),
-  max: z.lazy((): z.ZodType<CssValue> => cssValueSchema),
-});
+}> = z
+  .object({
+    kind: z.literal("clamp"),
+    // clamp() always has 3 arguments: min, preferred, max
+    min: z.lazy((): z.ZodType<CssValue> => cssValueSchema),
+    preferred: z.lazy((): z.ZodType<CssValue> => cssValueSchema),
+    max: z.lazy((): z.ZodType<CssValue> => cssValueSchema),
+  })
+  .strict();
 
-export const urlFunctionSchema = z.object({
-  kind: z.literal("url"),
-  url: z.string(),
-});
+export const urlFunctionSchema = z
+  .object({
+    kind: z.literal("url"),
+    url: z.string(),
+  })
+  .strict();
 
 export const attrFunctionSchema: z.ZodType<{
   kind: "attr";
   name: string;
   typeOrUnit?: string; // e.g., "color", "px"
   fallback?: CssValue;
-}> = z.object({
-  kind: z.literal("attr"),
-  name: z.string(),
-  typeOrUnit: z.string().optional(),
-  fallback: z.lazy((): z.ZodType<CssValue> => cssValueSchema).optional(),
-});
+}> = z
+  .object({
+    kind: z.literal("attr"),
+    name: z.string(),
+    typeOrUnit: z.string().optional(),
+    fallback: z.lazy((): z.ZodType<CssValue> => cssValueSchema).optional(),
+  })
+  .strict();
 
 /**
  * Union of all possible CSS value representations
