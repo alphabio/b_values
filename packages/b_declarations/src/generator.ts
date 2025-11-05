@@ -5,10 +5,15 @@ import type { CSSDeclaration } from "./types";
 
 /**
  * Input for generating a CSS declaration from IR.
+ * 
+ * Generic version allows type-safe property names and IR types.
  */
-export interface GenerateDeclarationInput {
-  property: string;
-  ir: unknown;
+export interface GenerateDeclarationInput<
+  TProperty extends string = string,
+  TIR = unknown
+> {
+  property: TProperty;
+  ir: TIR;
 }
 
 /**
@@ -19,8 +24,9 @@ export interface GenerateDeclarationInput {
  *
  * @example
  * ```ts
+ * // Type-safe usage
  * const result = generateDeclaration({
- *   property: "background-image",
+ *   property: "background-image" as const,
  *   ir: { kind: "layers", layers: [...] }
  * });
  *
@@ -29,7 +35,9 @@ export interface GenerateDeclarationInput {
  * }
  * ```
  */
-export function generateDeclaration(input: GenerateDeclarationInput): GenerateResult {
+export function generateDeclaration<TProperty extends string = string, TIR = unknown>(
+  input: GenerateDeclarationInput<TProperty, TIR>
+): GenerateResult {
   const { property, ir } = input;
 
   // Look up property definition
@@ -79,7 +87,7 @@ export function generateDeclaration(input: GenerateDeclarationInput): GenerateRe
  * @example
  * ```ts
  * const result = generateDeclarationObject({
- *   property: "background-image",
+ *   property: "background-image" as const,
  *   ir: { kind: "layers", layers: [...] }
  * });
  *
@@ -88,7 +96,9 @@ export function generateDeclaration(input: GenerateDeclarationInput): GenerateRe
  * }
  * ```
  */
-export function generateDeclarationObject(input: GenerateDeclarationInput): GenerateResult {
+export function generateDeclarationObject<TProperty extends string = string, TIR = unknown>(
+  input: GenerateDeclarationInput<TProperty, TIR>
+): GenerateResult {
   const { property, ir } = input;
 
   // Look up property definition
