@@ -175,6 +175,34 @@ importers:
         specifier: workspace:*
         version: link:../../packages/typescript-config
 
+  packages/b_declarations:
+    dependencies:
+      '@b/generators':
+        specifier: workspace:*
+        version: link:../b_generators
+      '@b/keywords':
+        specifier: workspace:*
+        version: link:../b_keywords
+      '@b/parsers':
+        specifier: workspace:*
+        version: link:../b_parsers
+      '@b/types':
+        specifier: workspace:*
+        version: link:../b_types
+      '@types/css-tree':
+        specifier: 'catalog:'
+        version: 2.3.11
+      css-tree:
+        specifier: 'catalog:'
+        version: 3.1.0
+      zod:
+        specifier: 'catalog:'
+        version: 4.1.12
+    devDependencies:
+      '@b/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
+
   packages/b_generators:
     dependencies:
       '@b/keywords':
@@ -221,34 +249,6 @@ importers:
       '@b/utils':
         specifier: workspace:*
         version: link:../b_utils
-      '@types/css-tree':
-        specifier: 'catalog:'
-        version: 2.3.11
-      css-tree:
-        specifier: 'catalog:'
-        version: 3.1.0
-      zod:
-        specifier: 'catalog:'
-        version: 4.1.12
-    devDependencies:
-      '@b/typescript-config':
-        specifier: workspace:*
-        version: link:../typescript-config
-
-  packages/b_properties:
-    dependencies:
-      '@b/generators':
-        specifier: workspace:*
-        version: link:../b_generators
-      '@b/keywords':
-        specifier: workspace:*
-        version: link:../b_keywords
-      '@b/parsers':
-        specifier: workspace:*
-        version: link:../b_parsers
-      '@b/types':
-        specifier: workspace:*
-        version: link:../b_types
       '@types/css-tree':
         specifier: 'catalog:'
         version: 2.3.11
@@ -310,6 +310,9 @@ importers:
 
   packages/b_values:
     dependencies:
+      '@b/declarations':
+        specifier: workspace:*
+        version: link:../b_declarations
       '@b/generators':
         specifier: workspace:*
         version: link:../b_generators
@@ -319,9 +322,6 @@ importers:
       '@b/parsers':
         specifier: workspace:*
         version: link:../b_parsers
-      '@b/properties':
-        specifier: workspace:*
-        version: link:../b_properties
       '@b/types':
         specifier: workspace:*
         version: link:../b_types

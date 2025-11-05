@@ -1,4 +1,4 @@
-// b_path:: packages/b_properties/tsup.config.ts
+// b_path:: packages/b_declarations/tsup.config.ts
 import { defineConfig } from "tsup";
 
 export default defineConfig({

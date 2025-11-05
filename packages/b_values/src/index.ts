@@ -7,4 +7,4 @@ export * as Types from "@b/types";
 export * as Units from "@b/units";
 export * as Parse from "@b/parsers";
 export * as Generate from "@b/generators";
-export * as Properties from "@b/properties";
+export * as Declarations from "@b/declarations";

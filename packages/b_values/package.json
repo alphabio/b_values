@@ -23,7 +23,7 @@
     "@b/generators": "workspace:*",
     "@b/keywords": "workspace:*",
     "@b/parsers": "workspace:*",
-    "@b/properties": "workspace:*",
+    "@b/declarations": "workspace:*",
     "@b/types": "workspace:*",
     "@b/units": "workspace:*",
     "@b/utils": "workspace:*",

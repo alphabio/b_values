@@ -1,7 +1,7 @@
 {
-  "name": "@b/properties",
+  "name": "@b/declarations",
   "version": "0.1.0",
-  "description": "Property-level CSS schemas and parsers",
+  "description": "CSS declaration schemas and parsers",
   "type": "module",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
