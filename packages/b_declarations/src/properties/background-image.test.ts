@@ -265,11 +265,13 @@ describe("rgb colors in gradients", () => {
   it("should parse radial gradient with rgb colors", () => {
     const input = "radial-gradient(rgb(255, 255, 255, 0) 0, rgb(255, 255, 255, 0.15) 30%)";
     const result = parseBackgroundImage(input);
-    expect(result.ok).toBe(true);
+
     if (!result.ok) {
-      console.error("Parse error:", result.error);
-      return;
+      console.log("Error parsing:", result.error);
     }
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
     expect(result.value.kind).toBe("layers");
     if (result.value.kind !== "layers") return;
     expect(result.value.layers[0].kind).toBe("gradient");

@@ -40,6 +40,16 @@ export function fromNodes(nodes: csstree.CssNode[]): Result<Type.ColorStop, stri
       continue;
     }
 
+    if (posNode.type === "Number") {
+      // Unitless 0 is valid for lengths
+      const value = Number.parseFloat(posNode.value);
+      if (value === 0) {
+        positions.push({ value: 0, unit: "px" });
+        continue;
+      }
+      return err(`Unitless numbers (other than 0) are not valid for color stop positions: ${posNode.value}`);
+    }
+
     if (posNode.type === "Dimension") {
       const value = Number.parseFloat(posNode.value);
       const unit = posNode.unit.toLowerCase();

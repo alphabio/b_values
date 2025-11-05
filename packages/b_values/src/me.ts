@@ -1,7 +1,8 @@
 // b_path:: packages/b_values/src/me.ts
 // DO NOT DELETE THIS FILE. IT IS BY THE USER FOR ADHOC TESTING PURPOSES ONLY.
 
-import * as decl from "@b/declarations";
+// import * as decl from "@b/declarations";
+// import * as exp from "b_short";
 
 // console.log(
 //   decl.parseDeclaration(
@@ -9,16 +10,12 @@ import * as decl from "@b/declarations";
 //   ),
 // );
 
-console.log(
-  JSON.stringify(
-    decl.parseDeclaration(
-      "background-image: radial-gradient(rgb(255,255,255,0) 0, rgb(255,255,255,.15) 30%, rgb(255,255,255,.3) 32%, rgb(255,255,255,0) 33%) 0 0",
-    ),
-    null,
-    2,
-  ),
-);
+// console.log(JSON.stringify(decl.parseDeclaration("background-image: url()"), null, 2));
 
+// import * as gen from "@b/generators";
+
+// console.log(
+//   gen.Color.generate({
 //     kind: "hsl",
 //     h: {
 //       kind: "calc",
@@ -35,7 +32,7 @@ console.log(
 //       },
 //     },
 //     s: { kind: "url", url: "https://example.com/saturation" },
-//     l: { kind: "literal", value: 50, unit: "%" },
+//     l: { kind: "literal", value: 50a, unit: "%" },
 //     alpha: { kind: "literal", value: 0.5 },
 //   }),
 // );

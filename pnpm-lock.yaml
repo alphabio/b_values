@@ -21,6 +21,9 @@ catalogs:
     '@types/react-dom':
       specifier: ^19.2.2
       version: 19.2.2
+    b_short:
+      specifier: ^2.7.0
+      version: 2.7.0
     css-tree:
       specifier: ^3.1.0
       version: 3.1.0
@@ -334,6 +337,9 @@ importers:
       '@b/utils':
         specifier: workspace:*
         version: link:../b_utils
+      b_short:
+        specifier: 'catalog:'
+        version: 2.7.0(css-tree@3.1.0)
       css-tree:
         specifier: 'catalog:'
         version: 3.1.0
@@ -1545,6 +1551,12 @@ packages:
   at-least-node@1.0.0:
     resolution: {integrity: sha512-+q/t7Ekv1EDY2l6Gda6LLiX14rU9TV20Wa3ofeQmwPFZbOMo9DXrLbOjFaaclkXKWidIaopwAObQDqwWtGUjqg==}
     engines: {node: '>= 4.0.0'}
+
+  b_short@2.7.0:
+    resolution: {integrity: sha512-w7sByyHHDUi+u3ng7Juj6PLGe82ZhH6u5Q1ZUrSkG9vdnN3zv5aqep1ajLduYeTIVjbj1GCzATVX+rkj5aCx4A==}
+    engines: {node: '>=16.0.0'}
+    peerDependencies:
+      css-tree: ^3.1.0
 
   babel-dead-code-elimination@1.0.10:
     resolution: {integrity: sha512-DV5bdJZTzZ0zn0DC24v3jD7Mnidh6xhKa4GfKCbq3sfW8kaWhDdZjP3i81geA8T33tdYqWKw4D3fVv0CwEgKVA==}
@@ -4992,6 +5004,10 @@ snapshots:
       js-tokens: 9.0.1
 
   at-least-node@1.0.0: {}
+
+  b_short@2.7.0(css-tree@3.1.0):
+    dependencies:
+      css-tree: 3.1.0
 
   babel-dead-code-elimination@1.0.10:
     dependencies:
