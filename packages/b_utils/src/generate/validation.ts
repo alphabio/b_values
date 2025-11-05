@@ -1,4 +1,4 @@
-// b_path:: src/utils/generate/validation.ts
+// b_path:: packages/b_utils/src/generate/validation.ts
 
 import type { z } from "zod";
 import type { Issue } from "@b/types";

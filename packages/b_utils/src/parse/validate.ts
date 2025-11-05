@@ -1,4 +1,4 @@
-// b_path:: src/core/validate.ts
+// b_path:: packages/b_utils/src/parse/validate.ts
 /**
  * Validates CSS stylesheet syntax and property values, providing detailed error formatting.
  *

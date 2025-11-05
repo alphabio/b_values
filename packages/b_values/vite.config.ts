@@ -1,4 +1,4 @@
-// b_path:: packages/b_declarations/vite.config.ts
+// b_path:: packages/b_values/vite.config.ts
 import path from "node:path";
 import { defineConfig } from "vite";
 
