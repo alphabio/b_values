@@ -53,6 +53,6 @@ export const propertyRegistry = new PropertyRegistry();
  * Helper to define and register a property.
  */
 export function defineProperty<T>(definition: PropertyDefinition<T>): PropertyDefinition<T> {
-  propertyRegistry.register(definition);
+  propertyRegistry.register(definition as PropertyDefinition<unknown>);
   return definition;
 }

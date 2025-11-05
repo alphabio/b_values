@@ -1,5 +1,5 @@
 // b_path:: packages/b_declarations/src/types.ts
-import type { Result } from "@b/types";
+import type { Result, GenerateResult } from "@b/types";
 
 /**
  * A CSS declaration consists of a property name and its value.
@@ -21,12 +21,13 @@ export interface DeclarationResult<T = unknown> {
 
 /**
  * Property definition for the registry.
- * Each CSS property must register its metadata and parser.
+ * Each CSS property must register its metadata, parser, and generator.
  */
 export interface PropertyDefinition<T = unknown> {
   name: string;
   syntax: string;
   parser: (value: string) => Result<T, string>;
+  generator?: (ir: T) => GenerateResult;
   inherited: boolean;
   initial: string;
   computed?: string;
@@ -36,3 +37,8 @@ export interface PropertyDefinition<T = unknown> {
  * Property parser function type.
  */
 export type PropertyParser<T = unknown> = (value: string) => Result<T, string>;
+
+/**
+ * Property generator function type.
+ */
+export type PropertyGenerator<T = unknown> = (ir: T) => GenerateResult;

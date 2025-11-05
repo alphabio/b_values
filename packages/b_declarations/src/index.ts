@@ -5,6 +5,7 @@
 export * from "./types";
 export * from "./registry";
 export * from "./parser";
+export * from "./generator";
 
 // Utilities
 export * from "./utils";
