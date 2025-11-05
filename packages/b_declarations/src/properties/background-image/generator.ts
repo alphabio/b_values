@@ -17,6 +17,7 @@ export function generateBackgroundImage(ir: BackgroundImageIR): GenerateResult {
 
   // Generate each layer
   const layerStrings: string[] = [];
+  const allIssues: import("@b/types").Issue[] = [];
 
   for (const layer of ir.layers) {
     const layerResult = generateImageLayer(layer);
@@ -24,10 +25,16 @@ export function generateBackgroundImage(ir: BackgroundImageIR): GenerateResult {
       return layerResult;
     }
     layerStrings.push(layerResult.value);
+    allIssues.push(...layerResult.issues);
   }
 
   // Join with comma and space
-  return generateOk(layerStrings.join(", "), "background-image");
+  return {
+    ok: true,
+    value: layerStrings.join(", "),
+    property: "background-image",
+    issues: allIssues,
+  };
 }
 
 /**

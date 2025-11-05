@@ -33,6 +33,12 @@ export function generate(colorStop: Type.ColorStop): GenerateResult {
   }
 
   let css = colorResult.value;
+  let result = generateOk(css);
+
+  // Propagate warnings from color
+  for (const issue of colorResult.issues) {
+    result = { ...result, issues: [...result.issues, issue] };
+  }
 
   if (colorStop.position) {
     const pos = colorStop.position;
@@ -54,7 +60,8 @@ export function generate(colorStop: Type.ColorStop): GenerateResult {
     }
   }
 
-  return generateOk(css);
+  result = { ...result, value: css };
+  return result;
 }
 
 /**

@@ -102,6 +102,7 @@ export function generate(ir: Type.RadialGradient): GenerateResult {
   const functionName = ir.repeating ? "repeating-radial-gradient" : "radial-gradient";
   const parts: string[] = [];
   const firstPart: string[] = [];
+  const allIssues: Type.Issue[] = [];
 
   if (ir.shape) {
     firstPart.push(ir.shape);
@@ -111,12 +112,14 @@ export function generate(ir: Type.RadialGradient): GenerateResult {
     const sizeResult = generateSize(ir.size);
     if (!sizeResult.ok) return sizeResult;
     firstPart.push(sizeResult.value);
+    allIssues.push(...sizeResult.issues);
   }
 
   if (ir.position) {
     const posResult = Position.generate(ir.position);
     if (!posResult.ok) return posResult;
     firstPart.push(`at ${posResult.value}`);
+    allIssues.push(...posResult.issues);
   }
 
   if (firstPart.length > 0) {
@@ -127,13 +130,19 @@ export function generate(ir: Type.RadialGradient): GenerateResult {
     const interpResult = generateColorInterpolation(ir.colorInterpolationMethod);
     if (!interpResult.ok) return interpResult;
     parts.push(interpResult.value);
+    allIssues.push(...interpResult.issues);
   }
 
   for (const stop of ir.colorStops) {
     const stopResult = ColorStop.generate(stop);
     if (!stopResult.ok) return stopResult;
     parts.push(stopResult.value);
+    allIssues.push(...stopResult.issues);
   }
 
-  return generateOk(`${functionName}(${parts.join(", ")})`);
+  return {
+    ok: true,
+    value: `${functionName}(${parts.join(", ")})`,
+    issues: allIssues,
+  };
 }

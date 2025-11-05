@@ -219,4 +219,109 @@ describe("rgb generator", () => {
       }
     });
   });
+
+  describe("Semantic validation", () => {
+    it("should warn for out-of-range RGB components", () => {
+      const color: RGBColor = {
+        kind: "rgb",
+        r: lit(-255),
+        g: lit(128),
+        b: lit(500),
+      };
+      const result = RGB.generate(color);
+
+      expect(result.ok).toBe(true); // Still generates!
+      if (result.ok) {
+        expect(result.value).toBe("rgb(-255 128 500)");
+      }
+      expect(result.issues).toHaveLength(2); // r and b warnings
+
+      expect(result.issues[0]).toMatchObject({
+        severity: "warning",
+        code: "invalid-value",
+        message: expect.stringContaining("out of valid range"),
+        path: ["r"],
+        suggestion: expect.stringContaining("between 0 and 255"),
+      });
+
+      expect(result.issues[1]).toMatchObject({
+        severity: "warning",
+        code: "invalid-value",
+        message: expect.stringContaining("out of valid range"),
+        path: ["b"],
+      });
+    });
+
+    it("should not warn for valid RGB components", () => {
+      const color: RGBColor = {
+        kind: "rgb",
+        r: lit(255),
+        g: lit(128),
+        b: lit(0),
+      };
+      const result = RGB.generate(color);
+
+      expect(result.ok).toBe(true);
+      expect(result.issues).toHaveLength(0); // No warnings
+    });
+
+    it("should warn for out-of-range alpha", () => {
+      const color: RGBColor = {
+        kind: "rgb",
+        r: lit(255),
+        g: lit(128),
+        b: lit(0),
+        alpha: lit(2),
+      };
+      const result = RGB.generate(color);
+
+      expect(result.ok).toBe(true); // Still generates
+      expect(result.issues).toHaveLength(1);
+      expect(result.issues[0]).toMatchObject({
+        severity: "warning",
+        code: "invalid-value",
+        message: expect.stringContaining("out of valid range"),
+        path: ["alpha"],
+      });
+    });
+
+    it("should not warn for variables", () => {
+      const color: RGBColor = {
+        kind: "rgb",
+        r: { kind: "variable", name: "--r" },
+        g: lit(128),
+        b: lit(0),
+      };
+      const result = RGB.generate(color);
+
+      expect(result.ok).toBe(true);
+      expect(result.issues).toHaveLength(0); // Can't validate variables
+    });
+
+    it("should handle boundary values correctly", () => {
+      const color: RGBColor = {
+        kind: "rgb",
+        r: lit(0),
+        g: lit(255),
+        b: lit(128),
+      };
+      const result = RGB.generate(color);
+
+      expect(result.ok).toBe(true);
+      expect(result.issues).toHaveLength(0); // No warnings for boundaries
+    });
+
+    it("should warn for slightly out-of-range values", () => {
+      const color: RGBColor = {
+        kind: "rgb",
+        r: lit(256), // Just over the limit
+        g: lit(128),
+        b: lit(-1), // Just under the limit
+      };
+      const result = RGB.generate(color);
+
+      expect(result.ok).toBe(true);
+      expect(result.issues).toHaveLength(2);
+    });
+  });
 });

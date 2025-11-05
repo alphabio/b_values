@@ -109,25 +109,33 @@ function generateColorInterpolation(method: Type.ColorInterpolationMethod): Gene
 export function generate(ir: Type.LinearGradient): GenerateResult {
   const functionName = ir.repeating ? "repeating-linear-gradient" : "linear-gradient";
   const parts: string[] = [];
+  const allIssues: Type.Issue[] = [];
 
   if (ir.direction) {
     const dirResult = generateDirection(ir.direction);
 
     if (!dirResult.ok) return dirResult;
     parts.push(dirResult.value);
+    allIssues.push(...dirResult.issues);
   }
 
   if (ir.colorInterpolationMethod) {
     const interpResult = generateColorInterpolation(ir.colorInterpolationMethod);
     if (!interpResult.ok) return interpResult;
     parts.push(interpResult.value);
+    allIssues.push(...interpResult.issues);
   }
 
   for (const stop of ir.colorStops) {
     const stopResult = ColorStop.generate(stop);
     if (!stopResult.ok) return stopResult;
     parts.push(stopResult.value);
+    allIssues.push(...stopResult.issues);
   }
 
-  return generateOk(`${functionName}(${parts.join(", ")})`);
+  return {
+    ok: true,
+    value: `${functionName}(${parts.join(", ")})`,
+    issues: allIssues,
+  };
 }

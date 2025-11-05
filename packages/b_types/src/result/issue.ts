@@ -100,6 +100,9 @@ export function createError(
     property?: string;
     suggestion?: string;
     location?: SourceLocation;
+    path?: (string | number)[];
+    expected?: string;
+    received?: string;
   },
 ): Issue {
   return {
@@ -129,6 +132,9 @@ export function createWarning(
     property?: string;
     suggestion?: string;
     location?: SourceLocation;
+    path?: (string | number)[];
+    expected?: string;
+    received?: string;
   },
 ): Issue {
   return {
@@ -156,6 +162,9 @@ export function createInfo(
     property?: string;
     suggestion?: string;
     location?: SourceLocation;
+    path?: (string | number)[];
+    expected?: string;
+    received?: string;
   },
 ): Issue {
   return {

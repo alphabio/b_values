@@ -75,17 +75,20 @@ export function generate(ir: Type.ConicGradient): GenerateResult {
   const functionName = ir.repeating ? "repeating-conic-gradient" : "conic-gradient";
   const parts: string[] = [];
   const firstPart: string[] = [];
+  const allIssues: Type.Issue[] = [];
 
   if (ir.fromAngle) {
     const angleResult = Angle.generate(ir.fromAngle);
     if (!angleResult.ok) return angleResult;
     firstPart.push(`from ${angleResult.value}`);
+    allIssues.push(...angleResult.issues);
   }
 
   if (ir.position) {
     const posResult = Position.generate(ir.position);
     if (!posResult.ok) return posResult;
     firstPart.push(`at ${posResult.value}`);
+    allIssues.push(...posResult.issues);
   }
 
   if (firstPart.length > 0) {
@@ -96,13 +99,19 @@ export function generate(ir: Type.ConicGradient): GenerateResult {
     const interpResult = generateColorInterpolation(ir.colorInterpolationMethod);
     if (!interpResult.ok) return interpResult;
     parts.push(interpResult.value);
+    allIssues.push(...interpResult.issues);
   }
 
   for (const stop of ir.colorStops) {
     const stopResult = ColorStop.generate(stop);
     if (!stopResult.ok) return stopResult;
     parts.push(stopResult.value);
+    allIssues.push(...stopResult.issues);
   }
 
-  return generateOk(`${functionName}(${parts.join(", ")})`);
+  return {
+    ok: true,
+    value: `${functionName}(${parts.join(", ")})`,
+    issues: allIssues,
+  };
 }
