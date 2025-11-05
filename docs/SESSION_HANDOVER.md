@@ -27,6 +27,13 @@ See `docs/sessions/016/TODO-test-coverage.md` for details:
 - ✅ All generators support regular and repeating variants
 - ✅ Comprehensive tests (6 linear gradient tests, all passing)
 - ✅ Type-safe generation from IR → CSS strings
+- ✅ **NEW**: Implemented linear gradient parser
+  - Parse direction (angle, to-side, to-corner)
+  - Parse color interpolation methods
+  - Parse color stops from AST nodes
+  - Support repeating variants
+- ✅ **NEW**: Created color parser (parseNode) for AST-based color parsing
+- ✅ **NEW**: 8 gradient parser tests + round-trip tests (178 parser tests passing)
 - ✅ All quality checks passing (typecheck, format, lint)
 
 ---
@@ -52,15 +59,13 @@ See `docs/sessions/016/TODO-test-coverage.md` for details:
 
 ## 🎯 Next Steps
 
-1. **Implement gradient parsers** (using generator-first approach):
-   - `parseLinearGradient()` - parse direction, interpolation, color stops
+1. **Implement remaining gradient parsers**:
    - `parseRadialGradient()` - parse shape, size, position
    - `parseConicGradient()` - parse from-angle, position
    - Repeating variants (same parsers, different function names)
-2. **Parse color stops from AST nodes** - delegate to color parsers
-3. **Connect gradient parsers to `background-image`** declaration
-4. **Round-trip tests** - verify parse → generate → parse is identity
-5. Add more properties (color, background-color)
+2. **Connect gradient parsers to `background-image`** declaration
+3. **Round-trip tests** - verify parse → generate → parse for all gradients
+4. Add more properties (color, background-color)
 
 ---
 
