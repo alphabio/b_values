@@ -15,6 +15,7 @@
 ## 📊 Current State
 
 **Working:**
+
 - ✅ `@b/declarations` package structure
 - ✅ Registry and parser framework
 - ✅ `parseUrl()` implementation
@@ -22,6 +23,7 @@
 - ✅ 44 tests passing
 
 **Not working:**
+
 - ⚠️ Gradient parsers not yet implemented
 - ⚠️ Only URL values supported in background-image
 

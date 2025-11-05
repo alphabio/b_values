@@ -1,0 +1,132 @@
+// b_path:: packages/b_generators/src/gradient/linear.ts
+import { generateOk, type GenerateResult } from "@b/types";
+import type * as Type from "@b/types";
+import * as Angle from "../angle";
+import * as ColorStop from "./color-stop";
+
+/**
+ * Generate CSS direction string from GradientDirection IR.
+ *
+ * @param direction - GradientDirection IR object
+ * @returns CSS direction string (e.g., "45deg", "to right", "to top left")
+ */
+function generateDirection(direction: Type.GradientDirection): GenerateResult {
+  if (direction.kind === "angle") {
+    return Angle.generate(direction.value);
+  }
+
+  if (direction.kind === "to-side") {
+    return generateOk(`to ${direction.value}`);
+  }
+
+  return generateOk(`to ${direction.value}`);
+}
+
+/**
+ * Generate CSS color interpolation method string.
+ *
+ * @param method - ColorInterpolationMethod IR object
+ * @returns CSS interpolation string (e.g., "in oklch", "in hsl shorter hue")
+ */
+function generateColorInterpolation(method: Type.ColorInterpolationMethod): GenerateResult {
+  let css = `in ${method.colorSpace}`;
+
+  if ("hueInterpolationMethod" in method && method.hueInterpolationMethod) {
+    css += ` ${method.hueInterpolationMethod}`;
+  }
+
+  return generateOk(css);
+}
+
+/**
+ * Generate a CSS linear gradient string from intermediate representation (IR).
+ *
+ * Converts a LinearGradient IR object into a valid CSS `linear-gradient()` or
+ * `repeating-linear-gradient()` function string.
+ *
+ * @param ir - LinearGradient IR object to convert to CSS
+ * @returns CSS linear gradient function string
+ *
+ * @example
+ * Simple gradient:
+ * ```typescript
+ * generate({
+ *   kind: "linear",
+ *   colorStops: [
+ *     { color: { kind: "named", value: "red" } },
+ *     { color: { kind: "named", value: "blue" } }
+ *   ],
+ *   repeating: false
+ * })
+ * // => "linear-gradient(red, blue)"
+ * ```
+ *
+ * @example
+ * With angle direction:
+ * ```typescript
+ * generate({
+ *   kind: "linear",
+ *   direction: { kind: "angle", value: { value: 45, unit: "deg" } },
+ *   colorStops: [
+ *     { color: { kind: "named", value: "red" } },
+ *     { color: { kind: "named", value: "blue" } }
+ *   ],
+ *   repeating: false
+ * })
+ * // => "linear-gradient(45deg, red, blue)"
+ * ```
+ *
+ * @example
+ * With side direction:
+ * ```typescript
+ * generate({
+ *   kind: "linear",
+ *   direction: { kind: "to-side", value: "right" },
+ *   colorStops: [
+ *     { color: { kind: "named", value: "red" } },
+ *     { color: { kind: "named", value: "blue" } }
+ *   ],
+ *   repeating: false
+ * })
+ * // => "linear-gradient(to right, red, blue)"
+ * ```
+ *
+ * @example
+ * With color interpolation:
+ * ```typescript
+ * generate({
+ *   kind: "linear",
+ *   colorSpace: "oklch",
+ *   colorStops: [
+ *     { color: { kind: "named", value: "red" } },
+ *     { color: { kind: "named", value: "blue" } }
+ *   ],
+ *   repeating: false
+ * })
+ * // => "linear-gradient(in oklch, red, blue)"
+ * ```
+ */
+export function generate(ir: Type.LinearGradient): GenerateResult {
+  const functionName = ir.repeating ? "repeating-linear-gradient" : "linear-gradient";
+  const parts: string[] = [];
+
+  if (ir.direction) {
+    const dirResult = generateDirection(ir.direction);
+    if (!dirResult.ok) return dirResult;
+    parts.push(dirResult.value);
+  }
+
+  if (ir.colorInterpolationMethod) {
+    const interpResult = generateColorInterpolation(ir.colorInterpolationMethod);
+    if (!interpResult.ok) return interpResult;
+    parts.push(interpResult.value);
+  }
+
+  for (const stop of ir.colorStops) {
+    const stopResult = ColorStop.generate(stop);
+    if (!stopResult.ok) return stopResult;
+    parts.push(stopResult.value);
+  }
+
+  return generateOk(`${functionName}(${parts.join(", ")})`);
+}
