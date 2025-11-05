@@ -1,4 +1,4 @@
-// b_path:: packages/b_utils/src/parse/color/hwb.ts
+// b_path:: packages/b_parsers/src/color/hwb.ts
 import type * as csstree from "css-tree";
 import { err, ok, type Result } from "@b/types";
 import type { HWBColor } from "@b/types";

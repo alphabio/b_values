@@ -1,4 +1,4 @@
-// b_path:: packages/b_utils/src/parse/color/oklch.ts
+// b_path:: packages/b_parsers/src/color/oklch.ts
 import type * as csstree from "css-tree";
 import { err, ok, type Result } from "@b/types";
 import type { OKLCHColor } from "@b/types";

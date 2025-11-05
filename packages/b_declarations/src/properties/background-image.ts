@@ -1,5 +1,5 @@
 // b_path:: packages/b_declarations/src/properties/background-image.ts
-import { ok, err, type Result } from "@b/types";
+import { ok, err, type Result, type Gradient } from "@b/types";
 import * as Parsers from "@b/parsers";
 import { defineProperty } from "../registry";
 import { isCSSWideKeyword, parseCSSWideKeyword, splitByComma } from "../utils";
@@ -21,10 +21,7 @@ export type BackgroundImageIR = { kind: "keyword"; value: string } | { kind: "la
  *   <cross-fade()> |
  *   <element()>
  */
-export type ImageLayer =
-  | { kind: "url"; url: string }
-  | { kind: "gradient"; value: string } // Placeholder until gradient parsers are added
-  | { kind: "none" };
+export type ImageLayer = { kind: "url"; url: string } | { kind: "gradient"; gradient: Gradient } | { kind: "none" };
 
 /**
  * Parse a background-image value.
@@ -86,19 +83,41 @@ export function parseBackgroundImage(value: string): Result<BackgroundImageIR, s
       continue;
     }
 
-    // Handle gradients (placeholder - delegate to gradient parsers when available)
-    if (
-      layer.startsWith("linear-gradient(") ||
-      layer.startsWith("radial-gradient(") ||
-      layer.startsWith("conic-gradient(") ||
-      layer.startsWith("repeating-linear-gradient(") ||
-      layer.startsWith("repeating-radial-gradient(") ||
-      layer.startsWith("repeating-conic-gradient(")
-    ) {
-      // TODO: Delegate to parseLinearGradient(), parseRadialGradient(), etc.
+    // Delegate to linear-gradient parser
+    if (layer.startsWith("linear-gradient(") || layer.startsWith("repeating-linear-gradient(")) {
+      const gradientResult = Parsers.Gradient.Linear.parse(layer);
+      if (!gradientResult.ok) {
+        return err(`Invalid linear-gradient in background-image: ${gradientResult.error}`);
+      }
       layers.push({
         kind: "gradient",
-        value: layer,
+        gradient: gradientResult.value,
+      });
+      continue;
+    }
+
+    // Delegate to radial-gradient parser
+    if (layer.startsWith("radial-gradient(") || layer.startsWith("repeating-radial-gradient(")) {
+      const gradientResult = Parsers.Gradient.Radial.parse(layer);
+      if (!gradientResult.ok) {
+        return err(`Invalid radial-gradient in background-image: ${gradientResult.error}`);
+      }
+      layers.push({
+        kind: "gradient",
+        gradient: gradientResult.value,
+      });
+      continue;
+    }
+
+    // Delegate to conic-gradient parser
+    if (layer.startsWith("conic-gradient(") || layer.startsWith("repeating-conic-gradient(")) {
+      const gradientResult = Parsers.Gradient.Conic.parse(layer);
+      if (!gradientResult.ok) {
+        return err(`Invalid conic-gradient in background-image: ${gradientResult.error}`);
+      }
+      layers.push({
+        kind: "gradient",
+        gradient: gradientResult.value,
       });
       continue;
     }

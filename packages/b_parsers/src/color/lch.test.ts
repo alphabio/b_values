@@ -1,4 +1,4 @@
-// b_path:: packages/b_utils/src/parse/color/lch.test.ts
+// b_path:: packages/b_parsers/src/color/lch.test.ts
 import { describe, expect, it } from "vitest";
 import { parseLchFunction } from "./lch";
 import { extractFunctionFromValue } from "../../../b_utils/src/parse/test-utils";

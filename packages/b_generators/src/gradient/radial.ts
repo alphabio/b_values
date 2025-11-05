@@ -101,26 +101,26 @@ function generateColorInterpolation(method: Type.ColorInterpolationMethod): Gene
 export function generate(ir: Type.RadialGradient): GenerateResult {
   const functionName = ir.repeating ? "repeating-radial-gradient" : "radial-gradient";
   const parts: string[] = [];
-  const shapeAndSize: string[] = [];
+  const firstPart: string[] = [];
 
   if (ir.shape) {
-    shapeAndSize.push(ir.shape);
+    firstPart.push(ir.shape);
   }
 
   if (ir.size) {
     const sizeResult = generateSize(ir.size);
     if (!sizeResult.ok) return sizeResult;
-    shapeAndSize.push(sizeResult.value);
-  }
-
-  if (shapeAndSize.length > 0) {
-    parts.push(shapeAndSize.join(" "));
+    firstPart.push(sizeResult.value);
   }
 
   if (ir.position) {
     const posResult = Position.generate(ir.position);
     if (!posResult.ok) return posResult;
-    parts.push(`at ${posResult.value}`);
+    firstPart.push(`at ${posResult.value}`);
+  }
+
+  if (firstPart.length > 0) {
+    parts.push(firstPart.join(" "));
   }
 
   if (ir.colorInterpolationMethod) {

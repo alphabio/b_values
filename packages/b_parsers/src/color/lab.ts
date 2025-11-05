@@ -1,4 +1,4 @@
-// b_path:: packages/b_utils/src/parse/color/lab.ts
+// b_path:: packages/b_parsers/src/color/lab.ts
 import type * as csstree from "css-tree";
 import { err, ok, type Result } from "@b/types";
 import type { LABColor } from "@b/types";

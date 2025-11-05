@@ -3,16 +3,22 @@
 
 import * as decl from "@b/declarations";
 
+// console.log(
+//   decl.parseDeclaration(
+//     "background-image: radial-gradient(rgb(255,255,255,0) 0, rgb(255,255,255,.15) 30%, rgb(255,255,255,.3) 32%, rgb(255,255,255,0) 33%) 0 0",
+//   ),
+// );
+
 console.log(
-  decl.parseDeclaration(
-    "background-image: radial-gradient(rgba(255,255,255,0) 0, rgba(255,255,255,.15) 30%, rgba(255,255,255,.3) 32%, rgba(255,255,255,0) 33%) 0 0",
-  ).value?.ir,
+  JSON.stringify(
+    decl.parseDeclaration(
+      "background-image: radial-gradient(rgb(255,255,255,0) 0, rgb(255,255,255,.15) 30%, rgb(255,255,255,.3) 32%, rgb(255,255,255,0) 33%) 0 0",
+    ),
+    null,
+    2,
+  ),
 );
 
-// import * as gen from "@b/generators";
-
-// console.log(
-//   gen.Color.generate({
 //     kind: "hsl",
 //     h: {
 //       kind: "calc",

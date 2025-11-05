@@ -1,4 +1,4 @@
-// b_path:: packages/b_utils/src/parse/length.test.ts
+// b_path:: packages/b_parsers/src/length.test.ts
 import { describe, expect, it } from "vitest";
 import { parseLengthNode, parseLengthPercentageNode, parseNumberNode } from "./length";
 import type * as csstree from "css-tree";

@@ -1,4 +1,4 @@
-// b_path:: packages/b_utils/src/parse/color/rgb.test.ts
+// b_path:: packages/b_parsers/src/color/rgb.test.ts
 import { describe, expect, it } from "vitest";
 import { parseRgbFunction } from "./rgb";
 import { extractFunctionFromValue } from "../../../b_utils/src/parse/test-utils";

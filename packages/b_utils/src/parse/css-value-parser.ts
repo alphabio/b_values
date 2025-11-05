@@ -1,4 +1,4 @@
-// b_path:: packages/b_utils/src/parse/color/helpers.ts
+// b_path:: packages/b_utils/src/parse/css-value-parser.ts
 import type * as csstree from "css-tree";
 import { err, ok, type Result } from "@b/types";
 import type { CssValue } from "@b/types";

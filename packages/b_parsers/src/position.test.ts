@@ -1,4 +1,4 @@
-// b_path:: packages/b_utils/src/parse/position.test.ts
+// b_path:: packages/b_parsers/src/position.test.ts
 import { describe, expect, it } from "vitest";
 import { parsePositionValueNode, parsePosition2D, parseAtPosition } from "./position";
 import type * as csstree from "css-tree";

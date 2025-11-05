@@ -1,4 +1,4 @@
-// b_path:: packages/b_utils/src/parse/color/lch.ts
+// b_path:: packages/b_parsers/src/color/lch.ts
 import type * as csstree from "css-tree";
 import { err, ok, type Result } from "@b/types";
 import type { LCHColor } from "@b/types";

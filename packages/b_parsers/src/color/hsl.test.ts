@@ -1,4 +1,4 @@
-// b_path:: packages/b_utils/src/parse/color/hsl.test.ts
+// b_path:: packages/b_parsers/src/color/hsl.test.ts
 import { describe, expect, it } from "vitest";
 import { parseHslFunction } from "./hsl";
 import { extractFunctionFromValue } from "../../../b_utils/src/parse/test-utils";

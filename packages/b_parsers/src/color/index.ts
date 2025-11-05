@@ -1,4 +1,4 @@
-// b_path:: packages/b_utils/src/parse/color/index.ts
+// b_path:: packages/b_parsers/src/color/index.ts
 export * from "@b/utils";
 export * from "./color";
 export * from "./rgb";

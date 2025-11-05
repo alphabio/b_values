@@ -74,17 +74,22 @@ function generateColorInterpolation(method: Type.ColorInterpolationMethod): Gene
 export function generate(ir: Type.ConicGradient): GenerateResult {
   const functionName = ir.repeating ? "repeating-conic-gradient" : "conic-gradient";
   const parts: string[] = [];
+  const firstPart: string[] = [];
 
   if (ir.fromAngle) {
     const angleResult = Angle.generate(ir.fromAngle);
     if (!angleResult.ok) return angleResult;
-    parts.push(`from ${angleResult.value}`);
+    firstPart.push(`from ${angleResult.value}`);
   }
 
   if (ir.position) {
     const posResult = Position.generate(ir.position);
     if (!posResult.ok) return posResult;
-    parts.push(`at ${posResult.value}`);
+    firstPart.push(`at ${posResult.value}`);
+  }
+
+  if (firstPart.length > 0) {
+    parts.push(firstPart.join(" "));
   }
 
   if (ir.colorInterpolationMethod) {

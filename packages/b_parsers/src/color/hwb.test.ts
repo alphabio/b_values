@@ -1,4 +1,4 @@
-// b_path:: packages/b_utils/src/parse/color/hwb.test.ts
+// b_path:: packages/b_parsers/src/color/hwb.test.ts
 import { describe, expect, it } from "vitest";
 import { parseHwbFunction } from "./hwb";
 import { extractFunctionFromValue } from "../../../b_utils/src/parse/test-utils";

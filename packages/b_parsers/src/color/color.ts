@@ -3,6 +3,13 @@ import type * as csstree from "css-tree";
 import * as cssTree from "css-tree";
 import { err, ok, type Result } from "@b/types";
 import type * as Type from "@b/types";
+import { parseRgbFunction } from "./rgb";
+import { parseHslFunction } from "./hsl";
+import { parseHwbFunction } from "./hwb";
+import { parseLabFunction } from "./lab";
+import { parseLchFunction } from "./lch";
+import { parseOklabFunction } from "./oklab";
+import { parseOklchFunction } from "./oklch";
 
 /**
  * Parse color AST node with auto-detection.
@@ -16,7 +23,28 @@ export function parseNode(node: csstree.CssNode): Result<Type.Color, string> {
   }
 
   if (node.type === "Function") {
-    return err(`Color functions not yet implemented: ${node.name}`);
+    const funcName = node.name.toLowerCase();
+
+    switch (funcName) {
+      case "rgb":
+      case "rgba":
+        return parseRgbFunction(node);
+      case "hsl":
+      case "hsla":
+        return parseHslFunction(node);
+      case "hwb":
+        return parseHwbFunction(node);
+      case "lab":
+        return parseLabFunction(node);
+      case "lch":
+        return parseLchFunction(node);
+      case "oklab":
+        return parseOklabFunction(node);
+      case "oklch":
+        return parseOklchFunction(node);
+      default:
+        return err(`Unsupported color function: ${funcName}`);
+    }
   }
 
   if (node.type === "Identifier") {
