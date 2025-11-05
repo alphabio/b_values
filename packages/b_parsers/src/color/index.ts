@@ -1,5 +1,6 @@
 // b_path:: packages/b_utils/src/parse/color/index.ts
 export * from "@b/utils";
+export * from "./color";
 export * from "./rgb";
 export * from "./hsl";
 export * from "./hwb";

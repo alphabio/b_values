@@ -259,6 +259,9 @@ importers:
         specifier: 'catalog:'
         version: 4.1.12
     devDependencies:
+      '@b/generators':
+        specifier: workspace:^
+        version: link:../b_generators
       '@b/typescript-config':
         specifier: workspace:*
         version: link:../typescript-config

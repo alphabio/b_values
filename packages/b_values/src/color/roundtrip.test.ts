@@ -1,15 +1,7 @@
 // b_path:: packages/b_values/src/color/roundtrip.test.ts
 import { describe, expect, it } from "vitest";
 import { Color as ColorGenerators } from "@b/generators";
-import {
-  parseRgbFunction,
-  parseHslFunction,
-  parseHwbFunction,
-  parseLabFunction,
-  parseLchFunction,
-  parseOklabFunction,
-  parseOklchFunction,
-} from "@b/parsers";
+import { Color as ColorParsers } from "@b/parsers";
 import { extractFunctionFromValue } from "@b/utils";
 
 /**
@@ -21,7 +13,7 @@ describe("Color Round-trip Tests", () => {
     it("should round-trip opaque RGB", () => {
       const input = "rgb(255 0 0)";
       const func = extractFunctionFromValue(input);
-      const parsed = parseRgbFunction(func);
+      const parsed = ColorParsers.parseRgbFunction(func);
 
       expect(parsed.ok).toBe(true);
       if (!parsed.ok) return;
@@ -36,7 +28,7 @@ describe("Color Round-trip Tests", () => {
     it("should round-trip RGB with alpha", () => {
       const input = "rgb(255 0 0 / 0.5)";
       const func = extractFunctionFromValue(input);
-      const parsed = parseRgbFunction(func);
+      const parsed = ColorParsers.parseRgbFunction(func);
 
       expect(parsed.ok).toBe(true);
       if (!parsed.ok) return;
@@ -51,7 +43,7 @@ describe("Color Round-trip Tests", () => {
     it("should round-trip RGB with percentages", () => {
       const input = "rgb(100% 50% 0%)";
       const func = extractFunctionFromValue(input);
-      const parsed = parseRgbFunction(func);
+      const parsed = ColorParsers.parseRgbFunction(func);
 
       expect(parsed.ok).toBe(true);
       if (!parsed.ok) return;
@@ -67,7 +59,7 @@ describe("Color Round-trip Tests", () => {
       const input = "rgb(255, 0, 0)";
       const expected = "rgb(255 0 0)";
       const func = extractFunctionFromValue(input);
-      const parsed = parseRgbFunction(func);
+      const parsed = ColorParsers.parseRgbFunction(func);
 
       expect(parsed.ok).toBe(true);
       if (!parsed.ok) return;
@@ -82,7 +74,7 @@ describe("Color Round-trip Tests", () => {
     it("should round-trip RGB with none keyword", () => {
       const input = "rgb(none 0 0)";
       const func = extractFunctionFromValue(input);
-      const parsed = parseRgbFunction(func);
+      const parsed = ColorParsers.parseRgbFunction(func);
 
       expect(parsed.ok).toBe(true);
       if (!parsed.ok) return;
@@ -99,7 +91,7 @@ describe("Color Round-trip Tests", () => {
     it("should round-trip opaque HSL", () => {
       const input = "hsl(120 100 50)";
       const func = extractFunctionFromValue(input);
-      const parsed = parseHslFunction(func);
+      const parsed = ColorParsers.parseHslFunction(func);
 
       expect(parsed.ok).toBe(true);
       if (!parsed.ok) return;
@@ -114,7 +106,7 @@ describe("Color Round-trip Tests", () => {
     it("should round-trip HSL with alpha", () => {
       const input = "hsl(120 100 50 / 0.5)";
       const func = extractFunctionFromValue(input);
-      const parsed = parseHslFunction(func);
+      const parsed = ColorParsers.parseHslFunction(func);
 
       expect(parsed.ok).toBe(true);
       if (!parsed.ok) return;
@@ -129,7 +121,7 @@ describe("Color Round-trip Tests", () => {
     it("should round-trip HSL with deg unit", () => {
       const input = "hsl(120deg 100% 50%)";
       const func = extractFunctionFromValue(input);
-      const parsed = parseHslFunction(func);
+      const parsed = ColorParsers.parseHslFunction(func);
 
       expect(parsed.ok).toBe(true);
       if (!parsed.ok) return;
@@ -145,7 +137,7 @@ describe("Color Round-trip Tests", () => {
       const input = "hsl(120, 100%, 50%)";
       const expected = "hsl(120 100% 50%)";
       const func = extractFunctionFromValue(input);
-      const parsed = parseHslFunction(func);
+      const parsed = ColorParsers.parseHslFunction(func);
 
       expect(parsed.ok).toBe(true);
       if (!parsed.ok) return;
@@ -160,7 +152,7 @@ describe("Color Round-trip Tests", () => {
     it("should round-trip HSL with none keyword", () => {
       const input = "hsl(none 100% 50%)";
       const func = extractFunctionFromValue(input);
-      const parsed = parseHslFunction(func);
+      const parsed = ColorParsers.parseHslFunction(func);
 
       expect(parsed.ok).toBe(true);
       if (!parsed.ok) return;
@@ -177,7 +169,7 @@ describe("Color Round-trip Tests", () => {
     it("should round-trip opaque HWB", () => {
       const input = "hwb(120 20% 30%)";
       const func = extractFunctionFromValue(input);
-      const parsed = parseHwbFunction(func);
+      const parsed = ColorParsers.parseHwbFunction(func);
 
       expect(parsed.ok).toBe(true);
       if (!parsed.ok) return;
@@ -192,7 +184,7 @@ describe("Color Round-trip Tests", () => {
     it("should round-trip HWB with alpha", () => {
       const input = "hwb(120 20% 30% / 0.5)";
       const func = extractFunctionFromValue(input);
-      const parsed = parseHwbFunction(func);
+      const parsed = ColorParsers.parseHwbFunction(func);
 
       expect(parsed.ok).toBe(true);
       if (!parsed.ok) return;
@@ -207,7 +199,7 @@ describe("Color Round-trip Tests", () => {
     it("should round-trip HWB with turn unit", () => {
       const input = "hwb(0.5turn 20% 30%)";
       const func = extractFunctionFromValue(input);
-      const parsed = parseHwbFunction(func);
+      const parsed = ColorParsers.parseHwbFunction(func);
 
       expect(parsed.ok).toBe(true);
       if (!parsed.ok) return;
@@ -222,7 +214,7 @@ describe("Color Round-trip Tests", () => {
     it("should round-trip HWB with none keyword", () => {
       const input = "hwb(120 none 30%)";
       const func = extractFunctionFromValue(input);
-      const parsed = parseHwbFunction(func);
+      const parsed = ColorParsers.parseHwbFunction(func);
 
       expect(parsed.ok).toBe(true);
       if (!parsed.ok) return;
@@ -239,7 +231,7 @@ describe("Color Round-trip Tests", () => {
     it("should round-trip opaque LAB", () => {
       const input = "lab(50 20 30)";
       const func = extractFunctionFromValue(input);
-      const parsed = parseLabFunction(func);
+      const parsed = ColorParsers.parseLabFunction(func);
 
       expect(parsed.ok).toBe(true);
       if (!parsed.ok) return;
@@ -254,7 +246,7 @@ describe("Color Round-trip Tests", () => {
     it("should round-trip LAB with alpha", () => {
       const input = "lab(50 20 30 / 0.5)";
       const func = extractFunctionFromValue(input);
-      const parsed = parseLabFunction(func);
+      const parsed = ColorParsers.parseLabFunction(func);
 
       expect(parsed.ok).toBe(true);
       if (!parsed.ok) return;
@@ -269,7 +261,7 @@ describe("Color Round-trip Tests", () => {
     it("should round-trip LAB with percentage lightness", () => {
       const input = "lab(50% 20 30)";
       const func = extractFunctionFromValue(input);
-      const parsed = parseLabFunction(func);
+      const parsed = ColorParsers.parseLabFunction(func);
 
       expect(parsed.ok).toBe(true);
       if (!parsed.ok) return;
@@ -284,7 +276,7 @@ describe("Color Round-trip Tests", () => {
     it("should round-trip LAB with none keyword", () => {
       const input = "lab(50 none 30)";
       const func = extractFunctionFromValue(input);
-      const parsed = parseLabFunction(func);
+      const parsed = ColorParsers.parseLabFunction(func);
 
       expect(parsed.ok).toBe(true);
       if (!parsed.ok) return;
@@ -301,7 +293,7 @@ describe("Color Round-trip Tests", () => {
     it("should round-trip opaque LCH", () => {
       const input = "lch(50 20 180)";
       const func = extractFunctionFromValue(input);
-      const parsed = parseLchFunction(func);
+      const parsed = ColorParsers.parseLchFunction(func);
 
       expect(parsed.ok).toBe(true);
       if (!parsed.ok) return;
@@ -316,7 +308,7 @@ describe("Color Round-trip Tests", () => {
     it("should round-trip LCH with alpha", () => {
       const input = "lch(50 20 180 / 0.5)";
       const func = extractFunctionFromValue(input);
-      const parsed = parseLchFunction(func);
+      const parsed = ColorParsers.parseLchFunction(func);
 
       expect(parsed.ok).toBe(true);
       if (!parsed.ok) return;
@@ -331,7 +323,7 @@ describe("Color Round-trip Tests", () => {
     it("should round-trip LCH with rad unit", () => {
       const input = "lch(50% 20 3.14159rad)";
       const func = extractFunctionFromValue(input);
-      const parsed = parseLchFunction(func);
+      const parsed = ColorParsers.parseLchFunction(func);
 
       expect(parsed.ok).toBe(true);
       if (!parsed.ok) return;
@@ -346,7 +338,7 @@ describe("Color Round-trip Tests", () => {
     it("should round-trip LCH with none keyword", () => {
       const input = "lch(50 20 none)";
       const func = extractFunctionFromValue(input);
-      const parsed = parseLchFunction(func);
+      const parsed = ColorParsers.parseLchFunction(func);
 
       expect(parsed.ok).toBe(true);
       if (!parsed.ok) return;
@@ -363,7 +355,7 @@ describe("Color Round-trip Tests", () => {
     it("should round-trip opaque OKLab", () => {
       const input = "oklab(0.5 0.1 0.2)";
       const func = extractFunctionFromValue(input);
-      const parsed = parseOklabFunction(func);
+      const parsed = ColorParsers.parseOklabFunction(func);
 
       expect(parsed.ok).toBe(true);
       if (!parsed.ok) return;
@@ -378,7 +370,7 @@ describe("Color Round-trip Tests", () => {
     it("should round-trip OKLab with alpha", () => {
       const input = "oklab(0.5 0.1 0.2 / 0.5)";
       const func = extractFunctionFromValue(input);
-      const parsed = parseOklabFunction(func);
+      const parsed = ColorParsers.parseOklabFunction(func);
 
       expect(parsed.ok).toBe(true);
       if (!parsed.ok) return;
@@ -393,7 +385,7 @@ describe("Color Round-trip Tests", () => {
     it("should round-trip OKLab with percentage", () => {
       const input = "oklab(50% 0.1 0.2)";
       const func = extractFunctionFromValue(input);
-      const parsed = parseOklabFunction(func);
+      const parsed = ColorParsers.parseOklabFunction(func);
 
       expect(parsed.ok).toBe(true);
       if (!parsed.ok) return;
@@ -408,7 +400,7 @@ describe("Color Round-trip Tests", () => {
     it("should round-trip OKLab with none keyword", () => {
       const input = "oklab(0.5 none 0.2)";
       const func = extractFunctionFromValue(input);
-      const parsed = parseOklabFunction(func);
+      const parsed = ColorParsers.parseOklabFunction(func);
 
       expect(parsed.ok).toBe(true);
       if (!parsed.ok) return;
@@ -425,7 +417,7 @@ describe("Color Round-trip Tests", () => {
     it("should round-trip opaque OKLCH", () => {
       const input = "oklch(0.5 0.2 180)";
       const func = extractFunctionFromValue(input);
-      const parsed = parseOklchFunction(func);
+      const parsed = ColorParsers.parseOklchFunction(func);
 
       expect(parsed.ok).toBe(true);
       if (!parsed.ok) return;
@@ -440,7 +432,7 @@ describe("Color Round-trip Tests", () => {
     it("should round-trip OKLCH with alpha", () => {
       const input = "oklch(0.5 0.2 180 / 0.5)";
       const func = extractFunctionFromValue(input);
-      const parsed = parseOklchFunction(func);
+      const parsed = ColorParsers.parseOklchFunction(func);
 
       expect(parsed.ok).toBe(true);
       if (!parsed.ok) return;
@@ -455,7 +447,7 @@ describe("Color Round-trip Tests", () => {
     it("should round-trip OKLCH with grad unit", () => {
       const input = "oklch(50% 0.2 200grad)";
       const func = extractFunctionFromValue(input);
-      const parsed = parseOklchFunction(func);
+      const parsed = ColorParsers.parseOklchFunction(func);
 
       expect(parsed.ok).toBe(true);
       if (!parsed.ok) return;
@@ -470,7 +462,7 @@ describe("Color Round-trip Tests", () => {
     it("should round-trip OKLCH with none keyword", () => {
       const input = "oklch(0.5 0.2 none)";
       const func = extractFunctionFromValue(input);
-      const parsed = parseOklchFunction(func);
+      const parsed = ColorParsers.parseOklchFunction(func);
 
       expect(parsed.ok).toBe(true);
       if (!parsed.ok) return;
@@ -488,7 +480,7 @@ describe("Color Round-trip Tests", () => {
       const input = "rgb(255 0 0 / 1)";
       const expected = "rgb(255 0 0 / 1)";
       const func = extractFunctionFromValue(input);
-      const parsed = parseRgbFunction(func);
+      const parsed = ColorParsers.parseRgbFunction(func);
 
       expect(parsed.ok).toBe(true);
       if (!parsed.ok) return;
@@ -503,7 +495,7 @@ describe("Color Round-trip Tests", () => {
     it("should round-trip HSL with zero alpha", () => {
       const input = "hsl(120 100% 50% / 0)";
       const func = extractFunctionFromValue(input);
-      const parsed = parseHslFunction(func);
+      const parsed = ColorParsers.parseHslFunction(func);
 
       expect(parsed.ok).toBe(true);
       if (!parsed.ok) return;
@@ -518,7 +510,7 @@ describe("Color Round-trip Tests", () => {
     it("should round-trip LAB with all none keywords", () => {
       const input = "lab(none none none)";
       const func = extractFunctionFromValue(input);
-      const parsed = parseLabFunction(func);
+      const parsed = ColorParsers.parseLabFunction(func);
 
       expect(parsed.ok).toBe(true);
       if (!parsed.ok) return;
@@ -533,7 +525,7 @@ describe("Color Round-trip Tests", () => {
     it("should round-trip OKLCH with mixed units and keywords", () => {
       const input = "oklch(50% none 180deg)";
       const func = extractFunctionFromValue(input);
-      const parsed = parseOklchFunction(func);
+      const parsed = ColorParsers.parseOklchFunction(func);
 
       expect(parsed.ok).toBe(true);
       if (!parsed.ok) return;

@@ -1,6 +1,6 @@
 // b_path:: packages/b_declarations/src/properties/background-image.ts
 import { ok, err, type Result } from "@b/types";
-import { parseUrl } from "@b/parsers";
+import * as Parsers from "@b/parsers";
 import { defineProperty } from "../registry";
 import { isCSSWideKeyword, parseCSSWideKeyword, splitByComma } from "../utils";
 
@@ -75,7 +75,7 @@ export function parseBackgroundImage(value: string): Result<BackgroundImageIR, s
 
     // Delegate to url() parser
     if (layer.startsWith("url(")) {
-      const urlResult = parseUrl(layer);
+      const urlResult = Parsers.Url.parseUrl(layer);
       if (!urlResult.ok) {
         return err(`Invalid url() in background-image: ${urlResult.error}`);
       }

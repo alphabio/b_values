@@ -1,6 +1,7 @@
 // b_path:: packages/b_parsers/src/index.ts
-export * from "./angle";
-export * from "./length";
-export * from "./position";
-export * from "./color";
-export * from "./url";
+export * as Angle from "./angle";
+export * as Color from "./color";
+export * as Gradient from "./gradient";
+export * as Length from "./length";
+export * as Position from "./position";
+export * as Url from "./url";

@@ -31,6 +31,7 @@
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@b/generators": "workspace:^",
     "@b/typescript-config": "workspace:*"
   },
   "publishConfig": {
