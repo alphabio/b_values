@@ -143,7 +143,7 @@ background-image: url(image.png);
       expect(result.ok).toBe(false);
       if (result.ok) return;
 
-      expect(result.issues[0]?.message).toContain("Failed to parse test-prop");
+      expect(result.issues[0]?.message).toBe("Parser error");
     });
   });
 });

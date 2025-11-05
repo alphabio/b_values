@@ -49,7 +49,7 @@ export function parseDeclaration(input: string | CSSDeclaration): ParseResult<De
   const parseResult = definition.parser(value);
 
   if (!parseResult.ok) {
-    return parseErr(createError("invalid-value", `Failed to parse ${property}: ${parseResult.issues[0]?.message}`));
+    return parseResult as ParseResult<DeclarationResult>;
   }
 
   return parseOk({
