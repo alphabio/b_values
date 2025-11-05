@@ -104,3 +104,26 @@ All planned architecture refinements from Session 022 action plan completed:
 - `c196315` - feat(types): add strict validation to all Zod schemas
 
 **All architecture refinements from Session 022 action plan complete.**
+
+---
+
+## 📋 ADR 002 Implementation Planning
+
+- [x] **ADR 002 Reviewed and Refined**
+  - Reviewed comprehensive feedback on error reporting strategy
+  - Created detailed implementation plan (23KB document)
+  - Defined 3 phases with clear dependencies and validation
+  - Estimated 7-10 hours total implementation time
+  - Commit: `78dda1e`
+
+**Key Refinements:**
+- **Phase 1:** Source-aware parsers (not re-parsing for efficiency)
+- **Phase 2:** Enhanced Zod errors with "Did you mean?" suggestions (HIGHEST priority)
+- **Phase 3:** Path propagation through nested calls
+
+**Documentation:**
+- ADR 002: `docs/architecture/decisions/002-rich-error-messaging.md`
+- Implementation Plan: `docs/sessions/023/ADR-002-IMPLEMENTATION-PLAN.md`
+
+**Next Action:** Ready to begin Phase 2 implementation (highest ROI for DX)
+
