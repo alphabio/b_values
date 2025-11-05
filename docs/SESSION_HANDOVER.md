@@ -8,6 +8,7 @@
 ## ✅ Accomplished
 
 ### Initial Phase (Polished Phase 3)
+
 - [x] Session 027 initialized
 - [x] Session 026 archived
 - [x] Documentation reviewed
@@ -17,6 +18,7 @@
 - [x] **✅ Phase 4: Type-Safe Forwarding** - Added forwardParseErr helper, updated 10 parser files
 
 ### Final Refinements (Based on Code Review)
+
 - [x] **✅ Refinement 1: Complete Type-Safe Error Forwarding** - Replaced ALL remaining `as ParseResult<>` casts
   - Updated `packages/b_declarations/src/parser.ts` (2 casts)
   - Updated `packages/b_declarations/src/properties/background-image/parser.ts` (4 casts)
@@ -57,11 +59,13 @@
 **Phase 3 Complete + Refinements Applied!** Ready for next phase or production use.
 
 **Next Major Frontier (ADR Phase 1):**
+
 - Thread source context (`offset`, `length`) from css-tree through parser chain
 - Enable rich source location in error messages
 - Show exact position in original CSS string
 
 Potential enhancements:
+
 1. Add more comprehensive warning tests
 2. Extend warning system to other property generators
 3. Document warning philosophy in architecture docs
@@ -82,3 +86,33 @@ Potential enhancements:
 5. **Complete type-safety** - Eliminated ALL remaining unsafe casts
 6. **4-step generator pattern** - Documented and aligned across all generators
 7. **Enhanced error messages** - Multi-key suggestions for better DX
+
+---
+
+## 📋 ADR Phase 1 Planning (Session 027 Extension)
+
+**Status:** ✅ Comprehensive plan complete and ready for implementation
+
+### Planning Documents Created
+
+1. **phase1-exploration.md** - Architecture analysis, parser flow, challenges
+2. **phase1-code-trace.md** - Actual code trace, 4 options evaluated
+3. **phase1-action-plan.md** - 71 tasks broken down with code examples
+4. **phase1-READY.md** - Executive summary and implementation guide
+
+### Key Decisions
+
+- **Approach:** Hybrid (Option D) - attach source context to errors immediately
+- **No IR pollution:** Context threaded, not stored in IR types
+- **Backward compatible:** All changes optional and additive
+- **Time estimate:** 6-8 hours over 2 days
+- **Risk:** Low-Medium, well-mitigated
+
+### Ready to Implement
+
+```bash
+git checkout -b feature/phase1-source-context
+# Follow docs/sessions/027/phase1-action-plan.md
+```
+
+**Next session can start implementation immediately.**
