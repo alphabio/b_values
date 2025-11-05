@@ -1,16 +1,14 @@
 // b_path:: packages/b_generators/src/color/lab.ts
-import { type GenerateResult, generateErr, generateOk, createError, labColorSchema } from "@b/types";
-import type { LABColor } from "@b/types";
-import { cssValueToCss } from "@b/utils";
+import { type GenerateResult, generateErr, generateOk, labColorSchema } from "@b/types";
+import { cssValueToCss, zodErrorToIssues } from "@b/utils";
 
 /**
  * @see https://drafts.csswg.org/css-color/#lab-colors
  */
-export function generate(color: LABColor): GenerateResult {
+export function generate(color: unknown): GenerateResult {
   const validation = labColorSchema.safeParse(color);
   if (!validation.success) {
-    const issue = validation.error.issues[0];
-    return generateErr(createError("invalid-ir", `Invalid LABColor: ${issue?.path.join(".")}: ${issue?.message}`));
+    return generateErr(zodErrorToIssues(validation.error), "lab-color");
   }
 
   const { l, a, b, alpha } = validation.data;

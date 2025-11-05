@@ -1,16 +1,14 @@
 // b_path:: packages/b_generators/src/color/oklch.ts
-import { type GenerateResult, generateErr, generateOk, createError, oklchColorSchema } from "@b/types";
-import type { OKLCHColor } from "@b/types";
-import { cssValueToCss } from "@b/utils";
+import { type GenerateResult, generateErr, generateOk, oklchColorSchema } from "@b/types";
+import { cssValueToCss, zodErrorToIssues } from "@b/utils";
 
 /**
  * @see https://drafts.csswg.org/css-color/#ok-lch
  */
-export function generate(color: OKLCHColor): GenerateResult {
+export function generate(color: unknown): GenerateResult {
   const validation = oklchColorSchema.safeParse(color);
   if (!validation.success) {
-    const issue = validation.error.issues[0];
-    return generateErr(createError("invalid-ir", `Invalid OKLCHColor: ${issue?.path.join(".")}: ${issue?.message}`));
+    return generateErr(zodErrorToIssues(validation.error), "oklch-color");
   }
 
   const { l, c, h, alpha } = validation.data;

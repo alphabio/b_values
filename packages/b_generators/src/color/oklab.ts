@@ -1,16 +1,14 @@
 // b_path:: packages/b_generators/src/color/oklab.ts
-import { type GenerateResult, generateErr, generateOk, createError, oklabColorSchema } from "@b/types";
-import type { OKLabColor } from "@b/types";
-import { cssValueToCss } from "@b/utils";
+import { type GenerateResult, generateErr, generateOk, oklabColorSchema } from "@b/types";
+import { cssValueToCss, zodErrorToIssues } from "@b/utils";
 
 /**
  * @see https://drafts.csswg.org/css-color/#ok-lab
  */
-export function generate(color: OKLabColor): GenerateResult {
+export function generate(color: unknown): GenerateResult {
   const validation = oklabColorSchema.safeParse(color);
   if (!validation.success) {
-    const issue = validation.error.issues[0];
-    return generateErr(createError("invalid-ir", `Invalid OKLabColor: ${issue?.path.join(".")}: ${issue?.message}`));
+    return generateErr(zodErrorToIssues(validation.error), "oklab-color");
   }
 
   const { l, a, b, alpha } = validation.data;

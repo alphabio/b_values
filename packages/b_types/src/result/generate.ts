@@ -65,18 +65,26 @@ export function generateOk(value: string, property?: string): GenerateResult {
 /**
  * Create a failed GenerateResult.
  *
+ * Accepts either a single Issue or an array of Issues for multi-error scenarios.
+ *
  * @example
  * ```typescript
+ * // Single error
  * return generateErr(createError("invalid-ir", "Invalid IR structure"));
+ *
+ * // Multiple errors from Zod
+ * return generateErr(zodErrorToIssues(zodError), "color");
+ *
+ * // With property
  * return generateErr(createError("missing-required-field", "Missing 'kind'"), "color");
  * ```
  *
  * @public
  */
-export function generateErr(issue: Issue, property?: string): GenerateResult {
+export function generateErr(issues: Issue | Issue[], property?: string): GenerateResult {
   const result: GenerateResult = {
     ok: false,
-    issues: [issue],
+    issues: Array.isArray(issues) ? issues : [issues],
   };
   if (property !== undefined) {
     result.property = property;

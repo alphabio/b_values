@@ -47,7 +47,7 @@ describe("rgb generator", () => {
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(result.issues[0]?.code).toBe("invalid-ir");
-      expect(result.issues[0]?.message).toContain("Invalid RGBColor");
+      expect(result.issues[0]?.message).toContain("expected object");
     }
   });
 
@@ -57,7 +57,8 @@ describe("rgb generator", () => {
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(result.issues[0]?.code).toBe("invalid-ir");
-      expect(result.issues[0]?.message).toContain("Invalid RGBColor");
+      // Zod reports first missing field
+      expect(result.issues[0]?.message).toContain("Expected");
     }
   });
 

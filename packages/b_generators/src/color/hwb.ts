@@ -1,16 +1,14 @@
 // b_path:: packages/b_generators/src/color/hwb.ts
-import { type GenerateResult, generateErr, generateOk, createError, hwbColorSchema } from "@b/types";
-import type { HWBColor } from "@b/types";
-import { cssValueToCss } from "@b/utils";
+import { type GenerateResult, generateErr, generateOk, hwbColorSchema } from "@b/types";
+import { cssValueToCss, zodErrorToIssues } from "@b/utils";
 
 /**
  * @see https://drafts.csswg.org/css-color/#the-hwb-notation
  */
-export function generate(color: HWBColor): GenerateResult {
+export function generate(color: unknown): GenerateResult {
   const validation = hwbColorSchema.safeParse(color);
   if (!validation.success) {
-    const issue = validation.error.issues[0];
-    return generateErr(createError("invalid-ir", `Invalid HWBColor: ${issue?.path.join(".")}: ${issue?.message}`));
+    return generateErr(zodErrorToIssues(validation.error), "hwb-color");
   }
 
   const { h, w, b, alpha } = validation.data;
