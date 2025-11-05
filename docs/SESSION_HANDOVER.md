@@ -1,114 +1,89 @@
-# Session 016: Gradient Parsers Implementation
+# Session 017: Radial & Conic Gradient Parsers
 
-**Date:** 2025-11-05  
-**Focus:** Implement gradient generators and parsers (generator-first approach)  
-**Status:** ✅ COMPLETE - Linear gradient fully implemented
-
----
-
-## ⚠️ TODO Before Next Session
-
-See `docs/sessions/016/TODO-test-coverage.md` for details:
-- ⚠️ Add tests for radial gradient generator
-- ⚠️ Add tests for conic gradient generator  
-- ⚠️ Add tests for color-stop generator
-- ⚠️ Add tests for AST utilities (split-by-comma, functions)
+**Date:** 2025-11-05
+**Focus:** Complete gradient parser implementation (radial, conic) and connect to background-image
+**Status:** ✅ Radial & Conic parsers complete
 
 ---
 
 ## ✅ Accomplished
 
-### Generators (Complete)
-- ✅ Color stop generator with position support (handles length/percentage/angle)
-- ✅ Linear gradient generator (direction, interpolation, color stops)
-- ✅ Radial gradient generator (shape, size, position, interpolation)
-- ✅ Conic gradient generator (from-angle, position, interpolation)
-- ✅ All generators support regular and repeating variants
-- ✅ 6 linear gradient generator tests passing
-- ✅ 154 total generator tests passing
-
-### Parsers (Linear Complete)
-- ✅ Created AST utilities (split-by-comma, find-function, parse-css-string)
-- ✅ Implemented general color parser (parseNode) for AST-based color parsing
-- ✅ Implemented color stop parser (fromNodes) - parses color + optional positions
-- ✅ **Implemented linear gradient parser**:
-  - Parse direction (angle, to-side, to-corner)
+- ✅ **Implemented radial gradient parser** (`packages/b_parsers/src/gradient/radial.ts`)
+  - Parse shape (circle, ellipse)
+  - Parse size keywords (closest-side, farthest-corner, etc.)
+  - Parse explicit sizes (length/percentage)
+  - Parse position (`at` keyword)
   - Parse color interpolation methods
-  - Parse color stops from AST nodes
-  - Support repeating variants (repeating-linear-gradient)
-- ✅ 8 linear gradient parser tests with round-trip validation
-- ✅ 178 total parser tests passing (12 test files)
-
-### Infrastructure
-- ✅ Type-safe generation: IR → CSS strings
-- ✅ Type-safe parsing: CSS → IR  
-- ✅ Round-trip tests prove bidirectionality
+  - Parse color stops
+  - 10 tests with round-trip validation
+- ✅ **Implemented conic gradient parser** (`packages/b_parsers/src/gradient/conic.ts`)
+  - Parse from-angle
+  - Parse position (`at` keyword)
+  - Parse color interpolation methods
+  - Parse color stops with angle positions
+  - 8 tests with round-trip validation
+- ✅ **Fixed hue interpolation parsing** in all gradient parsers
+  - Handle two-word hue methods: "longer hue", "shorter hue", etc.
+  - Applied fix to linear, radial, and conic parsers
+- ✅ **883 total tests passing** (18 new gradient parser tests)
 - ✅ All quality checks passing (typecheck, format, lint)
-- ✅ Minimal JSDoc pattern applied
 
 ---
 
 ## 📊 Current State
 
 **Working:**
-- ✅ `@b/declarations` package structure
-- ✅ Registry and parser framework
-- ✅ `parseUrl()` implementation
-- ✅ `background-image` property with URL support
-- ✅ 44 declaration tests passing
-- ✅ **Gradient generators** - ALL complete (linear, radial, conic)
-- ✅ **AST utilities** - Complete and in use
-- ✅ **Linear gradient parser** - Complete with round-trip tests
-- ✅ **Color parser** - parseNode for AST-based parsing
-- ✅ **376 total tests passing** (154 generators + 178 parsers + 44 declarations)
+
+- ✅ All gradient generators (linear, radial, conic)
+- ✅ All gradient parsers (linear, radial, conic)
+- ✅ Round-trip validation for all gradient types
+- ✅ Color interpolation method parsing
+- ✅ AST utilities for parsing
+- ✅ 883 total tests passing
 
 **Next:**
-- ⚠️ Radial gradient parser not implemented
-- ⚠️ Conic gradient parser not implemented  
-- ⚠️ Need to connect gradient parsers to `background-image`
-- ⚠️ Missing tests for radial/conic generators
+
+- ⚠️ Gradient parsers not yet connected to `background-image` property
+- ⚠️ Missing test coverage for radial/conic generators
+- ⚠️ Missing tests for color-stop generator
+- ⚠️ Missing tests for AST utilities
 
 ---
 
-## 🎯 Next Steps (Session 017)
+## 🎯 Next Steps (Session 018)
 
-1. **Implement remaining gradient parsers**:
-   - `parseRadialGradient()` - parse shape, size, position
-   - `parseConicGradient()` - parse from-angle, position
-2. **Connect gradient parsers to `background-image`**:
-   - Detect gradient function types
-   - Delegate to appropriate parser
-   - Update ImageLayer type
-3. **Complete test coverage**:
-   - Add radial/conic generator tests
+1. **Connect gradient parsers to `background-image`**:
+   - Update `parseBackgroundImage` to detect gradient functions
+   - Delegate to appropriate parser (linear, radial, conic)
+   - Update `ImageLayer` type to include gradients
+   - Add integration tests
+2. **Complete test coverage**:
+   - Add radial generator tests
+   - Add conic generator tests
    - Add color-stop generator tests
    - Add AST utility tests
-4. Add more properties (color, background-color)
+3. Add more properties (color, background-color, background)
 
 ---
 
 ## 💡 Key Decisions
 
-- **Generator-first approach worked perfectly!**
-  - Built generators first, then parsers
-  - Generator tests defined parser expectations
-  - Round-trip tests proved correctness
-- **AST-first parsing**: Use `css-tree` (no regex)
-- **Shared utilities**: Common AST operations extracted
-- **Node-level parsing**: No string round-trips
-- **Minimal JSDoc**: Only @see links to MDN
-- Architecture solid: declarations → value parsers
+- **Generator-first approach worked perfectly!** Radial and conic parsers followed same pattern
+- **Hue interpolation methods are two-word identifiers** ("longer hue", "shorter hue")
+  - Fixed by checking first word (longer/shorter/increasing/decreasing) then "hue"
+- **Type imports**: RadialShape and RadialSizeKeyword come from `@b/keywords`, not `@b/types`
+- **Round-trip tests**: Every parser test validates by generating back to CSS
 
 ---
 
 ## 📈 Session Statistics
 
-**Files Created:** 18
-**Lines Added:** ~1,400
-**Commits:** 7
-**Tests Added:** 14 new tests
-**Total Tests:** 376 passing ✅
+**Files Created:** 4 (radial parser, radial tests, conic parser, conic tests)
+**Files Modified:** 4 (linear parser, gradient index, radial parser imports, conic parser imports)
+**Lines Added:** ~650
+**Tests Added:** 18 new gradient parser tests
+**Total Tests:** 883 passing ✅
 
 ---
 
-**Ready for Session 017: Radial & Conic Gradient Parsers** 🚀
+**Ready for Session 018: Connect Gradients to background-image** 🚀

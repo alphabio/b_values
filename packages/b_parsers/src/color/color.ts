@@ -10,26 +10,26 @@ import type * as Type from "@b/types";
  * @see https://developer.mozilla.org/en-US/docs/Web/CSS/color_value
  */
 export function parseNode(node: csstree.CssNode): Result<Type.Color, string> {
-	if (node.type === "Hash") {
-		const value = node.value.toLowerCase();
-		return ok({ kind: "hex", value: `#${value}` } as Type.Color);
-	}
+  if (node.type === "Hash") {
+    const value = node.value.toLowerCase();
+    return ok({ kind: "hex", value: `#${value}` } as Type.Color);
+  }
 
-	if (node.type === "Function") {
-		return err(`Color functions not yet implemented: ${node.name}`);
-	}
+  if (node.type === "Function") {
+    return err(`Color functions not yet implemented: ${node.name}`);
+  }
 
-	if (node.type === "Identifier") {
-		const keyword = node.name.toLowerCase();
+  if (node.type === "Identifier") {
+    const keyword = node.name.toLowerCase();
 
-		if (keyword === "transparent" || keyword === "currentcolor") {
-			return ok({ kind: "special", keyword } as Type.Color);
-		}
+    if (keyword === "transparent" || keyword === "currentcolor") {
+      return ok({ kind: "special", keyword } as Type.Color);
+    }
 
-		return ok({ kind: "named", name: keyword } as Type.Color);
-	}
+    return ok({ kind: "named", name: keyword } as Type.Color);
+  }
 
-	return err(`Invalid color node type: ${node.type}`);
+  return err(`Invalid color node type: ${node.type}`);
 }
 
 /**
@@ -38,24 +38,24 @@ export function parseNode(node: csstree.CssNode): Result<Type.Color, string> {
  * @see https://developer.mozilla.org/en-US/docs/Web/CSS/color_value
  */
 export function parse(value: string): Result<Type.Color, string> {
-	try {
-		const ast = cssTree.parse(value, { context: "value" });
-		
-		let firstNode: csstree.CssNode | null = null;
-		cssTree.walk(ast, {
-			enter(node: csstree.CssNode) {
-				if (!firstNode && node.type !== "Value") {
-					firstNode = node;
-				}
-			},
-		});
+  try {
+    const ast = cssTree.parse(value, { context: "value" });
 
-		if (!firstNode) {
-			return err("Empty value");
-		}
+    let firstNode: csstree.CssNode | null = null;
+    cssTree.walk(ast, {
+      enter(node: csstree.CssNode) {
+        if (!firstNode && node.type !== "Value") {
+          firstNode = node;
+        }
+      },
+    });
 
-		return parseNode(firstNode);
-	} catch (e) {
-		return err(`Failed to parse color: ${e instanceof Error ? e.message : String(e)}`);
-	}
+    if (!firstNode) {
+      return err("Empty value");
+    }
+
+    return parseNode(firstNode);
+  } catch (e) {
+    return err(`Failed to parse color: ${e instanceof Error ? e.message : String(e)}`);
+  }
 }

@@ -18,11 +18,11 @@
 ## Question
 
 Should AST utilities be in:
+
 - **Option A**: `packages/b_parsers/src/utils/` (current)
   - Pro: Co-located with parsers
   - Pro: Clear that they're parser-specific
   - Con: Not accessible to other packages
-  
 - **Option B**: `packages/b_utils/src/parse/ast/`
   - Pro: Shared across packages
   - Pro: Consistent with existing `b_utils` structure
@@ -32,12 +32,14 @@ Should AST utilities be in:
 ## Recommendation
 
 **Keep current structure** for now:
+
 - AST utilities are tightly coupled to css-tree
 - Only used internally by parsers
 - No other package needs them currently
 - If generators need AST utilities later, we can refactor
 
 **If refactoring needed:**
+
 1. Move `packages/b_parsers/src/utils/ast/` → `packages/b_utils/src/ast/`
 2. Add css-tree dependency to `@b/utils`
 3. Export from `@b/utils` index
