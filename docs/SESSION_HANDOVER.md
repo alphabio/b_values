@@ -60,33 +60,41 @@ Ready for next phase or feature development:
 ## 💡 Key Decisions
 
 **Phase 2 Implementation:**
-
 - Enhanced error reporting WITHOUT breaking changes
 - All new Issue fields are optional for backward compatibility
 - Levenshtein distance with maxDistance=3 for typo suggestions
 - Context passed to zodErrorToIssues for rich error messages
 - Updated all color generators (8 files) to provide context
+- **Added receivedValue to context for union error suggestions**
 
 **What Changed:**
-
 - Issue interface: added `path`, `expected`, `received` fields
+- ZodErrorContext: added `receivedValue` for union errors
 - zodErrorToIssues: now accepts ZodErrorContext parameter
 - Added Levenshtein distance utility for "Did you mean?" suggestions
 - All color generators now pass typeName and property context
+- Named color generator passes validKeys and receivedValue
+- Exported namedColorsMap from b_keywords
+- Implemented invalid_union handling in generateSuggestion()
 
 **What Didn't Change:**
-
 - No breaking changes to public APIs
-- All 953 tests passing (updated 7 test expectations)
+- All 953 tests passing
 - Backward compatible - context is optional
 
 **Impact:**
-
 - 🎯 Better DX: Developers see field paths and type mismatches
 - 🔧 Easier debugging: Know exactly what's wrong and where
-- 💡 Helpful suggestions: Foundation for "Did you mean?" (needs validKeys)
+- 💡 **Working suggestions**: "Did you mean 'orange'?" for typos!
 - ✅ Zero regressions: All existing tests pass
+- ✅ **User-validated**: Real example confirms all fields populated
+
+**Lessons Learned:**
+- Don't declare completion without validating output
+- User feedback is essential for catching gaps
+- Union errors need special handling (receivedValue in context)
+- Testing with real examples catches what unit tests miss
 
 ---
 
-**Ready to implement Phase 2** 🚀
+**Phase 2 COMPLETE** - Validated and working! ✅

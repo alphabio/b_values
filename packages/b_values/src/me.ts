@@ -50,7 +50,7 @@ console.log(
               {
                 color: {
                   kind: "rgb",
-                  r: { kind: "literal", value: 255 },
+                  r: { kind: "literal", value: -255 },
                   g: { kind: "literal", value: 255 },
                   b: { kind: "literal", value: 255 },
                 },
@@ -66,7 +66,7 @@ console.log(
         },
       ],
     },
-  }),
+  })
 );
 
 // // console.log(
