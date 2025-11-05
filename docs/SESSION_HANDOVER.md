@@ -5,6 +5,16 @@
 
 ---
 
+## ⚠️ TODO Before Finishing Session
+
+See `docs/sessions/016/TODO-test-coverage.md` for details:
+- ⚠️ Add tests for radial gradient generator
+- ⚠️ Add tests for conic gradient generator  
+- ⚠️ Add tests for color-stop generator
+- ⚠️ Add tests for AST utilities (split-by-comma, functions)
+
+---
+
 ## ✅ Accomplished
 
 - ✅ Archived session 015
@@ -24,6 +34,7 @@
 ## 📊 Current State
 
 **Working:**
+
 - ✅ `@b/declarations` package structure
 - ✅ Registry and parser framework
 - ✅ `parseUrl()` implementation
@@ -33,6 +44,7 @@
 - ✅ **NEW**: AST utilities ready for parser implementation
 
 **Next:**
+
 - ⚠️ Gradient parsers not yet implemented
 - ⚠️ Need to delegate from `background-image` to gradient parsers
 
