@@ -1,5 +1,5 @@
 // b_path:: packages/b_generators/src/color/named.ts
-import { namedColorSchema } from "@b/keywords";
+import { namedColorSchema, namedColorsMap } from "@b/keywords";
 import { type GenerateResult, generateOk } from "@b/types";
 import type { NamedColor } from "@b/types";
 import { zodErrorToIssues } from "@b/utils";
@@ -13,6 +13,8 @@ export function generate(color: NamedColor): GenerateResult {
     const issues = zodErrorToIssues(validation.error, {
       typeName: "NamedColor",
       property: "color",
+      validKeys: namedColorsMap,
+      receivedValue: color.name,
     });
     return {
       property: `color[named]: ${color.name}`,

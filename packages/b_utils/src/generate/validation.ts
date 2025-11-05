@@ -24,6 +24,8 @@ export interface ZodErrorContext {
   parentPath?: (string | number)[];
   /** Valid keys for this schema (for typo suggestions) */
   validKeys?: string[];
+  /** The actual value that was received (for union errors) */
+  receivedValue?: unknown;
 }
 
 /**
@@ -170,8 +172,8 @@ function createIssue(zodIssue: ZodIssue, fullPath: (string | number)[], context?
     property: context?.property,
     path: fullPath.length > 0 ? fullPath : undefined,
     suggestion: generateSuggestion(zodIssue, context),
-    expected: extractExpected(zodIssue),
-    received: extractReceived(zodIssue),
+    expected: extractExpected(zodIssue, context),
+    received: extractReceived(zodIssue, context),
   };
 }
 
@@ -255,6 +257,26 @@ function generateSuggestion(issue: ZodIssue, context?: ZodErrorContext): string 
       return "Check for typos in key name";
     }
 
+    case "invalid_union": {
+      // For union errors, try to suggest closest match
+      if (context?.receivedValue && context?.validKeys && context.validKeys.length > 0) {
+        const receivedStr = String(context.receivedValue);
+        const suggestion = findClosestMatch(receivedStr, context.validKeys);
+        if (suggestion) {
+          return `Did you mean '${suggestion}'?`;
+        }
+      }
+
+      // Fallback: show first few valid options
+      if (context?.validKeys && context.validKeys.length > 0) {
+        const preview = context.validKeys.slice(0, 5).join(", ");
+        const more = context.validKeys.length > 5 ? `... (${context.validKeys.length - 5} more)` : "";
+        return `Must be one of: ${preview}${more}`;
+      }
+
+      return undefined;
+    }
+
     default:
       return undefined;
   }
@@ -263,19 +285,33 @@ function generateSuggestion(issue: ZodIssue, context?: ZodErrorContext): string 
 /**
  * Extract expected value/type from ZodIssue.
  */
-function extractExpected(issue: ZodIssue): string | undefined {
+function extractExpected(issue: ZodIssue, context?: ZodErrorContext): string | undefined {
   if ("expected" in issue) {
     return String(issue.expected);
   }
+
+  // For union errors, show valid options if available
+  if (issue.code === "invalid_union" && context?.validKeys && context.validKeys.length > 0) {
+    const preview = context.validKeys.slice(0, 3).join(" | ");
+    const more = context.validKeys.length > 3 ? ` | ... (${context.validKeys.length} total)` : "";
+    return preview + more;
+  }
+
   return undefined;
 }
 
 /**
  * Extract received value/type from ZodIssue.
  */
-function extractReceived(issue: ZodIssue): string | undefined {
+function extractReceived(issue: ZodIssue, context?: ZodErrorContext): string | undefined {
   if ("received" in issue) {
     return String(issue.received);
   }
+
+  // For union errors, use the received value from context if available
+  if (issue.code === "invalid_union" && context?.receivedValue !== undefined) {
+    return String(context.receivedValue);
+  }
+
   return undefined;
 }

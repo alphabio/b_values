@@ -159,7 +159,7 @@ export const namedColors = [
   z.literal("yellowgreen"),
 ];
 
-const namedColorsMap = namedColors.flatMap(getLiteralValues);
+export const namedColorsMap = namedColors.flatMap(getLiteralValues);
 
 export const namedColorSchema = z.union(namedColors, {
   error: () =>
