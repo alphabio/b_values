@@ -41,8 +41,6 @@ export function generateDeclaration<TProperty extends RegisteredProperty>(
   // Look up property definition
   const definition = propertyRegistry.get(property);
 
-  console.log(definition, ir);
-
   if (!definition) {
     return generateErr(
       createError("invalid-ir", `Unknown CSS property: ${property}`, {
