@@ -84,7 +84,7 @@ describe("parsePositionValueNode", () => {
     const result = parsePositionValueNode(node);
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.error).toBe("Invalid position keyword: invalid");
+      expect(result.issues[0]?.message).toContain("Invalid position keyword");
     }
   });
 
@@ -240,7 +240,7 @@ describe("parsePosition2D", () => {
     const result = parsePosition2D(nodes, 0);
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.error).toBe("Expected position value");
+      expect(result.issues[0]?.message).toContain("Expected position value");
     }
   });
 
@@ -249,7 +249,7 @@ describe("parsePosition2D", () => {
     const result = parsePosition2D(nodes, 5);
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.error).toBe("Expected position value");
+      expect(result.issues[0]?.message).toContain("Expected position value");
     }
   });
 });
@@ -351,7 +351,7 @@ describe("parseAtPosition", () => {
     const result = parseAtPosition(nodes, 0);
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.error).toBe("Expected position after 'at'");
+      expect(result.issues[0]?.message).toContain("Expected position after 'at'");
     }
   });
 });

@@ -64,7 +64,7 @@ describe("parseUrl", () => {
     expect(result.ok).toBe(false);
     if (result.ok) return;
 
-    expect(result.error).toContain("Expected url() function");
+    expect(result.issues[0]?.message).toContain("Expected url() function");
   });
 
   it("should fail for missing closing parenthesis", () => {
@@ -73,7 +73,7 @@ describe("parseUrl", () => {
     expect(result.ok).toBe(false);
     if (result.ok) return;
 
-    expect(result.error).toContain("missing closing parenthesis");
+    expect(result.issues[0]?.message).toContain("missing closing parenthesis");
   });
 
   it("should fail for empty url", () => {
@@ -82,7 +82,7 @@ describe("parseUrl", () => {
     expect(result.ok).toBe(false);
     if (result.ok) return;
 
-    expect(result.error).toContain("Empty url()");
+    expect(result.issues[0]?.message).toContain("Empty url()");
   });
 
   it("should handle mismatched quotes as unquoted string", () => {

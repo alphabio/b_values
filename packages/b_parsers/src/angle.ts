@@ -1,24 +1,27 @@
 // b_path:: packages/b_parsers/src/angle.ts
 import type * as csstree from "css-tree";
-import { err, ok, type Result } from "@b/types";
+import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
 import type * as Type from "@b/types";
 import * as Unit from "@b/units";
 
 /**
+ * Parse angle AST node from css-tree.
+ *
  * @see https://drafts.csswg.org/css-values-4/#angles
  */
-export function parseAngleNode(node: csstree.CssNode): Result<Type.Angle, string> {
-  if (node.type === "Dimension") {
-    const value = Number.parseFloat(node.value);
-    if (Number.isNaN(value)) {
-      return err("Invalid angle value");
-    }
-
-    if (!Unit.ANGLE_UNITS.includes(node.unit as (typeof Unit.ANGLE_UNITS)[number])) {
-      return err(`Invalid angle unit: ${node.unit}`);
-    }
-
-    return ok({ value, unit: node.unit as (typeof Unit.ANGLE_UNITS)[number] });
+export function parseAngleNode(node: csstree.CssNode): ParseResult<Type.Angle> {
+  if (node.type !== "Dimension") {
+    return parseErr(createError("invalid-syntax", `Expected angle dimension, but got node type ${node.type}`));
   }
-  return err("Expected angle dimension");
+
+  const value = Number.parseFloat(node.value);
+  if (Number.isNaN(value)) {
+    return parseErr(createError("invalid-value", "Invalid angle value: not a number"));
+  }
+
+  if (!Unit.ANGLE_UNITS.includes(node.unit as (typeof Unit.ANGLE_UNITS)[number])) {
+    return parseErr(createError("invalid-value", `Invalid angle unit: '${node.unit}'`));
+  }
+
+  return parseOk({ value, unit: node.unit as (typeof Unit.ANGLE_UNITS)[number] });
 }

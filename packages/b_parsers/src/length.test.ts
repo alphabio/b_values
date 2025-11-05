@@ -65,7 +65,7 @@ describe("parseLengthNode", () => {
     const result = parseLengthNode(node);
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.error).toBe("Invalid length value");
+      expect(result.issues[0]?.message).toContain("Invalid length value");
     }
   });
 
@@ -78,7 +78,7 @@ describe("parseLengthNode", () => {
     const result = parseLengthNode(node);
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.error).toBe("Invalid length unit: deg");
+      expect(result.issues[0]?.message).toContain("Invalid length unit");
     }
   });
 
@@ -90,7 +90,7 @@ describe("parseLengthNode", () => {
     const result = parseLengthNode(node);
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.error).toBe("Expected length dimension");
+      expect(result.issues[0]?.message).toContain("Expected length dimension");
     }
   });
 });
@@ -116,7 +116,7 @@ describe("parseLengthPercentageNode", () => {
     const result = parseLengthPercentageNode(node);
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.error).toBe("Unitless values must be zero");
+      expect(result.issues[0]?.message).toContain("Unitless values must be zero");
     }
   });
 
@@ -167,7 +167,7 @@ describe("parseLengthPercentageNode", () => {
     const result = parseLengthPercentageNode(node);
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.error).toBe("Invalid length value");
+      expect(result.issues[0]?.message).toContain("Invalid length value");
     }
   });
 
@@ -179,7 +179,7 @@ describe("parseLengthPercentageNode", () => {
     const result = parseLengthPercentageNode(node);
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.error).toBe("Invalid percentage value");
+      expect(result.issues[0]?.message).toContain("Invalid percentage value");
     }
   });
 
@@ -192,7 +192,7 @@ describe("parseLengthPercentageNode", () => {
     const result = parseLengthPercentageNode(node);
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.error).toBe("Invalid length unit: deg");
+      expect(result.issues[0]?.message).toContain("Invalid length unit");
     }
   });
 
@@ -204,7 +204,7 @@ describe("parseLengthPercentageNode", () => {
     const result = parseLengthPercentageNode(node);
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.error).toBe("Expected length or percentage");
+      expect(result.issues[0]?.message).toContain("Expected length or percentage");
     }
   });
 });
@@ -266,7 +266,7 @@ describe("parseNumberNode", () => {
     const result = parseNumberNode(node);
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.error).toBe("Invalid number value");
+      expect(result.issues[0]?.message).toContain("Invalid number value");
     }
   });
 
@@ -278,7 +278,7 @@ describe("parseNumberNode", () => {
     const result = parseNumberNode(node);
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.error).toBe("Expected number");
+      expect(result.issues[0]?.message).toContain("Expected number");
     }
   });
 });

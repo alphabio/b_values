@@ -78,7 +78,7 @@ describe("parseAngleNode", () => {
     const result = parseAngleNode(node);
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.error).toBe("Invalid angle value");
+      expect(result.issues[0]?.message).toContain("Invalid angle value");
     }
   });
 
@@ -91,7 +91,7 @@ describe("parseAngleNode", () => {
     const result = parseAngleNode(node);
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.error).toBe("Invalid angle unit: px");
+      expect(result.issues[0]?.message).toContain("Invalid angle unit");
     }
   });
 
@@ -103,7 +103,7 @@ describe("parseAngleNode", () => {
     const result = parseAngleNode(node);
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.error).toBe("Expected angle dimension");
+      expect(result.issues[0]?.message).toContain("Expected angle dimension");
     }
   });
 });

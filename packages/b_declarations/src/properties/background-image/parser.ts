@@ -55,7 +55,7 @@ export function parseBackgroundImage(value: string): Result<BackgroundImageIR, s
     if (layer.startsWith("url(")) {
       const urlResult = Parsers.Url.parseUrl(layer);
       if (!urlResult.ok) {
-        return err(`Invalid url() in background-image: ${urlResult.error}`);
+        return err(`Invalid url() in background-image: ${urlResult.issues[0]?.message}`);
       }
       layers.push({
         kind: "url",
