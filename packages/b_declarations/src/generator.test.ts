@@ -1,7 +1,7 @@
-// b_path:: packages/b_declarations/src/core/generator.test.ts
+// b_path:: packages/b_declarations/src/generator.test.ts
 import { describe, expect, it, beforeEach } from "vitest";
 import { generateDeclaration } from "./generator";
-import { propertyRegistry, defineProperty } from "./registry";
+import { propertyRegistry, defineProperty } from "./core";
 import { generateOk, generateErr, createError, parseOk, type GenerateResult } from "@b/types";
 
 describe("generateDeclaration", () => {

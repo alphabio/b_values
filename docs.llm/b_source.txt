@@ -2,11 +2,77 @@ Excluding patterns:
 Documentation for LLMs
 Excluding patterns: 
 Excluding patterns: -not -path */__pycache__/* -not -path */__tests__/* -not -path */.git/* -not -path */.idea/* -not -path */.next/* -not -path */.venv/* -not -path */.vscode/* -not -path */*.spec.py -not -path */*.spec.ts -not -path */*.spec.tsx -not -path */*.test.py -not -path */*.test.ts -not -path */*.test.tsx -not -path */*test.py -not -path */*test.ts -not -path */*test.tsx -not -path */build/* -not -path */dist/* -not -path */me.ts -not -path */node_modules/* -not -path */test_*.py -not -path */test.ts -not -path */test.ts -not -path */tests/* -not -path */venv/*
-=== File: packages/b_declarations/src/core/generator.ts ===
-// b_path:: packages/b_declarations/src/core/generator.ts
+=== File: packages/b_declarations/src/core/index.ts ===
+// b_path:: packages/b_declarations/src/core/index.ts
+export * from "./registry";
+
+
+=== File: packages/b_declarations/src/core/registry.ts ===
+// b_path:: packages/b_declarations/src/core/registry.ts
+import type { PropertyDefinition } from "./types";
+
+/**
+ * Property registry - maps CSS property names to their definitions.
+ * This allows runtime lookup of property parsers and metadata.
+ */
+class PropertyRegistry {
+  private properties = new Map<string, PropertyDefinition>();
+
+  /**
+   * Register a property definition.
+   */
+  register(definition: PropertyDefinition): void {
+    this.properties.set(definition.name, definition);
+  }
+
+  /**
+   * Get a property definition by name.
+   */
+  get(name: string): PropertyDefinition | undefined {
+    return this.properties.get(name);
+  }
+
+  /**
+   * Check if a property is registered.
+   */
+  has(name: string): boolean {
+    return this.properties.has(name);
+  }
+
+  /**
+   * Get all registered property names.
+   */
+  getPropertyNames(): string[] {
+    return Array.from(this.properties.keys());
+  }
+
+  /**
+   * Clear all registered properties (useful for testing).
+   */
+  clear(): void {
+    this.properties.clear();
+  }
+}
+
+/**
+ * Global property registry instance.
+ */
+export const propertyRegistry = new PropertyRegistry();
+
+/**
+ * Helper to define and register a property.
+ */
+export function defineProperty<T>(definition: PropertyDefinition<T>): PropertyDefinition<T> {
+  propertyRegistry.register(definition as PropertyDefinition<unknown>);
+  return definition;
+}
+
+
+=== File: packages/b_declarations/src/generator.ts ===
+// b_path:: packages/b_declarations/src/generator.ts
 import { generateOk, generateErr, createError, type GenerateResult } from "@b/types";
-import { propertyRegistry } from "./registry";
-import type { PropertyIRMap, RegisteredProperty, PropertyGenerator } from "../types";
+import { propertyRegistry } from "./core";
+import type { PropertyIRMap, RegisteredProperty, PropertyGenerator } from "./types";
 
 /**
  * Input for generating a CSS declaration from IR.
@@ -84,18 +150,20 @@ export function generateDeclaration<TProperty extends RegisteredProperty>(
 }
 
 
-=== File: packages/b_declarations/src/core/index.ts ===
-// b_path:: packages/b_declarations/src/core/index.ts
+=== File: packages/b_declarations/src/index.ts ===
+// b_path:: packages/b_declarations/src/index.ts
+// @b/declarations - CSS declaration schemas and parsers
+
 export * from "./types";
-export * from "./registry";
-export * from "./parser";
-export * from "./generator";
+export * from "./core";
+export * from "./utils";
+export * from "./properties";
 
 
-=== File: packages/b_declarations/src/core/parser.ts ===
-// b_path:: packages/b_declarations/src/core/parser.ts
+=== File: packages/b_declarations/src/parser.ts ===
+// b_path:: packages/b_declarations/src/parser.ts
 import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
-import { propertyRegistry } from "./registry";
+import { propertyRegistry } from "./core";
 import type { CSSDeclaration, DeclarationResult } from "./types";
 
 /**
@@ -124,7 +192,7 @@ export function parseDeclaration(input: string | CSSDeclaration): ParseResult<De
   if (typeof input === "string") {
     const parsed = parseDeclarationString(input);
     if (!parsed.ok) {
-      return parsed;
+      return parsed as ParseResult<DeclarationResult>;
     }
     property = parsed.value.property;
     value = parsed.value.value;
@@ -144,7 +212,7 @@ export function parseDeclaration(input: string | CSSDeclaration): ParseResult<De
   const parseResult = definition.parser(value);
 
   if (!parseResult.ok) {
-    return parseErr(createError("invalid-value", `Failed to parse ${property}: ${parseResult.issues[0]?.message}`));
+    return parseResult as ParseResult<DeclarationResult>;
   }
 
   return parseOk({
@@ -186,129 +254,6 @@ function parseDeclarationString(input: string): ParseResult<CSSDeclaration> {
 
   return parseOk({ property, value });
 }
-
-
-=== File: packages/b_declarations/src/core/registry.ts ===
-// b_path:: packages/b_declarations/src/core/registry.ts
-import type { PropertyDefinition } from "./types";
-
-/**
- * Property registry - maps CSS property names to their definitions.
- * This allows runtime lookup of property parsers and metadata.
- */
-class PropertyRegistry {
-  private properties = new Map<string, PropertyDefinition>();
-
-  /**
-   * Register a property definition.
-   */
-  register(definition: PropertyDefinition): void {
-    this.properties.set(definition.name, definition);
-  }
-
-  /**
-   * Get a property definition by name.
-   */
-  get(name: string): PropertyDefinition | undefined {
-    return this.properties.get(name);
-  }
-
-  /**
-   * Check if a property is registered.
-   */
-  has(name: string): boolean {
-    return this.properties.has(name);
-  }
-
-  /**
-   * Get all registered property names.
-   */
-  getPropertyNames(): string[] {
-    return Array.from(this.properties.keys());
-  }
-
-  /**
-   * Clear all registered properties (useful for testing).
-   */
-  clear(): void {
-    this.properties.clear();
-  }
-}
-
-/**
- * Global property registry instance.
- */
-export const propertyRegistry = new PropertyRegistry();
-
-/**
- * Helper to define and register a property.
- */
-export function defineProperty<T>(definition: PropertyDefinition<T>): PropertyDefinition<T> {
-  propertyRegistry.register(definition as PropertyDefinition<unknown>);
-  return definition;
-}
-
-
-=== File: packages/b_declarations/src/core/types.ts ===
-// b_path:: packages/b_declarations/src/core/types.ts
-import type { ParseResult, GenerateResult } from "@b/types";
-
-/**
- * A CSS declaration consists of a property name and its value.
- * Example: { property: "background-image", value: "linear-gradient(...)" }
- */
-export interface CSSDeclaration {
-  property: string;
-  value: string;
-}
-
-/**
- * Result of parsing a CSS declaration into its IR representation.
- */
-export interface DeclarationResult<T = unknown> {
-  property: string;
-  ir: T;
-  original: string;
-}
-
-/**
- * Property definition for the registry.
- * Each CSS property must register its metadata, parser, and generator.
- */
-export interface PropertyDefinition<T = unknown> {
-  name: string;
-  syntax: string;
-  parser: (value: string) => ParseResult<T>;
-  generator?: (ir: T) => GenerateResult;
-  inherited: boolean;
-  initial: string;
-  computed?: string;
-}
-
-/**
- * Property parser function type.
- */
-export type PropertyParser<T = unknown> = (value: string) => ParseResult<T>;
-
-/**
- * Property generator function type (from core/types).
- */
-export type CorePropertyGenerator<T = unknown> = (ir: T) => GenerateResult;
-
-
-=== File: packages/b_declarations/src/index.ts ===
-// b_path:: packages/b_declarations/src/index.ts
-// @b/declarations - CSS declaration schemas and parsers
-
-// Core
-export * from "./types";
-export * from "./core";
-
-// Utilities
-export * from "./utils";
-
-// Property implementations
-export * from "./properties";
 
 
 === File: packages/b_declarations/src/properties/background-image/definition.ts ===
@@ -442,83 +387,80 @@ export function parseBackgroundImage(value: string): ParseResult<BackgroundImage
 
   // Split into layers (comma-separated)
   const layerStrings = splitByComma(trimmed);
-  const layers: ImageLayer[] = [];
+  const layerResults: ParseResult<ImageLayer>[] = [];
 
   for (const layerStr of layerStrings) {
     const layer = layerStr.trim();
 
     // Parse 'none'
     if (layer.toLowerCase() === "none") {
-      layers.push({ kind: "none" });
+      layerResults.push(parseOk({ kind: "none" }));
       continue;
     }
 
     // Delegate to url() parser
     if (layer.startsWith("url(")) {
       const urlResult = Parsers.Url.parseUrl(layer);
-      if (!urlResult.ok) {
-        return parseErr(
-          createError("invalid-value", `Invalid url() in background-image: ${urlResult.issues[0]?.message}`),
+      if (urlResult.ok) {
+        layerResults.push(
+          parseOk({
+            kind: "url",
+            url: urlResult.value.value,
+          }),
         );
+      } else {
+        // Error has no value or wrong shape, cast to expected type
+        layerResults.push(urlResult as ParseResult<ImageLayer>);
       }
-      layers.push({
-        kind: "url",
-        url: urlResult.value.value,
-      });
       continue;
     }
 
     // Delegate to linear-gradient parser
     if (layer.startsWith("linear-gradient(") || layer.startsWith("repeating-linear-gradient(")) {
       const gradientResult = Parsers.Gradient.Linear.parse(layer);
-      if (!gradientResult.ok) {
-        return parseErr(
-          createError(
-            "invalid-value",
-            `Invalid linear-gradient in background-image: ${gradientResult.issues[0]?.message}`,
-          ),
+      if (gradientResult.ok) {
+        layerResults.push(
+          parseOk({
+            kind: "gradient",
+            gradient: gradientResult.value,
+          }),
         );
+      } else {
+        // Pass through error, no partial value for individual gradient
+        layerResults.push(gradientResult as ParseResult<ImageLayer>);
       }
-      layers.push({
-        kind: "gradient",
-        gradient: gradientResult.value,
-      });
       continue;
     }
 
     // Delegate to radial-gradient parser
     if (layer.startsWith("radial-gradient(") || layer.startsWith("repeating-radial-gradient(")) {
       const gradientResult = Parsers.Gradient.Radial.parse(layer);
-      if (!gradientResult.ok) {
-        return parseErr(
-          createError(
-            "invalid-value",
-            `Invalid radial-gradient in background-image: ${gradientResult.issues[0]?.message}`,
-          ),
+      if (gradientResult.ok) {
+        layerResults.push(
+          parseOk({
+            kind: "gradient",
+            gradient: gradientResult.value,
+          }),
         );
+      } else {
+        layerResults.push(gradientResult as ParseResult<ImageLayer>);
       }
-      layers.push({
-        kind: "gradient",
-        gradient: gradientResult.value,
-      });
       continue;
     }
 
     // Delegate to conic-gradient parser
     if (layer.startsWith("conic-gradient(") || layer.startsWith("repeating-conic-gradient(")) {
       const gradientResult = Parsers.Gradient.Conic.parse(layer);
-      if (!gradientResult.ok) {
-        return parseErr(
-          createError(
-            "invalid-value",
-            `Invalid conic-gradient in background-image: ${gradientResult.issues[0]?.message}`,
-          ),
+      if (gradientResult.ok) {
+        layerResults.push(
+          parseOk({
+            kind: "gradient",
+            gradient: gradientResult.value,
+          }),
         );
+      } else {
+        layerResults.push(gradientResult as ParseResult<ImageLayer>);
       }
-      layers.push({
-        kind: "gradient",
-        gradient: gradientResult.value,
-      });
       continue;
     }
 
@@ -528,13 +470,30 @@ export function parseBackgroundImage(value: string): ParseResult<BackgroundImage
     // - cross-fade()
     // - element()
 
-    return parseErr(createError("invalid-value", `Unsupported image type in background-image: ${layer}`));
+    layerResults.push(parseErr(createError("invalid-value", `Unsupported image type in background-image: ${layer}`)));
   }
 
-  return parseOk({
+  // Aggregate all issues from layer results
+  const allIssues = layerResults.flatMap((r) => r.issues);
+  const successfulLayers = layerResults.filter((r) => r.ok).map((r) => r.value as ImageLayer);
+
+  const finalValue: BackgroundImageIR = {
     kind: "layers",
-    layers,
-  });
+    layers: successfulLayers,
+  };
+
+  // If there are any errors, return failure with all issues but still include successful layers
+  if (allIssues.some((i) => i.severity === "error")) {
+    const result: ParseResult<BackgroundImageIR> = {
+      ok: false,
+      value: finalValue,
+      issues: allIssues,
+      property: "background-image",
+    };
+    return result;
+  }
+
+  return parseOk(finalValue, "background-image");
 }
 
 
@@ -572,7 +531,7 @@ export * from "./background-image";
 // This file contains the PropertyIRMap that maps property names to their IR types.
 // It should be auto-generated in the future.
 
-import type { GenerateResult } from "@b/types";
+import type { GenerateResult, ParseResult } from "@b/types";
 import type { BackgroundImageIR } from "./properties";
 
 /**
@@ -592,6 +551,52 @@ export type RegisteredProperty = keyof PropertyIRMap;
  * Property generator function type.
  */
 export type PropertyGenerator<T = unknown> = (ir: T) => GenerateResult;
+
+// ===================================
+// Moved from  ./core/types.ts
+// ===================================
+
+/**
+ * A CSS declaration consists of a property name and its value.
+ * Example: { property: "background-image", value: "linear-gradient(...)" }
+ */
+export interface CSSDeclaration {
+  property: string;
+  value: string;
+}
+
+/**
+ * Result of parsing a CSS declaration into its IR representation.
+ */
+export interface DeclarationResult<T = unknown> {
+  property: string;
+  ir: T;
+  original: string;
+}
+
+/**
+ * Property definition for the registry.
+ * Each CSS property must register its metadata, parser, and generator.
+ */
+export interface PropertyDefinition<T = unknown> {
+  name: string;
+  syntax: string;
+  parser: (value: string) => ParseResult<T>;
+  generator?: (ir: T) => GenerateResult;
+  inherited: boolean;
+  initial: string;
+  computed?: string;
+}
+
+/**
+ * Property parser function type.
+ */
+export type PropertyParser<T = unknown> = (value: string) => ParseResult<T>;
+
+/**
+ * Property generator function type (from core/types).
+ */
+export type CorePropertyGenerator<T = unknown> = (ir: T) => GenerateResult;
 
 
 === File: packages/b_declarations/src/utils/index.ts ===
@@ -848,18 +853,16 @@ export function generate(color: HexColor): GenerateResult {
 
 === File: packages/b_generators/src/color/hsl.ts ===
 // b_path:: packages/b_generators/src/color/hsl.ts
-import { type GenerateResult, generateErr, generateOk, createError, hslColorSchema } from "@b/types";
-import type { HSLColor } from "@b/types";
-import { cssValueToCss } from "@b/utils";
+import { type GenerateResult, generateErr, generateOk, hslColorSchema } from "@b/types";
+import { cssValueToCss, zodErrorToIssues } from "@b/utils";
 
 /**
  * @see https://drafts.csswg.org/css-color/#the-hsl-notation
  */
-export function generate(color: HSLColor): GenerateResult {
+export function generate(color: unknown): GenerateResult {
   const validation = hslColorSchema.safeParse(color);
   if (!validation.success) {
-    const issue = validation.error.issues[0];
-    return generateErr(createError("invalid-ir", `Invalid HSLColor: ${issue?.path.join(".")}: ${issue?.message}`));
+    return generateErr(zodErrorToIssues(validation.error), "hsl-color");
   }
 
   const { h, s, l, alpha } = validation.data;
@@ -876,18 +879,16 @@ export function generate(color: HSLColor): GenerateResult {
 
 === File: packages/b_generators/src/color/hwb.ts ===
 // b_path:: packages/b_generators/src/color/hwb.ts
-import { type GenerateResult, generateErr, generateOk, createError, hwbColorSchema } from "@b/types";
-import type { HWBColor } from "@b/types";
-import { cssValueToCss } from "@b/utils";
+import { type GenerateResult, generateErr, generateOk, hwbColorSchema } from "@b/types";
+import { cssValueToCss, zodErrorToIssues } from "@b/utils";
 
 /**
  * @see https://drafts.csswg.org/css-color/#the-hwb-notation
  */
-export function generate(color: HWBColor): GenerateResult {
+export function generate(color: unknown): GenerateResult {
   const validation = hwbColorSchema.safeParse(color);
   if (!validation.success) {
-    const issue = validation.error.issues[0];
-    return generateErr(createError("invalid-ir", `Invalid HWBColor: ${issue?.path.join(".")}: ${issue?.message}`));
+    return generateErr(zodErrorToIssues(validation.error), "hwb-color");
   }
 
   const { h, w, b, alpha } = validation.data;
@@ -921,18 +922,16 @@ export * from "./color";
 
 === File: packages/b_generators/src/color/lab.ts ===
 // b_path:: packages/b_generators/src/color/lab.ts
-import { type GenerateResult, generateErr, generateOk, createError, labColorSchema } from "@b/types";
-import type { LABColor } from "@b/types";
-import { cssValueToCss } from "@b/utils";
+import { type GenerateResult, generateErr, generateOk, labColorSchema } from "@b/types";
+import { cssValueToCss, zodErrorToIssues } from "@b/utils";
 
 /**
  * @see https://drafts.csswg.org/css-color/#lab-colors
  */
-export function generate(color: LABColor): GenerateResult {
+export function generate(color: unknown): GenerateResult {
   const validation = labColorSchema.safeParse(color);
   if (!validation.success) {
-    const issue = validation.error.issues[0];
-    return generateErr(createError("invalid-ir", `Invalid LABColor: ${issue?.path.join(".")}: ${issue?.message}`));
+    return generateErr(zodErrorToIssues(validation.error), "lab-color");
   }
 
   const { l, a, b, alpha } = validation.data;
@@ -949,20 +948,18 @@ export function generate(color: LABColor): GenerateResult {
 
 === File: packages/b_generators/src/color/lch.ts ===
 // b_path:: packages/b_generators/src/color/lch.ts
-import { type GenerateResult, generateErr, generateOk, createError, lchColorSchema } from "@b/types";
-import type { LCHColor } from "@b/types";
-import { cssValueToCss } from "@b/utils";
+import { type GenerateResult, generateErr, generateOk, lchColorSchema } from "@b/types";
+import { cssValueToCss, zodErrorToIssues } from "@b/utils";
 
 /**
  * Generates LCH color CSS from IR
  * Supports literals, variables (var()), and keywords (none)
  * @see https://drafts.csswg.org/css-color/#lch-colors
  */
-export function generate(color: LCHColor): GenerateResult {
+export function generate(color: unknown): GenerateResult {
   const validation = lchColorSchema.safeParse(color);
   if (!validation.success) {
-    const issue = validation.error.issues[0];
-    return generateErr(createError("invalid-ir", `Invalid LCHColor: ${issue?.path.join(".")}: ${issue?.message}`));
+    return generateErr(zodErrorToIssues(validation.error), "lch-color");
   }
 
   const { l, c, h, alpha } = validation.data;
@@ -1004,18 +1001,16 @@ export function generate(color: NamedColor): GenerateResult {
 
 === File: packages/b_generators/src/color/oklab.ts ===
 // b_path:: packages/b_generators/src/color/oklab.ts
-import { type GenerateResult, generateErr, generateOk, createError, oklabColorSchema } from "@b/types";
-import type { OKLabColor } from "@b/types";
-import { cssValueToCss } from "@b/utils";
+import { type GenerateResult, generateErr, generateOk, oklabColorSchema } from "@b/types";
+import { cssValueToCss, zodErrorToIssues } from "@b/utils";
 
 /**
  * @see https://drafts.csswg.org/css-color/#ok-lab
  */
-export function generate(color: OKLabColor): GenerateResult {
+export function generate(color: unknown): GenerateResult {
   const validation = oklabColorSchema.safeParse(color);
   if (!validation.success) {
-    const issue = validation.error.issues[0];
-    return generateErr(createError("invalid-ir", `Invalid OKLabColor: ${issue?.path.join(".")}: ${issue?.message}`));
+    return generateErr(zodErrorToIssues(validation.error), "oklab-color");
   }
 
   const { l, a, b, alpha } = validation.data;
@@ -1032,18 +1027,16 @@ export function generate(color: OKLabColor): GenerateResult {
 
 === File: packages/b_generators/src/color/oklch.ts ===
 // b_path:: packages/b_generators/src/color/oklch.ts
-import { type GenerateResult, generateErr, generateOk, createError, oklchColorSchema } from "@b/types";
-import type { OKLCHColor } from "@b/types";
-import { cssValueToCss } from "@b/utils";
+import { type GenerateResult, generateErr, generateOk, oklchColorSchema } from "@b/types";
+import { cssValueToCss, zodErrorToIssues } from "@b/utils";
 
 /**
  * @see https://drafts.csswg.org/css-color/#ok-lch
  */
-export function generate(color: OKLCHColor): GenerateResult {
+export function generate(color: unknown): GenerateResult {
   const validation = oklchColorSchema.safeParse(color);
   if (!validation.success) {
-    const issue = validation.error.issues[0];
-    return generateErr(createError("invalid-ir", `Invalid OKLCHColor: ${issue?.path.join(".")}: ${issue?.message}`));
+    return generateErr(zodErrorToIssues(validation.error), "oklch-color");
   }
 
   const { l, c, h, alpha } = validation.data;
@@ -1060,18 +1053,16 @@ export function generate(color: OKLCHColor): GenerateResult {
 
 === File: packages/b_generators/src/color/rgb.ts ===
 // b_path:: packages/b_generators/src/color/rgb.ts
-import { type GenerateResult, generateErr, generateOk, createError, rgbColorSchema } from "@b/types";
-import type { RGBColor } from "@b/types";
-import { cssValueToCss } from "@b/utils";
+import { type GenerateResult, generateErr, generateOk, rgbColorSchema } from "@b/types";
+import { cssValueToCss, zodErrorToIssues } from "@b/utils";
 
 /**
  * @see https://drafts.csswg.org/css-color/#rgb-functions
  */
-export function generate(color: RGBColor): GenerateResult {
+export function generate(color: unknown): GenerateResult {
   const validation = rgbColorSchema.safeParse(color);
   if (!validation.success) {
-    const issue = validation.error.issues[0];
-    return generateErr(createError("invalid-ir", `Invalid RGBColor: ${issue?.path.join(".")}: ${issue?.message}`));
+    return generateErr(zodErrorToIssues(validation.error), "rgb-color");
   }
 
   const { r, g, b, alpha } = validation.data;
@@ -2225,13 +2216,13 @@ export function parseHslFunction(node: csstree.FunctionNode): ParseResult<HSLCol
   }
 
   const hResult = parseCssValueNode(values[0]);
-  if (!hResult.ok) return hResult;
+  if (!hResult.ok) return hResult as ParseResult<HSLColor>;
 
   const sResult = parseCssValueNode(values[1]);
-  if (!sResult.ok) return sResult;
+  if (!sResult.ok) return sResult as ParseResult<HSLColor>;
 
   const lResult = parseCssValueNode(values[2]);
-  if (!lResult.ok) return lResult;
+  if (!lResult.ok) return lResult as ParseResult<HSLColor>;
 
   const hsl: HSLColor = {
     kind: "hsl",
@@ -2242,7 +2233,7 @@ export function parseHslFunction(node: csstree.FunctionNode): ParseResult<HSLCol
 
   if (values.length === 4) {
     const alphaResult = parseCssValueNode(values[3]);
-    if (!alphaResult.ok) return alphaResult;
+    if (!alphaResult.ok) return alphaResult as ParseResult<HSLColor>;
     hsl.alpha = alphaResult.value;
   }
 
@@ -2273,13 +2264,13 @@ export function parseHwbFunction(node: csstree.FunctionNode): ParseResult<HWBCol
   }
 
   const hResult = parseCssValueNode(values[0]);
-  if (!hResult.ok) return hResult;
+  if (!hResult.ok) return hResult as ParseResult<HWBColor>;
 
   const wResult = parseCssValueNode(values[1]);
-  if (!wResult.ok) return wResult;
+  if (!wResult.ok) return wResult as ParseResult<HWBColor>;
 
   const bResult = parseCssValueNode(values[2]);
-  if (!bResult.ok) return bResult;
+  if (!bResult.ok) return bResult as ParseResult<HWBColor>;
 
   const hwb: HWBColor = {
     kind: "hwb",
@@ -2290,7 +2281,7 @@ export function parseHwbFunction(node: csstree.FunctionNode): ParseResult<HWBCol
 
   if (values.length === 4) {
     const alphaResult = parseCssValueNode(values[3]);
-    if (!alphaResult.ok) return alphaResult;
+    if (!alphaResult.ok) return alphaResult as ParseResult<HWBColor>;
     hwb.alpha = alphaResult.value;
   }
 
@@ -2334,13 +2325,13 @@ export function parseLabFunction(node: csstree.FunctionNode): ParseResult<LABCol
   }
 
   const lResult = parseCssValueNode(values[0]);
-  if (!lResult.ok) return lResult;
+  if (!lResult.ok) return lResult as ParseResult<LABColor>;
 
   const aResult = parseCssValueNode(values[1]);
-  if (!aResult.ok) return aResult;
+  if (!aResult.ok) return aResult as ParseResult<LABColor>;
 
   const bResult = parseCssValueNode(values[2]);
-  if (!bResult.ok) return bResult;
+  if (!bResult.ok) return bResult as ParseResult<LABColor>;
 
   const lab: LABColor = {
     kind: "lab",
@@ -2351,7 +2342,7 @@ export function parseLabFunction(node: csstree.FunctionNode): ParseResult<LABCol
 
   if (values.length === 4) {
     const alphaResult = parseCssValueNode(values[3]);
-    if (!alphaResult.ok) return alphaResult;
+    if (!alphaResult.ok) return alphaResult as ParseResult<LABColor>;
     lab.alpha = alphaResult.value;
   }
 
@@ -2382,13 +2373,13 @@ export function parseLchFunction(node: csstree.FunctionNode): ParseResult<LCHCol
   }
 
   const lResult = parseCssValueNode(values[0]);
-  if (!lResult.ok) return lResult;
+  if (!lResult.ok) return lResult as ParseResult<LCHColor>;
 
   const cResult = parseCssValueNode(values[1]);
-  if (!cResult.ok) return cResult;
+  if (!cResult.ok) return cResult as ParseResult<LCHColor>;
 
   const hResult = parseCssValueNode(values[2]);
-  if (!hResult.ok) return hResult;
+  if (!hResult.ok) return hResult as ParseResult<LCHColor>;
 
   const lch: LCHColor = {
     kind: "lch",
@@ -2399,7 +2390,7 @@ export function parseLchFunction(node: csstree.FunctionNode): ParseResult<LCHCol
 
   if (values.length === 4) {
     const alphaResult = parseCssValueNode(values[3]);
-    if (!alphaResult.ok) return alphaResult;
+    if (!alphaResult.ok) return alphaResult as ParseResult<LCHColor>;
     lch.alpha = alphaResult.value;
   }
 
@@ -2430,13 +2421,13 @@ export function parseOklabFunction(node: csstree.FunctionNode): ParseResult<OKLa
   }
 
   const lResult = parseCssValueNode(values[0]);
-  if (!lResult.ok) return lResult;
+  if (!lResult.ok) return lResult as ParseResult<OKLabColor>;
 
   const aResult = parseCssValueNode(values[1]);
-  if (!aResult.ok) return aResult;
+  if (!aResult.ok) return aResult as ParseResult<OKLabColor>;
 
   const bResult = parseCssValueNode(values[2]);
-  if (!bResult.ok) return bResult;
+  if (!bResult.ok) return bResult as ParseResult<OKLabColor>;
 
   const oklab: OKLabColor = {
     kind: "oklab",
@@ -2447,7 +2438,7 @@ export function parseOklabFunction(node: csstree.FunctionNode): ParseResult<OKLa
 
   if (values.length === 4) {
     const alphaResult = parseCssValueNode(values[3]);
-    if (!alphaResult.ok) return alphaResult;
+    if (!alphaResult.ok) return alphaResult as ParseResult<OKLabColor>;
     oklab.alpha = alphaResult.value;
   }
 
@@ -2478,13 +2469,13 @@ export function parseOklchFunction(node: csstree.FunctionNode): ParseResult<OKLC
   }
 
   const lResult = parseCssValueNode(values[0]);
-  if (!lResult.ok) return lResult;
+  if (!lResult.ok) return lResult as ParseResult<OKLCHColor>;
 
   const cResult = parseCssValueNode(values[1]);
-  if (!cResult.ok) return cResult;
+  if (!cResult.ok) return cResult as ParseResult<OKLCHColor>;
 
   const hResult = parseCssValueNode(values[2]);
-  if (!hResult.ok) return hResult;
+  if (!hResult.ok) return hResult as ParseResult<OKLCHColor>;
 
   const oklch: OKLCHColor = {
     kind: "oklch",
@@ -2495,7 +2486,7 @@ export function parseOklchFunction(node: csstree.FunctionNode): ParseResult<OKLC
 
   if (values.length === 4) {
     const alphaResult = parseCssValueNode(values[3]);
-    if (!alphaResult.ok) return alphaResult;
+    if (!alphaResult.ok) return alphaResult as ParseResult<OKLCHColor>;
     oklch.alpha = alphaResult.value;
   }
 
@@ -2527,13 +2518,13 @@ export function parseRgbFunction(node: csstree.FunctionNode): ParseResult<RGBCol
   }
 
   const rResult = parseCssValueNode(values[0]);
-  if (!rResult.ok) return rResult;
+  if (!rResult.ok) return rResult as ParseResult<RGBColor>;
 
   const gResult = parseCssValueNode(values[1]);
-  if (!gResult.ok) return gResult;
+  if (!gResult.ok) return gResult as ParseResult<RGBColor>;
 
   const bResult = parseCssValueNode(values[2]);
-  if (!bResult.ok) return bResult;
+  if (!bResult.ok) return bResult as ParseResult<RGBColor>;
 
   const rgb: RGBColor = {
     kind: "rgb",
@@ -2544,7 +2535,7 @@ export function parseRgbFunction(node: csstree.FunctionNode): ParseResult<RGBCol
 
   if (values.length === 4) {
     const alphaResult = parseCssValueNode(values[3]);
-    if (!alphaResult.ok) return alphaResult;
+    if (!alphaResult.ok) return alphaResult as ParseResult<RGBColor>;
     rgb.alpha = alphaResult.value;
   }
 
@@ -2764,12 +2755,12 @@ export function fromFunction(fn: csstree.FunctionNode): ParseResult<Type.ConicGr
 export function parse(css: string): ParseResult<Type.ConicGradient> {
   const astResult = Utils.Ast.parseCssString(css, "value");
   if (!astResult.ok) {
-    return astResult;
+    return astResult as ParseResult<Type.ConicGradient>;
   }
 
   const funcResult = Utils.Ast.findFunctionNode(astResult.value, ["conic-gradient", "repeating-conic-gradient"]);
   if (!funcResult.ok) {
-    return funcResult;
+    return funcResult as ParseResult<Type.ConicGradient>;
   }
 
   return fromFunction(funcResult.value);
@@ -2949,12 +2940,12 @@ export function fromFunction(fn: csstree.FunctionNode): ParseResult<Type.LinearG
 export function parse(css: string): ParseResult<Type.LinearGradient> {
   const astResult = Utils.Ast.parseCssString(css, "value");
   if (!astResult.ok) {
-    return astResult;
+    return astResult as ParseResult<Type.LinearGradient>;
   }
 
   const funcResult = Utils.Ast.findFunctionNode(astResult.value, ["linear-gradient", "repeating-linear-gradient"]);
   if (!funcResult.ok) {
-    return funcResult;
+    return funcResult as ParseResult<Type.LinearGradient>;
   }
 
   return fromFunction(funcResult.value);
@@ -3189,12 +3180,12 @@ export function fromFunction(fn: csstree.FunctionNode): ParseResult<Type.RadialG
 export function parse(css: string): ParseResult<Type.RadialGradient> {
   const astResult = Utils.Ast.parseCssString(css, "value");
   if (!astResult.ok) {
-    return astResult;
+    return astResult as ParseResult<Type.RadialGradient>;
   }
 
   const funcResult = Utils.Ast.findFunctionNode(astResult.value, ["radial-gradient", "repeating-radial-gradient"]);
   if (!funcResult.ok) {
-    return funcResult;
+    return funcResult as ParseResult<Type.RadialGradient>;
   }
 
   return fromFunction(funcResult.value);
@@ -3361,7 +3352,7 @@ export function parsePosition2D(
 
   const firstValue = parsePositionValueNode(firstNode);
   if (!firstValue.ok) {
-    return firstValue;
+    return firstValue as ParseResult<{ position: Type.Position2D; nextIdx: number }>;
   }
   positionValues.push(firstValue.value);
   idx++;
@@ -3782,10 +3773,12 @@ import { angleUnitSchema } from "@b/units";
 /**
  * @see https://developer.mozilla.org/en-US/docs/Web/CSS/angle
  */
-export const angleSchema = z.object({
-  value: z.number(),
-  unit: angleUnitSchema.optional(),
-});
+export const angleSchema = z
+  .object({
+    value: z.number(),
+    unit: angleUnitSchema.optional(),
+  })
+  .strict();
 
 export type Angle = z.infer<typeof angleSchema>;
 
@@ -3799,13 +3792,17 @@ import { hueInterpolationMethodSchema, polarColorSpaceSchema, rectangularColorSp
  * @see https://developer.mozilla.org/en-US/docs/Web/CSS/color-interpolation-method
  */
 export const colorInterpolationMethodSchema = z.union([
-  z.object({
-    colorSpace: rectangularColorSpaceSchema,
-  }),
-  z.object({
-    colorSpace: polarColorSpaceSchema,
-    hueInterpolationMethod: hueInterpolationMethodSchema.optional(),
-  }),
+  z
+    .object({
+      colorSpace: rectangularColorSpaceSchema,
+    })
+    .strict(),
+  z
+    .object({
+      colorSpace: polarColorSpaceSchema,
+      hueInterpolationMethod: hueInterpolationMethodSchema.optional(),
+    })
+    .strict(),
 ]);
 
 export type ColorInterpolationMethod = z.infer<typeof colorInterpolationMethodSchema>;
@@ -3830,15 +3827,17 @@ export type AnglePercentage = z.infer<typeof anglePercentageSchema>;
 /**
  * @see https://developer.mozilla.org/en-US/docs/Web/CSS/gradient/linear-gradient#color-stops
  */
-export const colorStopSchema = z.object({
-  color: colorSchema,
-  position: z
-    .union([
-      z.union([lengthPercentageSchema, angleSchema]),
-      z.tuple([z.union([lengthPercentageSchema, angleSchema]), z.union([lengthPercentageSchema, angleSchema])]),
-    ])
-    .optional(),
-});
+export const colorStopSchema = z
+  .object({
+    color: colorSchema,
+    position: z
+      .union([
+        z.union([lengthPercentageSchema, angleSchema]),
+        z.tuple([z.union([lengthPercentageSchema, angleSchema]), z.union([lengthPercentageSchema, angleSchema])]),
+      ])
+      .optional(),
+  })
+  .strict();
 
 export type ColorStop = z.infer<typeof colorStopSchema>;
 
@@ -3865,22 +3864,24 @@ import { cssValueSchema } from "../values";
  * Supports literals, variables (var()), keywords (none), and relative color syntax
  * @see https://developer.mozilla.org/en-US/docs/Web/CSS/color_value/color
  */
-export const colorFunctionSchema = z.object({
-  kind: z.literal("color"),
-  colorSpace: z.enum([
-    "srgb",
-    "srgb-linear",
-    "display-p3",
-    "a98-rgb",
-    "prophoto-rgb",
-    "rec2020",
-    "xyz",
-    "xyz-d50",
-    "xyz-d65",
-  ]),
-  channels: z.tuple([cssValueSchema, cssValueSchema, cssValueSchema]),
-  alpha: cssValueSchema.optional(),
-});
+export const colorFunctionSchema = z
+  .object({
+    kind: z.literal("color"),
+    colorSpace: z.enum([
+      "srgb",
+      "srgb-linear",
+      "display-p3",
+      "a98-rgb",
+      "prophoto-rgb",
+      "rec2020",
+      "xyz",
+      "xyz-d50",
+      "xyz-d65",
+    ]),
+    channels: z.tuple([cssValueSchema, cssValueSchema, cssValueSchema]),
+    alpha: cssValueSchema.optional(),
+  })
+  .strict();
 
 export type ColorFunction = z.infer<typeof colorFunctionSchema>;
 
@@ -3933,10 +3934,12 @@ import { z } from "zod";
  *
  * @see https://developer.mozilla.org/en-US/docs/Web/CSS/hex-color
  */
-export const hexColorSchema = z.object({
-  kind: z.literal("hex"),
-  value: z.string().regex(/^#([0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/i),
-});
+export const hexColorSchema = z
+  .object({
+    kind: z.literal("hex"),
+    value: z.string().regex(/^#([0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/i),
+  })
+  .strict();
 
 export type HexColor = z.infer<typeof hexColorSchema>;
 
@@ -3951,13 +3954,15 @@ import { cssValueSchema } from "../values";
  * Supports literals, variables (var()), keywords (none), and relative color syntax
  * @see https://developer.mozilla.org/en-US/docs/Web/CSS/color_value/hsl
  */
-export const hslColorSchema = z.object({
-  kind: z.literal("hsl"),
-  h: cssValueSchema,
-  s: cssValueSchema,
-  l: cssValueSchema,
-  alpha: cssValueSchema.optional(),
-});
+export const hslColorSchema = z
+  .object({
+    kind: z.literal("hsl"),
+    h: cssValueSchema,
+    s: cssValueSchema,
+    l: cssValueSchema,
+    alpha: cssValueSchema.optional(),
+  })
+  .strict();
 
 export type HSLColor = z.infer<typeof hslColorSchema>;
 
@@ -3972,13 +3977,15 @@ import { cssValueSchema } from "../values";
  * Supports literals, variables (var()), keywords (none), and relative color syntax
  * @see https://developer.mozilla.org/en-US/docs/Web/CSS/color_value/hwb
  */
-export const hwbColorSchema = z.object({
-  kind: z.literal("hwb"),
-  h: cssValueSchema,
-  w: cssValueSchema,
-  b: cssValueSchema,
-  alpha: cssValueSchema.optional(),
-});
+export const hwbColorSchema = z
+  .object({
+    kind: z.literal("hwb"),
+    h: cssValueSchema,
+    w: cssValueSchema,
+    b: cssValueSchema,
+    alpha: cssValueSchema.optional(),
+  })
+  .strict();
 
 export type HWBColor = z.infer<typeof hwbColorSchema>;
 
@@ -4009,13 +4016,15 @@ import { cssValueSchema } from "../values";
  * Supports literals, variables (var()), keywords (none), and relative color syntax
  * @see https://developer.mozilla.org/en-US/docs/Web/CSS/color_value/lab
  */
-export const labColorSchema = z.object({
-  kind: z.literal("lab"),
-  l: cssValueSchema,
-  a: cssValueSchema,
-  b: cssValueSchema,
-  alpha: cssValueSchema.optional(),
-});
+export const labColorSchema = z
+  .object({
+    kind: z.literal("lab"),
+    l: cssValueSchema,
+    a: cssValueSchema,
+    b: cssValueSchema,
+    alpha: cssValueSchema.optional(),
+  })
+  .strict();
 
 export type LABColor = z.infer<typeof labColorSchema>;
 
@@ -4030,13 +4039,15 @@ import { cssValueSchema } from "../values";
  * Supports literals, variables (var()), keywords (none), and relative color syntax
  * @see https://drafts.csswg.org/css-color/#lch-colors
  */
-export const lchColorSchema = z.object({
-  kind: z.literal("lch"),
-  l: cssValueSchema,
-  c: cssValueSchema,
-  h: cssValueSchema,
-  alpha: cssValueSchema.optional(),
-});
+export const lchColorSchema = z
+  .object({
+    kind: z.literal("lch"),
+    l: cssValueSchema,
+    c: cssValueSchema,
+    h: cssValueSchema,
+    alpha: cssValueSchema.optional(),
+  })
+  .strict();
 
 export type LCHColor = z.infer<typeof lchColorSchema>;
 
@@ -4049,10 +4060,12 @@ import * as Keywords from "@b/keywords";
 /**
  * @see https://developer.mozilla.org/en-US/docs/Web/CSS/named-color
  */
-export const namedColorSchema = z.object({
-  kind: z.literal("named"),
-  name: Keywords.namedColorSchema,
-});
+export const namedColorSchema = z
+  .object({
+    kind: z.literal("named"),
+    name: Keywords.namedColorSchema,
+  })
+  .strict();
 
 export type NamedColor = z.infer<typeof namedColorSchema>;
 
@@ -4067,13 +4080,15 @@ import { cssValueSchema } from "../values";
  * Supports literals, variables (var()), keywords (none), and relative color syntax
  * @see https://developer.mozilla.org/en-US/docs/Web/CSS/color_value/oklab
  */
-export const oklabColorSchema = z.object({
-  kind: z.literal("oklab"),
-  l: cssValueSchema,
-  a: cssValueSchema,
-  b: cssValueSchema,
-  alpha: cssValueSchema.optional(),
-});
+export const oklabColorSchema = z
+  .object({
+    kind: z.literal("oklab"),
+    l: cssValueSchema,
+    a: cssValueSchema,
+    b: cssValueSchema,
+    alpha: cssValueSchema.optional(),
+  })
+  .strict();
 
 export type OKLabColor = z.infer<typeof oklabColorSchema>;
 
@@ -4088,13 +4103,15 @@ import { cssValueSchema } from "../values";
  * Supports literals, variables (var()), keywords (none), and relative color syntax
  * @see https://developer.mozilla.org/en-US/docs/Web/CSS/color_value/oklch
  */
-export const oklchColorSchema = z.object({
-  kind: z.literal("oklch"),
-  l: cssValueSchema,
-  c: cssValueSchema,
-  h: cssValueSchema,
-  alpha: cssValueSchema.optional(),
-});
+export const oklchColorSchema = z
+  .object({
+    kind: z.literal("oklch"),
+    l: cssValueSchema,
+    c: cssValueSchema,
+    h: cssValueSchema,
+    alpha: cssValueSchema.optional(),
+  })
+  .strict();
 
 export type OKLCHColor = z.infer<typeof oklchColorSchema>;
 
@@ -4109,13 +4126,15 @@ import { cssValueSchema } from "../values";
  * Supports literals, variables (var()), keywords (none), and relative color syntax
  * @see https://developer.mozilla.org/en-US/docs/Web/CSS/color_value/rgb
  */
-export const rgbColorSchema = z.object({
-  kind: z.literal("rgb"),
-  r: cssValueSchema,
-  g: cssValueSchema,
-  b: cssValueSchema,
-  alpha: cssValueSchema.optional(),
-});
+export const rgbColorSchema = z
+  .object({
+    kind: z.literal("rgb"),
+    r: cssValueSchema,
+    g: cssValueSchema,
+    b: cssValueSchema,
+    alpha: cssValueSchema.optional(),
+  })
+  .strict();
 
 export type RGBColor = z.infer<typeof rgbColorSchema>;
 
@@ -4127,10 +4146,12 @@ import { z } from "zod";
 /**
  * @see https://developer.mozilla.org/en-US/docs/Web/CSS/color_value#special_values
  */
-export const specialColorSchema = z.object({
-  kind: z.literal("special"),
-  keyword: z.enum(["transparent", "currentcolor"]),
-});
+export const specialColorSchema = z
+  .object({
+    kind: z.literal("special"),
+    keyword: z.enum(["transparent", "currentcolor"]),
+  })
+  .strict();
 
 export type SpecialColor = z.infer<typeof specialColorSchema>;
 
@@ -4146,14 +4167,16 @@ import { position2DSchema } from "../position";
 /**
  * @see https://developer.mozilla.org/en-US/docs/Web/CSS/gradient/conic-gradient
  */
-export const conicGradientSchema = z.object({
-  kind: z.literal("conic"),
-  fromAngle: angleSchema.optional(),
-  position: position2DSchema.optional(),
-  colorInterpolationMethod: colorInterpolationMethodSchema.optional(),
-  colorStops: colorStopListSchema,
-  repeating: z.boolean(),
-});
+export const conicGradientSchema = z
+  .object({
+    kind: z.literal("conic"),
+    fromAngle: angleSchema.optional(),
+    position: position2DSchema.optional(),
+    colorInterpolationMethod: colorInterpolationMethodSchema.optional(),
+    colorStops: colorStopListSchema,
+    repeating: z.boolean(),
+  })
+  .strict();
 
 export type ConicGradient = z.infer<typeof conicGradientSchema>;
 
@@ -4168,18 +4191,24 @@ import { angleSchema } from "../angle";
  * @see https://developer.mozilla.org/en-US/docs/Web/CSS/gradient/linear-gradient
  */
 export const gradientDirectionSchema = z.union([
-  z.object({
-    kind: z.literal("angle"),
-    value: angleSchema,
-  }),
-  z.object({
-    kind: z.literal("to-side"),
-    value: gradientSideSchema,
-  }),
-  z.object({
-    kind: z.literal("to-corner"),
-    value: gradientCornerSchema,
-  }),
+  z
+    .object({
+      kind: z.literal("angle"),
+      value: angleSchema,
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal("to-side"),
+      value: gradientSideSchema,
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal("to-corner"),
+      value: gradientCornerSchema,
+    })
+    .strict(),
 ]);
 
 export type GradientDirection = z.infer<typeof gradientDirectionSchema>;
@@ -4213,13 +4242,15 @@ import { gradientDirectionSchema } from "./direction";
 /**
  * @see https://developer.mozilla.org/en-US/docs/Web/CSS/gradient/linear-gradient
  */
-export const linearGradientSchema = z.object({
-  kind: z.literal("linear"),
-  direction: gradientDirectionSchema.optional(),
-  colorInterpolationMethod: colorInterpolationMethodSchema.optional(),
-  colorStops: colorStopListSchema,
-  repeating: z.boolean(),
-});
+export const linearGradientSchema = z
+  .object({
+    kind: z.literal("linear"),
+    direction: gradientDirectionSchema.optional(),
+    colorInterpolationMethod: colorInterpolationMethodSchema.optional(),
+    colorStops: colorStopListSchema,
+    repeating: z.boolean(),
+  })
+  .strict();
 
 export type LinearGradient = z.infer<typeof linearGradientSchema>;
 
@@ -4234,19 +4265,25 @@ import { lengthPercentageSchema } from "../length-percentage";
  * @see https://developer.mozilla.org/en-US/docs/Web/CSS/gradient/radial-gradient
  */
 export const radialGradientSizeSchema = z.union([
-  z.object({
-    kind: z.literal("keyword"),
-    value: radialSizeKeywordSchema,
-  }),
-  z.object({
-    kind: z.literal("circle-explicit"),
-    radius: lengthPercentageSchema,
-  }),
-  z.object({
-    kind: z.literal("ellipse-explicit"),
-    radiusX: lengthPercentageSchema,
-    radiusY: lengthPercentageSchema,
-  }),
+  z
+    .object({
+      kind: z.literal("keyword"),
+      value: radialSizeKeywordSchema,
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal("circle-explicit"),
+      radius: lengthPercentageSchema,
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal("ellipse-explicit"),
+      radiusX: lengthPercentageSchema,
+      radiusY: lengthPercentageSchema,
+    })
+    .strict(),
 ]);
 
 export type RadialGradientSize = z.infer<typeof radialGradientSizeSchema>;
@@ -4264,15 +4301,17 @@ import { radialGradientSizeSchema } from "./radial-size";
 /**
  * @see https://developer.mozilla.org/en-US/docs/Web/CSS/gradient/radial-gradient
  */
-export const radialGradientSchema = z.object({
-  kind: z.literal("radial"),
-  shape: radialShapeSchema.optional(),
-  size: radialGradientSizeSchema.optional(),
-  position: position2DSchema.optional(),
-  colorInterpolationMethod: colorInterpolationMethodSchema.optional(),
-  colorStops: colorStopListSchema,
-  repeating: z.boolean(),
-});
+export const radialGradientSchema = z
+  .object({
+    kind: z.literal("radial"),
+    shape: radialShapeSchema.optional(),
+    size: radialGradientSizeSchema.optional(),
+    position: position2DSchema.optional(),
+    colorInterpolationMethod: colorInterpolationMethodSchema.optional(),
+    colorStops: colorStopListSchema,
+    repeating: z.boolean(),
+  })
+  .strict();
 
 export type RadialGradient = z.infer<typeof radialGradientSchema>;
 
@@ -4321,10 +4360,12 @@ import { lengthUnitSchema } from "@b/units";
 /**
  * @see https://developer.mozilla.org/en-US/docs/Web/CSS/length
  */
-export const lengthSchema = z.object({
-  value: z.number(),
-  unit: lengthUnitSchema,
-});
+export const lengthSchema = z
+  .object({
+    value: z.number(),
+    unit: lengthUnitSchema,
+  })
+  .strict();
 
 export type Length = z.infer<typeof lengthSchema>;
 
@@ -4337,10 +4378,12 @@ import { percentageUnitSchema } from "@b/units";
 /**
  * @see https://developer.mozilla.org/en-US/docs/Web/CSS/percentage
  */
-export const percentageSchema = z.object({
-  value: z.number(),
-  unit: percentageUnitSchema,
-});
+export const percentageSchema = z
+  .object({
+    value: z.number(),
+    unit: percentageUnitSchema,
+  })
+  .strict();
 
 export type Percentage = z.infer<typeof percentageSchema>;
 
@@ -4358,10 +4401,12 @@ export const positionValueSchema = z.union([positionKeywordSchema, lengthPercent
 
 export type PositionValue = z.infer<typeof positionValueSchema>;
 
-export const position2DSchema = z.object({
-  horizontal: positionValueSchema,
-  vertical: positionValueSchema,
-});
+export const position2DSchema = z
+  .object({
+    horizontal: positionValueSchema,
+    vertical: positionValueSchema,
+  })
+  .strict();
 
 export type Position2D = z.infer<typeof position2DSchema>;
 
@@ -4606,18 +4651,26 @@ export function generateOk(value: string, property?: string): GenerateResult {
 /**
  * Create a failed GenerateResult.
  *
+ * Accepts either a single Issue or an array of Issues for multi-error scenarios.
+ *
  * @example
  * ```typescript
+ * // Single error
  * return generateErr(createError("invalid-ir", "Invalid IR structure"));
+ *
+ * // Multiple errors from Zod
+ * return generateErr(zodErrorToIssues(zodError), "color");
+ *
+ * // With property
  * return generateErr(createError("missing-required-field", "Missing 'kind'"), "color");
  * ```
  *
  * @public
  */
-export function generateErr(issue: Issue, property?: string): GenerateResult {
+export function generateErr(issues: Issue | Issue[], property?: string): GenerateResult {
   const result: GenerateResult = {
     ok: false,
-    issues: [issue],
+    issues: Array.isArray(issues) ? issues : [issues],
   };
   if (property !== undefined) {
     result.property = property;
@@ -4886,9 +4939,11 @@ import type { Issue } from "./issue";
  *
  * A discriminated union that ensures type safety:
  * - When `ok: true`, `value` is guaranteed to be present (type T)
- * - When `ok: false`, `value` is undefined
+ * - When `ok: false`, `value` is normally undefined, but can be partially present (type T)
+ *   for multi-error collection scenarios
  *
  * Issues array allows warnings + success (parser can succeed with warnings).
+ * When `ok: false`, issues contains all collected errors.
  *
  * @example
  * ```typescript
@@ -4900,18 +4955,27 @@ import type { Issue } from "./issue";
  *   console.log(result.value); // ColorIR
  * }
  *
- * // Error
+ * // Error (no partial value)
  * const error = parseErr("invalid-value", "Invalid hex color");
  * if (!error.ok) {
  *   console.log(error.issues[0].message);
  * }
+ *
+ * // Error with partial value (multi-error collection)
+ * // Must use explicit type annotation for type safety
+ * const partial: ParseResult<BackgroundImageIR> = {
+ *   ok: false,
+ *   value: { kind: "layers", layers: [successfulLayer1, successfulLayer2] },
+ *   issues: [error1, error2, error3]
+ * };
  * ```
  *
  * @public
  */
 export type ParseResult<T = unknown> =
   | { ok: true; value: T; property?: string; issues: Issue[] }
-  | { ok: false; value?: undefined; property?: string; issues: Issue[] };
+  | { ok: false; value?: undefined; property?: string; issues: Issue[] }
+  | { ok: false; value: T; property?: string; issues: Issue[] };
 
 /**
  * Create a successful ParseResult.
@@ -5024,10 +5088,12 @@ import { z } from "zod";
 /**
  * @see https://developer.mozilla.org/en-US/docs/Web/CSS/url
  */
-export const urlSchema = z.object({
-  kind: z.literal("url"),
-  value: z.string(),
-});
+export const urlSchema = z
+  .object({
+    kind: z.literal("url"),
+    value: z.string(),
+  })
+  .strict();
 
 export type Url = z.infer<typeof urlSchema>;
 
@@ -5041,11 +5107,13 @@ import { getLiteralValues } from "@b/keywords";
  * Represents a literal numeric value with optional unit
  * @see https://drafts.csswg.org/css-values-4/#numeric-types
  */
-export const literalValueSchema = z.object({
-  kind: z.literal("literal"),
-  value: z.number(),
-  unit: z.string().optional(),
-});
+export const literalValueSchema = z
+  .object({
+    kind: z.literal("literal"),
+    value: z.number(),
+    unit: z.string().optional(),
+  })
+  .strict();
 
 /**
  * Represents a CSS custom property reference (var() function)
@@ -5055,30 +5123,36 @@ export const variableReferenceSchema: z.ZodType<{
   kind: "variable";
   name: string;
   fallback?: CssValue;
-}> = z.object({
-  kind: z.literal("variable"),
-  name: z.string(),
-  fallback: z.lazy((): z.ZodType<CssValue> => cssValueSchema).optional(),
-});
+}> = z
+  .object({
+    kind: z.literal("variable"),
+    name: z.string(),
+    fallback: z.lazy((): z.ZodType<CssValue> => cssValueSchema).optional(),
+  })
+  .strict();
 
 /**
  * Represents a CSS keyword value
  * @see https://drafts.csswg.org/css-values-4/#keywords
  */
-export const keywordValueSchema = z.object({
-  kind: z.literal("keyword"),
-  value: z.string(),
-});
+export const keywordValueSchema = z
+  .object({
+    kind: z.literal("keyword"),
+    value: z.string(),
+  })
+  .strict();
 
 export const listValueSchema: z.ZodType<{
   kind: "list";
   separator: " " | ",";
   values: CssValue[];
-}> = z.object({
-  kind: z.literal("list"),
-  separator: z.enum([" ", ","]),
-  values: z.array(z.lazy((): z.ZodType<CssValue> => cssValueSchema)),
-});
+}> = z
+  .object({
+    kind: z.literal("list"),
+    separator: z.enum([" ", ","]),
+    values: z.array(z.lazy((): z.ZodType<CssValue> => cssValueSchema)),
+  })
+  .strict();
 
 // Represents a single operation within a calc() expression
 export const calcOperationSchema: z.ZodType<{
@@ -5087,32 +5161,38 @@ export const calcOperationSchema: z.ZodType<{
   // The operands can be any valid CSS value, including another operation
   left: CssValue;
   right: CssValue;
-}> = z.object({
-  kind: z.literal("calc-operation"),
-  operator: z.enum(["+", "-", "*", "/"]),
-  // Use z.lazy() for the recursive definition
-  left: z.lazy((): z.ZodType<CssValue> => cssValueSchema),
-  right: z.lazy((): z.ZodType<CssValue> => cssValueSchema),
-});
+}> = z
+  .object({
+    kind: z.literal("calc-operation"),
+    operator: z.enum(["+", "-", "*", "/"]),
+    // Use z.lazy() for the recursive definition
+    left: z.lazy((): z.ZodType<CssValue> => cssValueSchema),
+    right: z.lazy((): z.ZodType<CssValue> => cssValueSchema),
+  })
+  .strict();
 
 // A top-level calc() function just holds the root operation/value
 export const calcFunctionSchema: z.ZodType<{
   kind: "calc";
   value: CssValue;
-}> = z.object({
-  kind: z.literal("calc"),
-  // The value inside can be a simple literal or a complex operation tree
-  value: z.lazy((): z.ZodType<CssValue> => cssValueSchema),
-});
+}> = z
+  .object({
+    kind: z.literal("calc"),
+    // The value inside can be a simple literal or a complex operation tree
+    value: z.lazy((): z.ZodType<CssValue> => cssValueSchema),
+  })
+  .strict();
 
 // For min() and max()
 export const minmaxFunctionSchema: z.ZodType<{
   kind: "min" | "max";
   values: CssValue[];
-}> = z.object({
-  kind: z.union([z.literal("min"), z.literal("max")]),
-  values: z.array(z.lazy((): z.ZodType<CssValue> => cssValueSchema)),
-});
+}> = z
+  .object({
+    kind: z.union([z.literal("min"), z.literal("max")]),
+    values: z.array(z.lazy((): z.ZodType<CssValue> => cssValueSchema)),
+  })
+  .strict();
 
 // For clamp()
 export const clampFunctionSchema: z.ZodType<{
@@ -5120,30 +5200,36 @@ export const clampFunctionSchema: z.ZodType<{
   min: CssValue;
   preferred: CssValue;
   max: CssValue;
-}> = z.object({
-  kind: z.literal("clamp"),
-  // clamp() always has 3 arguments: min, preferred, max
-  min: z.lazy((): z.ZodType<CssValue> => cssValueSchema),
-  preferred: z.lazy((): z.ZodType<CssValue> => cssValueSchema),
-  max: z.lazy((): z.ZodType<CssValue> => cssValueSchema),
-});
+}> = z
+  .object({
+    kind: z.literal("clamp"),
+    // clamp() always has 3 arguments: min, preferred, max
+    min: z.lazy((): z.ZodType<CssValue> => cssValueSchema),
+    preferred: z.lazy((): z.ZodType<CssValue> => cssValueSchema),
+    max: z.lazy((): z.ZodType<CssValue> => cssValueSchema),
+  })
+  .strict();
 
-export const urlFunctionSchema = z.object({
-  kind: z.literal("url"),
-  url: z.string(),
-});
+export const urlFunctionSchema = z
+  .object({
+    kind: z.literal("url"),
+    url: z.string(),
+  })
+  .strict();
 
 export const attrFunctionSchema: z.ZodType<{
   kind: "attr";
   name: string;
   typeOrUnit?: string; // e.g., "color", "px"
   fallback?: CssValue;
-}> = z.object({
-  kind: z.literal("attr"),
-  name: z.string(),
-  typeOrUnit: z.string().optional(),
-  fallback: z.lazy((): z.ZodType<CssValue> => cssValueSchema).optional(),
-});
+}> = z
+  .object({
+    kind: z.literal("attr"),
+    name: z.string(),
+    typeOrUnit: z.string().optional(),
+    fallback: z.lazy((): z.ZodType<CssValue> => cssValueSchema).optional(),
+  })
+  .strict();
 
 /**
  * Union of all possible CSS value representations

@@ -1,6 +1,6 @@
 // b_path:: packages/b_declarations/src/integration.test.ts
 import { describe, expect, it } from "vitest";
-import { parseDeclaration } from "./core/parser";
+import { parseDeclaration } from "./parser";
 import { backgroundImage } from "./properties/background-image";
 
 describe("Declaration Layer Integration", () => {

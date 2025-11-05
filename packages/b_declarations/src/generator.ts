@@ -1,7 +1,7 @@
-// b_path:: packages/b_declarations/src/core/generator.ts
+// b_path:: packages/b_declarations/src/generator.ts
 import { generateOk, generateErr, createError, type GenerateResult } from "@b/types";
-import { propertyRegistry } from "./registry";
-import type { PropertyIRMap, RegisteredProperty, PropertyGenerator } from "../types";
+import { propertyRegistry } from "./core";
+import type { PropertyIRMap, RegisteredProperty, PropertyGenerator } from "./types";
 
 /**
  * Input for generating a CSS declaration from IR.

@@ -1,5 +1,5 @@
 // b_path:: packages/b_declarations/src/core/registry.ts
-import type { PropertyDefinition } from "./types";
+import type { PropertyDefinition } from "../types";
 
 /**
  * Property registry - maps CSS property names to their definitions.
