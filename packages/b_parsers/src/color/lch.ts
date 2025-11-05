@@ -20,13 +20,13 @@ export function parseLchFunction(node: csstree.FunctionNode): ParseResult<LCHCol
   }
 
   const lResult = parseCssValueNode(values[0]);
-  if (!lResult.ok) return lResult;
+  if (!lResult.ok) return lResult as ParseResult<LCHColor>;
 
   const cResult = parseCssValueNode(values[1]);
-  if (!cResult.ok) return cResult;
+  if (!cResult.ok) return cResult as ParseResult<LCHColor>;
 
   const hResult = parseCssValueNode(values[2]);
-  if (!hResult.ok) return hResult;
+  if (!hResult.ok) return hResult as ParseResult<LCHColor>;
 
   const lch: LCHColor = {
     kind: "lch",
@@ -37,7 +37,7 @@ export function parseLchFunction(node: csstree.FunctionNode): ParseResult<LCHCol
 
   if (values.length === 4) {
     const alphaResult = parseCssValueNode(values[3]);
-    if (!alphaResult.ok) return alphaResult;
+    if (!alphaResult.ok) return alphaResult as ParseResult<LCHColor>;
     lch.alpha = alphaResult.value;
   }
 

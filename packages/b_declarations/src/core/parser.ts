@@ -29,7 +29,7 @@ export function parseDeclaration(input: string | CSSDeclaration): ParseResult<De
   if (typeof input === "string") {
     const parsed = parseDeclarationString(input);
     if (!parsed.ok) {
-      return parsed;
+      return parsed as ParseResult<DeclarationResult>;
     }
     property = parsed.value.property;
     value = parsed.value.value;

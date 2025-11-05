@@ -40,83 +40,80 @@ export function parseBackgroundImage(value: string): ParseResult<BackgroundImage
 
   // Split into layers (comma-separated)
   const layerStrings = splitByComma(trimmed);
-  const layers: ImageLayer[] = [];
+  const layerResults: ParseResult<ImageLayer>[] = [];
 
   for (const layerStr of layerStrings) {
     const layer = layerStr.trim();
 
     // Parse 'none'
     if (layer.toLowerCase() === "none") {
-      layers.push({ kind: "none" });
+      layerResults.push(parseOk({ kind: "none" }));
       continue;
     }
 
     // Delegate to url() parser
     if (layer.startsWith("url(")) {
       const urlResult = Parsers.Url.parseUrl(layer);
-      if (!urlResult.ok) {
-        return parseErr(
-          createError("invalid-value", `Invalid url() in background-image: ${urlResult.issues[0]?.message}`),
+      if (urlResult.ok) {
+        layerResults.push(
+          parseOk({
+            kind: "url",
+            url: urlResult.value.value,
+          }),
         );
+      } else {
+        // Error has no value or wrong shape, cast to expected type
+        layerResults.push(urlResult as ParseResult<ImageLayer>);
       }
-      layers.push({
-        kind: "url",
-        url: urlResult.value.value,
-      });
       continue;
     }
 
     // Delegate to linear-gradient parser
     if (layer.startsWith("linear-gradient(") || layer.startsWith("repeating-linear-gradient(")) {
       const gradientResult = Parsers.Gradient.Linear.parse(layer);
-      if (!gradientResult.ok) {
-        return parseErr(
-          createError(
-            "invalid-value",
-            `Invalid linear-gradient in background-image: ${gradientResult.issues[0]?.message}`,
-          ),
+      if (gradientResult.ok) {
+        layerResults.push(
+          parseOk({
+            kind: "gradient",
+            gradient: gradientResult.value,
+          }),
         );
+      } else {
+        // Pass through error, no partial value for individual gradient
+        layerResults.push(gradientResult as ParseResult<ImageLayer>);
       }
-      layers.push({
-        kind: "gradient",
-        gradient: gradientResult.value,
-      });
       continue;
     }
 
     // Delegate to radial-gradient parser
     if (layer.startsWith("radial-gradient(") || layer.startsWith("repeating-radial-gradient(")) {
       const gradientResult = Parsers.Gradient.Radial.parse(layer);
-      if (!gradientResult.ok) {
-        return parseErr(
-          createError(
-            "invalid-value",
-            `Invalid radial-gradient in background-image: ${gradientResult.issues[0]?.message}`,
-          ),
+      if (gradientResult.ok) {
+        layerResults.push(
+          parseOk({
+            kind: "gradient",
+            gradient: gradientResult.value,
+          }),
         );
+      } else {
+        layerResults.push(gradientResult as ParseResult<ImageLayer>);
       }
-      layers.push({
-        kind: "gradient",
-        gradient: gradientResult.value,
-      });
       continue;
     }
 
     // Delegate to conic-gradient parser
     if (layer.startsWith("conic-gradient(") || layer.startsWith("repeating-conic-gradient(")) {
       const gradientResult = Parsers.Gradient.Conic.parse(layer);
-      if (!gradientResult.ok) {
-        return parseErr(
-          createError(
-            "invalid-value",
-            `Invalid conic-gradient in background-image: ${gradientResult.issues[0]?.message}`,
-          ),
+      if (gradientResult.ok) {
+        layerResults.push(
+          parseOk({
+            kind: "gradient",
+            gradient: gradientResult.value,
+          }),
         );
+      } else {
+        layerResults.push(gradientResult as ParseResult<ImageLayer>);
       }
-      layers.push({
-        kind: "gradient",
-        gradient: gradientResult.value,
-      });
       continue;
     }
 
@@ -126,11 +123,28 @@ export function parseBackgroundImage(value: string): ParseResult<BackgroundImage
     // - cross-fade()
     // - element()
 
-    return parseErr(createError("invalid-value", `Unsupported image type in background-image: ${layer}`));
+    layerResults.push(parseErr(createError("invalid-value", `Unsupported image type in background-image: ${layer}`)));
   }
 
-  return parseOk({
+  // Aggregate all issues from layer results
+  const allIssues = layerResults.flatMap((r) => r.issues);
+  const successfulLayers = layerResults.filter((r) => r.ok).map((r) => r.value as ImageLayer);
+
+  const finalValue: BackgroundImageIR = {
     kind: "layers",
-    layers,
-  });
+    layers: successfulLayers,
+  };
+
+  // If there are any errors, return failure with all issues but still include successful layers
+  if (allIssues.some((i) => i.severity === "error")) {
+    const result: ParseResult<BackgroundImageIR> = {
+      ok: false,
+      value: finalValue,
+      issues: allIssues,
+      property: "background-image",
+    };
+    return result;
+  }
+
+  return parseOk(finalValue, "background-image");
 }

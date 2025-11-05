@@ -1,147 +1,83 @@
-# Session 021: Phase 2 - Reduce Boilerplate
+# Session 022: Architecture Refinement
 
 **Date:** 2025-11-05
-**Focus:** Use Zod validation in generators, extract utilities, reduce duplication
+**Focus:** Multi-error reporting, Zod validation standardization, structure cleanup
 
 ---
 
 ## ✅ Accomplished
 
-- [x] Archived Session 020
-- [x] Session 021 initialized
-- [x] **Task 2.1: Zod Validation in Color Generators** ✅
-  - Replaced manual null/undefined/type checks with `schema.safeParse()`
-  - Updated 7 color generators (rgb, hsl, hwb, lab, lch, oklab, oklch)
-  - Fixed 8 test assertions to expect new error format
-  - All 942 tests passing ✅
-  - All quality gates passing ✅
-- [x] **Created ADR 002: Rich Error Messaging** ✅
-  - Documents long-term vision for parser/generator error handling
-  - Phase 1: Integrate existing validate() function
-  - Phase 2: Enhanced Zod error context with paths and hints
-  - Phase 3: Path tracking through nested structures
-- [x] **Task 2.2: Extract Color Interpolation Utility** ✅
-  - Created `packages/b_parsers/src/utils/color-interpolation.ts`
-  - Extracted duplicated parsing logic from 3 gradient parsers
-  - Reduced ~102 lines of duplication to single 66-line utility
-  - All 942 tests passing ✅
-- [x] **Task 2.3: Generator Helper Refactoring** ✅
-  - Already completed (generateDeclarationObject removed previously)
-  - Clean, single-responsibility generator.ts (79 lines)
-  - No duplication remaining
+- [x] Session 022 initialized
+- [x] Session 021 archived (Phase 2 complete)
+- [x] Architecture feedback analyzed
+- [x] Comprehensive action plan created
 
 ---
 
 ## 📊 Current State
 
-**✅ Phase 2: Reduce Boilerplate - COMPLETE!**
+**Working:**
 
-- ✅ All 3 tasks completed
-  - Task 2.1: Zod validation (84 lines removed)
-  - Task 2.2: Color interpolation utility (102 lines deduplicated)
-  - Task 2.3: Generator refactoring (already clean)
-  - **Total boilerplate reduced: ~186 lines**
-- ✅ All quality gates passing
-  - Typecheck: ✅
-  - Tests: 942/942 passing ✅
-  - Build: ✅
-  - Lint: ✅
+- ✅ All 942 tests passing
+- ✅ All quality gates passing (typecheck, lint, build, format)
+- ✅ Clean baseline from Phase 1 & Phase 2
+- ✅ Feedback analyzed (4 key areas identified)
+- ✅ Action plan ready (4 phases, 4.5-6.5h estimated)
 
-**Session Complete!**
+**Not working:**
 
-Phase 2 objectives achieved:
+- 🔴 Parsers use fail-fast strategy (return on first error)
+- 🟡 Inconsistent Zod validation in generators
+- 🟢 Minor structure improvements needed
 
-- ✅ Reduced boilerplate through Zod validation
-- ✅ Extracted common utilities (DRY principle)
-- ✅ Maintained clean, maintainable code
-- ✅ All tests passing, zero regressions
+**Documentation:**
+
+- `docs/sessions/022/FEEDBACK_ANALYSIS.md` - Detailed feedback breakdown
+- `docs/sessions/022/ACTION_PLAN.md` - 4-phase implementation plan
 
 ---
 
 ## 🎯 Next Steps
 
-**Phase 2 Complete! 🎉**
+**Phase 1: Multi-Error Reporting** (HIGH PRIORITY, 2-3h)
 
-All planned tasks accomplished:
+1. Refactor `parseBackgroundImage` to collect all errors
+2. Update gradient parsers (linear, radial, conic)
+3. Update test assertions
+4. Validate: 942 tests passing, all quality gates green
 
-- ✅ Task 2.1: Zod validation in color generators
-- ✅ Task 2.2: Color interpolation utility extraction
-- ✅ Task 2.3: Generator helpers (already clean)
+**Phase 2: Standardize Zod Validation** (MEDIUM PRIORITY, 1-2h)
 
-**Future Work (from ACTION_PLAN):**
+1. Update `generateErr` to accept arrays
+2. Apply `zodErrorToIssues` to 7 color generators
+3. Update test assertions
+4. Validate: all tests passing
 
-### Phase 3: Feature Completeness (Already Complete)
+**Phase 3: Structure & Code Smells** (LOW PRIORITY, 30min)
 
-All quick wins from original plan were completed in Phase 1 (Session 020):
+1. Move `core/types.ts` → `types.ts` in b_declarations
+2. Fix redundant error wrapping
+3. Validate: quality gates pass
 
-- ✅ Fix gradient generator throwing
-- ✅ Fix hex color parser
+**Phase 4: Validation** (NEW FEATURE, 1h)
 
-### Phase 4: Future Expansion (Documented)
-
-See ADR 002 for rich error messaging roadmap:
-
-1. Integrate validate() in parseDeclaration()
-2. Add path/hint fields to generator errors
-3. Track context through nested structures
-
----
-
-## 💡 Key Decisions & Session Summary
-
-- **Zod Validation Approach:** Use Zod's safeParse() directly, return `"invalid-ir"` code with detailed messages
-- **Test Strategy:** Fix test assertions rather than add complex Zod error mapping
-- **Future Enhancement:** ADR 002 captures vision for rich error messages with:
-  - Visual context for parser errors (reuse validate.ts)
-  - Full path context for generator errors (Zod paths)
-  - Actionable hints and suggestions
+1. Add `.strict()` to all Zod schemas
+2. Implement simple property (opacity) using refined patterns
+3. Validate: end-to-end proof of concept
 
 ---
 
 ## 💡 Key Decisions
 
-- **Zod Validation Approach:** Use Zod's safeParse() directly, return `"invalid-ir"` code with detailed messages
-- **Test Strategy:** Fix test assertions rather than add complex Zod error mapping
-- **Utility Extraction:** Created reusable color interpolation parser for gradient functions
-- **Future Enhancement:** ADR 002 captures vision for rich error messages with:
-  - Visual context for parser errors (reuse validate.ts)
-  - Full path context for generator errors (Zod paths)
-  - Actionable hints and suggestions
+- Session 021 successfully completed all Phase 2 objectives
+- ADR 002 (Rich Error Messaging) provides roadmap for future error handling improvements
+- Clean baseline: 942/942 tests passing, zero technical debt
 
 ---
 
-**Session 021 Complete!** 🎉
+**Previous Session Summary (021):**
 
-**Time invested:** ~50 minutes
-**Phase 2 Status:** COMPLETE (100%)
-**Final Score:** All 3 tasks completed successfully
-
-**Deliverables:**
-
-1. **7 color generators refactored** - Zod validation (~84 lines removed)
-2. **6 test files updated** - Error assertion fixes
-3. **1 ADR created** - Rich error messaging vision (002-rich-error-messaging.md)
-4. **1 utility created** - Color interpolation parser (~102 lines deduplicated)
-5. **3 gradient parsers updated** - Use shared utility
-
-**Impact:**
-
-- 🔥 ~186 lines of boilerplate eliminated
-- ✅ Cleaner, more maintainable codebase
-- ✅ Consistent error handling patterns
-- ✅ DRY principles applied
-- ✅ Zero regressions (942/942 tests passing)
-
-**Commits:**
-
-```bash
-06c7e86 feat(generators): use Zod validation in color generators
-46f0a78 refactor(parsers): extract color interpolation utility
-```
-
-**Next Session Ideas:**
-
-1. Implement ADR 002 Phase 1 (integrate validate() in declarations)
-2. Add more property implementations using established patterns
-3. Performance optimization review
-4. Documentation improvements
+- Phase 2 complete: Reduced boilerplate via Zod validation & utility extraction
+- 7 color generators refactored, 1 utility created (color-interpolation)
+- ADR 002 created for rich error messaging vision
+- Impact: ~186 lines of boilerplate eliminated, zero regressions

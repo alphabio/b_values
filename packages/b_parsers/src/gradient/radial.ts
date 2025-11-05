@@ -225,12 +225,12 @@ export function fromFunction(fn: csstree.FunctionNode): ParseResult<Type.RadialG
 export function parse(css: string): ParseResult<Type.RadialGradient> {
   const astResult = Utils.Ast.parseCssString(css, "value");
   if (!astResult.ok) {
-    return astResult;
+    return astResult as ParseResult<Type.RadialGradient>;
   }
 
   const funcResult = Utils.Ast.findFunctionNode(astResult.value, ["radial-gradient", "repeating-radial-gradient"]);
   if (!funcResult.ok) {
-    return funcResult;
+    return funcResult as ParseResult<Type.RadialGradient>;
   }
 
   return fromFunction(funcResult.value);

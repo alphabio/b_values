@@ -20,13 +20,13 @@ export function parseHslFunction(node: csstree.FunctionNode): ParseResult<HSLCol
   }
 
   const hResult = parseCssValueNode(values[0]);
-  if (!hResult.ok) return hResult;
+  if (!hResult.ok) return hResult as ParseResult<HSLColor>;
 
   const sResult = parseCssValueNode(values[1]);
-  if (!sResult.ok) return sResult;
+  if (!sResult.ok) return sResult as ParseResult<HSLColor>;
 
   const lResult = parseCssValueNode(values[2]);
-  if (!lResult.ok) return lResult;
+  if (!lResult.ok) return lResult as ParseResult<HSLColor>;
 
   const hsl: HSLColor = {
     kind: "hsl",
@@ -37,7 +37,7 @@ export function parseHslFunction(node: csstree.FunctionNode): ParseResult<HSLCol
 
   if (values.length === 4) {
     const alphaResult = parseCssValueNode(values[3]);
-    if (!alphaResult.ok) return alphaResult;
+    if (!alphaResult.ok) return alphaResult as ParseResult<HSLColor>;
     hsl.alpha = alphaResult.value;
   }
 

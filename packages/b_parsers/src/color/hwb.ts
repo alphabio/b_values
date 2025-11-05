@@ -20,13 +20,13 @@ export function parseHwbFunction(node: csstree.FunctionNode): ParseResult<HWBCol
   }
 
   const hResult = parseCssValueNode(values[0]);
-  if (!hResult.ok) return hResult;
+  if (!hResult.ok) return hResult as ParseResult<HWBColor>;
 
   const wResult = parseCssValueNode(values[1]);
-  if (!wResult.ok) return wResult;
+  if (!wResult.ok) return wResult as ParseResult<HWBColor>;
 
   const bResult = parseCssValueNode(values[2]);
-  if (!bResult.ok) return bResult;
+  if (!bResult.ok) return bResult as ParseResult<HWBColor>;
 
   const hwb: HWBColor = {
     kind: "hwb",
@@ -37,7 +37,7 @@ export function parseHwbFunction(node: csstree.FunctionNode): ParseResult<HWBCol
 
   if (values.length === 4) {
     const alphaResult = parseCssValueNode(values[3]);
-    if (!alphaResult.ok) return alphaResult;
+    if (!alphaResult.ok) return alphaResult as ParseResult<HWBColor>;
     hwb.alpha = alphaResult.value;
   }
 

@@ -20,13 +20,13 @@ export function parseLabFunction(node: csstree.FunctionNode): ParseResult<LABCol
   }
 
   const lResult = parseCssValueNode(values[0]);
-  if (!lResult.ok) return lResult;
+  if (!lResult.ok) return lResult as ParseResult<LABColor>;
 
   const aResult = parseCssValueNode(values[1]);
-  if (!aResult.ok) return aResult;
+  if (!aResult.ok) return aResult as ParseResult<LABColor>;
 
   const bResult = parseCssValueNode(values[2]);
-  if (!bResult.ok) return bResult;
+  if (!bResult.ok) return bResult as ParseResult<LABColor>;
 
   const lab: LABColor = {
     kind: "lab",
@@ -37,7 +37,7 @@ export function parseLabFunction(node: csstree.FunctionNode): ParseResult<LABCol
 
   if (values.length === 4) {
     const alphaResult = parseCssValueNode(values[3]);
-    if (!alphaResult.ok) return alphaResult;
+    if (!alphaResult.ok) return alphaResult as ParseResult<LABColor>;
     lab.alpha = alphaResult.value;
   }
 

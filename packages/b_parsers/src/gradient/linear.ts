@@ -162,12 +162,12 @@ export function fromFunction(fn: csstree.FunctionNode): ParseResult<Type.LinearG
 export function parse(css: string): ParseResult<Type.LinearGradient> {
   const astResult = Utils.Ast.parseCssString(css, "value");
   if (!astResult.ok) {
-    return astResult;
+    return astResult as ParseResult<Type.LinearGradient>;
   }
 
   const funcResult = Utils.Ast.findFunctionNode(astResult.value, ["linear-gradient", "repeating-linear-gradient"]);
   if (!funcResult.ok) {
-    return funcResult;
+    return funcResult as ParseResult<Type.LinearGradient>;
   }
 
   return fromFunction(funcResult.value);

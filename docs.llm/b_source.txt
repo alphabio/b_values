@@ -1,0 +1,6377 @@
+Excluding patterns: 
+Documentation for LLMs
+Excluding patterns: 
+Excluding patterns: -not -path */__pycache__/* -not -path */__tests__/* -not -path */.git/* -not -path */.idea/* -not -path */.next/* -not -path */.venv/* -not -path */.vscode/* -not -path */*.spec.py -not -path */*.spec.ts -not -path */*.spec.tsx -not -path */*.test.py -not -path */*.test.ts -not -path */*.test.tsx -not -path */*test.py -not -path */*test.ts -not -path */*test.tsx -not -path */build/* -not -path */dist/* -not -path */me.ts -not -path */node_modules/* -not -path */test_*.py -not -path */test.ts -not -path */test.ts -not -path */tests/* -not -path */venv/*
+=== File: packages/b_declarations/src/core/generator.ts ===
+// b_path:: packages/b_declarations/src/core/generator.ts
+import { generateOk, generateErr, createError, type GenerateResult } from "@b/types";
+import { propertyRegistry } from "./registry";
+import type { PropertyIRMap, RegisteredProperty, PropertyGenerator } from "../types";
+
+/**
+ * Input for generating a CSS declaration from IR.
+ *
+ * Generic version allows type-safe property names and IR types.
+ */
+
+export interface GenerateDeclarationInput<TProperty extends RegisteredProperty> {
+  property: TProperty;
+  ir: PropertyIRMap[TProperty]; // This is the magic lookup!
+}
+
+/**
+ * Generate a CSS declaration string from its IR representation.
+ *
+ * @param input - Property name and IR to generate from
+ * @returns GenerateResult with CSS declaration string or issues
+ *
+ * @example
+ * ```ts
+ * // Type-safe usage
+ * const result = generateDeclaration({
+ *   property: "background-image" as const,
+ *   ir: { kind: "layers", layers: [...] }
+ * });
+ *
+ * if (result.ok) {
+ *   console.log(result.value); // "background-image: url(img.png), linear-gradient(...)"
+ * }
+ * ```
+ */
+export function generateDeclaration<TProperty extends RegisteredProperty>(
+  input: GenerateDeclarationInput<TProperty>,
+): GenerateResult {
+  const { property, ir } = input;
+
+  // Look up property definition
+  const definition = propertyRegistry.get(property);
+
+  if (!definition) {
+    return generateErr(
+      createError("invalid-ir", `Unknown CSS property: ${property}`, {
+        property,
+        suggestion: "Check property name spelling or ensure property is registered",
+      }),
+      property,
+    );
+  }
+
+  // Check if property has a generator
+  if (!definition.generator) {
+    return generateErr(
+      createError("missing-required-field", `Property ${property} does not have a generator registered`, {
+        property,
+        suggestion: "Add a generator function to the property definition",
+      }),
+      property,
+    );
+  }
+
+  // We need to tell TypeScript that the generator we retrieved (which is `(ir: unknown) => ...` at a glance)
+  // is the correct one for the IR we have. This is a safe assertion because our registration
+  // process will guarantee it.
+  const generator = definition.generator as PropertyGenerator<PropertyIRMap[TProperty]>;
+  const generateResult = generator(ir);
+
+  if (!generateResult.ok) {
+    return generateResult;
+  }
+
+  // Format as CSS declaration: "property: value"
+  const declaration = `${property}: ${generateResult.value}`;
+
+  return generateOk(declaration, property);
+}
+
+
+=== File: packages/b_declarations/src/core/index.ts ===
+// b_path:: packages/b_declarations/src/core/index.ts
+export * from "./types";
+export * from "./registry";
+export * from "./parser";
+export * from "./generator";
+
+
+=== File: packages/b_declarations/src/core/parser.ts ===
+// b_path:: packages/b_declarations/src/core/parser.ts
+import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
+import { propertyRegistry } from "./registry";
+import type { CSSDeclaration, DeclarationResult } from "./types";
+
+/**
+ * Parse a CSS declaration string or object into its IR representation.
+ *
+ * @param input - CSS declaration string (e.g., "color: red;" or "color: red") or object
+ * @returns Result with the parsed IR or an error
+ *
+ * @example
+ * ```ts
+ * // From string
+ * const result = parseDeclaration("background-image: url(img.png);");
+ *
+ * // From object
+ * const result = parseDeclaration({
+ *   property: "background-image",
+ *   value: "url(img.png)"
+ * });
+ * ```
+ */
+export function parseDeclaration(input: string | CSSDeclaration): ParseResult<DeclarationResult> {
+  let property: string;
+  let value: string;
+
+  // Parse string input
+  if (typeof input === "string") {
+    const parsed = parseDeclarationString(input);
+    if (!parsed.ok) {
+      return parsed;
+    }
+    property = parsed.value.property;
+    value = parsed.value.value;
+  } else {
+    property = input.property;
+    value = input.value;
+  }
+
+  // Look up property definition
+  const definition = propertyRegistry.get(property);
+
+  if (!definition) {
+    return parseErr(createError("invalid-value", `Unknown CSS property: ${property}`));
+  }
+
+  // Parse the value using the property's parser
+  const parseResult = definition.parser(value);
+
+  if (!parseResult.ok) {
+    return parseErr(createError("invalid-value", `Failed to parse ${property}: ${parseResult.issues[0]?.message}`));
+  }
+
+  return parseOk({
+    property,
+    ir: parseResult.value,
+    original: value,
+  });
+}
+
+/**
+ * Parse a CSS declaration string into property and value.
+ * Handles both formats: "property: value;" and "property: value"
+ *
+ * @internal
+ */
+function parseDeclarationString(input: string): ParseResult<CSSDeclaration> {
+  const trimmed = input.trim();
+
+  // Remove trailing semicolon if present
+  const cleaned = trimmed.endsWith(";") ? trimmed.slice(0, -1) : trimmed;
+
+  // Split on first colon
+  const colonIndex = cleaned.indexOf(":");
+
+  if (colonIndex === -1) {
+    return parseErr(createError("invalid-syntax", `Invalid CSS declaration: missing colon in "${input}"`));
+  }
+
+  const property = cleaned.slice(0, colonIndex).trim();
+  const value = cleaned.slice(colonIndex + 1).trim();
+
+  if (!property) {
+    return parseErr(createError("missing-value", `Invalid CSS declaration: empty property in "${input}"`));
+  }
+
+  if (!value) {
+    return parseErr(createError("missing-value", `Invalid CSS declaration: empty value in "${input}"`));
+  }
+
+  return parseOk({ property, value });
+}
+
+
+=== File: packages/b_declarations/src/core/registry.ts ===
+// b_path:: packages/b_declarations/src/core/registry.ts
+import type { PropertyDefinition } from "./types";
+
+/**
+ * Property registry - maps CSS property names to their definitions.
+ * This allows runtime lookup of property parsers and metadata.
+ */
+class PropertyRegistry {
+  private properties = new Map<string, PropertyDefinition>();
+
+  /**
+   * Register a property definition.
+   */
+  register(definition: PropertyDefinition): void {
+    this.properties.set(definition.name, definition);
+  }
+
+  /**
+   * Get a property definition by name.
+   */
+  get(name: string): PropertyDefinition | undefined {
+    return this.properties.get(name);
+  }
+
+  /**
+   * Check if a property is registered.
+   */
+  has(name: string): boolean {
+    return this.properties.has(name);
+  }
+
+  /**
+   * Get all registered property names.
+   */
+  getPropertyNames(): string[] {
+    return Array.from(this.properties.keys());
+  }
+
+  /**
+   * Clear all registered properties (useful for testing).
+   */
+  clear(): void {
+    this.properties.clear();
+  }
+}
+
+/**
+ * Global property registry instance.
+ */
+export const propertyRegistry = new PropertyRegistry();
+
+/**
+ * Helper to define and register a property.
+ */
+export function defineProperty<T>(definition: PropertyDefinition<T>): PropertyDefinition<T> {
+  propertyRegistry.register(definition as PropertyDefinition<unknown>);
+  return definition;
+}
+
+
+=== File: packages/b_declarations/src/core/types.ts ===
+// b_path:: packages/b_declarations/src/core/types.ts
+import type { ParseResult, GenerateResult } from "@b/types";
+
+/**
+ * A CSS declaration consists of a property name and its value.
+ * Example: { property: "background-image", value: "linear-gradient(...)" }
+ */
+export interface CSSDeclaration {
+  property: string;
+  value: string;
+}
+
+/**
+ * Result of parsing a CSS declaration into its IR representation.
+ */
+export interface DeclarationResult<T = unknown> {
+  property: string;
+  ir: T;
+  original: string;
+}
+
+/**
+ * Property definition for the registry.
+ * Each CSS property must register its metadata, parser, and generator.
+ */
+export interface PropertyDefinition<T = unknown> {
+  name: string;
+  syntax: string;
+  parser: (value: string) => ParseResult<T>;
+  generator?: (ir: T) => GenerateResult;
+  inherited: boolean;
+  initial: string;
+  computed?: string;
+}
+
+/**
+ * Property parser function type.
+ */
+export type PropertyParser<T = unknown> = (value: string) => ParseResult<T>;
+
+/**
+ * Property generator function type (from core/types).
+ */
+export type CorePropertyGenerator<T = unknown> = (ir: T) => GenerateResult;
+
+
+=== File: packages/b_declarations/src/index.ts ===
+// b_path:: packages/b_declarations/src/index.ts
+// @b/declarations - CSS declaration schemas and parsers
+
+// Core
+export * from "./types";
+export * from "./core";
+
+// Utilities
+export * from "./utils";
+
+// Property implementations
+export * from "./properties";
+
+
+=== File: packages/b_declarations/src/properties/background-image/definition.ts ===
+// b_path:: packages/b_declarations/src/properties/background-image/definition.ts
+import { defineProperty } from "../../core";
+import { parseBackgroundImage } from "./parser";
+import { generateBackgroundImage } from "./generator";
+import type { BackgroundImageIR } from "./types";
+
+/**
+ * background-image property definition.
+ */
+export const backgroundImage = defineProperty<BackgroundImageIR>({
+  name: "background-image",
+  syntax: "<bg-image>#",
+  parser: parseBackgroundImage,
+  generator: generateBackgroundImage,
+  inherited: false,
+  initial: "none",
+});
+
+
+=== File: packages/b_declarations/src/properties/background-image/generator.ts ===
+// b_path:: packages/b_declarations/src/properties/background-image/generator.ts
+import { generateOk, generateErr, createError, type GenerateResult } from "@b/types";
+import * as Generators from "@b/generators";
+import type { BackgroundImageIR, ImageLayer } from "./types";
+
+/**
+ * Generate a background-image CSS value from its IR representation.
+ *
+ * @param ir - Background image IR
+ * @returns GenerateResult with CSS string or issues
+ */
+export function generateBackgroundImage(ir: BackgroundImageIR): GenerateResult {
+  // Handle CSS-wide keywords
+  if (ir.kind === "keyword") {
+    return generateOk(ir.value, "background-image");
+  }
+
+  // Generate each layer
+  const layerStrings: string[] = [];
+
+  for (const layer of ir.layers) {
+    const layerResult = generateImageLayer(layer);
+    if (!layerResult.ok) {
+      return layerResult;
+    }
+    layerStrings.push(layerResult.value);
+  }
+
+  // Join with comma and space
+  return generateOk(layerStrings.join(", "), "background-image");
+}
+
+/**
+ * Generate a single image layer.
+ */
+function generateImageLayer(layer: ImageLayer): GenerateResult {
+  switch (layer.kind) {
+    case "none":
+      return generateOk("none", "background-image");
+
+    case "url":
+      // Generate url() function
+      return generateOk(`url(${layer.url})`, "background-image");
+
+    case "gradient": {
+      return Generators.Gradient.generate(layer.gradient);
+    }
+
+    default:
+      return generateErr(
+        createError("invalid-ir", "Unsupported image layer kind", {
+          property: "background-image",
+        }),
+        "background-image",
+      );
+  }
+}
+
+
+=== File: packages/b_declarations/src/properties/background-image/index.ts ===
+// b_path:: packages/b_declarations/src/properties/background-image/index.ts
+export * from "./types";
+export * from "./parser";
+export * from "./generator";
+export * from "./definition";
+
+
+=== File: packages/b_declarations/src/properties/background-image/parser.ts ===
+// b_path:: packages/b_declarations/src/properties/background-image/parser.ts
+import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
+import * as Parsers from "@b/parsers";
+import { isCSSWideKeyword, parseCSSWideKeyword, splitByComma } from "../../utils";
+import type { BackgroundImageIR, ImageLayer } from "./types";
+
+/**
+ * Parse a background-image value.
+ *
+ * Property syntax: background-image = <bg-image>#
+ * Where <bg-image> = <image> | none
+ * And <image> = <url> | <gradient> | <image()> | etc.
+ *
+ * This parser:
+ * 1. Handles CSS-wide keywords (inherit, initial, etc.)
+ * 2. Splits comma-separated layers
+ * 3. Delegates each layer to appropriate VALUE parser
+ */
+export function parseBackgroundImage(value: string): ParseResult<BackgroundImageIR> {
+  const trimmed = value.trim();
+
+  // Handle CSS-wide keywords
+  if (isCSSWideKeyword(trimmed)) {
+    const keywordResult = parseCSSWideKeyword(trimmed);
+    if (keywordResult.ok) {
+      return parseOk({
+        kind: "keyword",
+        value: keywordResult.value,
+      });
+    }
+  }
+
+  // Handle 'none' keyword
+  if (trimmed.toLowerCase() === "none") {
+    return parseOk({
+      kind: "keyword",
+      value: "none",
+    });
+  }
+
+  // Split into layers (comma-separated)
+  const layerStrings = splitByComma(trimmed);
+  const layers: ImageLayer[] = [];
+
+  for (const layerStr of layerStrings) {
+    const layer = layerStr.trim();
+
+    // Parse 'none'
+    if (layer.toLowerCase() === "none") {
+      layers.push({ kind: "none" });
+      continue;
+    }
+
+    // Delegate to url() parser
+    if (layer.startsWith("url(")) {
+      const urlResult = Parsers.Url.parseUrl(layer);
+      if (!urlResult.ok) {
+        return parseErr(
+          createError("invalid-value", `Invalid url() in background-image: ${urlResult.issues[0]?.message}`),
+        );
+      }
+      layers.push({
+        kind: "url",
+        url: urlResult.value.value,
+      });
+      continue;
+    }
+
+    // Delegate to linear-gradient parser
+    if (layer.startsWith("linear-gradient(") || layer.startsWith("repeating-linear-gradient(")) {
+      const gradientResult = Parsers.Gradient.Linear.parse(layer);
+      if (!gradientResult.ok) {
+        return parseErr(
+          createError(
+            "invalid-value",
+            `Invalid linear-gradient in background-image: ${gradientResult.issues[0]?.message}`,
+          ),
+        );
+      }
+      layers.push({
+        kind: "gradient",
+        gradient: gradientResult.value,
+      });
+      continue;
+    }
+
+    // Delegate to radial-gradient parser
+    if (layer.startsWith("radial-gradient(") || layer.startsWith("repeating-radial-gradient(")) {
+      const gradientResult = Parsers.Gradient.Radial.parse(layer);
+      if (!gradientResult.ok) {
+        return parseErr(
+          createError(
+            "invalid-value",
+            `Invalid radial-gradient in background-image: ${gradientResult.issues[0]?.message}`,
+          ),
+        );
+      }
+      layers.push({
+        kind: "gradient",
+        gradient: gradientResult.value,
+      });
+      continue;
+    }
+
+    // Delegate to conic-gradient parser
+    if (layer.startsWith("conic-gradient(") || layer.startsWith("repeating-conic-gradient(")) {
+      const gradientResult = Parsers.Gradient.Conic.parse(layer);
+      if (!gradientResult.ok) {
+        return parseErr(
+          createError(
+            "invalid-value",
+            `Invalid conic-gradient in background-image: ${gradientResult.issues[0]?.message}`,
+          ),
+        );
+      }
+      layers.push({
+        kind: "gradient",
+        gradient: gradientResult.value,
+      });
+      continue;
+    }
+
+    // TODO: Handle other <image> types:
+    // - image()
+    // - image-set()
+    // - cross-fade()
+    // - element()
+
+    return parseErr(createError("invalid-value", `Unsupported image type in background-image: ${layer}`));
+  }
+
+  return parseOk({
+    kind: "layers",
+    layers,
+  });
+}
+
+
+=== File: packages/b_declarations/src/properties/background-image/types.ts ===
+// b_path:: packages/b_declarations/src/properties/background-image/types.ts
+import type { Gradient } from "@b/types";
+
+/**
+ * Background image value IR.
+ * Can be a list of image layers.
+ */
+export type BackgroundImageIR = { kind: "keyword"; value: string } | { kind: "layers"; layers: ImageLayer[] };
+
+/**
+ * Single image layer - can be various <image> types.
+ *
+ * <image> =
+ *   <url> |
+ *   <gradient> |
+ *   <image()> |
+ *   <image-set()> |
+ *   <cross-fade()> |
+ *   <element()>
+ */
+export type ImageLayer = { kind: "url"; url: string } | { kind: "gradient"; gradient: Gradient } | { kind: "none" };
+
+
+=== File: packages/b_declarations/src/properties/index.ts ===
+// b_path:: packages/b_declarations/src/properties/index.ts
+export * from "./background-image";
+
+
+=== File: packages/b_declarations/src/types.ts ===
+// b_path:: packages/b_declarations/src/types.ts
+// This file contains the PropertyIRMap that maps property names to their IR types.
+// It should be auto-generated in the future.
+
+import type { GenerateResult } from "@b/types";
+import type { BackgroundImageIR } from "./properties";
+
+/**
+ * Map of CSS property names to their IR types.
+ * Used for type-safe parsing and generation.
+ */
+export interface PropertyIRMap {
+  "background-image": BackgroundImageIR;
+}
+
+/**
+ * Union type of all registered property names.
+ */
+export type RegisteredProperty = keyof PropertyIRMap;
+
+/**
+ * Property generator function type.
+ */
+export type PropertyGenerator<T = unknown> = (ir: T) => GenerateResult;
+
+
+=== File: packages/b_declarations/src/utils/index.ts ===
+// b_path:: packages/b_declarations/src/utils/index.ts
+export * from "./keywords";
+export * from "./split";
+
+
+=== File: packages/b_declarations/src/utils/keywords.ts ===
+// b_path:: packages/b_declarations/src/utils/keywords.ts
+import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
+
+/**
+ * CSS-wide keywords that apply to all properties.
+ * https://www.w3.org/TR/css-values-4/#common-keywords
+ */
+export const CSS_WIDE_KEYWORDS = ["inherit", "initial", "unset", "revert", "revert-layer"] as const;
+
+export type CSSWideKeyword = (typeof CSS_WIDE_KEYWORDS)[number];
+
+/**
+ * Check if a value is a CSS-wide keyword.
+ */
+export function isCSSWideKeyword(value: string): value is CSSWideKeyword {
+  return CSS_WIDE_KEYWORDS.includes(value as CSSWideKeyword);
+}
+
+/**
+ * Parse a CSS-wide keyword.
+ */
+export function parseCSSWideKeyword(value: string): ParseResult<CSSWideKeyword> {
+  const normalized = value.trim().toLowerCase();
+
+  if (isCSSWideKeyword(normalized)) {
+    return parseOk(normalized);
+  }
+
+  return parseErr(createError("invalid-value", `Not a CSS-wide keyword: ${value}`));
+}
+
+
+=== File: packages/b_declarations/src/utils/split.ts ===
+// b_path:: packages/b_declarations/src/utils/split.ts
+/**
+ * Split a CSS value by comma, respecting nested functions.
+ *
+ * @example
+ * splitByComma("url(a.png), linear-gradient(red, blue)")
+ * // ["url(a.png)", "linear-gradient(red, blue)"]
+ */
+export function splitByComma(value: string): string[] {
+  const result: string[] = [];
+  let current = "";
+  let depth = 0;
+
+  for (let i = 0; i < value.length; i++) {
+    const char = value[i];
+
+    if (char === "(") {
+      depth++;
+      current += char;
+    } else if (char === ")") {
+      depth--;
+      current += char;
+    } else if (char === "," && depth === 0) {
+      result.push(current.trim());
+      current = "";
+    } else {
+      current += char;
+    }
+  }
+
+  if (current.trim()) {
+    result.push(current.trim());
+  }
+
+  return result;
+}
+
+
+=== File: packages/b_declarations/tsup.config.ts ===
+// b_path:: packages/b_declarations/tsup.config.ts
+import { defineConfig } from "tsup";
+
+export default defineConfig({
+  entry: ["src/index.ts"],
+  format: ["cjs", "esm"],
+  dts: true,
+  splitting: false,
+  sourcemap: true,
+  clean: true,
+  treeshake: true,
+});
+
+
+=== File: packages/b_declarations/vite.config.ts ===
+// b_path:: packages/b_declarations/vite.config.ts
+import { defineConfig } from "vite";
+
+import tsconfigPaths from "vite-tsconfig-paths";
+
+// https://vite.dev/config/
+export default defineConfig({
+  plugins: [tsconfigPaths()],
+});
+
+
+=== File: packages/b_generators/src/angle.ts ===
+// b_path:: packages/b_generators/src/angle.ts
+import { generateOk, type GenerateResult } from "@b/types";
+import type * as Type from "@b/types";
+
+/**
+ * Generate CSS angle string from Angle IR
+ * @see https://drafts.csswg.org/css-values-4/#angles
+ */
+export function generate(angle: Type.Angle): GenerateResult {
+  return generateOk(`${angle.value}${angle.unit}`);
+}
+
+
+=== File: packages/b_generators/src/color/color-function.ts ===
+// b_path:: packages/b_generators/src/color/color-function.ts
+import { type GenerateResult, generateErr, generateOk, createError } from "@b/types";
+import type { ColorFunction } from "@b/types";
+import { cssValueToCss } from "@b/utils";
+
+/**
+ * @see https://drafts.csswg.org/css-color/#color-function
+ */
+export function generate(value: ColorFunction): GenerateResult {
+  if (value === undefined || value === null) {
+    return generateErr(createError("invalid-ir", "ColorFunction must not be null or undefined"));
+  }
+  if (typeof value !== "object") {
+    return generateErr(createError("invalid-ir", `Expected ColorFunction object, got ${typeof value}`));
+  }
+  if (!("colorSpace" in value) || !("channels" in value)) {
+    return generateErr(
+      createError("missing-required-field", "ColorFunction must have 'colorSpace' and 'channels' fields"),
+    );
+  }
+
+  const parts: string[] = ["color(", value.colorSpace];
+
+  for (const channel of value.channels) {
+    parts.push(" ");
+    parts.push(cssValueToCss(channel));
+  }
+
+  if (value.alpha !== undefined) {
+    parts.push(" / ");
+    parts.push(cssValueToCss(value.alpha));
+  }
+
+  parts.push(")");
+  return generateOk(parts.join(""));
+}
+
+
+=== File: packages/b_generators/src/color/color.ts ===
+// b_path:: packages/b_generators/src/color/color.ts
+import { type GenerateResult, generateErr, createError } from "@b/types";
+import type * as Type from "@b/types";
+import * as ColorFunction from "./color-function";
+import * as Hex from "./hex";
+import * as Hsl from "./hsl";
+import * as Hwb from "./hwb";
+import * as Lab from "./lab";
+import * as Lch from "./lch";
+import * as Named from "./named";
+import * as Oklab from "./oklab";
+import * as Oklch from "./oklch";
+import * as Rgb from "./rgb";
+import * as Special from "./special";
+
+/**
+ * @see https://drafts.csswg.org/css-color/#typedef-color
+ */
+export function generate(color: Type.Color): GenerateResult {
+  if (!color || typeof color !== "object" || !("kind" in color)) {
+    return generateErr(
+      createError("missing-required-field", "Invalid color IR: missing 'kind' field", {
+        suggestion: "Ensure IR was parsed correctly",
+      }),
+    );
+  }
+
+  switch (color.kind) {
+    case "hex":
+      return Hex.generate(color);
+
+    case "named":
+      return Named.generate(color);
+
+    case "rgb":
+      return Rgb.generate(color);
+
+    case "hsl":
+      return Hsl.generate(color);
+
+    case "hwb":
+      return Hwb.generate(color);
+
+    case "lab":
+      return Lab.generate(color);
+
+    case "lch":
+      return Lch.generate(color);
+
+    case "oklab":
+      return Oklab.generate(color);
+
+    case "oklch":
+      return Oklch.generate(color);
+
+    case "special":
+      return Special.generate(color);
+
+    case "color":
+      return ColorFunction.generate(color);
+
+    default:
+      return generateErr(
+        createError("unsupported-kind", `Unknown color kind: ${(color as { kind?: string }).kind}`, {
+          suggestion: "Check that color IR is valid",
+        }),
+      );
+  }
+}
+
+
+=== File: packages/b_generators/src/color/hex.ts ===
+// b_path:: packages/b_generators/src/color/hex.ts
+import { type GenerateResult, generateErr, generateOk, createError } from "@b/types";
+import type { HexColor } from "@b/types";
+
+/**
+ * @see https://drafts.csswg.org/css-color/#hex-notation
+ */
+export function generate(color: HexColor): GenerateResult {
+  if (color === undefined || color === null) {
+    return generateErr(createError("invalid-ir", "HexColor must not be null or undefined"));
+  }
+  if (typeof color !== "object") {
+    return generateErr(createError("invalid-ir", `Expected HexColor object, got ${typeof color}`));
+  }
+  if (!("value" in color)) {
+    return generateErr(createError("missing-required-field", "HexColor must have 'value' field"));
+  }
+  return generateOk(color.value);
+}
+
+
+=== File: packages/b_generators/src/color/hsl.ts ===
+// b_path:: packages/b_generators/src/color/hsl.ts
+import { type GenerateResult, generateErr, generateOk, createError, hslColorSchema } from "@b/types";
+import type { HSLColor } from "@b/types";
+import { cssValueToCss } from "@b/utils";
+
+/**
+ * @see https://drafts.csswg.org/css-color/#the-hsl-notation
+ */
+export function generate(color: HSLColor): GenerateResult {
+  const validation = hslColorSchema.safeParse(color);
+  if (!validation.success) {
+    const issue = validation.error.issues[0];
+    return generateErr(createError("invalid-ir", `Invalid HSLColor: ${issue?.path.join(".")}: ${issue?.message}`));
+  }
+
+  const { h, s, l, alpha } = validation.data;
+
+  const hslPart = `${cssValueToCss(h)} ${cssValueToCss(s)} ${cssValueToCss(l)}`;
+
+  if (alpha !== undefined) {
+    return generateOk(`hsl(${hslPart} / ${cssValueToCss(alpha)})`);
+  }
+
+  return generateOk(`hsl(${hslPart})`);
+}
+
+
+=== File: packages/b_generators/src/color/hwb.ts ===
+// b_path:: packages/b_generators/src/color/hwb.ts
+import { type GenerateResult, generateErr, generateOk, createError, hwbColorSchema } from "@b/types";
+import type { HWBColor } from "@b/types";
+import { cssValueToCss } from "@b/utils";
+
+/**
+ * @see https://drafts.csswg.org/css-color/#the-hwb-notation
+ */
+export function generate(color: HWBColor): GenerateResult {
+  const validation = hwbColorSchema.safeParse(color);
+  if (!validation.success) {
+    const issue = validation.error.issues[0];
+    return generateErr(createError("invalid-ir", `Invalid HWBColor: ${issue?.path.join(".")}: ${issue?.message}`));
+  }
+
+  const { h, w, b, alpha } = validation.data;
+
+  let result = `hwb(${cssValueToCss(h)} ${cssValueToCss(w)} ${cssValueToCss(b)}`;
+
+  if (alpha !== undefined) {
+    result += ` / ${cssValueToCss(alpha)}`;
+  }
+
+  result += ")";
+  return generateOk(result);
+}
+
+
+=== File: packages/b_generators/src/color/index.ts ===
+// b_path:: packages/b_generators/src/color/index.ts
+export * as ColorFunction from "./color-function";
+export * as Hex from "./hex";
+export * as Hsl from "./hsl";
+export * as Hwb from "./hwb";
+export * as Lab from "./lab";
+export * as Lch from "./lch";
+export * as Named from "./named";
+export * as Oklab from "./oklab";
+export * as Oklch from "./oklch";
+export * as Rgb from "./rgb";
+export * as Special from "./special";
+export * from "./color";
+
+
+=== File: packages/b_generators/src/color/lab.ts ===
+// b_path:: packages/b_generators/src/color/lab.ts
+import { type GenerateResult, generateErr, generateOk, createError, labColorSchema } from "@b/types";
+import type { LABColor } from "@b/types";
+import { cssValueToCss } from "@b/utils";
+
+/**
+ * @see https://drafts.csswg.org/css-color/#lab-colors
+ */
+export function generate(color: LABColor): GenerateResult {
+  const validation = labColorSchema.safeParse(color);
+  if (!validation.success) {
+    const issue = validation.error.issues[0];
+    return generateErr(createError("invalid-ir", `Invalid LABColor: ${issue?.path.join(".")}: ${issue?.message}`));
+  }
+
+  const { l, a, b, alpha } = validation.data;
+
+  const labPart = `${cssValueToCss(l)} ${cssValueToCss(a)} ${cssValueToCss(b)}`;
+
+  if (alpha !== undefined) {
+    return generateOk(`lab(${labPart} / ${cssValueToCss(alpha)})`);
+  }
+
+  return generateOk(`lab(${labPart})`);
+}
+
+
+=== File: packages/b_generators/src/color/lch.ts ===
+// b_path:: packages/b_generators/src/color/lch.ts
+import { type GenerateResult, generateErr, generateOk, createError, lchColorSchema } from "@b/types";
+import type { LCHColor } from "@b/types";
+import { cssValueToCss } from "@b/utils";
+
+/**
+ * Generates LCH color CSS from IR
+ * Supports literals, variables (var()), and keywords (none)
+ * @see https://drafts.csswg.org/css-color/#lch-colors
+ */
+export function generate(color: LCHColor): GenerateResult {
+  const validation = lchColorSchema.safeParse(color);
+  if (!validation.success) {
+    const issue = validation.error.issues[0];
+    return generateErr(createError("invalid-ir", `Invalid LCHColor: ${issue?.path.join(".")}: ${issue?.message}`));
+  }
+
+  const { l, c, h, alpha } = validation.data;
+
+  const lchPart = `${cssValueToCss(l)} ${cssValueToCss(c)} ${cssValueToCss(h)}`;
+
+  if (alpha !== undefined) {
+    return generateOk(`lch(${lchPart} / ${cssValueToCss(alpha)})`);
+  }
+
+  return generateOk(`lch(${lchPart})`);
+}
+
+
+=== File: packages/b_generators/src/color/named.ts ===
+// b_path:: packages/b_generators/src/color/named.ts
+import { namedColorSchema } from "@b/keywords";
+import { type GenerateResult, generateOk } from "@b/types";
+import type { NamedColor } from "@b/types";
+import { zodErrorToIssues } from "@b/utils";
+/**
+ * @see https://drafts.csswg.org/css-color/#named-colors
+ */
+export function generate(color: NamedColor): GenerateResult {
+  const validation = namedColorSchema.safeParse(color.name);
+
+  if (!validation.success) {
+    const issues = zodErrorToIssues(validation.error);
+    return {
+      property: `color[named]: ${color.name}`,
+      ok: false,
+      issues,
+    };
+  }
+
+  return generateOk(color.name);
+}
+
+
+=== File: packages/b_generators/src/color/oklab.ts ===
+// b_path:: packages/b_generators/src/color/oklab.ts
+import { type GenerateResult, generateErr, generateOk, createError, oklabColorSchema } from "@b/types";
+import type { OKLabColor } from "@b/types";
+import { cssValueToCss } from "@b/utils";
+
+/**
+ * @see https://drafts.csswg.org/css-color/#ok-lab
+ */
+export function generate(color: OKLabColor): GenerateResult {
+  const validation = oklabColorSchema.safeParse(color);
+  if (!validation.success) {
+    const issue = validation.error.issues[0];
+    return generateErr(createError("invalid-ir", `Invalid OKLabColor: ${issue?.path.join(".")}: ${issue?.message}`));
+  }
+
+  const { l, a, b, alpha } = validation.data;
+
+  const oklabPart = `${cssValueToCss(l)} ${cssValueToCss(a)} ${cssValueToCss(b)}`;
+
+  if (alpha !== undefined) {
+    return generateOk(`oklab(${oklabPart} / ${cssValueToCss(alpha)})`);
+  }
+
+  return generateOk(`oklab(${oklabPart})`);
+}
+
+
+=== File: packages/b_generators/src/color/oklch.ts ===
+// b_path:: packages/b_generators/src/color/oklch.ts
+import { type GenerateResult, generateErr, generateOk, createError, oklchColorSchema } from "@b/types";
+import type { OKLCHColor } from "@b/types";
+import { cssValueToCss } from "@b/utils";
+
+/**
+ * @see https://drafts.csswg.org/css-color/#ok-lch
+ */
+export function generate(color: OKLCHColor): GenerateResult {
+  const validation = oklchColorSchema.safeParse(color);
+  if (!validation.success) {
+    const issue = validation.error.issues[0];
+    return generateErr(createError("invalid-ir", `Invalid OKLCHColor: ${issue?.path.join(".")}: ${issue?.message}`));
+  }
+
+  const { l, c, h, alpha } = validation.data;
+
+  const oklchPart = `${cssValueToCss(l)} ${cssValueToCss(c)} ${cssValueToCss(h)}`;
+
+  if (alpha !== undefined) {
+    return generateOk(`oklch(${oklchPart} / ${cssValueToCss(alpha)})`);
+  }
+
+  return generateOk(`oklch(${oklchPart})`);
+}
+
+
+=== File: packages/b_generators/src/color/rgb.ts ===
+// b_path:: packages/b_generators/src/color/rgb.ts
+import { type GenerateResult, generateErr, generateOk, createError, rgbColorSchema } from "@b/types";
+import type { RGBColor } from "@b/types";
+import { cssValueToCss } from "@b/utils";
+
+/**
+ * @see https://drafts.csswg.org/css-color/#rgb-functions
+ */
+export function generate(color: RGBColor): GenerateResult {
+  const validation = rgbColorSchema.safeParse(color);
+  if (!validation.success) {
+    const issue = validation.error.issues[0];
+    return generateErr(createError("invalid-ir", `Invalid RGBColor: ${issue?.path.join(".")}: ${issue?.message}`));
+  }
+
+  const { r, g, b, alpha } = validation.data;
+
+  const rgbPart = `${cssValueToCss(r)} ${cssValueToCss(g)} ${cssValueToCss(b)}`;
+
+  if (alpha !== undefined) {
+    return generateOk(`rgb(${rgbPart} / ${cssValueToCss(alpha)})`);
+  }
+
+  return generateOk(`rgb(${rgbPart})`);
+}
+
+
+=== File: packages/b_generators/src/color/special.ts ===
+// b_path:: packages/b_generators/src/color/special.ts
+import { type GenerateResult, generateErr, generateOk, createError } from "@b/types";
+import type { SpecialColor } from "@b/types";
+
+/**
+ * @see https://drafts.csswg.org/css-color/#typedef-color
+ */
+export function generate(color: SpecialColor): GenerateResult {
+  if (color === undefined || color === null) {
+    return generateErr(createError("invalid-ir", "SpecialColor must not be null or undefined"));
+  }
+  if (typeof color !== "object") {
+    return generateErr(createError("invalid-ir", `Expected SpecialColor object, got ${typeof color}`));
+  }
+  if (!("keyword" in color)) {
+    return generateErr(createError("missing-required-field", "SpecialColor must have 'keyword' field"));
+  }
+  return generateOk(color.keyword);
+}
+
+
+=== File: packages/b_generators/src/gradient/color-stop.ts ===
+// b_path:: packages/b_generators/src/gradient/color-stop.ts
+import { generateErr, generateOk, createError, type GenerateResult } from "@b/types";
+import type * as Type from "@b/types";
+import * as Color from "../color";
+import * as Angle from "../angle";
+import * as Length from "../length";
+
+/**
+ * Generate CSS color stop string from ColorStop IR.
+ *
+ * A color stop consists of a color and an optional position.
+ * Position can be a length, percentage, or angle (for conic gradients).
+ *
+ * @param colorStop - ColorStop IR object
+ * @returns CSS color stop string
+ *
+ * @example
+ * ```typescript
+ * generate({ color: { kind: "named", value: "red" } })
+ * // => "red"
+ *
+ * generate({
+ *   color: { kind: "named", value: "blue" },
+ *   position: { value: 50, unit: "%" }
+ * })
+ * // => "blue 50%"
+ * ```
+ */
+export function generate(colorStop: Type.ColorStop): GenerateResult {
+  const colorResult = Color.generate(colorStop.color);
+  if (!colorResult.ok) {
+    return colorResult;
+  }
+
+  let css = colorResult.value;
+
+  if (colorStop.position) {
+    const pos = colorStop.position;
+
+    if (Array.isArray(pos)) {
+      const [pos1, pos2] = pos;
+      const pos1Result = generatePosition(pos1);
+      if (!pos1Result.ok) return pos1Result;
+
+      const pos2Result = generatePosition(pos2);
+      if (!pos2Result.ok) return pos2Result;
+
+      css += ` ${pos1Result.value} ${pos2Result.value}`;
+    } else {
+      const posResult = generatePosition(pos);
+      if (!posResult.ok) return posResult;
+
+      css += ` ${posResult.value}`;
+    }
+  }
+
+  return generateOk(css);
+}
+
+/**
+ * Generate position string (length, percentage, or angle).
+ */
+function generatePosition(position: Type.LengthPercentage | Type.Angle): GenerateResult {
+  if ("unit" in position) {
+    if (position.unit === "deg" || position.unit === "grad" || position.unit === "rad" || position.unit === "turn") {
+      return Angle.generate(position as Type.Angle);
+    }
+    return Length.generateLengthPercentage(position as Type.LengthPercentage);
+  }
+
+  return generateErr(
+    createError("invalid-ir", "Invalid position in color stop", {
+      suggestion: "Position must be a length, percentage, or angle",
+    }),
+  );
+}
+
+
+=== File: packages/b_generators/src/gradient/conic.ts ===
+// b_path:: packages/b_generators/src/gradient/conic.ts
+import { generateOk, type GenerateResult } from "@b/types";
+import type * as Type from "@b/types";
+import * as Angle from "../angle";
+import * as Position from "../position";
+import * as ColorStop from "./color-stop";
+
+/**
+ * Generate CSS color interpolation method string.
+ */
+function generateColorInterpolation(method: Type.ColorInterpolationMethod): GenerateResult {
+  let css = `in ${method.colorSpace}`;
+
+  if ("hueInterpolationMethod" in method && method.hueInterpolationMethod) {
+    css += ` ${method.hueInterpolationMethod}`;
+  }
+
+  return generateOk(css);
+}
+
+/**
+ * Generate a CSS conic gradient string from intermediate representation (IR).
+ *
+ * Converts a ConicGradient IR object into a valid CSS `conic-gradient()` or
+ * `repeating-conic-gradient()` function string.
+ *
+ * @param ir - ConicGradient IR object to convert to CSS
+ * @returns CSS conic gradient function string
+ *
+ * @example
+ * Simple gradient:
+ * ```typescript
+ * generate({
+ *   kind: "conic",
+ *   colorStops: [
+ *     { color: { kind: "named", value: "red" } },
+ *     { color: { kind: "named", value: "blue" } }
+ *   ],
+ *   repeating: false
+ * })
+ * // => "conic-gradient(red, blue)"
+ * ```
+ *
+ * @example
+ * With from angle:
+ * ```typescript
+ * generate({
+ *   kind: "conic",
+ *   fromAngle: { value: 45, unit: "deg" },
+ *   colorStops: [
+ *     { color: { kind: "named", value: "red" } },
+ *     { color: { kind: "named", value: "blue" } }
+ *   ],
+ *   repeating: false
+ * })
+ * // => "conic-gradient(from 45deg, red, blue)"
+ * ```
+ *
+ * @example
+ * With position:
+ * ```typescript
+ * generate({
+ *   kind: "conic",
+ *   position: { horizontal: "center", vertical: "center" },
+ *   colorStops: [
+ *     { color: { kind: "named", value: "red" } },
+ *     { color: { kind: "named", value: "blue" } }
+ *   ],
+ *   repeating: false
+ * })
+ * // => "conic-gradient(at center center, red, blue)"
+ * ```
+ */
+export function generate(ir: Type.ConicGradient): GenerateResult {
+  const functionName = ir.repeating ? "repeating-conic-gradient" : "conic-gradient";
+  const parts: string[] = [];
+  const firstPart: string[] = [];
+
+  if (ir.fromAngle) {
+    const angleResult = Angle.generate(ir.fromAngle);
+    if (!angleResult.ok) return angleResult;
+    firstPart.push(`from ${angleResult.value}`);
+  }
+
+  if (ir.position) {
+    const posResult = Position.generate(ir.position);
+    if (!posResult.ok) return posResult;
+    firstPart.push(`at ${posResult.value}`);
+  }
+
+  if (firstPart.length > 0) {
+    parts.push(firstPart.join(" "));
+  }
+
+  if (ir.colorInterpolationMethod) {
+    const interpResult = generateColorInterpolation(ir.colorInterpolationMethod);
+    if (!interpResult.ok) return interpResult;
+    parts.push(interpResult.value);
+  }
+
+  for (const stop of ir.colorStops) {
+    const stopResult = ColorStop.generate(stop);
+    if (!stopResult.ok) return stopResult;
+    parts.push(stopResult.value);
+  }
+
+  return generateOk(`${functionName}(${parts.join(", ")})`);
+}
+
+
+=== File: packages/b_generators/src/gradient/index.ts ===
+// b_path:: packages/b_generators/src/gradient/index.ts
+export * as ColorStop from "./color-stop";
+export * as Linear from "./linear";
+export * as Radial from "./radial";
+export * as Conic from "./conic";
+
+import { createError, generateErr, type GenerateResult, type Gradient } from "@b/types";
+import * as Linear from "./linear";
+import * as Radial from "./radial";
+import * as Conic from "./conic";
+
+/**
+ * Generate CSS string for any gradient type.
+ * Routes to the appropriate gradient generator based on kind.
+ */
+export function generate(gradient: Gradient): GenerateResult {
+  switch (gradient.kind) {
+    case "linear":
+      return Linear.generate(gradient);
+    case "radial":
+      return Radial.generate(gradient);
+    case "conic":
+      return Conic.generate(gradient);
+    default:
+      return generateErr(
+        createError("unsupported-kind", `Unsupported gradient kind: ${(gradient as { kind: string }).kind}`),
+      );
+  }
+}
+
+
+=== File: packages/b_generators/src/gradient/linear.ts ===
+// b_path:: packages/b_generators/src/gradient/linear.ts
+import { generateOk, type GenerateResult } from "@b/types";
+import type * as Type from "@b/types";
+import * as Angle from "../angle";
+import * as ColorStop from "./color-stop";
+
+/**
+ * Generate CSS direction string from GradientDirection IR.
+ *
+ * @param direction - GradientDirection IR object
+ * @returns CSS direction string (e.g., "45deg", "to right", "to top left")
+ */
+function generateDirection(direction: Type.GradientDirection): GenerateResult {
+  if (direction.kind === "angle") {
+    return Angle.generate(direction.value);
+  }
+
+  if (direction.kind === "to-side") {
+    return generateOk(`to ${direction.value}`);
+  }
+
+  return generateOk(`to ${direction.value}`);
+}
+
+/**
+ * Generate CSS color interpolation method string.
+ *
+ * @param method - ColorInterpolationMethod IR object
+ * @returns CSS interpolation string (e.g., "in oklch", "in hsl shorter hue")
+ */
+function generateColorInterpolation(method: Type.ColorInterpolationMethod): GenerateResult {
+  let css = `in ${method.colorSpace}`;
+
+  if ("hueInterpolationMethod" in method && method.hueInterpolationMethod) {
+    css += ` ${method.hueInterpolationMethod}`;
+  }
+
+  return generateOk(css);
+}
+
+/**
+ * Generate a CSS linear gradient string from intermediate representation (IR).
+ *
+ * Converts a LinearGradient IR object into a valid CSS `linear-gradient()` or
+ * `repeating-linear-gradient()` function string.
+ *
+ * @param ir - LinearGradient IR object to convert to CSS
+ * @returns CSS linear gradient function string
+ *
+ * @example
+ * Simple gradient:
+ * ```typescript
+ * generate({
+ *   kind: "linear",
+ *   colorStops: [
+ *     { color: { kind: "named", value: "red" } },
+ *     { color: { kind: "named", value: "blue" } }
+ *   ],
+ *   repeating: false
+ * })
+ * // => "linear-gradient(red, blue)"
+ * ```
+ *
+ * @example
+ * With angle direction:
+ * ```typescript
+ * generate({
+ *   kind: "linear",
+ *   direction: { kind: "angle", value: { value: 45, unit: "deg" } },
+ *   colorStops: [
+ *     { color: { kind: "named", value: "red" } },
+ *     { color: { kind: "named", value: "blue" } }
+ *   ],
+ *   repeating: false
+ * })
+ * // => "linear-gradient(45deg, red, blue)"
+ * ```
+ *
+ * @example
+ * With side direction:
+ * ```typescript
+ * generate({
+ *   kind: "linear",
+ *   direction: { kind: "to-side", value: "right" },
+ *   colorStops: [
+ *     { color: { kind: "named", value: "red" } },
+ *     { color: { kind: "named", value: "blue" } }
+ *   ],
+ *   repeating: false
+ * })
+ * // => "linear-gradient(to right, red, blue)"
+ * ```
+ *
+ * @example
+ * With color interpolation:
+ * ```typescript
+ * generate({
+ *   kind: "linear",
+ *   colorSpace: "oklch",
+ *   colorStops: [
+ *     { color: { kind: "named", value: "red" } },
+ *     { color: { kind: "named", value: "blue" } }
+ *   ],
+ *   repeating: false
+ * })
+ * // => "linear-gradient(in oklch, red, blue)"
+ * ```
+ */
+export function generate(ir: Type.LinearGradient): GenerateResult {
+  const functionName = ir.repeating ? "repeating-linear-gradient" : "linear-gradient";
+  const parts: string[] = [];
+
+  if (ir.direction) {
+    const dirResult = generateDirection(ir.direction);
+
+    if (!dirResult.ok) return dirResult;
+    parts.push(dirResult.value);
+  }
+
+  if (ir.colorInterpolationMethod) {
+    const interpResult = generateColorInterpolation(ir.colorInterpolationMethod);
+    if (!interpResult.ok) return interpResult;
+    parts.push(interpResult.value);
+  }
+
+  for (const stop of ir.colorStops) {
+    const stopResult = ColorStop.generate(stop);
+    if (!stopResult.ok) return stopResult;
+    parts.push(stopResult.value);
+  }
+
+  return generateOk(`${functionName}(${parts.join(", ")})`);
+}
+
+
+=== File: packages/b_generators/src/gradient/radial.ts ===
+// b_path:: packages/b_generators/src/gradient/radial.ts
+import { generateOk, type GenerateResult } from "@b/types";
+import type * as Type from "@b/types";
+import * as Position from "../position";
+import * as Length from "../length";
+import * as ColorStop from "./color-stop";
+
+/**
+ * Generate CSS radial gradient size string from RadialGradientSize IR.
+ *
+ * @param size - RadialGradientSize IR object
+ * @returns CSS size string
+ */
+function generateSize(size: Type.RadialGradientSize): GenerateResult {
+  if (size.kind === "keyword") {
+    return generateOk(size.value);
+  }
+
+  if (size.kind === "circle-explicit") {
+    const radiusResult = Length.generateLengthPercentage(size.radius);
+    if (!radiusResult.ok) return radiusResult;
+    return generateOk(radiusResult.value);
+  }
+
+  const rxResult = Length.generateLengthPercentage(size.radiusX);
+  if (!rxResult.ok) return rxResult;
+
+  const ryResult = Length.generateLengthPercentage(size.radiusY);
+  if (!ryResult.ok) return ryResult;
+
+  return generateOk(`${rxResult.value} ${ryResult.value}`);
+}
+
+/**
+ * Generate CSS color interpolation method string.
+ */
+function generateColorInterpolation(method: Type.ColorInterpolationMethod): GenerateResult {
+  let css = `in ${method.colorSpace}`;
+
+  if ("hueInterpolationMethod" in method && method.hueInterpolationMethod) {
+    css += ` ${method.hueInterpolationMethod}`;
+  }
+
+  return generateOk(css);
+}
+
+/**
+ * Generate a CSS radial gradient string from intermediate representation (IR).
+ *
+ * Converts a RadialGradient IR object into a valid CSS `radial-gradient()` or
+ * `repeating-radial-gradient()` function string.
+ *
+ * @param ir - RadialGradient IR object to convert to CSS
+ * @returns CSS radial gradient function string
+ *
+ * @example
+ * Simple gradient:
+ * ```typescript
+ * generate({
+ *   kind: "radial",
+ *   colorStops: [
+ *     { color: { kind: "named", value: "red" } },
+ *     { color: { kind: "named", value: "blue" } }
+ *   ],
+ *   repeating: false
+ * })
+ * // => "radial-gradient(red, blue)"
+ * ```
+ *
+ * @example
+ * With shape and size:
+ * ```typescript
+ * generate({
+ *   kind: "radial",
+ *   shape: "circle",
+ *   size: { kind: "keyword", value: "closest-side" },
+ *   colorStops: [
+ *     { color: { kind: "named", value: "red" } },
+ *     { color: { kind: "named", value: "blue" } }
+ *   ],
+ *   repeating: false
+ * })
+ * // => "radial-gradient(circle closest-side, red, blue)"
+ * ```
+ *
+ * @example
+ * With position:
+ * ```typescript
+ * generate({
+ *   kind: "radial",
+ *   position: { horizontal: "center", vertical: "top" },
+ *   colorStops: [
+ *     { color: { kind: "named", value: "red" } },
+ *     { color: { kind: "named", value: "blue" } }
+ *   ],
+ *   repeating: false
+ * })
+ * // => "radial-gradient(at center top, red, blue)"
+ * ```
+ */
+export function generate(ir: Type.RadialGradient): GenerateResult {
+  const functionName = ir.repeating ? "repeating-radial-gradient" : "radial-gradient";
+  const parts: string[] = [];
+  const firstPart: string[] = [];
+
+  if (ir.shape) {
+    firstPart.push(ir.shape);
+  }
+
+  if (ir.size) {
+    const sizeResult = generateSize(ir.size);
+    if (!sizeResult.ok) return sizeResult;
+    firstPart.push(sizeResult.value);
+  }
+
+  if (ir.position) {
+    const posResult = Position.generate(ir.position);
+    if (!posResult.ok) return posResult;
+    firstPart.push(`at ${posResult.value}`);
+  }
+
+  if (firstPart.length > 0) {
+    parts.push(firstPart.join(" "));
+  }
+
+  if (ir.colorInterpolationMethod) {
+    const interpResult = generateColorInterpolation(ir.colorInterpolationMethod);
+    if (!interpResult.ok) return interpResult;
+    parts.push(interpResult.value);
+  }
+
+  for (const stop of ir.colorStops) {
+    const stopResult = ColorStop.generate(stop);
+    if (!stopResult.ok) return stopResult;
+    parts.push(stopResult.value);
+  }
+
+  return generateOk(`${functionName}(${parts.join(", ")})`);
+}
+
+
+=== File: packages/b_generators/src/index.ts ===
+// b_path:: packages/b_generators/src/index.ts
+export * as Angle from "./angle";
+export * as Color from "./color";
+export * as Gradient from "./gradient";
+export * as Length from "./length";
+export * as Position from "./position";
+
+
+=== File: packages/b_generators/src/length.ts ===
+// b_path:: packages/b_generators/src/length.ts
+import { generateOk, type GenerateResult } from "@b/types";
+import type * as Type from "@b/types";
+
+/**
+ * Generate CSS length string from Length IR
+ * @see https://drafts.csswg.org/css-values-4/#lengths
+ */
+export function generate(length: Type.Length): GenerateResult {
+  return generateOk(`${length.value}${length.unit}`);
+}
+
+/**
+ * Generate CSS length-percentage string from LengthPercentage IR
+ * @see https://drafts.csswg.org/css-values-4/#percentage-value
+ */
+export function generateLengthPercentage(lengthPercentage: Type.LengthPercentage): GenerateResult {
+  return generateOk(`${lengthPercentage.value}${lengthPercentage.unit}`);
+}
+
+
+=== File: packages/b_generators/src/position.ts ===
+// b_path:: packages/b_generators/src/position.ts
+import { generateOk, type GenerateResult } from "@b/types";
+import type * as Type from "@b/types";
+
+/**
+ * Generate CSS position string from Position2D IR
+ * @see https://drafts.csswg.org/css-backgrounds-3/#typedef-bg-position
+ */
+export function generate(position: Type.Position2D): GenerateResult {
+  const horizontal =
+    typeof position.horizontal === "string"
+      ? position.horizontal
+      : `${position.horizontal.value}${position.horizontal.unit}`;
+
+  const vertical =
+    typeof position.vertical === "string" ? position.vertical : `${position.vertical.value}${position.vertical.unit}`;
+
+  return generateOk(`${horizontal} ${vertical}`);
+}
+
+
+=== File: packages/b_generators/tsup.config.ts ===
+// b_path:: packages/b_generators/tsup.config.ts
+import { defineConfig } from "tsup";
+
+export default defineConfig({
+  entry: ["src/index.ts"],
+  format: ["cjs", "esm"],
+  dts: true,
+  splitting: false,
+  sourcemap: true,
+  clean: true,
+  treeshake: true,
+});
+
+
+=== File: packages/b_generators/vite.config.ts ===
+// b_path:: packages/b_generators/vite.config.ts
+import { defineConfig } from "vite";
+
+import tsconfigPaths from "vite-tsconfig-paths";
+
+// https://vite.dev/config/
+export default defineConfig({
+  plugins: [tsconfigPaths()],
+});
+
+
+=== File: packages/b_keywords/src/color-interpolation.ts ===
+// b_path:: packages/b_keywords/src/color-interpolation.ts
+import { z } from "zod";
+
+/**
+ * @see https://developer.mozilla.org/en-US/docs/Web/CSS/color-interpolation-method
+ */
+
+export const rectangularColorSpaceSchema = z.union([
+  z.literal("srgb"),
+  z.literal("srgb-linear"),
+  z.literal("display-p3"),
+  z.literal("display-p3-linear"),
+  z.literal("a98-rgb"),
+  z.literal("prophoto-rgb"),
+  z.literal("rec2020"),
+  z.literal("lab"),
+  z.literal("oklab"),
+  z.literal("xyz"),
+  z.literal("xyz-d50"),
+  z.literal("xyz-d65"),
+]);
+
+export type RectangularColorSpace = z.infer<typeof rectangularColorSpaceSchema>;
+
+export const polarColorSpaceSchema = z.union([
+  z.literal("hsl"),
+  z.literal("hwb"),
+  z.literal("lch"),
+  z.literal("oklch"),
+]);
+
+export type PolarColorSpace = z.infer<typeof polarColorSpaceSchema>;
+
+export const hueInterpolationMethodSchema = z.union([
+  z.literal("shorter hue"),
+  z.literal("longer hue"),
+  z.literal("increasing hue"),
+  z.literal("decreasing hue"),
+]);
+
+export type HueInterpolationMethod = z.infer<typeof hueInterpolationMethodSchema>;
+
+// For backward compatibility, keep the simple union
+export const colorInterpolationSchema = z.union([rectangularColorSpaceSchema, polarColorSpaceSchema]);
+
+export type ColorInterpolation = z.infer<typeof colorInterpolationSchema>;
+
+
+=== File: packages/b_keywords/src/gradient-direction.ts ===
+// b_path:: packages/b_keywords/src/gradient-direction.ts
+import { z } from "zod";
+
+/**
+ * @see https://developer.mozilla.org/en-US/docs/Web/CSS/gradient/linear-gradient
+ */
+export const gradientSideSchema = z.union([
+  z.literal("top"),
+  z.literal("right"),
+  z.literal("bottom"),
+  z.literal("left"),
+]);
+
+export const gradientCornerSchema = z.union([
+  z.literal("top left"),
+  z.literal("top right"),
+  z.literal("bottom left"),
+  z.literal("bottom right"),
+]);
+
+export type GradientSide = z.infer<typeof gradientSideSchema>;
+export type GradientCorner = z.infer<typeof gradientCornerSchema>;
+
+
+=== File: packages/b_keywords/src/index.ts ===
+// b_path:: packages/b_keywords/src/index.ts
+export * from "./color-interpolation";
+export * from "./gradient-direction";
+export * from "./named-colors";
+export * from "./position";
+export * from "./radial-shape";
+export * from "./radial-size";
+export * from "./utils";
+
+
+=== File: packages/b_keywords/src/named-colors.ts ===
+// b_path:: packages/b_keywords/src/named-colors.ts
+import { z } from "zod";
+import { getLiteralValues } from "./utils";
+
+/**
+ * @see https://developer.mozilla.org/en-US/docs/Web/CSS/named-color
+ */
+
+export const namedColors = [
+  z.literal("transparent"),
+  z.literal("currentcolor"),
+  z.literal("black"),
+  z.literal("white"),
+  z.literal("red"),
+  z.literal("green"),
+  z.literal("blue"),
+  z.literal("yellow"),
+  z.literal("orange"),
+  z.literal("purple"),
+  z.literal("pink"),
+  z.literal("brown"),
+  z.literal("gray"),
+  z.literal("grey"),
+  z.literal("silver"),
+  z.literal("gold"),
+  z.literal("navy"),
+  z.literal("teal"),
+  z.literal("lime"),
+  z.literal("aqua"),
+  z.literal("fuchsia"),
+  z.literal("maroon"),
+  z.literal("olive"),
+  z.literal("cyan"),
+  z.literal("aliceblue"),
+  z.literal("antiquewhite"),
+  z.literal("aquamarine"),
+  z.literal("azure"),
+  z.literal("beige"),
+  z.literal("bisque"),
+  z.literal("blanchedalmond"),
+  z.literal("blueviolet"),
+  z.literal("burlywood"),
+  z.literal("cadetblue"),
+  z.literal("chartreuse"),
+  z.literal("chocolate"),
+  z.literal("coral"),
+  z.literal("cornflowerblue"),
+  z.literal("cornsilk"),
+  z.literal("crimson"),
+  z.literal("darkblue"),
+  z.literal("darkcyan"),
+  z.literal("darkgoldenrod"),
+  z.literal("darkgray"),
+  z.literal("darkgrey"),
+  z.literal("darkgreen"),
+  z.literal("darkkhaki"),
+  z.literal("darkmagenta"),
+  z.literal("darkolivegreen"),
+  z.literal("darkorange"),
+  z.literal("darkorchid"),
+  z.literal("darkred"),
+  z.literal("darksalmon"),
+  z.literal("darkseagreen"),
+  z.literal("darkslateblue"),
+  z.literal("darkslategray"),
+  z.literal("darkslategrey"),
+  z.literal("darkturquoise"),
+  z.literal("darkviolet"),
+  z.literal("deeppink"),
+  z.literal("deepskyblue"),
+  z.literal("dimgray"),
+  z.literal("dimgrey"),
+  z.literal("dodgerblue"),
+  z.literal("firebrick"),
+  z.literal("floralwhite"),
+  z.literal("forestgreen"),
+  z.literal("gainsboro"),
+  z.literal("ghostwhite"),
+  z.literal("goldenrod"),
+  z.literal("greenyellow"),
+  z.literal("honeydew"),
+  z.literal("hotpink"),
+  z.literal("indianred"),
+  z.literal("indigo"),
+  z.literal("ivory"),
+  z.literal("khaki"),
+  z.literal("lavender"),
+  z.literal("lavenderblush"),
+  z.literal("lawngreen"),
+  z.literal("lemonchiffon"),
+  z.literal("lightblue"),
+  z.literal("lightcoral"),
+  z.literal("lightcyan"),
+  z.literal("lightgoldenrodyellow"),
+  z.literal("lightgray"),
+  z.literal("lightgrey"),
+  z.literal("lightgreen"),
+  z.literal("lightpink"),
+  z.literal("lightsalmon"),
+  z.literal("lightseagreen"),
+  z.literal("lightskyblue"),
+  z.literal("lightslategray"),
+  z.literal("lightslategrey"),
+  z.literal("lightsteelblue"),
+  z.literal("lightyellow"),
+  z.literal("limegreen"),
+  z.literal("linen"),
+  z.literal("magenta"),
+  z.literal("mediumaquamarine"),
+  z.literal("mediumblue"),
+  z.literal("mediumorchid"),
+  z.literal("mediumpurple"),
+  z.literal("mediumseagreen"),
+  z.literal("mediumslateblue"),
+  z.literal("mediumspringgreen"),
+  z.literal("mediumturquoise"),
+  z.literal("mediumvioletred"),
+  z.literal("midnightblue"),
+  z.literal("mintcream"),
+  z.literal("mistyrose"),
+  z.literal("moccasin"),
+  z.literal("navajowhite"),
+  z.literal("oldlace"),
+  z.literal("olivedrab"),
+  z.literal("orangered"),
+  z.literal("orchid"),
+  z.literal("palegoldenrod"),
+  z.literal("palegreen"),
+  z.literal("paleturquoise"),
+  z.literal("palevioletred"),
+  z.literal("papayawhip"),
+  z.literal("peachpuff"),
+  z.literal("peru"),
+  z.literal("plum"),
+  z.literal("powderblue"),
+  z.literal("rebeccapurple"),
+  z.literal("rosybrown"),
+  z.literal("royalblue"),
+  z.literal("saddlebrown"),
+  z.literal("salmon"),
+  z.literal("sandybrown"),
+  z.literal("seagreen"),
+  z.literal("seashell"),
+  z.literal("sienna"),
+  z.literal("skyblue"),
+  z.literal("slateblue"),
+  z.literal("slategray"),
+  z.literal("slategrey"),
+  z.literal("snow"),
+  z.literal("springgreen"),
+  z.literal("steelblue"),
+  z.literal("tan"),
+  z.literal("thistle"),
+  z.literal("tomato"),
+  z.literal("turquoise"),
+  z.literal("violet"),
+  z.literal("wheat"),
+  z.literal("whitesmoke"),
+  z.literal("yellowgreen"),
+];
+
+const namedColorsMap = namedColors.flatMap(getLiteralValues);
+
+export const namedColorSchema = z.union(namedColors, {
+  error: () =>
+    `Expected a named color (@see b_keywords/src/named-colors.ts): ${namedColorsMap.slice(0, 12).join(" | ")}..`,
+});
+
+// export const namedColorSchema = z.union();
+
+export type NamedColor = z.infer<typeof namedColorSchema>;
+
+
+=== File: packages/b_keywords/src/position.ts ===
+// b_path:: packages/b_keywords/src/position.ts
+import { z } from "zod";
+
+/**
+ * @see https://developer.mozilla.org/en-US/docs/Web/CSS/position_value
+ */
+export const positionKeywordSchema = z.union([
+  z.literal("center"),
+  z.literal("left"),
+  z.literal("right"),
+  z.literal("top"),
+  z.literal("bottom"),
+  z.literal("x-start"),
+  z.literal("x-end"),
+  z.literal("y-start"),
+  z.literal("y-end"),
+  z.literal("block-start"),
+  z.literal("block-end"),
+  z.literal("inline-start"),
+  z.literal("inline-end"),
+  z.literal("start"),
+  z.literal("end"),
+]);
+
+export type PositionKeyword = z.infer<typeof positionKeywordSchema>;
+
+export const positionHorizontalEdgeSchema = z.union([
+  z.literal("left"),
+  z.literal("right"),
+  z.literal("x-start"),
+  z.literal("x-end"),
+]);
+
+export type PositionHorizontalEdge = z.infer<typeof positionHorizontalEdgeSchema>;
+
+export const positionVerticalEdgeSchema = z.union([
+  z.literal("top"),
+  z.literal("bottom"),
+  z.literal("y-start"),
+  z.literal("y-end"),
+]);
+
+export type PositionVerticalEdge = z.infer<typeof positionVerticalEdgeSchema>;
+
+
+=== File: packages/b_keywords/src/radial-shape.ts ===
+// b_path:: packages/b_keywords/src/radial-shape.ts
+import { z } from "zod";
+
+/**
+ * @see https://developer.mozilla.org/en-US/docs/Web/CSS/gradient/radial-gradient
+ */
+export const radialShapeSchema = z.union([z.literal("circle"), z.literal("ellipse")]);
+
+export type RadialShape = z.infer<typeof radialShapeSchema>;
+
+
+=== File: packages/b_keywords/src/radial-size.ts ===
+// b_path:: packages/b_keywords/src/radial-size.ts
+import { z } from "zod";
+
+/**
+ * @see https://developer.mozilla.org/en-US/docs/Web/CSS/gradient/radial-gradient
+ */
+export const radialSizeKeywordSchema = z.union([
+  z.literal("closest-side"),
+  z.literal("farthest-side"),
+  z.literal("closest-corner"),
+  z.literal("farthest-corner"),
+]);
+
+export type RadialSizeKeyword = z.infer<typeof radialSizeKeywordSchema>;
+
+
+=== File: packages/b_keywords/src/utils/index.ts ===
+// b_path:: packages/b_keywords/src/utils/index.ts
+export * from "./zod";
+
+
+=== File: packages/b_keywords/src/utils/zod.ts ===
+// b_path:: packages/b_keywords/src/utils/zod.ts
+import { z } from "zod";
+
+/**
+ * Extract literal string values from a Zod schema.
+ *
+ * Recursively traverses ZodLiteral and ZodUnion schemas to collect all literal string values.
+ *
+ * @param schema
+ * @returns Array of literal string values
+ *
+ */
+export function getLiteralValues(schema: z.core.$ZodType): string[] {
+  if (schema instanceof z.ZodLiteral) {
+    return [String(schema.value)];
+  }
+  if (schema instanceof z.ZodUnion) {
+    return schema.options.flatMap(getLiteralValues);
+  }
+  return [];
+}
+
+
+=== File: packages/b_keywords/tsup.config.ts ===
+// b_path:: packages/b_keywords/tsup.config.ts
+import { defineConfig } from "tsup";
+
+export default defineConfig({
+  entry: ["src/index.ts"],
+  format: ["cjs", "esm"],
+  dts: true,
+  splitting: false,
+  sourcemap: true,
+  clean: true,
+  treeshake: true,
+});
+
+
+=== File: packages/b_keywords/vite.config.ts ===
+// b_path:: packages/b_keywords/vite.config.ts
+import { defineConfig } from "vite";
+
+import tsconfigPaths from "vite-tsconfig-paths";
+
+// https://vite.dev/config/
+export default defineConfig({
+  plugins: [tsconfigPaths()],
+});
+
+
+=== File: packages/b_parsers/src/angle.ts ===
+// b_path:: packages/b_parsers/src/angle.ts
+import type * as csstree from "css-tree";
+import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
+import type * as Type from "@b/types";
+import * as Unit from "@b/units";
+
+/**
+ * Parse angle AST node from css-tree.
+ *
+ * @see https://drafts.csswg.org/css-values-4/#angles
+ */
+export function parseAngleNode(node: csstree.CssNode): ParseResult<Type.Angle> {
+  if (node.type !== "Dimension") {
+    return parseErr(createError("invalid-syntax", `Expected angle dimension, but got node type ${node.type}`));
+  }
+
+  const value = Number.parseFloat(node.value);
+  if (Number.isNaN(value)) {
+    return parseErr(createError("invalid-value", "Invalid angle value: not a number"));
+  }
+
+  if (!Unit.ANGLE_UNITS.includes(node.unit as (typeof Unit.ANGLE_UNITS)[number])) {
+    return parseErr(createError("invalid-value", `Invalid angle unit: '${node.unit}'`));
+  }
+
+  return parseOk({ value, unit: node.unit as (typeof Unit.ANGLE_UNITS)[number] });
+}
+
+
+=== File: packages/b_parsers/src/color/color.ts ===
+// b_path:: packages/b_parsers/src/color/color.ts
+import type * as csstree from "css-tree";
+import * as cssTree from "css-tree";
+import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
+import type * as Type from "@b/types";
+import { parseRgbFunction } from "./rgb";
+import { parseHslFunction } from "./hsl";
+import { parseHwbFunction } from "./hwb";
+import { parseLabFunction } from "./lab";
+import { parseLchFunction } from "./lch";
+import { parseOklabFunction } from "./oklab";
+import { parseOklchFunction } from "./oklch";
+
+/**
+ * Parse color AST node with auto-detection.
+ *
+ * @see https://developer.mozilla.org/en-US/docs/Web/CSS/color_value
+ */
+export function parseNode(node: csstree.CssNode): ParseResult<Type.Color> {
+  if (node.type === "Hash") {
+    const value = node.value.toLowerCase();
+    return parseOk({ kind: "hex", value: `#${value}` } as Type.Color);
+  }
+
+  if (node.type === "Function") {
+    const funcName = node.name.toLowerCase();
+
+    switch (funcName) {
+      case "rgb":
+      case "rgba":
+        return parseRgbFunction(node);
+      case "hsl":
+      case "hsla":
+        return parseHslFunction(node);
+      case "hwb":
+        return parseHwbFunction(node);
+      case "lab":
+        return parseLabFunction(node);
+      case "lch":
+        return parseLchFunction(node);
+      case "oklab":
+        return parseOklabFunction(node);
+      case "oklch":
+        return parseOklchFunction(node);
+      default:
+        return parseErr(createError("unsupported-kind", `Unsupported color function: ${funcName}`));
+    }
+  }
+
+  if (node.type === "Identifier") {
+    const keyword = node.name.toLowerCase();
+
+    if (keyword === "transparent" || keyword === "currentcolor") {
+      return parseOk({ kind: "special", keyword } as Type.Color);
+    }
+
+    return parseOk({ kind: "named", name: keyword } as Type.Color);
+  }
+
+  return parseErr(createError("invalid-syntax", `Invalid color node type: ${node.type}`));
+}
+
+/**
+ * Parse color value string with auto-detection.
+ *
+ * @see https://developer.mozilla.org/en-US/docs/Web/CSS/color_value
+ */
+export function parse(value: string): ParseResult<Type.Color> {
+  try {
+    const ast = cssTree.parse(value, { context: "value" });
+
+    let firstNode: csstree.CssNode | null = null;
+    cssTree.walk(ast, {
+      enter(node: csstree.CssNode) {
+        if (!firstNode && node.type !== "Value") {
+          firstNode = node;
+        }
+      },
+    });
+
+    if (!firstNode) {
+      return parseErr(createError("invalid-syntax", "Empty value"));
+    }
+
+    return parseNode(firstNode);
+  } catch (e) {
+    return parseErr(
+      createError("invalid-syntax", `Failed to parse color: ${e instanceof Error ? e.message : String(e)}`),
+    );
+  }
+}
+
+
+=== File: packages/b_parsers/src/color/hsl.ts ===
+// b_path:: packages/b_parsers/src/color/hsl.ts
+import type * as csstree from "css-tree";
+import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
+import type { HSLColor } from "@b/types";
+import { parseCssValueNode, getChildren, getValues } from "@b/utils";
+
+/**
+ * Parse hsl() or hsla() function
+ * @see https://drafts.csswg.org/css-color/#the-hsl-notation
+ */
+export function parseHslFunction(node: csstree.FunctionNode): ParseResult<HSLColor> {
+  if (node.name !== "hsl" && node.name !== "hsla") {
+    return parseErr(createError("invalid-syntax", "Expected hsl() or hsla() function"));
+  }
+
+  const values = getValues(getChildren(node));
+
+  if (values.length < 3 || values.length > 4) {
+    return parseErr(createError("invalid-syntax", `HSL function must have 3 or 4 values, got ${values.length}`));
+  }
+
+  const hResult = parseCssValueNode(values[0]);
+  if (!hResult.ok) return hResult;
+
+  const sResult = parseCssValueNode(values[1]);
+  if (!sResult.ok) return sResult;
+
+  const lResult = parseCssValueNode(values[2]);
+  if (!lResult.ok) return lResult;
+
+  const hsl: HSLColor = {
+    kind: "hsl",
+    h: hResult.value,
+    s: sResult.value,
+    l: lResult.value,
+  };
+
+  if (values.length === 4) {
+    const alphaResult = parseCssValueNode(values[3]);
+    if (!alphaResult.ok) return alphaResult;
+    hsl.alpha = alphaResult.value;
+  }
+
+  return parseOk(hsl);
+}
+
+
+=== File: packages/b_parsers/src/color/hwb.ts ===
+// b_path:: packages/b_parsers/src/color/hwb.ts
+import type * as csstree from "css-tree";
+import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
+import type { HWBColor } from "@b/types";
+import { parseCssValueNode, getChildren, getValues } from "@b/utils";
+
+/**
+ * Parse hwb() function
+ * @see https://drafts.csswg.org/css-color/#the-hwb-notation
+ */
+export function parseHwbFunction(node: csstree.FunctionNode): ParseResult<HWBColor> {
+  if (node.name !== "hwb") {
+    return parseErr(createError("invalid-syntax", "Expected hwb() function"));
+  }
+
+  const values = getValues(getChildren(node));
+
+  if (values.length < 3 || values.length > 4) {
+    return parseErr(createError("invalid-syntax", `HWB function must have 3 or 4 values, got ${values.length}`));
+  }
+
+  const hResult = parseCssValueNode(values[0]);
+  if (!hResult.ok) return hResult;
+
+  const wResult = parseCssValueNode(values[1]);
+  if (!wResult.ok) return wResult;
+
+  const bResult = parseCssValueNode(values[2]);
+  if (!bResult.ok) return bResult;
+
+  const hwb: HWBColor = {
+    kind: "hwb",
+    h: hResult.value,
+    w: wResult.value,
+    b: bResult.value,
+  };
+
+  if (values.length === 4) {
+    const alphaResult = parseCssValueNode(values[3]);
+    if (!alphaResult.ok) return alphaResult;
+    hwb.alpha = alphaResult.value;
+  }
+
+  return parseOk(hwb);
+}
+
+
+=== File: packages/b_parsers/src/color/index.ts ===
+// b_path:: packages/b_parsers/src/color/index.ts
+export * from "@b/utils";
+export * from "./color";
+export * from "./rgb";
+export * from "./hsl";
+export * from "./hwb";
+export * from "./lab";
+export * from "./lch";
+export * from "./oklab";
+export * from "./oklch";
+
+
+=== File: packages/b_parsers/src/color/lab.ts ===
+// b_path:: packages/b_parsers/src/color/lab.ts
+import type * as csstree from "css-tree";
+import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
+import type { LABColor } from "@b/types";
+import { parseCssValueNode, getChildren, getValues } from "@b/utils";
+
+/**
+ * Parse lab() function
+ * @see https://drafts.csswg.org/css-color/#lab-colors
+ */
+export function parseLabFunction(node: csstree.FunctionNode): ParseResult<LABColor> {
+  if (node.name !== "lab") {
+    return parseErr(createError("invalid-syntax", "Expected lab() function"));
+  }
+
+  const values = getValues(getChildren(node));
+
+  if (values.length < 3 || values.length > 4) {
+    return parseErr(createError("invalid-syntax", `LAB function must have 3 or 4 values, got ${values.length}`));
+  }
+
+  const lResult = parseCssValueNode(values[0]);
+  if (!lResult.ok) return lResult;
+
+  const aResult = parseCssValueNode(values[1]);
+  if (!aResult.ok) return aResult;
+
+  const bResult = parseCssValueNode(values[2]);
+  if (!bResult.ok) return bResult;
+
+  const lab: LABColor = {
+    kind: "lab",
+    l: lResult.value,
+    a: aResult.value,
+    b: bResult.value,
+  };
+
+  if (values.length === 4) {
+    const alphaResult = parseCssValueNode(values[3]);
+    if (!alphaResult.ok) return alphaResult;
+    lab.alpha = alphaResult.value;
+  }
+
+  return parseOk(lab);
+}
+
+
+=== File: packages/b_parsers/src/color/lch.ts ===
+// b_path:: packages/b_parsers/src/color/lch.ts
+import type * as csstree from "css-tree";
+import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
+import type { LCHColor } from "@b/types";
+import { parseCssValueNode, getChildren, getValues } from "@b/utils";
+
+/**
+ * Parse lch() function
+ * @see https://drafts.csswg.org/css-color/#lch-colors
+ */
+export function parseLchFunction(node: csstree.FunctionNode): ParseResult<LCHColor> {
+  if (node.name !== "lch") {
+    return parseErr(createError("invalid-syntax", "Expected lch() function"));
+  }
+
+  const values = getValues(getChildren(node));
+
+  if (values.length < 3 || values.length > 4) {
+    return parseErr(createError("invalid-syntax", `LCH function must have 3 or 4 values, got ${values.length}`));
+  }
+
+  const lResult = parseCssValueNode(values[0]);
+  if (!lResult.ok) return lResult;
+
+  const cResult = parseCssValueNode(values[1]);
+  if (!cResult.ok) return cResult;
+
+  const hResult = parseCssValueNode(values[2]);
+  if (!hResult.ok) return hResult;
+
+  const lch: LCHColor = {
+    kind: "lch",
+    l: lResult.value,
+    c: cResult.value,
+    h: hResult.value,
+  };
+
+  if (values.length === 4) {
+    const alphaResult = parseCssValueNode(values[3]);
+    if (!alphaResult.ok) return alphaResult;
+    lch.alpha = alphaResult.value;
+  }
+
+  return parseOk(lch);
+}
+
+
+=== File: packages/b_parsers/src/color/oklab.ts ===
+// b_path:: packages/b_parsers/src/color/oklab.ts
+import type * as csstree from "css-tree";
+import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
+import type { OKLabColor } from "@b/types";
+import { parseCssValueNode, getChildren, getValues } from "@b/utils";
+
+/**
+ * Parse oklab() function
+ * @see https://drafts.csswg.org/css-color/#ok-lab
+ */
+export function parseOklabFunction(node: csstree.FunctionNode): ParseResult<OKLabColor> {
+  if (node.name !== "oklab") {
+    return parseErr(createError("invalid-syntax", "Expected oklab() function"));
+  }
+
+  const values = getValues(getChildren(node));
+
+  if (values.length < 3 || values.length > 4) {
+    return parseErr(createError("invalid-syntax", `OKLab function must have 3 or 4 values, got ${values.length}`));
+  }
+
+  const lResult = parseCssValueNode(values[0]);
+  if (!lResult.ok) return lResult;
+
+  const aResult = parseCssValueNode(values[1]);
+  if (!aResult.ok) return aResult;
+
+  const bResult = parseCssValueNode(values[2]);
+  if (!bResult.ok) return bResult;
+
+  const oklab: OKLabColor = {
+    kind: "oklab",
+    l: lResult.value,
+    a: aResult.value,
+    b: bResult.value,
+  };
+
+  if (values.length === 4) {
+    const alphaResult = parseCssValueNode(values[3]);
+    if (!alphaResult.ok) return alphaResult;
+    oklab.alpha = alphaResult.value;
+  }
+
+  return parseOk(oklab);
+}
+
+
+=== File: packages/b_parsers/src/color/oklch.ts ===
+// b_path:: packages/b_parsers/src/color/oklch.ts
+import type * as csstree from "css-tree";
+import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
+import type { OKLCHColor } from "@b/types";
+import { parseCssValueNode, getChildren, getValues } from "@b/utils";
+
+/**
+ * Parse oklch() function
+ * @see https://drafts.csswg.org/css-color/#ok-lch
+ */
+export function parseOklchFunction(node: csstree.FunctionNode): ParseResult<OKLCHColor> {
+  if (node.name !== "oklch") {
+    return parseErr(createError("invalid-syntax", "Expected oklch() function"));
+  }
+
+  const values = getValues(getChildren(node));
+
+  if (values.length < 3 || values.length > 4) {
+    return parseErr(createError("invalid-syntax", `OKLCH function must have 3 or 4 values, got ${values.length}`));
+  }
+
+  const lResult = parseCssValueNode(values[0]);
+  if (!lResult.ok) return lResult;
+
+  const cResult = parseCssValueNode(values[1]);
+  if (!cResult.ok) return cResult;
+
+  const hResult = parseCssValueNode(values[2]);
+  if (!hResult.ok) return hResult;
+
+  const oklch: OKLCHColor = {
+    kind: "oklch",
+    l: lResult.value,
+    c: cResult.value,
+    h: hResult.value,
+  };
+
+  if (values.length === 4) {
+    const alphaResult = parseCssValueNode(values[3]);
+    if (!alphaResult.ok) return alphaResult;
+    oklch.alpha = alphaResult.value;
+  }
+
+  return parseOk(oklch);
+}
+
+
+=== File: packages/b_parsers/src/color/rgb.ts ===
+// b_path:: packages/b_parsers/src/color/rgb.ts
+import type * as csstree from "css-tree";
+import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
+import type { RGBColor } from "@b/types";
+import { parseCssValueNode, getChildren, getValues } from "@b/utils";
+
+/**
+ * Parse rgb() or rgba() function from css-tree AST.
+ *
+ * @see https://drafts.csswg.org/css-color/#rgb-functions
+ */
+export function parseRgbFunction(node: csstree.FunctionNode): ParseResult<RGBColor> {
+  if (node.name !== "rgb" && node.name !== "rgba") {
+    return parseErr(createError("invalid-syntax", "Expected rgb() or rgba() function"));
+  }
+
+  const values = getValues(getChildren(node));
+
+  if (values.length < 3 || values.length > 4) {
+    return parseErr(createError("invalid-syntax", `RGB function must have 3 or 4 values, got ${values.length}`));
+  }
+
+  const rResult = parseCssValueNode(values[0]);
+  if (!rResult.ok) return rResult;
+
+  const gResult = parseCssValueNode(values[1]);
+  if (!gResult.ok) return gResult;
+
+  const bResult = parseCssValueNode(values[2]);
+  if (!bResult.ok) return bResult;
+
+  const rgb: RGBColor = {
+    kind: "rgb",
+    r: rResult.value,
+    g: gResult.value,
+    b: bResult.value,
+  };
+
+  if (values.length === 4) {
+    const alphaResult = parseCssValueNode(values[3]);
+    if (!alphaResult.ok) return alphaResult;
+    rgb.alpha = alphaResult.value;
+  }
+
+  return parseOk(rgb);
+}
+
+
+=== File: packages/b_parsers/src/gradient/color-stop.ts ===
+// b_path:: packages/b_parsers/src/gradient/color-stop.ts
+import type * as csstree from "css-tree";
+import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
+import type * as Type from "@b/types";
+import * as Color from "../color";
+
+/**
+ * Parse color stop from CSS AST nodes.
+ *
+ * @see https://developer.mozilla.org/en-US/docs/Web/CSS/gradient/linear-gradient#color-stops
+ */
+export function fromNodes(nodes: csstree.CssNode[]): ParseResult<Type.ColorStop> {
+  if (nodes.length === 0) {
+    return parseErr(createError("missing-value", "Color stop requires at least a color value"));
+  }
+
+  const firstNode = nodes[0];
+  if (!firstNode) {
+    return parseErr(createError("missing-value", "Color stop requires at least a color value"));
+  }
+
+  const colorResult = Color.parseNode(firstNode);
+  if (!colorResult.ok) {
+    return parseErr(createError("invalid-value", `Invalid color value: ${colorResult.issues[0]?.message}`));
+  }
+
+  if (nodes.length === 1) {
+    return parseOk({ color: colorResult.value });
+  }
+
+  const positions: (Type.LengthPercentage | Type.Angle)[] = [];
+
+  for (let i = 1; i < nodes.length; i++) {
+    const posNode = nodes[i];
+    if (!posNode) continue;
+
+    if (posNode.type === "Percentage") {
+      const value = Number.parseFloat(posNode.value);
+      positions.push({ value, unit: "%" });
+      continue;
+    }
+
+    if (posNode.type === "Number") {
+      // Unitless 0 is valid for lengths
+      const value = Number.parseFloat(posNode.value);
+      if (value === 0) {
+        positions.push({ value: 0, unit: "px" });
+        continue;
+      }
+      return parseErr(
+        createError(
+          "invalid-value",
+          `Unitless numbers (other than 0) are not valid for color stop positions: ${posNode.value}`,
+        ),
+      );
+    }
+
+    if (posNode.type === "Dimension") {
+      const value = Number.parseFloat(posNode.value);
+      const unit = posNode.unit.toLowerCase();
+
+      if (unit === "deg" || unit === "rad" || unit === "grad" || unit === "turn") {
+        positions.push({ value, unit } as Type.Angle);
+      } else {
+        positions.push({ value, unit } as Type.LengthPercentage);
+      }
+      continue;
+    }
+
+    return parseErr(createError("invalid-value", `Invalid position type: ${posNode.type}`));
+  }
+
+  if (positions.length === 0) {
+    return parseOk({ color: colorResult.value });
+  }
+
+  if (positions.length === 1) {
+    return parseOk({
+      color: colorResult.value,
+      position: positions[0],
+    });
+  }
+
+  return parseOk({
+    color: colorResult.value,
+    position: [positions[0], positions[1]] as [Type.LengthPercentage | Type.Angle, Type.LengthPercentage | Type.Angle],
+  });
+}
+
+
+=== File: packages/b_parsers/src/gradient/conic.ts ===
+// b_path:: packages/b_parsers/src/gradient/conic.ts
+import type * as csstree from "css-tree";
+import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
+import type * as Type from "@b/types";
+import { parseAngleNode } from "../angle";
+import { parsePosition2D } from "../position";
+import * as ColorStop from "./color-stop";
+import * as Utils from "../utils";
+
+/**
+ * Parse conic gradient from CSS function AST.
+ *
+ * @see https://developer.mozilla.org/en-US/docs/Web/CSS/gradient/conic-gradient
+ */
+export function fromFunction(fn: csstree.FunctionNode): ParseResult<Type.ConicGradient> {
+  const functionName = fn.name.toLowerCase();
+  const isRepeating = functionName === "repeating-conic-gradient";
+
+  if (!isRepeating && functionName !== "conic-gradient") {
+    return parseErr(
+      createError("invalid-value", `Expected conic-gradient or repeating-conic-gradient, got: ${functionName}`),
+    );
+  }
+
+  const children = fn.children.toArray();
+  if (children.length === 0) {
+    return parseErr(createError("missing-value", "conic-gradient requires at least 2 color stops"));
+  }
+
+  let fromAngle: Type.Angle | undefined;
+  let position: Type.Position2D | undefined;
+  let colorInterpolationMethod: Type.ColorInterpolationMethod | undefined;
+
+  let idx = 0;
+
+  const fromNode = children[idx];
+  if (fromNode?.type === "Identifier" && fromNode.name.toLowerCase() === "from") {
+    idx++;
+    const angleNode = children[idx];
+    if (angleNode) {
+      const angleResult = parseAngleNode(angleNode);
+      if (angleResult.ok) {
+        fromAngle = angleResult.value;
+        idx++;
+      }
+    }
+  }
+
+  const atNode = children[idx];
+  if (atNode?.type === "Identifier" && atNode.name.toLowerCase() === "at") {
+    idx++;
+    const positionNodes: csstree.CssNode[] = [];
+
+    while (idx < children.length) {
+      const node = children[idx];
+      if (!node) break;
+      if (node.type === "Operator" && node.value === ",") break;
+      if (node.type === "Identifier" && node.name.toLowerCase() === "in") break;
+
+      positionNodes.push(node);
+      idx++;
+    }
+
+    if (positionNodes.length > 0) {
+      const posResult = parsePosition2D(positionNodes, 0);
+      if (posResult.ok) {
+        position = posResult.value.position;
+      }
+    }
+  }
+
+  idx = Utils.Ast.skipComma(children, idx);
+
+  const interpolationResult = Utils.parseColorInterpolationMethod(children, idx);
+  if (interpolationResult) {
+    colorInterpolationMethod = interpolationResult.method;
+    idx = interpolationResult.nextIndex;
+    idx = Utils.Ast.skipComma(children, idx);
+  }
+
+  const stopGroups = Utils.Ast.splitNodesByComma(children, { startIndex: idx });
+
+  const colorStops: Type.ColorStop[] = [];
+  const issues: Type.Issue[] = [];
+
+  for (const stopNodes of stopGroups) {
+    const stopResult = ColorStop.fromNodes(stopNodes);
+    if (stopResult.ok) {
+      colorStops.push(stopResult.value);
+    } else {
+      issues.push(...stopResult.issues);
+    }
+  }
+
+  if (issues.length > 0) {
+    return { ok: false, issues };
+  }
+
+  if (colorStops.length < 2) {
+    return parseErr(createError("invalid-value", "conic-gradient requires at least 2 color stops"));
+  }
+
+  return parseOk({
+    kind: "conic",
+    fromAngle,
+    position,
+    colorInterpolationMethod,
+    colorStops,
+    repeating: isRepeating,
+  });
+}
+
+/**
+ * Parse a CSS conic gradient value into IR.
+ *
+ * @see https://developer.mozilla.org/en-US/docs/Web/CSS/gradient/conic-gradient
+ */
+export function parse(css: string): ParseResult<Type.ConicGradient> {
+  const astResult = Utils.Ast.parseCssString(css, "value");
+  if (!astResult.ok) {
+    return astResult;
+  }
+
+  const funcResult = Utils.Ast.findFunctionNode(astResult.value, ["conic-gradient", "repeating-conic-gradient"]);
+  if (!funcResult.ok) {
+    return funcResult;
+  }
+
+  return fromFunction(funcResult.value);
+}
+
+
+=== File: packages/b_parsers/src/gradient/index.ts ===
+// b_path:: packages/b_parsers/src/gradient/index.ts
+export * as ColorStop from "./color-stop";
+export * as Linear from "./linear";
+export * as Radial from "./radial";
+export * as Conic from "./conic";
+
+
+=== File: packages/b_parsers/src/gradient/linear.ts ===
+// b_path:: packages/b_parsers/src/gradient/linear.ts
+import type * as csstree from "css-tree";
+import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
+import type * as Type from "@b/types";
+import { parseAngleNode } from "../angle";
+import * as ColorStop from "./color-stop";
+import * as Utils from "../utils";
+
+/**
+ * Parse gradient direction from nodes.
+ */
+function parseDirection(
+  nodes: csstree.CssNode[],
+  startIdx: number,
+): ParseResult<{ direction: Type.GradientDirection; nextIdx: number }> {
+  let idx = startIdx;
+  const node = nodes[idx];
+
+  if (!node) {
+    return parseErr(createError("missing-value", "Expected direction value"));
+  }
+
+  if (node.type === "Dimension" || node.type === "Number") {
+    const angleResult = parseAngleNode(node);
+    if (angleResult.ok) {
+      return parseOk({
+        direction: {
+          kind: "angle",
+          value: angleResult.value,
+        },
+        nextIdx: idx + 1,
+      });
+    }
+  }
+
+  if (node.type === "Identifier" && node.name.toLowerCase() === "to") {
+    idx++;
+    const firstKeyword = nodes[idx];
+    if (!firstKeyword || firstKeyword.type !== "Identifier") {
+      return parseErr(createError("invalid-syntax", "Expected side or corner keyword after 'to'"));
+    }
+
+    const first = firstKeyword.name.toLowerCase();
+    idx++;
+
+    const secondKeyword = nodes[idx];
+    if (secondKeyword && secondKeyword.type === "Identifier") {
+      const second = secondKeyword.name.toLowerCase();
+      const corner = `${first} ${second}`;
+      if (["top left", "top right", "bottom left", "bottom right"].includes(corner)) {
+        return parseOk({
+          direction: {
+            kind: "to-corner",
+            value: corner as "top left" | "top right" | "bottom left" | "bottom right",
+          },
+          nextIdx: idx + 1,
+        });
+      }
+    }
+
+    if (["top", "right", "bottom", "left"].includes(first)) {
+      return parseOk({
+        direction: {
+          kind: "to-side",
+          value: first as "top" | "right" | "bottom" | "left",
+        },
+        nextIdx: idx,
+      });
+    }
+
+    return parseErr(createError("invalid-value", `Invalid direction keyword: ${first}`));
+  }
+
+  return parseErr(createError("invalid-syntax", "Invalid direction syntax"));
+}
+
+/**
+ * Parse linear gradient from CSS function AST.
+ *
+ * @see https://developer.mozilla.org/en-US/docs/Web/CSS/gradient/linear-gradient
+ */
+export function fromFunction(fn: csstree.FunctionNode): ParseResult<Type.LinearGradient> {
+  const functionName = fn.name.toLowerCase();
+  const isRepeating = functionName === "repeating-linear-gradient";
+
+  if (!isRepeating && functionName !== "linear-gradient") {
+    return parseErr(
+      createError("invalid-value", `Expected linear-gradient or repeating-linear-gradient, got: ${functionName}`),
+    );
+  }
+
+  const children = fn.children.toArray();
+  if (children.length === 0) {
+    return parseErr(createError("missing-value", "linear-gradient requires at least 2 color stops"));
+  }
+
+  let direction: Type.GradientDirection | undefined;
+  let colorInterpolationMethod: Type.ColorInterpolationMethod | undefined;
+
+  let idx = 0;
+
+  const firstNode = children[idx];
+  if (firstNode) {
+    if (
+      firstNode.type === "Dimension" ||
+      firstNode.type === "Number" ||
+      (firstNode.type === "Identifier" && firstNode.name.toLowerCase() === "to")
+    ) {
+      const dirResult = parseDirection(children, idx);
+      if (dirResult.ok) {
+        direction = dirResult.value.direction;
+        idx = dirResult.value.nextIdx;
+      }
+    }
+  }
+
+  idx = Utils.Ast.skipComma(children, idx);
+
+  const interpolationResult = Utils.parseColorInterpolationMethod(children, idx);
+  if (interpolationResult) {
+    colorInterpolationMethod = interpolationResult.method;
+    idx = interpolationResult.nextIndex;
+    idx = Utils.Ast.skipComma(children, idx);
+  }
+
+  const stopGroups = Utils.Ast.splitNodesByComma(children, { startIndex: idx });
+
+  const colorStops: Type.ColorStop[] = [];
+  const issues: Type.Issue[] = [];
+
+  for (const stopNodes of stopGroups) {
+    const stopResult = ColorStop.fromNodes(stopNodes);
+    if (stopResult.ok) {
+      colorStops.push(stopResult.value);
+    } else {
+      issues.push(...stopResult.issues);
+    }
+  }
+
+  if (issues.length > 0) {
+    return { ok: false, issues };
+  }
+
+  if (colorStops.length < 2) {
+    return parseErr(createError("invalid-value", "linear-gradient requires at least 2 color stops"));
+  }
+
+  return parseOk({
+    kind: "linear",
+    direction,
+    colorInterpolationMethod,
+    colorStops,
+    repeating: isRepeating,
+  });
+}
+
+/**
+ * Parse a CSS linear gradient value into IR.
+ *
+ * @see https://developer.mozilla.org/en-US/docs/Web/CSS/gradient/linear-gradient
+ */
+export function parse(css: string): ParseResult<Type.LinearGradient> {
+  const astResult = Utils.Ast.parseCssString(css, "value");
+  if (!astResult.ok) {
+    return astResult;
+  }
+
+  const funcResult = Utils.Ast.findFunctionNode(astResult.value, ["linear-gradient", "repeating-linear-gradient"]);
+  if (!funcResult.ok) {
+    return funcResult;
+  }
+
+  return fromFunction(funcResult.value);
+}
+
+
+=== File: packages/b_parsers/src/gradient/radial.ts ===
+// b_path:: packages/b_parsers/src/gradient/radial.ts
+import type * as csstree from "css-tree";
+import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
+import type * as Type from "@b/types";
+import type { RadialShape, RadialSizeKeyword } from "@b/keywords";
+import { parseLengthPercentageNode } from "../length";
+import { parsePosition2D } from "../position";
+import * as ColorStop from "./color-stop";
+import * as Utils from "../utils";
+
+/**
+ * Parse radial gradient shape and size from nodes.
+ */
+function parseShapeAndSize(
+  nodes: csstree.CssNode[],
+  startIdx: number,
+): ParseResult<{
+  shape?: RadialShape;
+  size?: Type.RadialGradientSize;
+  nextIdx: number;
+}> {
+  let idx = startIdx;
+  let shape: RadialShape | undefined;
+  let size: Type.RadialGradientSize | undefined;
+
+  const node = nodes[idx];
+  if (!node) {
+    return parseOk({ nextIdx: idx });
+  }
+
+  if (node.type === "Identifier") {
+    const value = node.name.toLowerCase();
+
+    if (value === "circle" || value === "ellipse") {
+      shape = value as RadialShape;
+      idx++;
+
+      const nextNode = nodes[idx];
+      if (nextNode?.type === "Identifier") {
+        const sizeKeyword = nextNode.name.toLowerCase();
+        if (["closest-side", "closest-corner", "farthest-side", "farthest-corner"].includes(sizeKeyword)) {
+          size = {
+            kind: "keyword",
+            value: sizeKeyword as RadialSizeKeyword,
+          };
+          idx++;
+        }
+      } else if (nextNode?.type === "Dimension" || nextNode?.type === "Percentage") {
+        if (shape === "circle") {
+          const radiusResult = parseLengthPercentageNode(nextNode);
+          if (radiusResult.ok) {
+            size = {
+              kind: "circle-explicit",
+              radius: radiusResult.value,
+            };
+            idx++;
+          }
+        } else {
+          const rxResult = parseLengthPercentageNode(nextNode);
+          if (rxResult.ok) {
+            idx++;
+            const ryNode = nodes[idx];
+            if (ryNode && (ryNode.type === "Dimension" || ryNode.type === "Percentage")) {
+              const ryResult = parseLengthPercentageNode(ryNode);
+              if (ryResult.ok) {
+                size = {
+                  kind: "ellipse-explicit",
+                  radiusX: rxResult.value,
+                  radiusY: ryResult.value,
+                };
+                idx++;
+              }
+            }
+          }
+        }
+      }
+    } else if (["closest-side", "closest-corner", "farthest-side", "farthest-corner"].includes(value)) {
+      size = {
+        kind: "keyword",
+        value: value as RadialSizeKeyword,
+      };
+      idx++;
+
+      const nextNode = nodes[idx];
+      if (nextNode?.type === "Identifier") {
+        const shapeValue = nextNode.name.toLowerCase();
+        if (shapeValue === "circle" || shapeValue === "ellipse") {
+          shape = shapeValue as RadialShape;
+          idx++;
+        }
+      }
+    }
+  } else if (node.type === "Dimension" || node.type === "Percentage") {
+    const firstResult = parseLengthPercentageNode(node);
+    if (firstResult.ok) {
+      idx++;
+      const secondNode = nodes[idx];
+
+      if (secondNode && (secondNode.type === "Dimension" || secondNode.type === "Percentage")) {
+        const secondResult = parseLengthPercentageNode(secondNode);
+        if (secondResult.ok) {
+          size = {
+            kind: "ellipse-explicit",
+            radiusX: firstResult.value,
+            radiusY: secondResult.value,
+          };
+          idx++;
+        }
+      } else {
+        size = {
+          kind: "circle-explicit",
+          radius: firstResult.value,
+        };
+      }
+    }
+  }
+
+  return parseOk({ shape, size, nextIdx: idx });
+}
+
+/**
+ * Parse radial gradient from CSS function AST.
+ *
+ * @see https://developer.mozilla.org/en-US/docs/Web/CSS/gradient/radial-gradient
+ */
+export function fromFunction(fn: csstree.FunctionNode): ParseResult<Type.RadialGradient> {
+  const functionName = fn.name.toLowerCase();
+  const isRepeating = functionName === "repeating-radial-gradient";
+
+  if (!isRepeating && functionName !== "radial-gradient") {
+    return parseErr(
+      createError("invalid-value", `Expected radial-gradient or repeating-radial-gradient, got: ${functionName}`),
+    );
+  }
+
+  const children = fn.children.toArray();
+  if (children.length === 0) {
+    return parseErr(createError("missing-value", "radial-gradient requires at least 2 color stops"));
+  }
+
+  let shape: RadialShape | undefined;
+  let size: Type.RadialGradientSize | undefined;
+  let position: Type.Position2D | undefined;
+  let colorInterpolationMethod: Type.ColorInterpolationMethod | undefined;
+
+  let idx = 0;
+
+  const shapeAndSizeResult = parseShapeAndSize(children, idx);
+  if (shapeAndSizeResult.ok) {
+    shape = shapeAndSizeResult.value.shape;
+    size = shapeAndSizeResult.value.size;
+    idx = shapeAndSizeResult.value.nextIdx;
+  }
+
+  const atNode = children[idx];
+  if (atNode?.type === "Identifier" && atNode.name.toLowerCase() === "at") {
+    idx++;
+    const positionNodes: csstree.CssNode[] = [];
+
+    while (idx < children.length) {
+      const node = children[idx];
+      if (!node) break;
+      if (node.type === "Operator" && node.value === ",") break;
+      if (node.type === "Identifier" && node.name.toLowerCase() === "in") break;
+
+      positionNodes.push(node);
+      idx++;
+    }
+
+    if (positionNodes.length > 0) {
+      const posResult = parsePosition2D(positionNodes, 0);
+      if (posResult.ok) {
+        position = posResult.value.position;
+      }
+    }
+  }
+
+  idx = Utils.Ast.skipComma(children, idx);
+
+  const interpolationResult = Utils.parseColorInterpolationMethod(children, idx);
+  if (interpolationResult) {
+    colorInterpolationMethod = interpolationResult.method;
+    idx = interpolationResult.nextIndex;
+    idx = Utils.Ast.skipComma(children, idx);
+  }
+
+  const stopGroups = Utils.Ast.splitNodesByComma(children, { startIndex: idx });
+
+  const colorStops: Type.ColorStop[] = [];
+  const issues: Type.Issue[] = [];
+
+  for (const stopNodes of stopGroups) {
+    const stopResult = ColorStop.fromNodes(stopNodes);
+    if (stopResult.ok) {
+      colorStops.push(stopResult.value);
+    } else {
+      issues.push(...stopResult.issues);
+    }
+  }
+
+  if (issues.length > 0) {
+    return { ok: false, issues };
+  }
+
+  if (colorStops.length < 2) {
+    return parseErr(createError("invalid-value", "radial-gradient requires at least 2 color stops"));
+  }
+
+  return parseOk({
+    kind: "radial",
+    shape,
+    size,
+    position,
+    colorInterpolationMethod,
+    colorStops,
+    repeating: isRepeating,
+  });
+}
+
+/**
+ * Parse a CSS radial gradient value into IR.
+ *
+ * @see https://developer.mozilla.org/en-US/docs/Web/CSS/gradient/radial-gradient
+ */
+export function parse(css: string): ParseResult<Type.RadialGradient> {
+  const astResult = Utils.Ast.parseCssString(css, "value");
+  if (!astResult.ok) {
+    return astResult;
+  }
+
+  const funcResult = Utils.Ast.findFunctionNode(astResult.value, ["radial-gradient", "repeating-radial-gradient"]);
+  if (!funcResult.ok) {
+    return funcResult;
+  }
+
+  return fromFunction(funcResult.value);
+}
+
+
+=== File: packages/b_parsers/src/index.ts ===
+// b_path:: packages/b_parsers/src/index.ts
+export * as Angle from "./angle";
+export * as Color from "./color";
+export * as Gradient from "./gradient";
+export * as Length from "./length";
+export * as Position from "./position";
+export * as Url from "./url";
+
+
+=== File: packages/b_parsers/src/length.ts ===
+// b_path:: packages/b_parsers/src/length.ts
+import type * as csstree from "css-tree";
+import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
+import type * as Type from "@b/types";
+import * as Unit from "@b/units";
+
+/**
+ * Parse length AST node from css-tree.
+ *
+ * @see https://drafts.csswg.org/css-values-4/#lengths
+ */
+export function parseLengthNode(node: csstree.CssNode): ParseResult<Type.Length> {
+  if (node.type !== "Dimension") {
+    return parseErr(createError("invalid-syntax", `Expected length dimension, but got node type ${node.type}`));
+  }
+
+  const value = Number.parseFloat(node.value);
+  if (Number.isNaN(value)) {
+    return parseErr(createError("invalid-value", "Invalid length value: not a number"));
+  }
+
+  const allLengthUnits = [...Unit.ABSOLUTE_LENGTH_UNITS, ...Unit.FONT_LENGTH_UNITS, ...Unit.VIEWPORT_LENGTH_UNITS];
+
+  if (!allLengthUnits.includes(node.unit as (typeof allLengthUnits)[number])) {
+    return parseErr(createError("invalid-value", `Invalid length unit: '${node.unit}'`));
+  }
+
+  return parseOk({
+    value,
+    unit: node.unit as (typeof allLengthUnits)[number],
+  });
+}
+
+/**
+ * Parse length or percentage AST node from css-tree.
+ *
+ * @see https://drafts.csswg.org/css-values-4/#percentage-value
+ */
+export function parseLengthPercentageNode(node: csstree.CssNode): ParseResult<Type.LengthPercentage> {
+  if (node.type === "Number") {
+    const val = Number.parseFloat(node.value);
+    if (val !== 0) {
+      return parseErr(createError("invalid-value", "Unitless values must be zero"));
+    }
+    return parseOk({ value: 0, unit: "px" });
+  }
+
+  if (node.type === "Dimension") {
+    const value = Number.parseFloat(node.value);
+    if (Number.isNaN(value)) {
+      return parseErr(createError("invalid-value", "Invalid length value: not a number"));
+    }
+
+    const allLengthUnits = [...Unit.ABSOLUTE_LENGTH_UNITS, ...Unit.FONT_LENGTH_UNITS, ...Unit.VIEWPORT_LENGTH_UNITS];
+
+    if (!allLengthUnits.includes(node.unit as (typeof allLengthUnits)[number])) {
+      return parseErr(createError("invalid-value", `Invalid length unit: '${node.unit}'`));
+    }
+
+    return parseOk({
+      value,
+      unit: node.unit as (typeof allLengthUnits)[number],
+    });
+  }
+
+  if (node.type === "Percentage") {
+    const value = Number.parseFloat(node.value);
+    if (Number.isNaN(value)) {
+      return parseErr(createError("invalid-value", "Invalid percentage value: not a number"));
+    }
+    return parseOk({ value, unit: Unit.PERCENTAGE_UNIT });
+  }
+
+  return parseErr(createError("invalid-syntax", `Expected length or percentage, but got node type ${node.type}`));
+}
+
+/**
+ * Parse number AST node from css-tree.
+ *
+ * @see https://drafts.csswg.org/css-values-4/#numbers
+ */
+export function parseNumberNode(node: csstree.CssNode): ParseResult<number> {
+  if (node.type !== "Number") {
+    return parseErr(createError("invalid-syntax", `Expected number, but got node type ${node.type}`));
+  }
+
+  const value = Number.parseFloat(node.value);
+  if (Number.isNaN(value)) {
+    return parseErr(createError("invalid-value", "Invalid number value: not a number"));
+  }
+
+  return parseOk(value);
+}
+
+
+=== File: packages/b_parsers/src/position.ts ===
+// b_path:: packages/b_parsers/src/position.ts
+import type * as csstree from "css-tree";
+import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
+import type * as Type from "@b/types";
+import { parseLengthPercentageNode } from "./length";
+
+/**
+ * Parse position value from AST node (keyword, length, or percentage).
+ *
+ * @see https://drafts.csswg.org/css-backgrounds-3/#typedef-bg-position
+ */
+export function parsePositionValueNode(node: csstree.CssNode): ParseResult<Type.PositionValue> {
+  if (node.type === "Identifier") {
+    const keyword = node.name.toLowerCase();
+    if (["center", "left", "right", "top", "bottom"].includes(keyword)) {
+      return parseOk(keyword as Type.PositionValue);
+    }
+    return parseErr(createError("invalid-value", `Invalid position keyword: '${keyword}'`));
+  }
+
+  const lengthResult = parseLengthPercentageNode(node);
+  if (lengthResult.ok) {
+    return lengthResult;
+  }
+
+  // Propagate errors from length parser
+  return lengthResult;
+}
+
+/**
+ * Parse 2D position from array of AST nodes.
+ *
+ * @see https://drafts.csswg.org/css-backgrounds-3/#typedef-bg-position
+ */
+export function parsePosition2D(
+  nodes: csstree.CssNode[],
+  startIdx: number,
+): ParseResult<{ position: Type.Position2D; nextIdx: number }> {
+  let idx = startIdx;
+
+  const positionValues: Type.PositionValue[] = [];
+
+  if (idx >= nodes.length) {
+    return parseErr(createError("invalid-syntax", "Expected position value"));
+  }
+
+  const firstNode = nodes[idx];
+  if (!firstNode) {
+    return parseErr(createError("invalid-syntax", "Missing first position value"));
+  }
+
+  const firstValue = parsePositionValueNode(firstNode);
+  if (!firstValue.ok) {
+    return firstValue;
+  }
+  positionValues.push(firstValue.value);
+  idx++;
+
+  if (idx < nodes.length) {
+    const secondNode = nodes[idx];
+    if (secondNode) {
+      const secondValue = parsePositionValueNode(secondNode);
+      if (secondValue.ok) {
+        positionValues.push(secondValue.value);
+        idx++;
+      }
+    }
+  }
+
+  let position: Type.Position2D;
+
+  if (positionValues.length === 1) {
+    const val = positionValues[0];
+    if (!val) {
+      return parseErr(createError("invalid-syntax", "Missing position value"));
+    }
+    if (typeof val === "string") {
+      if (val === "top" || val === "bottom") {
+        position = { horizontal: "center", vertical: val };
+      } else {
+        position = { horizontal: val, vertical: "center" };
+      }
+    } else {
+      position = { horizontal: val, vertical: "center" };
+    }
+  } else {
+    const h = positionValues[0];
+    const v = positionValues[1];
+    if (!h || !v) {
+      return parseErr(createError("invalid-syntax", "Missing position values"));
+    }
+    position = { horizontal: h, vertical: v };
+  }
+
+  return parseOk({ position, nextIdx: idx });
+}
+
+/**
+ * Parse optional "at <position>" clause in gradients.
+ *
+ * @see https://drafts.csswg.org/css-images-4/#radial-gradients
+ */
+export function parseAtPosition(
+  children: csstree.CssNode[],
+  startIdx: number,
+): ParseResult<{ position?: Type.Position2D; nextIdx: number }> {
+  let idx = startIdx;
+
+  if (idx >= children.length) {
+    return parseOk({ nextIdx: idx });
+  }
+
+  const atNode = children[idx];
+  if (atNode?.type !== "Identifier" || atNode.name.toLowerCase() !== "at") {
+    return parseOk({ nextIdx: idx });
+  }
+
+  idx++;
+
+  const positionNodes = children.slice(idx);
+  if (positionNodes.length === 0) {
+    return parseErr(createError("invalid-syntax", "Expected position after 'at'"));
+  }
+
+  const posResult = parsePosition2D(positionNodes, 0);
+  if (!posResult.ok) return posResult;
+
+  return parseOk({
+    position: posResult.value.position,
+    nextIdx: idx + posResult.value.nextIdx,
+  });
+}
+
+
+=== File: packages/b_parsers/src/url.ts ===
+// b_path:: packages/b_parsers/src/url.ts
+import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
+import type { Url } from "@b/types";
+
+/**
+ * Parse a CSS url() function.
+ *
+ * @see https://developer.mozilla.org/en-US/docs/Web/CSS/url
+ *
+ * @example
+ * ```ts
+ * parseUrl("url(image.png)")
+ * parseUrl('url("image.png")')
+ * parseUrl("url('image.png')")
+ * ```
+ */
+export function parseUrl(input: string): ParseResult<Url> {
+  const trimmed = input.trim();
+
+  // Must start with url(
+  if (!trimmed.startsWith("url(")) {
+    return parseErr(createError("invalid-syntax", `Expected url() function, got: ${input}`));
+  }
+
+  // Must end with )
+  if (!trimmed.endsWith(")")) {
+    return parseErr(createError("invalid-syntax", `Invalid url() function: missing closing parenthesis in "${input}"`));
+  }
+
+  // Extract content between url( and )
+  const content = trimmed.slice(4, -1).trim();
+
+  // Handle quoted strings
+  const quotedMatch = content.match(/^(['"])(.*)\1$/);
+  if (quotedMatch) {
+    return parseOk({
+      kind: "url",
+      value: quotedMatch[2],
+    });
+  }
+
+  // Handle unquoted URL
+  if (content) {
+    return parseOk({
+      kind: "url",
+      value: content,
+    });
+  }
+
+  return parseErr(createError("invalid-syntax", `Empty url() function in "${input}"`));
+}
+
+
+=== File: packages/b_parsers/src/utils/ast/functions.ts ===
+// b_path:: packages/b_parsers/src/utils/ast/functions.ts
+import * as csstree from "css-tree";
+import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
+
+/**
+ * Find a function node by name in a CSS AST.
+ *
+ * Walks the AST to find the first function node with the specified name.
+ * Function name matching is case-insensitive to match CSS spec behavior.
+ *
+ * @param ast - CSS AST to search
+ * @param functionNames - Function name(s) to search for (case-insensitive)
+ * @returns Result containing FunctionNode or error message
+ *
+ * @example
+ * ```typescript
+ * const result = findFunctionNode(ast, ["linear-gradient", "repeating-linear-gradient"]);
+ * if (result.ok) {
+ *   console.log(result.value.name); // "linear-gradient"
+ * }
+ * ```
+ */
+export function findFunctionNode(
+  ast: csstree.CssNode,
+  functionNames: string | string[],
+): ParseResult<csstree.FunctionNode> {
+  const names = Array.isArray(functionNames) ? functionNames : [functionNames];
+  const lowerNames = names.map((name) => name.toLowerCase());
+  let foundNode: csstree.FunctionNode | null = null;
+
+  try {
+    csstree.walk(ast, {
+      visit: "Function",
+      enter(node: csstree.FunctionNode) {
+        if (lowerNames.includes(node.name.toLowerCase())) {
+          foundNode = node;
+        }
+      },
+    });
+
+    if (!foundNode) {
+      return parseErr(createError("missing-value", `No function found with name(s): ${names.join(", ")}`));
+    }
+
+    return parseOk(foundNode);
+  } catch (e) {
+    return parseErr(
+      createError("invalid-syntax", `Failed to search AST: ${e instanceof Error ? e.message : String(e)}`),
+    );
+  }
+}
+
+/**
+ * Parse CSS string into AST with error handling.
+ *
+ * @param css - CSS string to parse
+ * @param context - CSS parsing context ("value", "declaration", etc.)
+ * @returns Result containing CSS AST or error message
+ *
+ * @example
+ * ```typescript
+ * const result = parseCssString("linear-gradient(red, blue)", "value");
+ * if (result.ok) {
+ *   // Work with AST
+ * }
+ * ```
+ */
+export function parseCssString(css: string, context: "value" | "declaration" = "value"): ParseResult<csstree.CssNode> {
+  try {
+    const ast = csstree.parse(css, { context });
+    return parseOk(ast);
+  } catch (e) {
+    return parseErr(
+      createError("invalid-syntax", `Failed to parse CSS: ${e instanceof Error ? e.message : String(e)}`),
+    );
+  }
+}
+
+
+=== File: packages/b_parsers/src/utils/ast/index.ts ===
+// b_path:: packages/b_parsers/src/utils/ast/index.ts
+export * from "./functions";
+export * from "./split-by-comma";
+
+
+=== File: packages/b_parsers/src/utils/ast/split-by-comma.ts ===
+// b_path:: packages/b_parsers/src/utils/ast/split-by-comma.ts
+import type * as csstree from "css-tree";
+
+export interface SplitByCommaOptions {
+  /** Start index in nodes array (default: 0) */
+  startIndex?: number;
+  /** Allow empty groups between commas (default: false) */
+  allowEmpty?: boolean;
+  /** Skip whitespace nodes (default: true) */
+  trimWhitespace?: boolean;
+}
+
+/**
+ * Split array of AST nodes by comma operators.
+ *
+ * Used for parsing comma-separated function arguments.
+ * Returns array of node groups, where each group is the nodes between commas.
+ *
+ * @param nodes - Array of AST nodes to split
+ * @param options - Parsing options
+ * @returns Array of node groups (each group is nodes between commas)
+ *
+ * @example
+ * ```typescript
+ * // For linear-gradient(45deg, red, blue 50%, green)
+ * // After parsing direction, start from index 2
+ * const groups = splitNodesByComma(children, { startIndex: 2 });
+ * // Returns: [[red], [blue, 50%], [green]]
+ * ```
+ */
+export function splitNodesByComma(nodes: csstree.CssNode[], options: SplitByCommaOptions = {}): csstree.CssNode[][] {
+  const { startIndex = 0, allowEmpty = false, trimWhitespace = true } = options;
+
+  const groups: csstree.CssNode[][] = [];
+  let currentGroup: csstree.CssNode[] = [];
+
+  for (let i = startIndex; i < nodes.length; i++) {
+    const node = nodes[i];
+    if (!node) continue;
+
+    if (trimWhitespace && node.type === "WhiteSpace") {
+      continue;
+    }
+
+    if (node.type === "Operator" && "value" in node && node.value === ",") {
+      if (currentGroup.length > 0 || allowEmpty) {
+        groups.push(currentGroup);
+        currentGroup = [];
+      }
+    } else {
+      currentGroup.push(node);
+    }
+  }
+
+  if (currentGroup.length > 0 || allowEmpty) {
+    groups.push(currentGroup);
+  }
+
+  return groups;
+}
+
+/**
+ * Check if a comma exists at the given index.
+ *
+ * @param nodes - Array of AST nodes
+ * @param index - Index to check
+ * @returns True if node at index is a comma operator
+ */
+export function isCommaAt(nodes: csstree.CssNode[], index: number): boolean {
+  const node = nodes[index];
+  return Boolean(node && node.type === "Operator" && "value" in node && node.value === ",");
+}
+
+/**
+ * Skip comma at index if present, return next index.
+ *
+ * @param nodes - Array of AST nodes
+ * @param index - Current index
+ * @returns Index after comma if present, otherwise same index
+ *
+ * @example
+ * ```typescript
+ * let idx = 5;
+ * idx = skipComma(children, idx); // Skips comma if at index 5
+ * ```
+ */
+export function skipComma(nodes: csstree.CssNode[], index: number): number {
+  return isCommaAt(nodes, index) ? index + 1 : index;
+}
+
+
+=== File: packages/b_parsers/src/utils/color-interpolation.ts ===
+// b_path:: packages/b_parsers/src/utils/color-interpolation.ts
+import type * as csstree from "css-tree";
+import type { ColorInterpolationMethod } from "@b/types";
+import type { HueInterpolationMethod } from "@b/keywords";
+
+/**
+ * Parse color interpolation method from gradient nodes.
+ *
+ * Handles syntax: `in <color-space> [<hue-interpolation-method>]`
+ *
+ * @example
+ * // "in hsl"
+ * // "in hsl longer hue"
+ * // "in oklch shorter hue"
+ *
+ * @param nodes - Array of CSS AST nodes
+ * @param startIndex - Index to start parsing from (should point to "in" keyword)
+ * @returns Color interpolation method and next index, or undefined if not found
+ */
+export function parseColorInterpolationMethod(
+  nodes: csstree.CssNode[],
+  startIndex: number,
+): { method: ColorInterpolationMethod; nextIndex: number } | undefined {
+  let idx = startIndex;
+  const node = nodes[idx];
+
+  // Must start with "in" keyword
+  if (!node || node.type !== "Identifier" || node.name.toLowerCase() !== "in") {
+    return undefined;
+  }
+
+  idx++;
+  const spaceNode = nodes[idx];
+
+  // Must have color space identifier
+  if (!spaceNode || spaceNode.type !== "Identifier") {
+    return undefined;
+  }
+
+  const space = spaceNode.name.toLowerCase();
+  let method: ColorInterpolationMethod = { colorSpace: space } as ColorInterpolationMethod;
+  idx++;
+
+  // Optional: hue interpolation method (e.g., "longer hue", "shorter hue")
+  const hueNode = nodes[idx];
+  if (hueNode?.type === "Identifier") {
+    const hueWord1 = hueNode.name.toLowerCase();
+
+    if (hueWord1 === "longer" || hueWord1 === "shorter" || hueWord1 === "increasing" || hueWord1 === "decreasing") {
+      idx++;
+      const hueNode2 = nodes[idx];
+
+      if (hueNode2?.type === "Identifier" && hueNode2.name.toLowerCase() === "hue") {
+        method = {
+          colorSpace: space,
+          hueInterpolationMethod: `${hueWord1} hue` as HueInterpolationMethod,
+        } as ColorInterpolationMethod;
+        idx++;
+      }
+    }
+  }
+
+  return { method, nextIndex: idx };
+}
+
+
+=== File: packages/b_parsers/src/utils/index.ts ===
+// b_path:: packages/b_parsers/src/utils/index.ts
+export * as Ast from "./ast";
+export * from "./color-interpolation";
+
+
+=== File: packages/b_parsers/tsup.config.ts ===
+// b_path:: packages/b_parsers/tsup.config.ts
+import { defineConfig } from "tsup";
+
+export default defineConfig({
+  entry: ["src/index.ts"],
+  format: ["cjs", "esm"],
+  dts: true,
+  splitting: false,
+  sourcemap: true,
+  clean: true,
+  treeshake: true,
+});
+
+
+=== File: packages/b_parsers/vite.config.ts ===
+// b_path:: packages/b_parsers/vite.config.ts
+import { defineConfig } from "vite";
+
+import tsconfigPaths from "vite-tsconfig-paths";
+
+// https://vite.dev/config/
+export default defineConfig({
+  plugins: [tsconfigPaths()],
+});
+
+
+=== File: packages/b_types/src/angle.ts ===
+// b_path:: packages/b_types/src/angle.ts
+import { z } from "zod";
+import { angleUnitSchema } from "@b/units";
+
+/**
+ * @see https://developer.mozilla.org/en-US/docs/Web/CSS/angle
+ */
+export const angleSchema = z.object({
+  value: z.number(),
+  unit: angleUnitSchema.optional(),
+});
+
+export type Angle = z.infer<typeof angleSchema>;
+
+
+=== File: packages/b_types/src/color-interpolation-method.ts ===
+// b_path:: packages/b_types/src/color-interpolation-method.ts
+import { z } from "zod";
+import { hueInterpolationMethodSchema, polarColorSpaceSchema, rectangularColorSpaceSchema } from "@b/keywords";
+
+/**
+ * @see https://developer.mozilla.org/en-US/docs/Web/CSS/color-interpolation-method
+ */
+export const colorInterpolationMethodSchema = z.union([
+  z.object({
+    colorSpace: rectangularColorSpaceSchema,
+  }),
+  z.object({
+    colorSpace: polarColorSpaceSchema,
+    hueInterpolationMethod: hueInterpolationMethodSchema.optional(),
+  }),
+]);
+
+export type ColorInterpolationMethod = z.infer<typeof colorInterpolationMethodSchema>;
+
+
+=== File: packages/b_types/src/color-stop.ts ===
+// b_path:: packages/b_types/src/color-stop.ts
+import { z } from "zod";
+import { angleSchema } from "./angle";
+import { colorSchema } from "./color";
+import { lengthPercentageSchema } from "./length-percentage";
+import { percentageSchema } from "./percentage";
+
+/**
+ * Angle or percentage value (used in conic gradients)
+ * @see https://developer.mozilla.org/en-US/docs/Web/CSS/gradient/conic-gradient
+ */
+export const anglePercentageSchema = z.union([angleSchema, percentageSchema]);
+
+export type AnglePercentage = z.infer<typeof anglePercentageSchema>;
+
+/**
+ * @see https://developer.mozilla.org/en-US/docs/Web/CSS/gradient/linear-gradient#color-stops
+ */
+export const colorStopSchema = z.object({
+  color: colorSchema,
+  position: z
+    .union([
+      z.union([lengthPercentageSchema, angleSchema]),
+      z.tuple([z.union([lengthPercentageSchema, angleSchema]), z.union([lengthPercentageSchema, angleSchema])]),
+    ])
+    .optional(),
+});
+
+export type ColorStop = z.infer<typeof colorStopSchema>;
+
+/**
+ * Angular color hint - position hint between color stops in conic gradients
+ * @see https://developer.mozilla.org/en-US/docs/Web/CSS/gradient/conic-gradient
+ */
+export const angularColorHintSchema = anglePercentageSchema;
+
+export type AngularColorHint = z.infer<typeof angularColorHintSchema>;
+
+export const colorStopListSchema = z.array(colorStopSchema).min(2);
+
+export type ColorStopList = z.infer<typeof colorStopListSchema>;
+
+
+=== File: packages/b_types/src/color/color-function.ts ===
+// b_path:: packages/b_types/src/color/color-function.ts
+import { z } from "zod";
+import { cssValueSchema } from "../values";
+
+/**
+ * color() function representation using CssValue for flexible value types
+ * Supports literals, variables (var()), keywords (none), and relative color syntax
+ * @see https://developer.mozilla.org/en-US/docs/Web/CSS/color_value/color
+ */
+export const colorFunctionSchema = z.object({
+  kind: z.literal("color"),
+  colorSpace: z.enum([
+    "srgb",
+    "srgb-linear",
+    "display-p3",
+    "a98-rgb",
+    "prophoto-rgb",
+    "rec2020",
+    "xyz",
+    "xyz-d50",
+    "xyz-d65",
+  ]),
+  channels: z.tuple([cssValueSchema, cssValueSchema, cssValueSchema]),
+  alpha: cssValueSchema.optional(),
+});
+
+export type ColorFunction = z.infer<typeof colorFunctionSchema>;
+
+
+=== File: packages/b_types/src/color/color.ts ===
+// b_path:: packages/b_types/src/color/color.ts
+import { z } from "zod";
+import { hexColorSchema } from "./hex";
+import { namedColorSchema } from "./named";
+import { rgbColorSchema } from "./rgb";
+import { hslColorSchema } from "./hsl";
+import { hwbColorSchema } from "./hwb";
+import { labColorSchema } from "./lab";
+import { lchColorSchema } from "./lch";
+import { oklabColorSchema } from "./oklab";
+import { oklchColorSchema } from "./oklch";
+import { specialColorSchema } from "./special";
+import { colorFunctionSchema } from "./color-function";
+
+/**
+ * @see https://developer.mozilla.org/en-US/docs/Web/CSS/color_value
+ */
+export const colorSchema = z.union([
+  hexColorSchema,
+  namedColorSchema,
+  rgbColorSchema,
+  hslColorSchema,
+  hwbColorSchema,
+  labColorSchema,
+  lchColorSchema,
+  oklabColorSchema,
+  oklchColorSchema,
+  specialColorSchema,
+  colorFunctionSchema,
+]);
+
+export type Color = z.infer<typeof colorSchema>;
+
+
+=== File: packages/b_types/src/color/hex.ts ===
+// b_path:: packages/b_types/src/color/hex.ts
+import { z } from "zod";
+
+/**
+ * Hex color schema supporting 3, 4, 6, and 8 digit formats (case-insensitive).
+ * - #rgb (3 digits)
+ * - #rgba (4 digits)
+ * - #rrggbb (6 digits)
+ * - #rrggbbaa (8 digits)
+ *
+ * @see https://developer.mozilla.org/en-US/docs/Web/CSS/hex-color
+ */
+export const hexColorSchema = z.object({
+  kind: z.literal("hex"),
+  value: z.string().regex(/^#([0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/i),
+});
+
+export type HexColor = z.infer<typeof hexColorSchema>;
+
+
+=== File: packages/b_types/src/color/hsl.ts ===
+// b_path:: packages/b_types/src/color/hsl.ts
+import { z } from "zod";
+import { cssValueSchema } from "../values";
+
+/**
+ * HSL color representation using CssValue for flexible value types
+ * Supports literals, variables (var()), keywords (none), and relative color syntax
+ * @see https://developer.mozilla.org/en-US/docs/Web/CSS/color_value/hsl
+ */
+export const hslColorSchema = z.object({
+  kind: z.literal("hsl"),
+  h: cssValueSchema,
+  s: cssValueSchema,
+  l: cssValueSchema,
+  alpha: cssValueSchema.optional(),
+});
+
+export type HSLColor = z.infer<typeof hslColorSchema>;
+
+
+=== File: packages/b_types/src/color/hwb.ts ===
+// b_path:: packages/b_types/src/color/hwb.ts
+import { z } from "zod";
+import { cssValueSchema } from "../values";
+
+/**
+ * HWB color representation using CssValue for flexible value types
+ * Supports literals, variables (var()), keywords (none), and relative color syntax
+ * @see https://developer.mozilla.org/en-US/docs/Web/CSS/color_value/hwb
+ */
+export const hwbColorSchema = z.object({
+  kind: z.literal("hwb"),
+  h: cssValueSchema,
+  w: cssValueSchema,
+  b: cssValueSchema,
+  alpha: cssValueSchema.optional(),
+});
+
+export type HWBColor = z.infer<typeof hwbColorSchema>;
+
+
+=== File: packages/b_types/src/color/index.ts ===
+// b_path:: packages/b_types/src/color/index.ts
+export * from "./color-function";
+export * from "./color";
+export * from "./hex";
+export * from "./hsl";
+export * from "./hwb";
+export * from "./lab";
+export * from "./lch";
+export * from "./named";
+export * from "./oklab";
+export * from "./oklch";
+export * from "./rgb";
+export * from "./special";
+
+
+=== File: packages/b_types/src/color/lab.ts ===
+// b_path:: packages/b_types/src/color/lab.ts
+import { z } from "zod";
+import { cssValueSchema } from "../values";
+
+/**
+ * LAB color representation using CssValue for flexible value types
+ * Supports literals, variables (var()), keywords (none), and relative color syntax
+ * @see https://developer.mozilla.org/en-US/docs/Web/CSS/color_value/lab
+ */
+export const labColorSchema = z.object({
+  kind: z.literal("lab"),
+  l: cssValueSchema,
+  a: cssValueSchema,
+  b: cssValueSchema,
+  alpha: cssValueSchema.optional(),
+});
+
+export type LABColor = z.infer<typeof labColorSchema>;
+
+
+=== File: packages/b_types/src/color/lch.ts ===
+// b_path:: packages/b_types/src/color/lch.ts
+import { z } from "zod";
+import { cssValueSchema } from "../values";
+
+/**
+ * LCH color representation using CssValue for flexible value types
+ * Supports literals, variables (var()), keywords (none), and relative color syntax
+ * @see https://drafts.csswg.org/css-color/#lch-colors
+ */
+export const lchColorSchema = z.object({
+  kind: z.literal("lch"),
+  l: cssValueSchema,
+  c: cssValueSchema,
+  h: cssValueSchema,
+  alpha: cssValueSchema.optional(),
+});
+
+export type LCHColor = z.infer<typeof lchColorSchema>;
+
+
+=== File: packages/b_types/src/color/named.ts ===
+// b_path:: packages/b_types/src/color/named.ts
+import { z } from "zod";
+import * as Keywords from "@b/keywords";
+
+/**
+ * @see https://developer.mozilla.org/en-US/docs/Web/CSS/named-color
+ */
+export const namedColorSchema = z.object({
+  kind: z.literal("named"),
+  name: Keywords.namedColorSchema,
+});
+
+export type NamedColor = z.infer<typeof namedColorSchema>;
+
+
+=== File: packages/b_types/src/color/oklab.ts ===
+// b_path:: packages/b_types/src/color/oklab.ts
+import { z } from "zod";
+import { cssValueSchema } from "../values";
+
+/**
+ * OKLab color representation using CssValue for flexible value types
+ * Supports literals, variables (var()), keywords (none), and relative color syntax
+ * @see https://developer.mozilla.org/en-US/docs/Web/CSS/color_value/oklab
+ */
+export const oklabColorSchema = z.object({
+  kind: z.literal("oklab"),
+  l: cssValueSchema,
+  a: cssValueSchema,
+  b: cssValueSchema,
+  alpha: cssValueSchema.optional(),
+});
+
+export type OKLabColor = z.infer<typeof oklabColorSchema>;
+
+
+=== File: packages/b_types/src/color/oklch.ts ===
+// b_path:: packages/b_types/src/color/oklch.ts
+import { z } from "zod";
+import { cssValueSchema } from "../values";
+
+/**
+ * OKLCH color representation using CssValue for flexible value types
+ * Supports literals, variables (var()), keywords (none), and relative color syntax
+ * @see https://developer.mozilla.org/en-US/docs/Web/CSS/color_value/oklch
+ */
+export const oklchColorSchema = z.object({
+  kind: z.literal("oklch"),
+  l: cssValueSchema,
+  c: cssValueSchema,
+  h: cssValueSchema,
+  alpha: cssValueSchema.optional(),
+});
+
+export type OKLCHColor = z.infer<typeof oklchColorSchema>;
+
+
+=== File: packages/b_types/src/color/rgb.ts ===
+// b_path:: packages/b_types/src/color/rgb.ts
+import { z } from "zod";
+import { cssValueSchema } from "../values";
+
+/**
+ * RGB color representation using CssValue for flexible value types
+ * Supports literals, variables (var()), keywords (none), and relative color syntax
+ * @see https://developer.mozilla.org/en-US/docs/Web/CSS/color_value/rgb
+ */
+export const rgbColorSchema = z.object({
+  kind: z.literal("rgb"),
+  r: cssValueSchema,
+  g: cssValueSchema,
+  b: cssValueSchema,
+  alpha: cssValueSchema.optional(),
+});
+
+export type RGBColor = z.infer<typeof rgbColorSchema>;
+
+
+=== File: packages/b_types/src/color/special.ts ===
+// b_path:: packages/b_types/src/color/special.ts
+import { z } from "zod";
+
+/**
+ * @see https://developer.mozilla.org/en-US/docs/Web/CSS/color_value#special_values
+ */
+export const specialColorSchema = z.object({
+  kind: z.literal("special"),
+  keyword: z.enum(["transparent", "currentcolor"]),
+});
+
+export type SpecialColor = z.infer<typeof specialColorSchema>;
+
+
+=== File: packages/b_types/src/gradient/conic.ts ===
+// b_path:: packages/b_types/src/gradient/conic.ts
+import { z } from "zod";
+import { angleSchema } from "../angle";
+import { colorStopListSchema } from "../color-stop";
+import { colorInterpolationMethodSchema } from "../color-interpolation-method";
+import { position2DSchema } from "../position";
+
+/**
+ * @see https://developer.mozilla.org/en-US/docs/Web/CSS/gradient/conic-gradient
+ */
+export const conicGradientSchema = z.object({
+  kind: z.literal("conic"),
+  fromAngle: angleSchema.optional(),
+  position: position2DSchema.optional(),
+  colorInterpolationMethod: colorInterpolationMethodSchema.optional(),
+  colorStops: colorStopListSchema,
+  repeating: z.boolean(),
+});
+
+export type ConicGradient = z.infer<typeof conicGradientSchema>;
+
+
+=== File: packages/b_types/src/gradient/direction.ts ===
+// b_path:: packages/b_types/src/gradient/direction.ts
+import { z } from "zod";
+import { gradientCornerSchema, gradientSideSchema } from "@b/keywords";
+import { angleSchema } from "../angle";
+
+/**
+ * @see https://developer.mozilla.org/en-US/docs/Web/CSS/gradient/linear-gradient
+ */
+export const gradientDirectionSchema = z.union([
+  z.object({
+    kind: z.literal("angle"),
+    value: angleSchema,
+  }),
+  z.object({
+    kind: z.literal("to-side"),
+    value: gradientSideSchema,
+  }),
+  z.object({
+    kind: z.literal("to-corner"),
+    value: gradientCornerSchema,
+  }),
+]);
+
+export type GradientDirection = z.infer<typeof gradientDirectionSchema>;
+
+
+=== File: packages/b_types/src/gradient/index.ts ===
+// b_path:: packages/b_types/src/gradient/index.ts
+export * from "./conic";
+export * from "./direction";
+export * from "./linear";
+export * from "./radial";
+export * from "./radial-size";
+
+import { z } from "zod";
+import { conicGradientSchema } from "./conic";
+import { linearGradientSchema } from "./linear";
+import { radialGradientSchema } from "./radial";
+
+export const gradientSchema = z.union([linearGradientSchema, radialGradientSchema, conicGradientSchema]);
+
+export type Gradient = z.infer<typeof gradientSchema>;
+
+
+=== File: packages/b_types/src/gradient/linear.ts ===
+// b_path:: packages/b_types/src/gradient/linear.ts
+import { z } from "zod";
+import { colorStopListSchema } from "../color-stop";
+import { colorInterpolationMethodSchema } from "../color-interpolation-method";
+import { gradientDirectionSchema } from "./direction";
+
+/**
+ * @see https://developer.mozilla.org/en-US/docs/Web/CSS/gradient/linear-gradient
+ */
+export const linearGradientSchema = z.object({
+  kind: z.literal("linear"),
+  direction: gradientDirectionSchema.optional(),
+  colorInterpolationMethod: colorInterpolationMethodSchema.optional(),
+  colorStops: colorStopListSchema,
+  repeating: z.boolean(),
+});
+
+export type LinearGradient = z.infer<typeof linearGradientSchema>;
+
+
+=== File: packages/b_types/src/gradient/radial-size.ts ===
+// b_path:: packages/b_types/src/gradient/radial-size.ts
+import { z } from "zod";
+import { radialSizeKeywordSchema } from "@b/keywords";
+import { lengthPercentageSchema } from "../length-percentage";
+
+/**
+ * @see https://developer.mozilla.org/en-US/docs/Web/CSS/gradient/radial-gradient
+ */
+export const radialGradientSizeSchema = z.union([
+  z.object({
+    kind: z.literal("keyword"),
+    value: radialSizeKeywordSchema,
+  }),
+  z.object({
+    kind: z.literal("circle-explicit"),
+    radius: lengthPercentageSchema,
+  }),
+  z.object({
+    kind: z.literal("ellipse-explicit"),
+    radiusX: lengthPercentageSchema,
+    radiusY: lengthPercentageSchema,
+  }),
+]);
+
+export type RadialGradientSize = z.infer<typeof radialGradientSizeSchema>;
+
+
+=== File: packages/b_types/src/gradient/radial.ts ===
+// b_path:: packages/b_types/src/gradient/radial.ts
+import { z } from "zod";
+import { radialShapeSchema } from "@b/keywords";
+import { colorStopListSchema } from "../color-stop";
+import { colorInterpolationMethodSchema } from "../color-interpolation-method";
+import { position2DSchema } from "../position";
+import { radialGradientSizeSchema } from "./radial-size";
+
+/**
+ * @see https://developer.mozilla.org/en-US/docs/Web/CSS/gradient/radial-gradient
+ */
+export const radialGradientSchema = z.object({
+  kind: z.literal("radial"),
+  shape: radialShapeSchema.optional(),
+  size: radialGradientSizeSchema.optional(),
+  position: position2DSchema.optional(),
+  colorInterpolationMethod: colorInterpolationMethodSchema.optional(),
+  colorStops: colorStopListSchema,
+  repeating: z.boolean(),
+});
+
+export type RadialGradient = z.infer<typeof radialGradientSchema>;
+
+
+=== File: packages/b_types/src/index.ts ===
+// b_path:: packages/b_types/src/index.ts
+/**
+ * b_types - Zod schemas and Result system
+ *
+ * @packageDocumentation
+ */
+
+export * from "./result";
+export * from "./values";
+export * from "./color";
+export * from "./angle";
+export * from "./length";
+export * from "./percentage";
+export * from "./length-percentage";
+export * from "./position";
+export * from "./url";
+export * from "./color-stop";
+export * from "./color-interpolation-method";
+export * from "./gradient";
+
+
+=== File: packages/b_types/src/length-percentage.ts ===
+// b_path:: packages/b_types/src/length-percentage.ts
+import { z } from "zod";
+import { lengthSchema } from "./length";
+import { percentageSchema } from "./percentage";
+
+/**
+ * @see https://developer.mozilla.org/en-US/docs/Web/CSS/length-percentage
+ */
+export const lengthPercentageSchema = z.union([lengthSchema, percentageSchema]);
+
+export type LengthPercentage = z.infer<typeof lengthPercentageSchema>;
+
+
+=== File: packages/b_types/src/length.ts ===
+// b_path:: packages/b_types/src/length.ts
+import { z } from "zod";
+import { lengthUnitSchema } from "@b/units";
+
+/**
+ * @see https://developer.mozilla.org/en-US/docs/Web/CSS/length
+ */
+export const lengthSchema = z.object({
+  value: z.number(),
+  unit: lengthUnitSchema,
+});
+
+export type Length = z.infer<typeof lengthSchema>;
+
+
+=== File: packages/b_types/src/percentage.ts ===
+// b_path:: packages/b_types/src/percentage.ts
+import { z } from "zod";
+import { percentageUnitSchema } from "@b/units";
+
+/**
+ * @see https://developer.mozilla.org/en-US/docs/Web/CSS/percentage
+ */
+export const percentageSchema = z.object({
+  value: z.number(),
+  unit: percentageUnitSchema,
+});
+
+export type Percentage = z.infer<typeof percentageSchema>;
+
+
+=== File: packages/b_types/src/position.ts ===
+// b_path:: packages/b_types/src/position.ts
+import { z } from "zod";
+import { positionKeywordSchema } from "@b/keywords";
+import { lengthPercentageSchema } from "./length-percentage";
+
+/**
+ * @see https://developer.mozilla.org/en-US/docs/Web/CSS/position_value
+ */
+export const positionValueSchema = z.union([positionKeywordSchema, lengthPercentageSchema]);
+
+export type PositionValue = z.infer<typeof positionValueSchema>;
+
+export const position2DSchema = z.object({
+  horizontal: positionValueSchema,
+  vertical: positionValueSchema,
+});
+
+export type Position2D = z.infer<typeof position2DSchema>;
+
+
+=== File: packages/b_types/src/result/core.ts ===
+// b_path:: packages/b_types/src/result/core.ts
+/**
+ * Core Result type for operations that may fail.
+ *
+ * Provides a type-safe way to handle errors without throwing exceptions.
+ * Inspired by Rust's Result<T, E> and functional programming patterns.
+ *
+ * @module
+ */
+
+/**
+ * Result type for operations that may fail.
+ *
+ * A discriminated union that ensures type safety:
+ * - When `ok: true`, `value` is guaranteed to be present (type T)
+ * - When `ok: false`, `error` is guaranteed to be present (type E)
+ *
+ * @example
+ * ```typescript
+ * import { Result, ok, err } from "@b/types";
+ *
+ * function divide(a: number, b: number): Result<number, string> {
+ *   if (b === 0) return err("Division by zero");
+ *   return ok(a / b);
+ * }
+ *
+ * const result = divide(10, 2);
+ * if (result.ok) {
+ *   console.log(result.value); // 5 (type: number)
+ * } else {
+ *   console.error(result.error); // string
+ * }
+ * ```
+ *
+ * @public
+ */
+export type Result<T, E = Error> = { ok: true; value: T; error: undefined } | { ok: false; value: undefined; error: E };
+
+/**
+ * Create a successful result.
+ *
+ * @example
+ * ```typescript
+ * const result = ok(42);
+ * console.log(result.ok); // true
+ * console.log(result.value); // 42
+ * console.log(result.error); // undefined
+ * ```
+ *
+ * @public
+ */
+export function ok<T>(value: T): Result<T, never> {
+  return { ok: true, value, error: undefined };
+}
+
+/**
+ * Create an error result.
+ *
+ * @example
+ * ```typescript
+ * const result = err("Something went wrong");
+ * console.log(result.ok); // false
+ * console.log(result.error); // "Something went wrong"
+ * console.log(result.value); // undefined
+ * ```
+ *
+ * @public
+ */
+export function err<E>(error: E): Result<never, E> {
+  return { ok: false, value: undefined, error };
+}
+
+/**
+ * Convert a Zod SafeParseReturnType to a Result.
+ *
+ * @example
+ * ```typescript
+ * import { z } from "zod";
+ * import { fromZod } from "@b/types";
+ *
+ * const schema = z.number();
+ * const zodResult = schema.safeParse("not a number");
+ * const result = fromZod(zodResult);
+ *
+ * if (!result.ok) {
+ *   console.error(result.error); // ZodError
+ * }
+ * ```
+ *
+ * @public
+ */
+export function fromZod<T, E = unknown>(
+  zodResult: { success: true; data: T } | { success: false; error: E },
+): Result<T, E> {
+  if (zodResult.success) {
+    return ok(zodResult.data);
+  }
+  return err(zodResult.error);
+}
+
+/**
+ * Unwrap a result, throwing if it's an error.
+ * Use sparingly - prefer explicit error handling.
+ *
+ * @example
+ * ```typescript
+ * const result = ok(42);
+ * const value = unwrap(result); // 42
+ *
+ * const errorResult = err("Failed");
+ * unwrap(errorResult); // throws Error("Failed")
+ * ```
+ *
+ * @public
+ */
+export function unwrap<T, E>(result: Result<T, E>): T {
+  if (result.ok) {
+    return result.value;
+  }
+  throw result.error instanceof Error ? result.error : new Error(String(result.error));
+}
+
+/**
+ * Get the value or a default if error.
+ *
+ * @example
+ * ```typescript
+ * const result = err("Failed");
+ * const value = unwrapOr(result, 42); // 42
+ * ```
+ *
+ * @public
+ */
+export function unwrapOr<T, E>(result: Result<T, E>, defaultValue: T): T {
+  return result.ok ? result.value : defaultValue;
+}
+
+/**
+ * Map over a successful result.
+ *
+ * @example
+ * ```typescript
+ * const result = ok(2);
+ * const doubled = map(result, x => x * 2);
+ * console.log(doubled.value); // 4
+ * ```
+ *
+ * @public
+ */
+export function map<T, U, E>(result: Result<T, E>, fn: (value: T) => U): Result<U, E> {
+  return result.ok ? ok(fn(result.value)) : result;
+}
+
+/**
+ * Chain results together (flatMap).
+ *
+ * @example
+ * ```typescript
+ * const result = ok(2);
+ * const doubled = andThen(result, x =>
+ *   x > 0 ? ok(x * 2) : err("Must be positive")
+ * );
+ * ```
+ *
+ * @public
+ */
+export function andThen<T, U, E>(result: Result<T, E>, fn: (value: T) => Result<U, E>): Result<U, E> {
+  return result.ok ? fn(result.value) : result;
+}
+
+
+=== File: packages/b_types/src/result/generate.ts ===
+// b_path:: packages/b_types/src/result/generate.ts
+/**
+ * GenerateResult type for IR → CSS generation operations.
+ *
+ * @module
+ */
+
+import type { Issue } from "./issue";
+
+/**
+ * Result of generating CSS from intermediate representation.
+ *
+ * A discriminated union that ensures type safety:
+ * - When `ok: true`, `value` is guaranteed to be present (CSS string)
+ * - When `ok: false`, `value` is undefined
+ *
+ * Issues array allows warnings + success (generator can succeed with warnings).
+ *
+ * @example
+ * ```typescript
+ * import { generateOk, generateErr } from "@b/types";
+ *
+ * // Success
+ * const result = generateOk("#ff0000");
+ * if (result.ok) {
+ *   console.log(result.value); // "#ff0000"
+ * }
+ *
+ * // Error
+ * const error = generateErr(createError("invalid-ir", "Missing required field"));
+ * if (!error.ok) {
+ *   console.log(error.issues[0].message);
+ * }
+ * ```
+ *
+ * @public
+ */
+export type GenerateResult =
+  | { ok: true; value: string; property?: string; issues: Issue[] }
+  | { ok: false; value?: undefined; property?: string; issues: Issue[] };
+
+/**
+ * Create a successful GenerateResult.
+ *
+ * @example
+ * ```typescript
+ * return generateOk("#ff0000");
+ * return generateOk("#ff0000", "color");  // with property
+ * ```
+ *
+ * @public
+ */
+export function generateOk(value: string, property?: string): GenerateResult {
+  const result: GenerateResult = {
+    ok: true,
+    value,
+    issues: [],
+  };
+  if (property !== undefined) {
+    result.property = property;
+  }
+  return result;
+}
+
+/**
+ * Create a failed GenerateResult.
+ *
+ * @example
+ * ```typescript
+ * return generateErr(createError("invalid-ir", "Invalid IR structure"));
+ * return generateErr(createError("missing-required-field", "Missing 'kind'"), "color");
+ * ```
+ *
+ * @public
+ */
+export function generateErr(issue: Issue, property?: string): GenerateResult {
+  const result: GenerateResult = {
+    ok: false,
+    issues: [issue],
+  };
+  if (property !== undefined) {
+    result.property = property;
+  }
+  return result;
+}
+
+/**
+ * Add an issue to a GenerateResult (preserves success state).
+ *
+ * Useful for adding warnings to successful generation.
+ *
+ * @example
+ * ```typescript
+ * let result = generateOk("#ff0000");
+ * result = addGenerateIssue(result, warningIssue);
+ * // result.ok is still true, but has a warning
+ * ```
+ *
+ * @public
+ */
+export function addGenerateIssue(result: GenerateResult, issue: Issue): GenerateResult {
+  return {
+    ...result,
+    issues: [...result.issues, issue],
+  };
+}
+
+/**
+ * Combine multiple GenerateResults into one (for list/array generation).
+ *
+ * All results must succeed for combined result to succeed.
+ * All issues are collected regardless of success/failure.
+ * CSS strings are joined with separator (default: ", ").
+ *
+ * @example
+ * ```typescript
+ * const results = [generateOk("red"), generateOk("blue")];
+ * const combined = combineGenerateResults(results);
+ * // { ok: true, value: "red, blue", issues: [] }
+ *
+ * // Custom separator
+ * const spaced = combineGenerateResults(results, " ");
+ * // { ok: true, value: "red blue", issues: [] }
+ * ```
+ *
+ * @public
+ */
+export function combineGenerateResults(results: GenerateResult[], separator = ", "): GenerateResult {
+  const allOk = results.every((r) => r.ok);
+  const values = results.map((r) => r.value).filter((v): v is string => v !== undefined);
+  const allIssues = results.flatMap((r) => r.issues);
+
+  if (allOk && values.length === results.length) {
+    return {
+      ok: true,
+      value: values.join(separator),
+      issues: allIssues,
+    };
+  }
+
+  return {
+    ok: false,
+    issues: allIssues,
+  };
+}
+
+
+=== File: packages/b_types/src/result/index.ts ===
+// b_path:: packages/b_types/src/result/index.ts
+/**
+ * Result system for type-safe error handling.
+ *
+ * @module
+ */
+
+// Core Result type
+export * from "./core";
+
+// Issue tracking
+export * from "./issue";
+
+// Parse results
+export * from "./parse";
+
+// Generate results
+export * from "./generate";
+
+
+=== File: packages/b_types/src/result/issue.ts ===
+// b_path:: packages/b_types/src/result/issue.ts
+/**
+ * Issue tracking for parse and generate operations.
+ *
+ * Provides structured error and warning reporting with strongly-typed codes.
+ *
+ * @module
+ */
+
+/**
+ * Issue code categories for extensibility.
+ *
+ * Uses interface merging to allow packages to extend issue codes.
+ * Each category maps to specific issue code strings.
+ *
+ * @public
+ */
+export interface IssueCodeMap {
+  parse: "invalid-value" | "invalid-syntax" | "missing-value";
+  generate: "invalid-ir" | "missing-required-field" | "unsupported-kind";
+  warning: "duplicate-property" | "deprecated-syntax" | "legacy-syntax";
+}
+
+/**
+ * Union of all issue codes.
+ *
+ * Packages can extend IssueCodeMap via module augmentation to add custom codes.
+ *
+ * @example
+ * ```typescript
+ * // In b_parsers package
+ * declare module "@b/types" {
+ *   interface IssueCodeMap {
+ *     parse: "invalid-gradient" | "invalid-color";
+ *   }
+ * }
+ * ```
+ *
+ * @public
+ */
+export type IssueCode = IssueCodeMap[keyof IssueCodeMap];
+
+/**
+ * Source location in input string.
+ *
+ * Used for parse errors to point to specific characters.
+ *
+ * @public
+ */
+export interface SourceLocation {
+  /** Zero-based offset from start of input */
+  offset: number;
+  /** Number of characters */
+  length: number;
+}
+
+/**
+ * Issue reported during parsing or generation.
+ *
+ * Strongly typed for IDE autocomplete and type safety.
+ * All fields are intentionally flat (no nested objects) for simplicity.
+ *
+ * @public
+ */
+export interface Issue {
+  /** Issue code for categorization */
+  code: IssueCode;
+  /** Severity level */
+  severity: "error" | "warning" | "info";
+  /** Human-readable message */
+  message: string;
+  /** Optional CSS property name that caused the issue */
+  property?: string;
+  /** Optional suggestion for fixing the issue */
+  suggestion?: string;
+  /** Optional location in input string (for parse errors) */
+  location?: SourceLocation;
+}
+
+/**
+ * Create an error issue.
+ *
+ * @example
+ * ```typescript
+ * const issue = createError("invalid-value", "Invalid hex color");
+ * ```
+ *
+ * @public
+ */
+export function createError(
+  code: IssueCode,
+  message: string,
+  options?: {
+    property?: string;
+    suggestion?: string;
+    location?: SourceLocation;
+  },
+): Issue {
+  return {
+    code,
+    severity: "error",
+    message,
+    ...options,
+  };
+}
+
+/**
+ * Create a warning issue.
+ *
+ * @example
+ * ```typescript
+ * const issue = createWarning("deprecated-syntax", "Use modern syntax", {
+ *   suggestion: "Replace with new syntax"
+ * });
+ * ```
+ *
+ * @public
+ */
+export function createWarning(
+  code: IssueCode,
+  message: string,
+  options?: {
+    property?: string;
+    suggestion?: string;
+    location?: SourceLocation;
+  },
+): Issue {
+  return {
+    code,
+    severity: "warning",
+    message,
+    ...options,
+  };
+}
+
+/**
+ * Create an info issue.
+ *
+ * @example
+ * ```typescript
+ * const issue = createInfo("legacy-syntax", "Consider updating syntax");
+ * ```
+ *
+ * @public
+ */
+export function createInfo(
+  code: IssueCode,
+  message: string,
+  options?: {
+    property?: string;
+    suggestion?: string;
+    location?: SourceLocation;
+  },
+): Issue {
+  return {
+    code,
+    severity: "info",
+    message,
+    ...options,
+  };
+}
+
+
+=== File: packages/b_types/src/result/parse.ts ===
+// b_path:: packages/b_types/src/result/parse.ts
+/**
+ * ParseResult type for CSS → IR parsing operations.
+ *
+ * @module
+ */
+
+import type { Issue } from "./issue";
+
+/**
+ * Result of parsing CSS to intermediate representation.
+ *
+ * A discriminated union that ensures type safety:
+ * - When `ok: true`, `value` is guaranteed to be present (type T)
+ * - When `ok: false`, `value` is undefined
+ *
+ * Issues array allows warnings + success (parser can succeed with warnings).
+ *
+ * @example
+ * ```typescript
+ * import { parseOk, parseErr } from "@b/types";
+ *
+ * // Success
+ * const result = parseOk({ kind: "hex", value: "#FF0000" });
+ * if (result.ok) {
+ *   console.log(result.value); // ColorIR
+ * }
+ *
+ * // Error
+ * const error = parseErr("invalid-value", "Invalid hex color");
+ * if (!error.ok) {
+ *   console.log(error.issues[0].message);
+ * }
+ * ```
+ *
+ * @public
+ */
+export type ParseResult<T = unknown> =
+  | { ok: true; value: T; property?: string; issues: Issue[] }
+  | { ok: false; value?: undefined; property?: string; issues: Issue[] };
+
+/**
+ * Create a successful ParseResult.
+ *
+ * @example
+ * ```typescript
+ * return parseOk(colorIR);
+ * return parseOk(colorIR, "background-color");  // with property
+ * ```
+ *
+ * @public
+ */
+export function parseOk<T>(value: T, property?: string): ParseResult<T> {
+  const result: ParseResult<T> = {
+    ok: true,
+    value,
+    issues: [],
+  };
+  if (property !== undefined) {
+    result.property = property;
+  }
+  return result;
+}
+
+/**
+ * Create a failed ParseResult.
+ *
+ * @example
+ * ```typescript
+ * return parseErr("invalid-value", "Invalid color format");
+ * return parseErr("invalid-value", "Invalid hex color", {
+ *   suggestion: "Use #RRGGBB format",
+ *   property: "color"
+ * });
+ * ```
+ *
+ * @public
+ */
+export function parseErr<T = never>(issue: Issue, property?: string): ParseResult<T> {
+  const result: ParseResult<T> = {
+    ok: false,
+    issues: [issue],
+  };
+  if (property !== undefined) {
+    result.property = property;
+  }
+  return result;
+}
+
+/**
+ * Add an issue to a ParseResult (preserves success state).
+ *
+ * Useful for adding warnings to successful parses.
+ *
+ * @example
+ * ```typescript
+ * let result = parseOk(colorIR);
+ * result = addIssue(result, warningIssue);
+ * // result.ok is still true, but has a warning
+ * ```
+ *
+ * @public
+ */
+export function addIssue<T>(result: ParseResult<T>, issue: Issue): ParseResult<T> {
+  return {
+    ...result,
+    issues: [...result.issues, issue],
+  };
+}
+
+/**
+ * Combine multiple ParseResults into one (for list/array parsing).
+ *
+ * All results must succeed for combined result to succeed.
+ * All issues are collected regardless of success/failure.
+ *
+ * @example
+ * ```typescript
+ * const results = [parseOk(color1), parseOk(color2)];
+ * const combined = combineResults(results);
+ * // { ok: true, value: [color1, color2], issues: [] }
+ * ```
+ *
+ * @public
+ */
+export function combineResults<T>(results: ParseResult<T>[]): ParseResult<T[]> {
+  const allOk = results.every((r) => r.ok);
+  const values = results.map((r) => r.value).filter((v): v is T => v !== undefined);
+  const allIssues = results.flatMap((r) => r.issues);
+
+  if (allOk && values.length === results.length) {
+    return {
+      ok: true,
+      value: values,
+      issues: allIssues,
+    };
+  }
+
+  return {
+    ok: false,
+    issues: allIssues,
+  };
+}
+
+
+=== File: packages/b_types/src/url.ts ===
+// b_path:: packages/b_types/src/url.ts
+import { z } from "zod";
+
+/**
+ * @see https://developer.mozilla.org/en-US/docs/Web/CSS/url
+ */
+export const urlSchema = z.object({
+  kind: z.literal("url"),
+  value: z.string(),
+});
+
+export type Url = z.infer<typeof urlSchema>;
+
+
+=== File: packages/b_types/src/values/css-value.ts ===
+// b_path:: packages/b_types/src/values/css-value.ts
+import { z } from "zod";
+import { getLiteralValues } from "@b/keywords";
+
+/**
+ * Represents a literal numeric value with optional unit
+ * @see https://drafts.csswg.org/css-values-4/#numeric-types
+ */
+export const literalValueSchema = z.object({
+  kind: z.literal("literal"),
+  value: z.number(),
+  unit: z.string().optional(),
+});
+
+/**
+ * Represents a CSS custom property reference (var() function)
+ * @see https://drafts.csswg.org/css-variables/#using-variables
+ */
+export const variableReferenceSchema: z.ZodType<{
+  kind: "variable";
+  name: string;
+  fallback?: CssValue;
+}> = z.object({
+  kind: z.literal("variable"),
+  name: z.string(),
+  fallback: z.lazy((): z.ZodType<CssValue> => cssValueSchema).optional(),
+});
+
+/**
+ * Represents a CSS keyword value
+ * @see https://drafts.csswg.org/css-values-4/#keywords
+ */
+export const keywordValueSchema = z.object({
+  kind: z.literal("keyword"),
+  value: z.string(),
+});
+
+export const listValueSchema: z.ZodType<{
+  kind: "list";
+  separator: " " | ",";
+  values: CssValue[];
+}> = z.object({
+  kind: z.literal("list"),
+  separator: z.enum([" ", ","]),
+  values: z.array(z.lazy((): z.ZodType<CssValue> => cssValueSchema)),
+});
+
+// Represents a single operation within a calc() expression
+export const calcOperationSchema: z.ZodType<{
+  kind: "calc-operation";
+  operator: "+" | "-" | "*" | "/";
+  // The operands can be any valid CSS value, including another operation
+  left: CssValue;
+  right: CssValue;
+}> = z.object({
+  kind: z.literal("calc-operation"),
+  operator: z.enum(["+", "-", "*", "/"]),
+  // Use z.lazy() for the recursive definition
+  left: z.lazy((): z.ZodType<CssValue> => cssValueSchema),
+  right: z.lazy((): z.ZodType<CssValue> => cssValueSchema),
+});
+
+// A top-level calc() function just holds the root operation/value
+export const calcFunctionSchema: z.ZodType<{
+  kind: "calc";
+  value: CssValue;
+}> = z.object({
+  kind: z.literal("calc"),
+  // The value inside can be a simple literal or a complex operation tree
+  value: z.lazy((): z.ZodType<CssValue> => cssValueSchema),
+});
+
+// For min() and max()
+export const minmaxFunctionSchema: z.ZodType<{
+  kind: "min" | "max";
+  values: CssValue[];
+}> = z.object({
+  kind: z.union([z.literal("min"), z.literal("max")]),
+  values: z.array(z.lazy((): z.ZodType<CssValue> => cssValueSchema)),
+});
+
+// For clamp()
+export const clampFunctionSchema: z.ZodType<{
+  kind: "clamp";
+  min: CssValue;
+  preferred: CssValue;
+  max: CssValue;
+}> = z.object({
+  kind: z.literal("clamp"),
+  // clamp() always has 3 arguments: min, preferred, max
+  min: z.lazy((): z.ZodType<CssValue> => cssValueSchema),
+  preferred: z.lazy((): z.ZodType<CssValue> => cssValueSchema),
+  max: z.lazy((): z.ZodType<CssValue> => cssValueSchema),
+});
+
+export const urlFunctionSchema = z.object({
+  kind: z.literal("url"),
+  url: z.string(),
+});
+
+export const attrFunctionSchema: z.ZodType<{
+  kind: "attr";
+  name: string;
+  typeOrUnit?: string; // e.g., "color", "px"
+  fallback?: CssValue;
+}> = z.object({
+  kind: z.literal("attr"),
+  name: z.string(),
+  typeOrUnit: z.string().optional(),
+  fallback: z.lazy((): z.ZodType<CssValue> => cssValueSchema).optional(),
+});
+
+/**
+ * Union of all possible CSS value representations
+ * This is the foundation for representing authored CSS values
+ * that may contain symbolic references (var()), keywords, or literals
+ */
+// export const cssValueSchema = z.union([literalValueSchema, variableReferenceSchema, keywordValueSchema]);
+
+export const allCssValueSchema = [
+  // Primitives
+  literalValueSchema,
+  variableReferenceSchema,
+  keywordValueSchema,
+
+  // Functions
+  calcFunctionSchema,
+  calcOperationSchema, // Operations inside calc() expressions
+  minmaxFunctionSchema,
+  clampFunctionSchema,
+  urlFunctionSchema,
+  attrFunctionSchema,
+
+  // lchColorSchema,
+  // rgbColorSchema, etc.
+
+  // Structural
+  listValueSchema,
+];
+
+const allCssValues = allCssValueSchema.flatMap(getLiteralValues);
+
+export const cssValueSchema = z.union(allCssValueSchema, {
+  error: () => `Expected ${allCssValues.join(" | ")}`,
+});
+
+export type LiteralValue = z.infer<typeof literalValueSchema>;
+export type VariableReference = z.infer<typeof variableReferenceSchema>;
+export type KeywordValue = z.infer<typeof keywordValueSchema>;
+export type CssValue = z.infer<typeof cssValueSchema>;
+
+
+=== File: packages/b_types/src/values/index.ts ===
+// b_path:: packages/b_types/src/values/index.ts
+export * from "./css-value";
+
+
+=== File: packages/b_types/tsup.config.ts ===
+// b_path:: packages/b_types/tsup.config.ts
+import { defineConfig } from "tsup";
+
+export default defineConfig({
+  entry: ["src/index.ts"],
+  format: ["cjs", "esm"],
+  dts: true,
+  splitting: false,
+  sourcemap: true,
+  clean: true,
+  treeshake: true,
+});
+
+
+=== File: packages/b_types/vite.config.ts ===
+// b_path:: packages/b_types/vite.config.ts
+import { defineConfig } from "vite";
+
+import tsconfigPaths from "vite-tsconfig-paths";
+
+// https://vite.dev/config/
+export default defineConfig({
+  plugins: [tsconfigPaths()],
+});
+
+
+=== File: packages/b_units/src/angle.ts ===
+// b_path:: packages/b_units/src/angle.ts
+import { z } from "zod";
+
+/**
+ * @see https://developer.mozilla.org/en-US/docs/Web/CSS/angle
+ */
+export const angleUnitSchema = z.union([z.literal("deg"), z.literal("grad"), z.literal("rad"), z.literal("turn")]);
+
+export const ANGLE_UNITS = angleUnitSchema.options.map((option) => option.value);
+
+export type AngleUnit = z.infer<typeof angleUnitSchema>;
+
+
+=== File: packages/b_units/src/index.ts ===
+// b_path:: packages/b_units/src/index.ts
+export * from "./angle";
+export * from "./length-absolute";
+export * from "./length-font";
+export * from "./length-viewport";
+export * from "./length";
+export * from "./percentage";
+
+
+=== File: packages/b_units/src/length-absolute.ts ===
+// b_path:: packages/b_units/src/length-absolute.ts
+import { z } from "zod";
+
+/**
+ * @see https://developer.mozilla.org/en-US/docs/Web/CSS/length#absolute_length_units
+ */
+export const absoluteLengthUnitSchema = z.union([
+  z.literal("px"),
+  z.literal("pt"),
+  z.literal("cm"),
+  z.literal("mm"),
+  z.literal("Q"),
+  z.literal("in"),
+  z.literal("pc"),
+]);
+
+export const ABSOLUTE_LENGTH_UNITS = absoluteLengthUnitSchema.options.map((option) => option.value);
+
+export type AbsoluteLengthUnit = z.infer<typeof absoluteLengthUnitSchema>;
+
+
+=== File: packages/b_units/src/length-font.ts ===
+// b_path:: packages/b_units/src/length-font.ts
+import { z } from "zod";
+
+/**
+ * @see https://developer.mozilla.org/en-US/docs/Web/CSS/length#font-relative_lengths
+ */
+export const fontLengthUnitSchema = z.union([
+  z.literal("em"),
+  z.literal("ex"),
+  z.literal("cap"),
+  z.literal("ch"),
+  z.literal("ic"),
+  z.literal("rem"),
+  z.literal("rex"),
+  z.literal("rcap"),
+  z.literal("rch"),
+  z.literal("ric"),
+  z.literal("lh"),
+  z.literal("rlh"),
+]);
+
+export const FONT_LENGTH_UNITS = fontLengthUnitSchema.options.map((option) => option.value);
+
+export type FontLengthUnit = z.infer<typeof fontLengthUnitSchema>;
+
+
+=== File: packages/b_units/src/length-viewport.ts ===
+// b_path:: packages/b_units/src/length-viewport.ts
+import { z } from "zod";
+
+/**
+ * @see https://developer.mozilla.org/en-US/docs/Web/CSS/length#viewport-percentage_lengths
+ */
+export const viewportLengthUnitSchema = z.union([
+  z.literal("vw"),
+  z.literal("vh"),
+  z.literal("vi"),
+  z.literal("vb"),
+  z.literal("vmin"),
+  z.literal("vmax"),
+  z.literal("svw"),
+  z.literal("svh"),
+  z.literal("svi"),
+  z.literal("svb"),
+  z.literal("svmin"),
+  z.literal("svmax"),
+  z.literal("lvw"),
+  z.literal("lvh"),
+  z.literal("lvi"),
+  z.literal("lvb"),
+  z.literal("lvmin"),
+  z.literal("lvmax"),
+  z.literal("dvw"),
+  z.literal("dvh"),
+  z.literal("dvi"),
+  z.literal("dvb"),
+  z.literal("dvmin"),
+  z.literal("dvmax"),
+]);
+
+export const VIEWPORT_LENGTH_UNITS = viewportLengthUnitSchema.options.map((option) => option.value);
+
+export type ViewportLengthUnit = z.infer<typeof viewportLengthUnitSchema>;
+
+
+=== File: packages/b_units/src/length.ts ===
+// b_path:: packages/b_units/src/length.ts
+import { z } from "zod";
+import { absoluteLengthUnitSchema } from "./length-absolute";
+import { fontLengthUnitSchema } from "./length-font";
+import { viewportLengthUnitSchema } from "./length-viewport";
+
+/**
+ * @see https://developer.mozilla.org/en-US/docs/Web/CSS/length
+ */
+export const lengthUnitSchema = z.union([absoluteLengthUnitSchema, fontLengthUnitSchema, viewportLengthUnitSchema]);
+
+export type LengthUnit = z.infer<typeof lengthUnitSchema>;
+
+
+=== File: packages/b_units/src/percentage.ts ===
+// b_path:: packages/b_units/src/percentage.ts
+import { z } from "zod";
+
+/**
+ * @see https://developer.mozilla.org/en-US/docs/Web/CSS/percentage
+ */
+export const percentageUnitSchema = z.literal("%");
+
+export const PERCENTAGE_UNIT = "%" as const;
+
+export type PercentageUnit = z.infer<typeof percentageUnitSchema>;
+
+
+=== File: packages/b_units/tsup.config.ts ===
+// b_path:: packages/b_units/tsup.config.ts
+import { defineConfig } from "tsup";
+
+export default defineConfig({
+  entry: ["src/index.ts"],
+  format: ["cjs", "esm"],
+  dts: true,
+  splitting: false,
+  sourcemap: true,
+  clean: true,
+  treeshake: true,
+});
+
+
+=== File: packages/b_units/vite.config.ts ===
+// b_path:: packages/b_units/vite.config.ts
+import { defineConfig } from "vite";
+
+import tsconfigPaths from "vite-tsconfig-paths";
+
+// https://vite.dev/config/
+export default defineConfig({
+  plugins: [tsconfigPaths()],
+});
+
+
+=== File: packages/b_utils/src/generate/css-value.ts ===
+// b_path:: packages/b_utils/src/generate/css-value.ts
+import type { CssValue } from "@b/types";
+
+/**
+ * Generates CSS string representation from a CssValue
+ * Handles all CSS value types including functions and operations
+ * @see https://drafts.csswg.org/css-values-4/
+ */
+export function cssValueToCss(value: CssValue): string {
+  switch (value.kind) {
+    case "literal": {
+      const { value: num, unit } = value;
+      return unit ? `${num}${unit}` : String(num);
+    }
+
+    case "variable": {
+      const { name, fallback } = value;
+      if (fallback) {
+        return `var(${name}, ${cssValueToCss(fallback)})`;
+      }
+      return `var(${name})`;
+    }
+
+    case "keyword": {
+      return value.value;
+    }
+
+    case "list": {
+      const { values, separator } = value;
+      return values.map((v) => cssValueToCss(v)).join(separator);
+    }
+
+    case "calc": {
+      return `calc(${cssValueToCss(value.value)})`;
+    }
+
+    case "calc-operation": {
+      const { left, operator, right } = value;
+      const leftStr = cssValueToCss(left);
+      const rightStr = cssValueToCss(right);
+      // Add spaces around operators for readability
+      return `${leftStr} ${operator} ${rightStr}`;
+    }
+
+    case "min":
+    case "max": {
+      const { values } = value;
+      const valuesStr = values.map((v) => cssValueToCss(v)).join(", ");
+      return `${value.kind}(${valuesStr})`;
+    }
+
+    case "clamp": {
+      const { min, preferred, max } = value;
+      const minStr = cssValueToCss(min);
+      const preferredStr = cssValueToCss(preferred);
+      const maxStr = cssValueToCss(max);
+      return `clamp(${minStr}, ${preferredStr}, ${maxStr})`;
+    }
+
+    case "url": {
+      return `url(${value.url})`;
+    }
+
+    case "attr": {
+      const { name, typeOrUnit, fallback } = value;
+      let result = `attr(${name}`;
+      if (typeOrUnit) {
+        result += ` ${typeOrUnit}`;
+      }
+      if (fallback) {
+        result += `, ${cssValueToCss(fallback)}`;
+      }
+      result += ")";
+      return result;
+    }
+  }
+}
+
+
+=== File: packages/b_utils/src/generate/index.ts ===
+// b_path:: packages/b_utils/src/generate/index.ts
+export * from "./css-value";
+export * from "./values";
+export * from "./validation";
+
+
+=== File: packages/b_utils/src/generate/validation.ts ===
+// b_path:: packages/b_utils/src/generate/validation.ts
+
+import type { z } from "zod";
+import type { Issue } from "@b/types";
+
+// Use Zod v4 core types (not deprecated)
+type ZodIssue = z.core.$ZodIssue;
+type ZodError = z.ZodError;
+type ZodIssueInvalidUnion = z.core.$ZodIssueInvalidUnion;
+
+/**
+ * Format a path array into a human-readable string.
+ *
+ * Converts an array path (e.g., from Zod validation) into dot notation
+ * with bracket notation for array indices.
+ *
+ * @param path - Array of path segments (strings and numbers)
+ * @returns Formatted path string
+ *
+ * @example
+ * ```typescript
+ * formatPath(["durations", 0, "unit"]) // "durations[0].unit"
+ * formatPath(["value"]) // "value"
+ * formatPath([]) // ""
+ * ```
+ *
+ * @public
+ */
+export function formatPath(path: (string | number)[]): string {
+  if (path.length === 0) return "";
+
+  return path.reduce<string>((acc, segment, i) => {
+    if (typeof segment === "number") return `${acc}[${segment}]`;
+    if (i === 0) return String(segment);
+    return `${acc}.${segment}`;
+  }, "");
+}
+
+/**
+ * Convert Zod validation errors to b_value Issue format.
+ *
+ * Zod creates deeply nested error structures for unions and complex schemas.
+ * This recursively traverses the error tree and extracts actionable error messages
+ * with path context for pinpointing the exact location of validation failures.
+ *
+ * Features:
+ * - Recursively traverses union errors to collect all failures
+ * - Includes path context in error messages (e.g., "durations[0].unit: ...")
+ * - Preserves path array for programmatic access
+ * - Adds Zod error code as metadata for advanced filtering
+ * - Filters out generic "Invalid input" messages
+ *
+ * @param zodError - Zod validation error from safeParse()
+ * @returns Array of Issue objects with detailed error information and path context
+ *
+ * @example
+ * ```typescript
+ * import { zodErrorToIssues } from "@/utils/generate";
+ * import { animationDurationSchema } from "@/core/types/animation";
+ *
+ * const validation = animationDurationSchema.safeParse(input);
+ * if (!validation.success) {
+ *   const issues = zodErrorToIssues(validation.error);
+ *   // issues[0].message: "durations[0].unit: Invalid input: expected \"s\""
+ *   // issues[0].path: ["durations", 0, "unit"]
+ *   // issues[0].metadata.zodCode: "invalid_literal"
+ *   return { ok: false, issues };
+ * }
+ * ```
+ *
+ * @public
+ */
+export function zodErrorToIssues(zodError: ZodError): Issue[] {
+  const issues: Issue[] = [];
+
+  function traverse(zodIssues: readonly ZodIssue[], parentPath: (string | number)[] = []): void {
+    for (const zodIssue of zodIssues) {
+      if (zodIssue.code === "invalid_union") {
+        const unionIssue = zodIssue as ZodIssueInvalidUnion;
+
+        // If union has a custom message (not generic "Invalid input"), use it and DON'T traverse
+        if (zodIssue.message !== "Invalid input") {
+          const relativePath = zodIssue.path.filter(
+            (p): p is string | number => typeof p === "string" || typeof p === "number",
+          );
+          const fullPath = [...parentPath, ...relativePath];
+          const pathStr = formatPath(fullPath);
+          const message = pathStr ? `${pathStr}: ${zodIssue.message}` : zodIssue.message;
+
+          issues.push({
+            code: "invalid-ir",
+            severity: "error",
+            message,
+          });
+          // Don't traverse into union branches - custom message is sufficient
+          continue;
+        }
+
+        // Generic union error - traverse into all branches to collect specific errors
+        const unionPath = [
+          ...parentPath,
+          ...zodIssue.path.filter((p): p is string | number => typeof p === "string" || typeof p === "number"),
+        ];
+
+        if (Array.isArray(unionIssue.errors)) {
+          for (const errorGroup of unionIssue.errors) {
+            if (Array.isArray(errorGroup)) {
+              traverse(errorGroup, unionPath);
+            }
+          }
+        }
+      } else {
+        // Skip generic "Invalid input" messages without path details
+        if (zodIssue.message === "Invalid input" && zodIssue.path.length === 0) {
+          continue;
+        }
+
+        // Convert path to (string | number)[] - filter out symbols if present
+        const relativePath = zodIssue.path.filter(
+          (p): p is string | number => typeof p === "string" || typeof p === "number",
+        );
+        const fullPath = [...parentPath, ...relativePath];
+        const pathStr = formatPath(fullPath);
+        const message = pathStr ? `${pathStr}: ${zodIssue.message}` : zodIssue.message;
+
+        issues.push({
+          code: "invalid-ir",
+          severity: "error",
+          message,
+        });
+      }
+    }
+  }
+
+  traverse(zodError.issues);
+
+  // Fallback if no specific errors found
+  if (issues.length === 0) {
+    issues.push({
+      code: "invalid-ir",
+      severity: "error",
+      message: "Invalid IR structure",
+    });
+  }
+
+  return issues;
+}
+
+
+=== File: packages/b_utils/src/generate/values.ts ===
+// b_path:: packages/b_utils/src/generate/values.ts
+import type * as Type from "@b/types";
+
+/**
+ * @see https://drafts.csswg.org/css-values-4/#lengths
+ */
+export function lengthToCss(length: Type.Length): string {
+  return `${length.value}${length.unit}`;
+}
+
+/**
+ * @see https://drafts.csswg.org/css-values-4/#percentage-value
+ */
+export function lengthPercentageToCss(lengthPercentage: Type.LengthPercentage): string {
+  return `${lengthPercentage.value}${lengthPercentage.unit}`;
+}
+
+/**
+ * @see https://drafts.csswg.org/css-values-4/#angles
+ */
+export function angleToCss(angle: Type.Angle): string {
+  return `${angle.value}${angle.unit}`;
+}
+
+/**
+ * @see https://drafts.csswg.org/css-values-4/#numbers
+ */
+export function numberToCss(number: number): string {
+  return String(number);
+}
+
+/**
+ * @see https://drafts.csswg.org/css-backgrounds-3/#typedef-bg-position
+ */
+export function positionValueToCss(value: Type.PositionValue): string {
+  if (typeof value === "string") {
+    return value;
+  }
+  return lengthPercentageToCss(value);
+}
+
+/**
+ * @see https://drafts.csswg.org/css-backgrounds-3/#typedef-bg-position
+ */
+export function position2DToCss(position: Type.Position2D): string {
+  return `${positionValueToCss(position.horizontal)} ${positionValueToCss(position.vertical)}`;
+}
+
+export function joinCssValues(values: string[]): string {
+  return values.join(", ");
+}
+
+export function joinCssValuesWithSpaces(values: string[]): string {
+  return values.join(" ");
+}
+
+
+=== File: packages/b_utils/src/index.ts ===
+// b_path:: packages/b_utils/src/index.ts
+export * from "./generate";
+export * from "./parse";
+
+
+=== File: packages/b_utils/src/parse/css-value-parser.ts ===
+// b_path:: packages/b_utils/src/parse/css-value-parser.ts
+import type * as csstree from "css-tree";
+import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
+import type { CssValue } from "@b/types";
+
+/**
+ * Parse a CSS node into a CssValue.
+ * Handles numbers, dimensions, percentages, keywords, and var() functions.
+ */
+export function parseCssValueNode(node: csstree.CssNode): ParseResult<CssValue> {
+  switch (node.type) {
+    case "Number": {
+      const value = Number.parseFloat(node.value);
+      if (Number.isNaN(value)) {
+        return parseErr(createError("invalid-value", "Invalid number value"));
+      }
+      return parseOk({ kind: "literal", value });
+    }
+
+    case "Percentage": {
+      const value = Number.parseFloat(node.value);
+      if (Number.isNaN(value)) {
+        return parseErr(createError("invalid-value", "Invalid percentage value"));
+      }
+      return parseOk({ kind: "literal", value, unit: "%" });
+    }
+
+    case "Dimension": {
+      const value = Number.parseFloat(node.value);
+      if (Number.isNaN(value)) {
+        return parseErr(createError("invalid-value", "Invalid dimension value"));
+      }
+      return parseOk({ kind: "literal", value, unit: node.unit });
+    }
+
+    case "Identifier": {
+      return parseOk({ kind: "keyword", value: node.name });
+    }
+
+    case "Function": {
+      // We only handle var() for now.
+      if (node.name.toLowerCase() !== "var") {
+        return parseErr(createError("unsupported-kind", `Unsupported function: ${node.name}`));
+      }
+
+      const children = node.children.toArray();
+      const varNameNode = children[0];
+
+      // 1. Guard against an empty var() function like `var()`
+      if (!varNameNode) {
+        return parseErr(createError("invalid-syntax", "Invalid var() function: missing custom property name"));
+      }
+
+      // 2. Check if the varNameNode is an Identifier with a name starting with '--'
+      if (varNameNode.type !== "Identifier" || !varNameNode.name.startsWith("--")) {
+        return parseErr(
+          createError(
+            "invalid-syntax",
+            `Invalid var() function: expected a custom property name (--*), got ${varNameNode.type}`,
+          ),
+        );
+      }
+
+      // Now TypeScript knows it's an Identifier, so you can safely access its properties.
+      const varName = varNameNode.name;
+
+      let fallback: CssValue | undefined;
+
+      // The fallback consists of a comma and then the value node.
+      // children[0] is the name, children[1] is the comma.
+      if (children.length > 1) {
+        if (children[1].type !== "Operator" || children[1].value !== ",") {
+          return parseErr(
+            createError("invalid-syntax", "Invalid var() function: expected a comma before the fallback value"),
+          );
+        }
+
+        const fallbackNode = children[2];
+        if (!fallbackNode) {
+          return parseErr(createError("invalid-syntax", "Invalid var() function: missing fallback value after comma"));
+        }
+
+        // RECURSION: Parse the fallback node.
+        const fallbackResult = parseCssValueNode(fallbackNode);
+        if (!fallbackResult.ok) {
+          return fallbackResult; // Propagate the parsing error from the fallback.
+        }
+        fallback = fallbackResult.value;
+      }
+
+      return parseOk({
+        kind: "variable",
+        name: varName,
+        ...(fallback && { fallback }),
+      });
+    }
+
+    default: {
+      return parseErr(createError("unsupported-kind", `Unsupported node type: ${node.type}`));
+    }
+  }
+}
+
+/**
+ * Extract non-whitespace children from a function node
+ */
+export function getChildren(node: csstree.FunctionNode): csstree.CssNode[] {
+  const children: csstree.CssNode[] = [];
+  node.children.forEach((child) => {
+    if (child.type !== "WhiteSpace") {
+      children.push(child);
+    }
+  });
+  return children;
+}
+
+/**
+ * Extract values from children, filtering out operator nodes
+ */
+export function getValues(children: csstree.CssNode[]): csstree.CssNode[] {
+  const values: csstree.CssNode[] = [];
+  for (const child of children) {
+    if (child.type !== "Operator") {
+      values.push(child);
+    }
+  }
+  return values;
+}
+
+
+=== File: packages/b_utils/src/parse/index.ts ===
+// b_path:: packages/b_utils/src/parse/index.ts
+export * from "./css-value-parser";
+export * from "./test-utils";
+export * from "./validate";
+
+
+=== File: packages/b_utils/src/parse/schema.ts ===
+// b_path:: packages/b_utils/src/parse/schema.ts
+/**
+ * CSS Tree syntax parsing error
+ */
+export interface CssTreeSyntaxParseError {
+  name: string;
+  message: string;
+  line?: number;
+  column?: number;
+  property?: string;
+  offset?: number;
+  length?: number;
+}
+
+/**
+ * Custom warning for CSS property validation
+ */
+export interface BStyleWarning {
+  /** CSS property that has the warning */
+  property: string;
+  /** Warning name/type */
+  name: string;
+  /** CSS syntax that caused the warning */
+  syntax?: string;
+  /** Formatted warning message for display */
+  formattedWarning?: string;
+}
+
+/**
+ * Result of CSS stylesheet validation
+ */
+export interface StylesheetValidation {
+  /** Whether validation passed (no errors) */
+  ok: boolean;
+  /** Array of syntax parsing errors */
+  errors: CssTreeSyntaxParseError[];
+  /** Array of property validation warnings */
+  warnings: BStyleWarning[];
+}
+
+
+=== File: packages/b_utils/src/parse/test-utils.ts ===
+// b_path:: packages/b_utils/src/parse/test-utils.ts
+import * as csstree from "css-tree";
+
+/**
+ * Extract a function node from a CSS function string for testing
+ *
+ * @param input - CSS function string (e.g., "rgb(255 0 0)", "calc(100% - 20px)")
+ * @returns The parsed FunctionNode
+ * @throws Error if parsing fails or result is not a function
+ */
+export function extractFunctionFromValue(input: string): csstree.FunctionNode {
+  const ast = csstree.parse(input, { context: "value" });
+
+  if (ast.type !== "Value") {
+    throw new Error("Expected Value node");
+  }
+
+  const func = ast.children.first;
+  if (func?.type !== "Function") {
+    throw new Error(`Expected Function node, got ${func?.type}`);
+  }
+
+  return func;
+}
+
+
+=== File: packages/b_utils/src/parse/validate.ts ===
+// b_path:: packages/b_utils/src/parse/validate.ts
+/**
+ * Validates CSS stylesheet syntax and property values, providing detailed error formatting.
+ *
+ * This function parses CSS using the css-tree library and validates each CSS property
+ * against the CSS specification. When validation errors are found, it generates
+ * formatted error messages with visual context including line numbers, code snippets,
+ * and precise error location indicators.
+ *
+ * @param css - The CSS string to validate
+ *
+ * @returns StylesheetValidation object containing:
+ *   - ok: boolean indicating if validation passed (no errors)
+ *   - errors: Array of syntax parsing errors (malformed CSS)
+ *   - warnings: Array of property validation errors (invalid property values)
+ *
+ * @remarks
+ * - Context window shows ±2 lines around each error for better debugging
+ * - Long lines are intelligently truncated with ellipses (…) for readability
+ * - Pointer indicators (^^^) precisely mark the error location and length
+ * - Duplicate declarations are automatically deduplicated to avoid redundant warnings
+ *
+ * @throws Does not throw - parsing errors are captured in the returned errors array
+ *
+ * @since 1.0.0
+ */
+
+import * as csstree from "css-tree";
+import type { BStyleWarning, StylesheetValidation } from "./schema";
+
+// Constants
+const DEFAULT_MAX_LINE_WIDTH = 80;
+const LINE_NUMBER_PADDING = 4;
+const DEFAULT_CONTEXT_WINDOW_SIZE = 2; // Lines before and after error
+
+export interface BStyleMatchError extends csstree.SyntaxMatchError {
+  property: string;
+  formattedError?: string;
+}
+
+export type { BStyleWarning, StylesheetValidation };
+
+export interface Declaration {
+  property: string;
+  value: csstree.Value | csstree.Raw;
+  node: csstree.CssNode;
+}
+
+export interface ErrorFormatOptions {
+  maxLineWidth: number;
+  contextWindowSize?: number;
+}
+
+interface TruncationBounds {
+  startPos: number;
+  endPos: number;
+  needsStartEllipsis: boolean;
+  needsEndEllipsis: boolean;
+  availableWidth: number;
+}
+
+interface FormattedLine {
+  content: string;
+  adjustedColumn: number;
+}
+
+/**
+ * Validates a CSS stylesheet for syntax and property value errors.
+ *
+ * @param css - The CSS string to validate
+ * @returns StylesheetValidation object containing validation results
+ */
+export function validate(css: string): StylesheetValidation {
+  const errors: csstree.SyntaxParseError[] = [];
+  const warnings: BStyleMatchError[] = [];
+  const declarations: Declaration[] = [];
+  const syntax = csstree.lexer;
+  const uniqueDecls = new Map<string, number>();
+
+  // Parse CSS
+  const ast = csstree.parse(css, {
+    context: "declarationList",
+    positions: true,
+    parseAtrulePrelude: true,
+    parseRulePrelude: true,
+    parseCustomProperty: true,
+    onParseError(err: csstree.SyntaxParseError) {
+      // biome-ignore lint/correctness/noUnusedVariables: remove stack from err
+      const { stack, ...rest } = err;
+      errors.push(rest);
+    },
+  });
+
+  // Extract declarations
+  csstree.walk(ast, (node) => {
+    if (node.type !== "Declaration") {
+      return;
+    }
+    const id = csstree.generate(node);
+    if (uniqueDecls.has(id)) {
+      uniqueDecls.set(id, uniqueDecls.get(id)! + 1);
+      return;
+    }
+    uniqueDecls.set(id, 1);
+    declarations.push({ property: node.property, value: node.value, node });
+  });
+
+  // Validate declarations
+  // Suppress noisy csstree-match iteration warnings during matching.
+  // Control via env var: BStyle_CSSTREE_LOG_LEVEL=ERROR (default) suppresses these messages.
+  const suppressNoise = (msg: unknown): boolean => {
+    try {
+      const s = String(msg);
+      return /\[csstree-match\]\s*BREAK after/i.test(s);
+    } catch {
+      return false;
+    }
+  };
+  const LOG_LEVEL = (process.env.BStyle_CSSTREE_LOG_LEVEL || "ERROR").toUpperCase();
+  const QUIET = LOG_LEVEL === "ERROR" || LOG_LEVEL === "SILENT";
+  // biome-ignore lint/suspicious/noConsole: suppress console method reassignment
+  const origWarn = console.warn;
+  // biome-ignore lint/suspicious/noConsole: suppress console method reassignment
+  const origError = console.error;
+  try {
+    if (QUIET) {
+      console.warn = (...args: Parameters<typeof console.warn>) => {
+        if (args.length && suppressNoise(args[0])) return;
+        return origWarn(...args);
+      };
+      console.error = (...args: Parameters<typeof console.error>) => {
+        if (args.length && suppressNoise(args[0])) return;
+        return origError(...args);
+      };
+    }
+
+    for (const decl of declarations) {
+      const match = syntax.matchProperty(decl.property, decl.value);
+      const error = match.error as csstree.SyntaxMatchError;
+
+      if (!error) continue;
+
+      // biome-ignore lint/correctness/noUnusedVariables: remove stack from error
+      const { stack, name, ...rest } = error;
+      warnings.push({
+        property: decl.property,
+        name,
+        ...rest,
+      });
+    }
+  } finally {
+    // Always restore console methods
+    console.warn = origWarn;
+    console.error = origError;
+  }
+
+  // Format and display warnings
+  const formattedWarnings: BStyleWarning[] = [];
+
+  if (warnings.length > 0) {
+    const cssLines = css.split("\n");
+    for (const warning of warnings) {
+      const formattedError = formatErrorDisplay(cssLines, warning);
+      formattedWarnings.push({
+        property: warning.property,
+        name: warning.name,
+        syntax: warning.syntax,
+        formattedWarning: `Errors found in: ${warning.property}\n${formattedError.join("\n")}`,
+      });
+    }
+  }
+
+  // Return result with runtime type safety
+  const result: StylesheetValidation = {
+    ok: errors.length === 0,
+    errors,
+    warnings: formattedWarnings,
+  };
+
+  return result;
+}
+
+export function validateDeclaration(value: string, prop: string): StylesheetValidation {
+  const css = `.class {${prop}: ${value};}`;
+  const result = validate(css);
+  return result;
+}
+
+// Helper functions
+/**
+ * Calculates the line window to display around an error line.
+ * Shows contextWindowSize lines before and after the error for better context.
+ *
+ * @param errorLine - The line number where the error occurred
+ * @param totalLines - Total number of lines in the CSS
+ * @param contextWindowSize - Number of lines to show before and after error (default: 2)
+ * @returns Object with start and end line numbers for the context window
+ */
+function calculateLineWindow(
+  errorLine: number,
+  totalLines: number,
+  contextWindowSize: number = DEFAULT_CONTEXT_WINDOW_SIZE,
+): { start: number; end: number } {
+  const start = Math.max(1, errorLine - contextWindowSize);
+  const end = Math.min(totalLines, errorLine + contextWindowSize);
+  return { start, end };
+}
+
+function formatLineNumber(lineNum: number, maxLineNum: number): string {
+  const maxDigits = Math.max(maxLineNum.toString().length, 1);
+  const paddedNum = lineNum.toString().padStart(maxDigits, " ");
+  const prefix = " ".repeat(LINE_NUMBER_PADDING - maxDigits);
+  return `${prefix}${paddedNum} |`;
+}
+
+function trimLine(line: string): { trimmed: string; spacesRemoved: number } {
+  const trimmed = line.trimStart();
+  const spacesRemoved = line.length - trimmed.length;
+  return { trimmed, spacesRemoved };
+}
+
+function calculateTruncationBounds(lineLength: number, errorColumn: number, maxWidth: number): TruncationBounds {
+  if (lineLength <= maxWidth) {
+    return {
+      startPos: 0,
+      endPos: lineLength,
+      needsStartEllipsis: false,
+      needsEndEllipsis: false,
+      availableWidth: maxWidth,
+    };
+  }
+
+  // Reserve space for potential ellipses
+  let availableWidth = maxWidth - 2;
+  const halfWidth = Math.floor(availableWidth / 2);
+  let startPos = Math.max(0, errorColumn - halfWidth - 1);
+
+  // Determine if we need start ellipsis
+  const needsStartEllipsis = startPos > 0;
+
+  if (!needsStartEllipsis) {
+    // No start truncation - reclaim space for end-only ellipsis
+    availableWidth = maxWidth - 1;
+  } else {
+    // Skip one additional character for better spacing after ellipsis
+    startPos = startPos + 1;
+  }
+
+  let endPos = startPos + availableWidth;
+  let needsEndEllipsis = endPos < lineLength;
+
+  // Adjust if we hit the end of the line
+  if (endPos >= lineLength) {
+    endPos = lineLength;
+    needsEndEllipsis = false;
+
+    if (needsStartEllipsis) {
+      startPos = Math.max(0, endPos - availableWidth);
+    }
+  }
+
+  return {
+    startPos,
+    endPos,
+    needsStartEllipsis,
+    needsEndEllipsis,
+    availableWidth,
+  };
+}
+
+function applyTruncation(line: string, bounds: TruncationBounds, originalErrorColumn: number): FormattedLine {
+  let content = line.slice(bounds.startPos, bounds.endPos);
+  let adjustedColumn = originalErrorColumn - bounds.startPos;
+
+  if (bounds.needsStartEllipsis) {
+    content = `…${content}`;
+    adjustedColumn = adjustedColumn + 1;
+  }
+
+  if (bounds.needsEndEllipsis) {
+    content = `${content}…`;
+  }
+
+  return { content, adjustedColumn };
+}
+
+function formatContextLine(line: string, maxWidth: number): string {
+  const { trimmed } = trimLine(line);
+
+  if (trimmed.length <= maxWidth) {
+    return trimmed;
+  }
+
+  return `${trimmed.slice(0, maxWidth - 1)}…`;
+}
+
+function formatErrorLine(line: string, errorColumn: number, maxWidth: number): FormattedLine {
+  // Input validation
+  if (errorColumn < 1) {
+    throw new Error("Error column must be >= 1");
+  }
+
+  const { trimmed, spacesRemoved } = trimLine(line);
+  const adjustedErrorColumn = Math.max(1, errorColumn - spacesRemoved);
+
+  // Handle case where line fits without truncation after trimming
+  if (trimmed.length <= maxWidth) {
+    return {
+      content: trimmed,
+      adjustedColumn: adjustedErrorColumn,
+    };
+  }
+
+  // Calculate truncation bounds using the original error column position
+  const bounds = calculateTruncationBounds(line.length, errorColumn, maxWidth);
+
+  // Special handling for start-of-line case (after trimming consideration)
+  if (bounds.startPos === 0 || bounds.startPos <= spacesRemoved) {
+    // Use trimmed line for start-of-line truncation
+    const trimmedBounds = calculateTruncationBounds(trimmed.length, adjustedErrorColumn, maxWidth);
+    return applyTruncation(trimmed, trimmedBounds, adjustedErrorColumn);
+  }
+
+  // Standard middle-of-line truncation
+  return applyTruncation(line, bounds, errorColumn);
+}
+
+function createPointerLine(prefixLength: number, column: number, length: number): string {
+  const safeLength = Math.max(1, length ?? 1);
+  const safeColumn = Math.max(1, column);
+
+  const pointerPrefix = " ".repeat(prefixLength);
+  const dashes = "-".repeat(safeColumn - 1);
+  const carets = "^".repeat(safeLength);
+
+  return pointerPrefix + dashes + carets;
+}
+
+/**
+ * Formats and displays CSS validation errors with visual context.
+ * Shows the error line with surrounding context, line numbers, and pointer indicators.
+ *
+ * @param cssLines - Array of CSS source lines
+ * @param warning - The validation error/warning to format
+ * @param options - Formatting options (maxLineWidth, contextWindowSize)
+ * @returns Array of formatted strings representing the error display
+ *
+ * @example
+ * // Error at line 5, column 10:
+ * //   3 | .class {
+ * //   4 |   margin: 10px;
+ * //   5 |   color: notacolor;
+ * //       ---------^^^^^^^^^^^
+ * //   6 | }
+ */
+function formatErrorDisplay(
+  cssLines: string[],
+  warning: BStyleMatchError,
+  options: ErrorFormatOptions = {
+    maxLineWidth: DEFAULT_MAX_LINE_WIDTH,
+    contextWindowSize: DEFAULT_CONTEXT_WINDOW_SIZE,
+  },
+): string[] {
+  // Input validation
+  if (!cssLines.length || warning.line < 1 || warning.line > cssLines.length) {
+    return [`Invalid error location: line ${warning.line}`];
+  }
+  const errorLine = warning.line;
+  const errorColumn = warning.column;
+  const mismatchLength = warning.mismatchLength ?? 1;
+  const contextWindowSize = options.contextWindowSize ?? DEFAULT_CONTEXT_WINDOW_SIZE;
+
+  const { start, end } = calculateLineWindow(errorLine, cssLines.length, contextWindowSize);
+  const maxLineNum = end;
+  const linePrefix = formatLineNumber(1, maxLineNum);
+  const prefixLength = linePrefix.length;
+  const availableWidth = options.maxLineWidth - prefixLength;
+
+  const result: string[] = [];
+
+  for (let lineNum = start; lineNum <= end; lineNum++) {
+    const lineIndex = lineNum - 1;
+    const currentLine = cssLines[lineIndex] ?? "";
+    const currentPrefix = formatLineNumber(lineNum, maxLineNum);
+
+    if (lineNum === errorLine) {
+      // Format error line
+      const { content, adjustedColumn } = formatErrorLine(currentLine, errorColumn, availableWidth);
+
+      result.push(currentPrefix + content);
+
+      // Add pointer line
+      const pointerLine = createPointerLine(prefixLength, adjustedColumn, mismatchLength);
+      result.push(pointerLine);
+    } else {
+      // Format context line
+      const formattedLine = formatContextLine(currentLine, availableWidth);
+      result.push(currentPrefix + formattedLine);
+    }
+  }
+
+  return result;
+}
+
+
+=== File: packages/b_utils/tsup.config.ts ===
+// b_path:: packages/b_utils/tsup.config.ts
+import { defineConfig } from "tsup";
+
+export default defineConfig({
+  entry: ["src/index.ts", "src/parse/index.ts", "src/generate/index.ts"],
+  format: ["esm"],
+  dts: true,
+  clean: true,
+  sourcemap: true,
+});
+
+
+=== File: packages/b_utils/vite.config.ts ===
+// b_path:: packages/b_utils/vite.config.ts
+import { defineConfig } from "vite";
+
+import tsconfigPaths from "vite-tsconfig-paths";
+
+// https://vite.dev/config/
+export default defineConfig({
+  plugins: [tsconfigPaths()],
+});
+
+
+=== File: packages/b_values/src/color/index.ts ===
+// b_path:: packages/b_values/src/color/index.ts
+export {};
+
+
+=== File: packages/b_values/src/index.ts ===
+// b_path:: packages/b_values/src/index.ts
+// @b/values - Main umbrella package
+
+// Re-export all packages
+export * as Keywords from "@b/keywords";
+export * as Types from "@b/types";
+export * as Units from "@b/units";
+export * as Parse from "@b/parsers";
+export * as Generate from "@b/generators";
+export * as Declarations from "@b/declarations";
+
+
+=== File: packages/b_values/tsup.config.ts ===
+// b_path:: packages/b_values/tsup.config.ts
+import { defineConfig } from "tsup";
+
+export default defineConfig({
+  entry: ["src/index.ts"],
+  format: ["cjs", "esm"],
+  dts: true,
+  splitting: false,
+  sourcemap: true,
+  clean: true,
+  treeshake: true,
+});
+
+
+=== File: packages/b_values/vite.config.ts ===
+// b_path:: packages/b_values/vite.config.ts
+import path from "node:path";
+import { defineConfig } from "vite";
+
+import tsconfigPaths from "vite-tsconfig-paths";
+
+// https://vite.dev/config/
+export default defineConfig({
+  plugins: [tsconfigPaths()],
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "./src"),
+    },
+  },
+});
+
+

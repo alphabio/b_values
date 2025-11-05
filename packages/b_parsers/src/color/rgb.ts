@@ -21,13 +21,13 @@ export function parseRgbFunction(node: csstree.FunctionNode): ParseResult<RGBCol
   }
 
   const rResult = parseCssValueNode(values[0]);
-  if (!rResult.ok) return rResult;
+  if (!rResult.ok) return rResult as ParseResult<RGBColor>;
 
   const gResult = parseCssValueNode(values[1]);
-  if (!gResult.ok) return gResult;
+  if (!gResult.ok) return gResult as ParseResult<RGBColor>;
 
   const bResult = parseCssValueNode(values[2]);
-  if (!bResult.ok) return bResult;
+  if (!bResult.ok) return bResult as ParseResult<RGBColor>;
 
   const rgb: RGBColor = {
     kind: "rgb",
@@ -38,7 +38,7 @@ export function parseRgbFunction(node: csstree.FunctionNode): ParseResult<RGBCol
 
   if (values.length === 4) {
     const alphaResult = parseCssValueNode(values[3]);
-    if (!alphaResult.ok) return alphaResult;
+    if (!alphaResult.ok) return alphaResult as ParseResult<RGBColor>;
     rgb.alpha = alphaResult.value;
   }
 

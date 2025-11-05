@@ -51,7 +51,7 @@ export function parsePosition2D(
 
   const firstValue = parsePositionValueNode(firstNode);
   if (!firstValue.ok) {
-    return firstValue;
+    return firstValue as ParseResult<{ position: Type.Position2D; nextIdx: number }>;
   }
   positionValues.push(firstValue.value);
   idx++;

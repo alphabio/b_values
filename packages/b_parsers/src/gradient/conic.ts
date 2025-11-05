@@ -118,12 +118,12 @@ export function fromFunction(fn: csstree.FunctionNode): ParseResult<Type.ConicGr
 export function parse(css: string): ParseResult<Type.ConicGradient> {
   const astResult = Utils.Ast.parseCssString(css, "value");
   if (!astResult.ok) {
-    return astResult;
+    return astResult as ParseResult<Type.ConicGradient>;
   }
 
   const funcResult = Utils.Ast.findFunctionNode(astResult.value, ["conic-gradient", "repeating-conic-gradient"]);
   if (!funcResult.ok) {
-    return funcResult;
+    return funcResult as ParseResult<Type.ConicGradient>;
   }
 
   return fromFunction(funcResult.value);

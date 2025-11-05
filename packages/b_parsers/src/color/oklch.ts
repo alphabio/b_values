@@ -20,13 +20,13 @@ export function parseOklchFunction(node: csstree.FunctionNode): ParseResult<OKLC
   }
 
   const lResult = parseCssValueNode(values[0]);
-  if (!lResult.ok) return lResult;
+  if (!lResult.ok) return lResult as ParseResult<OKLCHColor>;
 
   const cResult = parseCssValueNode(values[1]);
-  if (!cResult.ok) return cResult;
+  if (!cResult.ok) return cResult as ParseResult<OKLCHColor>;
 
   const hResult = parseCssValueNode(values[2]);
-  if (!hResult.ok) return hResult;
+  if (!hResult.ok) return hResult as ParseResult<OKLCHColor>;
 
   const oklch: OKLCHColor = {
     kind: "oklch",
@@ -37,7 +37,7 @@ export function parseOklchFunction(node: csstree.FunctionNode): ParseResult<OKLC
 
   if (values.length === 4) {
     const alphaResult = parseCssValueNode(values[3]);
-    if (!alphaResult.ok) return alphaResult;
+    if (!alphaResult.ok) return alphaResult as ParseResult<OKLCHColor>;
     oklch.alpha = alphaResult.value;
   }
 

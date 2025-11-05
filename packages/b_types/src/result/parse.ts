@@ -12,9 +12,11 @@ import type { Issue } from "./issue";
  *
  * A discriminated union that ensures type safety:
  * - When `ok: true`, `value` is guaranteed to be present (type T)
- * - When `ok: false`, `value` is undefined
+ * - When `ok: false`, `value` is normally undefined, but can be partially present (type T)
+ *   for multi-error collection scenarios
  *
  * Issues array allows warnings + success (parser can succeed with warnings).
+ * When `ok: false`, issues contains all collected errors.
  *
  * @example
  * ```typescript
@@ -26,18 +28,27 @@ import type { Issue } from "./issue";
  *   console.log(result.value); // ColorIR
  * }
  *
- * // Error
+ * // Error (no partial value)
  * const error = parseErr("invalid-value", "Invalid hex color");
  * if (!error.ok) {
  *   console.log(error.issues[0].message);
  * }
+ *
+ * // Error with partial value (multi-error collection)
+ * // Must use explicit type annotation for type safety
+ * const partial: ParseResult<BackgroundImageIR> = {
+ *   ok: false,
+ *   value: { kind: "layers", layers: [successfulLayer1, successfulLayer2] },
+ *   issues: [error1, error2, error3]
+ * };
  * ```
  *
  * @public
  */
 export type ParseResult<T = unknown> =
   | { ok: true; value: T; property?: string; issues: Issue[] }
-  | { ok: false; value?: undefined; property?: string; issues: Issue[] };
+  | { ok: false; value?: undefined; property?: string; issues: Issue[] }
+  | { ok: false; value: T; property?: string; issues: Issue[] };
 
 /**
  * Create a successful ParseResult.

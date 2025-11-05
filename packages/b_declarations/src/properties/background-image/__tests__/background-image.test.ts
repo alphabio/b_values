@@ -211,7 +211,7 @@ describe("background-image property", () => {
       const result = parseBackgroundImage(input);
       expect(result.ok).toBe(false);
       if (result.ok) return;
-      expect(result.issues[0]?.message).toContain("Invalid linear-gradient");
+      expect(result.issues[0]?.message).toContain("linear-gradient requires at least 2 color stops");
     });
   });
 
@@ -269,6 +269,34 @@ describe("background-image property", () => {
       expect(result.ok).toBe(false);
       if (result.ok) return;
       expect(result.issues[0]?.message).toContain("Unsupported image type");
+    });
+
+    it("should collect multiple errors from multiple invalid layers", () => {
+      const result = parseBackgroundImage("invalid-first, linear-gradient(bad), unknown-func()");
+      expect(result.ok).toBe(false);
+      if (result.ok) return;
+      // Should have collected errors from all 3 invalid layers
+      expect(result.issues.length).toBeGreaterThanOrEqual(3);
+      // Should still have partial success (successful layers in value)
+      expect(result.value).toBeDefined();
+      if (!result.value) return;
+      expect(result.value.kind).toBe("layers");
+    });
+
+    it("should collect errors but include successful layers", () => {
+      const result = parseBackgroundImage("url(valid.png), invalid-layer, url(also-valid.png)");
+      expect(result.ok).toBe(false);
+      if (result.ok) return;
+      // Should have error from the invalid layer
+      expect(result.issues.length).toBeGreaterThanOrEqual(1);
+      // But should still include the 2 successful url layers
+      expect(result.value).toBeDefined();
+      if (!result.value) return;
+      expect(result.value.kind).toBe("layers");
+      if (result.value.kind !== "layers") return;
+      expect(result.value.layers).toHaveLength(2);
+      expect(result.value.layers[0].kind).toBe("url");
+      expect(result.value.layers[1].kind).toBe("url");
     });
   });
 });
