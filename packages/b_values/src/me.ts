@@ -58,7 +58,7 @@ console.log(
               {
                 color: {
                   kind: "named",
-                  name: "notacolor" as any, // Test invalid color
+                  name: "red" as any, // Test invalid color
                 },
               },
             ],

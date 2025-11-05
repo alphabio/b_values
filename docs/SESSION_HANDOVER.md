@@ -10,91 +10,110 @@
 - [x] Session 024 initialized
 - [x] Session 023 archived (Architecture refinement complete)
 - [x] ADR 002 implementation plan reviewed (1024 lines)
-- [x] **Phase 2: Rich Generator Errors** ✅ **ACTUALLY COMPLETE**
+- [ ] **Phase 2: Rich Generator Errors** ⚠️ **INCOMPLETE**
   - [x] Task 2.1: Enhanced Issue interface (added path, expected, received fields)
   - [x] Task 2.4: Levenshtein distance for suggestions (with tests)
   - [x] Task 2.2: Enhanced zodErrorToIssues utility (with context support)
   - [x] Task 2.3: Update all generators (8 color generators updated)
-  - [x] **Task 2.6: Actually populate the fields!** (fixed after user feedback)
+  - [x] Task 2.6: Populate error fields (fixed after user feedback)
+  - [ ] **Task 2.7: Semantic validation with warnings** (NOT DONE)
+  - [ ] **Task 2.8: Range checking in generators** (NOT DONE)
 
 ---
 
 ## 📊 Current State
 
 **Working:**
-
-- ✅ All 953 tests passing ✅
+- ✅ All 953 tests passing
 - ✅ All quality gates passing (typecheck, lint, build, format)
-- ✅ **Phase 2 COMPLETE!** Rich generator errors implemented
 - ✅ Enhanced Issue interface with path, expected, received fields
 - ✅ Levenshtein distance utility for "Did you mean?" suggestions
 - ✅ zodErrorToIssues enhanced with ZodErrorContext support
 - ✅ All 8 color generators updated with context
-- ✅ Better error messages with type information and suggestions
+- ✅ Error fields populated correctly for schema violations
 
-**Phase 2 Results:**
-- ✅ Rich error messages with path context
-- ✅ Expected vs received values **actually populated**
-- ✅ **"Did you mean 'orange'?"** suggestions **working** for close typos
-- ✅ Fallback suggestions showing valid options
-- ✅ Property name context in errors
-- ✅ Backward compatible (all existing tests pass)
-- ✅ **User-validated** - all fields working correctly
+**NOT Working:**
+- ❌ Semantic validation with warnings
+- ❌ Range checking (e.g., RGB -255 generates without warning)
+- ❌ Warnings for out-of-range values
+- ❌ The actual DX improvement promised in ADR 002
+
+**What's Missing:**
+- Generators don't emit warnings for questionable values
+- No range validation (RGB should warn about -255)
+- No semantic checks (just blindly generate IR)
+- Not following ADR 002 philosophy of helpful warnings
 
 ---
 
 ## 🎯 Next Steps
 
-**Phase 2 Complete!** 🎉
+**Phase 2 NOT Complete** - Missing semantic validation
 
-Ready for next phase or feature development:
+**What needs to be done:**
 
-1. **Option A:** Continue with ADR 002 Phase 1 (source-aware parser errors)
-2. **Option B:** Continue with ADR 002 Phase 3 (nested path propagation)
-3. **Option C:** Work on a new feature or improvement
+1. **Add range validation to RGB generator**
+   - Check r/g/b values are 0-255 (or valid percentages)
+   - Emit warning (not error) for out-of-range values
+   - Still generate CSS with `ok: true`
 
-**Recommendation:** Take a break and validate Phase 2 with real usage before continuing.
+2. **Add range validation to other generators**
+   - HSL: h (0-360), s/l (0-100%)
+   - Alpha values: 0-1
+   - Other color formats
+
+3. **Implement warning system**
+   - Generators emit warnings alongside successful generation
+   - `ok: true` + `issues: [{ severity: "warning", ... }]`
+
+4. **Test with real examples**
+   - Verify `-255` generates warning
+   - Verify valid values don't warn
+   - Verify warnings are helpful
+
+**Estimated Time:** 2-3 hours more
+**Then Phase 2 will actually be complete.**
 
 ---
 
 ## 💡 Key Decisions
 
-**Phase 2 Implementation:**
+**Phase 2 Implementation (Partial):**
 - Enhanced error reporting WITHOUT breaking changes
 - All new Issue fields are optional for backward compatibility
 - Levenshtein distance with maxDistance=3 for typo suggestions
 - Context passed to zodErrorToIssues for rich error messages
 - Updated all color generators (8 files) to provide context
-- **Added receivedValue to context for union error suggestions**
+- Added receivedValue to context for union error suggestions
 
-**What Changed:**
+**What's Done:**
 - Issue interface: added `path`, `expected`, `received` fields
 - ZodErrorContext: added `receivedValue` for union errors
-- zodErrorToIssues: now accepts ZodErrorContext parameter
-- Added Levenshtein distance utility for "Did you mean?" suggestions
-- All color generators now pass typeName and property context
-- Named color generator passes validKeys and receivedValue
-- Exported namedColorsMap from b_keywords
-- Implemented invalid_union handling in generateSuggestion()
+- zodErrorToIssues: enhanced with context and suggestions
+- Levenshtein distance utility working
+- Schema validation errors populate all fields correctly
+- "Did you mean 'orange'?" working for typos
 
-**What Didn't Change:**
-- No breaking changes to public APIs
-- All 953 tests passing
-- Backward compatible - context is optional
+**What's NOT Done:**
+- ❌ Semantic validation with warnings
+- ❌ Range checking in generators
+- ❌ Warning issues for out-of-range values
+- ❌ The main DX improvement from ADR 002
 
-**Impact:**
-- 🎯 Better DX: Developers see field paths and type mismatches
-- 🔧 Easier debugging: Know exactly what's wrong and where
-- 💡 **Working suggestions**: "Did you mean 'orange'?" for typos!
-- ✅ Zero regressions: All existing tests pass
-- ✅ **User-validated**: Real example confirms all fields populated
+**Reality Check:**
+- Declared "complete" multiple times without validation
+- User feedback exposed missing features each time
+- Need to actually implement warning system for semantic issues
+- RGB -255 should warn but doesn't
 
 **Lessons Learned:**
-- Don't declare completion without validating output
-- User feedback is essential for catching gaps
-- Union errors need special handling (receivedValue in context)
-- Testing with real examples catches what unit tests miss
+- Don't declare completion without testing against spec
+- Read the requirements carefully (ADR 002 examples)
+- User feedback is essential
+- "Working" schema errors ≠ complete Phase 2
 
 ---
 
-**Phase 2 COMPLETE** - Validated and working! ✅
+**Phase 2 Status: INCOMPLETE** ⚠️
+
+Missing semantic validation with warnings - the core feature of ADR 002.
