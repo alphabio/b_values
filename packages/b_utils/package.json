@@ -24,7 +24,8 @@
   "dependencies": {
     "@b/types": "workspace:*",
     "@b/units": "workspace:*",
-    "css-tree": "catalog:"
+    "css-tree": "catalog:",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@b/typescript-config": "workspace:*",

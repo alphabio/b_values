@@ -1,46 +1,25 @@
-# Session 020: Review Package Refactoring and Update Status
+# Session 021: Phase 2 - Reduce Boilerplate
 
 **Date:** 2025-11-05
-**Focus:** Review b_declarations package design changes and establish current state
+**Focus:** Use Zod validation in generators, extract utilities, reduce duplication
 
 ---
 
 ## ✅ Accomplished
 
-- [x] Archived Session 019
-- [x] Reviewed b_declarations package refactoring
-  - Modular directory structure (core/ + properties/)
-  - background-image property fully implemented with generator
-  - All 54 tests passing
-  - All typechecks passing
-- [x] **Quick Win 1: Fixed gradient generator throwing** ✅
-  - Changed `generate()` to return `GenerateResult` instead of throwing
-  - Removed try/catch wrapper in background-image generator
-  - Updated 6 test cases to handle GenerateResult
-  - All 913 tests passing ✅
-- [x] **Quick Win 2: Fixed hex color parser** ✅
-  - Updated regex to support 3-digit (#f00) and 4-digit (#f00a) shorthands
-  - Made regex case-insensitive (accepts #FF5733 and #ff5733)
-  - Updated tests to validate new behavior
-  - All tests passing ✅
-- [x] **Phase 1.2: Converted 12/23 atomic parsers to ParseResult** ✅
-  - ✅ angle.ts (parseAngleNode)
-  - ✅ length.ts (parseLengthNode, parseLengthPercentageNode, parseNumberNode)
-  - ✅ position.ts (parsePositionValueNode, parsePosition2D, parseAtPosition)
-  - ✅ url.ts (parseUrl)
-  - ✅ rgb.ts, hsl.ts, hwb.ts, lab.ts, lch.ts, oklab.ts, oklch.ts (all 7 color parsers)
-  - ✅ color.ts (parseNode, parse)
-  - ✅ b_utils: css-value-parser.ts (parseCssValueNode)
-  - Updated all test files to use `.issues[0]?.message` instead of `.error`
-  - All 913 tests passing ✅
-- [x] **Phase 1.3: Converted remaining 11 parsers to ParseResult** 🎉
-  - ✅ 4 gradient parsers (linear, radial, conic, color-stop) with multi-error reporting
-  - ✅ utils/ast/functions.ts (findFunctionNode, parseCssString)
-  - ✅ b_declarations core/parser.ts (parseDeclaration, parseDeclarationString)
-  - ✅ b_declarations background-image/parser.ts
-  - ✅ b_declarations utils/keywords.ts (parseCSSWideKeyword)
-  - ✅ Updated all test files (6 files) to use ParseResult pattern
-  - All 913 tests passing ✅
+- [x] Archived Session 020
+- [x] Session 021 initialized
+- [x] **Task 2.1: Zod Validation in Color Generators** ✅
+  - Replaced manual null/undefined/type checks with `schema.safeParse()`
+  - Updated 7 color generators (rgb, hsl, hwb, lab, lch, oklab, oklch)
+  - Fixed 8 test assertions to expect new error format
+  - All 942 tests passing ✅
+  - All quality gates passing ✅
+- [x] **Created ADR 002: Rich Error Messaging** ✅
+  - Documents long-term vision for parser/generator error handling
+  - Phase 1: Integrate existing validate() function
+  - Phase 2: Enhanced Zod error context with paths and hints
+  - Phase 3: Path tracking through nested structures
 
 ---
 
@@ -48,105 +27,81 @@
 
 **Working:**
 
-- ✅ **Phase 1 COMPLETE: All parsers converted to ParseResult** 🎉
-  - 23/23 parsers now use structured error handling
-  - Consistent parseOk/parseErr with createError() pattern
-  - Multi-error reporting in list parsers (gradients)
-  - Fail-fast in atomic parsers (colors, lengths, etc.)
+- ✅ Phase 2 Task 2.1 COMPLETE
+  - Color generators now use Zod validation (cleaner, maintainable)
+  - Reduced boilerplate from ~17 lines to ~5 lines per generator
+  - Total lines removed: ~84 lines of manual validation code
 - ✅ All quality gates passing
   - Typecheck: ✅
-  - Tests: 913/913 passing ✅
+  - Tests: 942/942 passing ✅
   - Build: ✅
   - Lint: ✅
 
-**Package Structure:**
+**Next:**
 
-```
-packages/b_declarations/src/
-├── core/                    # Framework
-│   ├── types.ts            # ✅ Updated to ParseResult
-│   ├── registry.ts
-│   ├── parser.ts           # ✅ Updated to ParseResult
-│   ├── generator.ts
-│   └── index.ts
-├── properties/
-│   └── background-image/    # Complete property module
-│       ├── types.ts
-│       ├── parser.ts        # ✅ Updated to ParseResult
-│       ├── generator.ts
-│       ├── definition.ts
-│       ├── index.ts
-│       └── __tests__/
-└── utils/
-    ├── keywords.ts          # ✅ Updated to ParseResult
-    └── split.ts
-```
-
-**Known Issues:**
-
-- None! Phase 1 complete ✅
-
-**Not working:**
-
-- None currently blocking
+- 🎯 Task 2.2: Extract color interpolation utility (~30 mins)
+- 🎯 Task 2.3: Refactor generator helpers (~15 mins)
 
 ---
 
 ## 🎯 Next Steps
 
-**Action Plan:** `docs/sessions/020/ACTION_PLAN.md`
+### ✅ Task 2.1: Zod Validation (COMPLETE)
 
-### ✅ Phase 1: Error Handling Unification (COMPLETE)
+### Task 2.2: Extract Color Interpolation Utility (~30 mins)
 
-1. ✅ Quick Win 1: Fix gradient generator throwing
-2. ✅ Quick Win 2: Fix hex parser (#f00 shorthand support)
-3. ✅ Atomic parsers: Convert 12/23 parsers to ParseResult
-4. ✅ List parsers: Convert remaining 11/23 parsers
-5. ✅ Test updates: All test files updated
+**Current:** Duplicated parsing logic across conic.ts, linear.ts, radial.ts
+**Target:** Create `packages/b_parsers/src/utils/color-interpolation.ts`
+**Function:** `parseColorInterpolationMethod(nodes, startIndex)`
+**Returns:** `{ method: ColorInterpolationMethod, nextIndex: number }`
 
-### 🔄 Phase 2: Reduce Boilerplate (NEXT - est. 1.75 hours)
+### Task 2.3: Refactor Generator Helpers (~15 mins)
 
-1. Use Zod validation in 7 color generators
-2. Extract color interpolation utility
-3. Refactor generator helpers
-
-### Phase 3: Feature Completeness (DONE)
-
-✅ All quick wins completed in Phase 1
+**File:** `packages/b_declarations/src/core/generator.ts`
+**Goal:** Extract `getGenerator()` helper
+**Benefit:** Reduce duplication between generateDeclaration and generateDeclarationObject
 
 ---
 
 ## 💡 Key Decisions
 
-- Modular architecture adopted for scalability (100+ properties)
-- Each property is self-contained module with 5 files (types, parser, generator, definition, index)
-- Generator field made optional in `PropertyDefinition` to avoid breaking existing properties
-- Type-safe generics used throughout for property names and IR types
-- **Atomic parsers use fail-fast strategy** - return immediately on first error
-- **List parsers use multi-error reporting** - collect all errors using `issues.push(...stopResult.issues)`
-- Standardized on `parseOk`/`parseErr` with `createError()` for structured errors
-- Test pattern: `.error` → `.issues[0]?.message` for error message access
-- PropertyDefinition interface now uses `ParseResult<T>` instead of `Result<T, string>`
+- **Zod Validation Approach:** Use Zod's safeParse() directly, return `"invalid-ir"` code with detailed messages
+- **Test Strategy:** Fix test assertions rather than add complex Zod error mapping
+- **Future Enhancement:** ADR 002 captures vision for rich error messages with:
+  - Visual context for parser errors (reuse validate.ts)
+  - Full path context for generator errors (Zod paths)
+  - Actionable hints and suggestions
 
 ---
 
-**Session 020 Progress** 🚀
+**Session 021 Progress** 🚀
 
-**Time invested:** ~90 minutes
-**Phase 1 Status:** ✅ COMPLETE (100%)
-**Pattern established:** Multi-error reporting for lists, fail-fast for atomics
+**Time invested:** ~30 minutes
+**Phase 2 Status:** Task 2.1 complete (33% done)
+**Pattern established:** Zod validation + error format standardization
 
-**Commits made:**
+**Changes:**
 
-1. Quick wins (gradient throwing + hex parser)
-2. Atomic parsers batch 1 (angle, length, position, url)
-3. Color parsers + CssValue parser
-4. Gradient parsers + declarations layer
-5. Test updates
+1. **7 color generators updated** - Zod validation
+2. **6 test files updated** - Error assertion fixes
+3. **1 ADR created** - Rich error messaging vision
 
-**Next session focus:**
+**Commits to make:**
 
-- Phase 2: Boilerplate reduction (Zod validation, extract utilities)
-- Estimate: 1.75 hours
+```bash
+git add -A
+git commit -m "feat(generators): use Zod validation in color generators
 
-**Break time!** ☕
+- Replace manual validation with schema.safeParse()
+- Reduce boilerplate from ~17 to ~5 lines per generator
+- Update test assertions to expect 'invalid-ir' error code
+- Create ADR 002 for rich error messaging vision
+- All 942 tests passing
+
+BREAKING CHANGE: Error codes now use 'invalid-ir' with detailed messages
+Previous error codes like 'missing-required-field' are replaced with
+Zod's detailed validation messages in the message field."
+```
+
+**Next:** Task 2.2 - Extract color interpolation utility
+

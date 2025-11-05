@@ -112,6 +112,7 @@ export function generate(ir: Type.LinearGradient): GenerateResult {
 
   if (ir.direction) {
     const dirResult = generateDirection(ir.direction);
+
     if (!dirResult.ok) return dirResult;
     parts.push(dirResult.value);
   }

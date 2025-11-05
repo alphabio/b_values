@@ -1,8 +1,8 @@
 // b_path:: packages/b_generators/src/color/named.ts
 import { namedColorSchema } from "@b/keywords";
-import { type GenerateResult, generateOk, createError } from "@b/types";
+import { type GenerateResult, generateOk } from "@b/types";
 import type { NamedColor } from "@b/types";
-
+import { zodErrorToIssues } from "@b/utils";
 /**
  * @see https://drafts.csswg.org/css-color/#named-colors
  */
@@ -10,9 +10,11 @@ export function generate(color: NamedColor): GenerateResult {
   const validation = namedColorSchema.safeParse(color.name);
 
   if (!validation.success) {
+    const issues = zodErrorToIssues(validation.error);
     return {
+      property: `color[named]: ${color.name}`,
       ok: false,
-      issues: validation.error.issues.map((issue) => createError("invalid-value", issue.message)),
+      issues,
     };
   }
 

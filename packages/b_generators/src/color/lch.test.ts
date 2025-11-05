@@ -323,7 +323,7 @@ describe("lch generator", () => {
       const result = LCH.generate(color);
       expect(result.ok).toBe(false);
       if (!result.ok) {
-        expect(result.issues[0]?.code).toBe("missing-required-field");
+        expect(result.issues[0]?.code).toBe("invalid-ir");
       }
     });
   });

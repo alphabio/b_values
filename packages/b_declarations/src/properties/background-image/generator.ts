@@ -43,7 +43,6 @@ function generateImageLayer(layer: ImageLayer): GenerateResult {
       return generateOk(`url(${layer.url})`, "background-image");
 
     case "gradient": {
-      // Gradient.generate now returns GenerateResult directly
       return Generators.Gradient.generate(layer.gradient);
     }
 

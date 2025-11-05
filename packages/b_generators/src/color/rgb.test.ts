@@ -47,6 +47,7 @@ describe("rgb generator", () => {
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(result.issues[0]?.code).toBe("invalid-ir");
+      expect(result.issues[0]?.message).toContain("Invalid RGBColor");
     }
   });
 
@@ -55,7 +56,8 @@ describe("rgb generator", () => {
     const result = RGB.generate(color);
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.issues[0]?.code).toBe("missing-required-field");
+      expect(result.issues[0]?.code).toBe("invalid-ir");
+      expect(result.issues[0]?.message).toContain("Invalid RGBColor");
     }
   });
 

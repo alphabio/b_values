@@ -1,10 +1,12 @@
 // b_path:: packages/b_keywords/src/named-colors.ts
 import { z } from "zod";
+import { getLiteralValues } from "./utils";
 
 /**
  * @see https://developer.mozilla.org/en-US/docs/Web/CSS/named-color
  */
-export const namedColorSchema = z.union([
+
+export const namedColors = [
   z.literal("transparent"),
   z.literal("currentcolor"),
   z.literal("black"),
@@ -155,6 +157,15 @@ export const namedColorSchema = z.union([
   z.literal("wheat"),
   z.literal("whitesmoke"),
   z.literal("yellowgreen"),
-]);
+];
+
+const namedColorsMap = namedColors.flatMap(getLiteralValues);
+
+export const namedColorSchema = z.union(namedColors, {
+  error: () =>
+    `Expected a named color (@see b_keywords/src/named-colors.ts): ${namedColorsMap.slice(0, 12).join(" | ")}..`,
+});
+
+// export const namedColorSchema = z.union();
 
 export type NamedColor = z.infer<typeof namedColorSchema>;

@@ -1,5 +1,6 @@
 // b_path:: packages/b_types/src/values/css-value.ts
 import { z } from "zod";
+import { getLiteralValues } from "@b/keywords";
 
 /**
  * Represents a literal numeric value with optional unit
@@ -116,7 +117,7 @@ export const attrFunctionSchema: z.ZodType<{
  */
 // export const cssValueSchema = z.union([literalValueSchema, variableReferenceSchema, keywordValueSchema]);
 
-export const cssValueSchema = z.union([
+export const allCssValueSchema = [
   // Primitives
   literalValueSchema,
   variableReferenceSchema,
@@ -135,7 +136,13 @@ export const cssValueSchema = z.union([
 
   // Structural
   listValueSchema,
-]);
+];
+
+const allCssValues = allCssValueSchema.flatMap(getLiteralValues);
+
+export const cssValueSchema = z.union(allCssValueSchema, {
+  error: () => `Expected ${allCssValues.join(" | ")}`,
+});
 
 export type LiteralValue = z.infer<typeof literalValueSchema>;
 export type VariableReference = z.infer<typeof variableReferenceSchema>;

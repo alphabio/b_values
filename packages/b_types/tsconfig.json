@@ -4,5 +4,5 @@
   "include": [
     "vite.config.ts",
     "src"
-  ]
+, "../b_utils/src/generate/validation.ts", "../b_keywords/src/utils"  ]
 }
