@@ -1,5 +1,5 @@
 // b_path:: packages/b_declarations/src/parser.ts
-import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
+import { createError, parseErr, parseOk, forwardParseErr, type ParseResult } from "@b/types";
 import { propertyRegistry } from "./core";
 import type { CSSDeclaration, DeclarationResult } from "./types";
 
@@ -29,7 +29,7 @@ export function parseDeclaration(input: string | CSSDeclaration): ParseResult<De
   if (typeof input === "string") {
     const parsed = parseDeclarationString(input);
     if (!parsed.ok) {
-      return parsed as ParseResult<DeclarationResult>;
+      return forwardParseErr<DeclarationResult>(parsed);
     }
     property = parsed.value.property;
     value = parsed.value.value;
@@ -49,7 +49,7 @@ export function parseDeclaration(input: string | CSSDeclaration): ParseResult<De
   const parseResult = definition.parser(value);
 
   if (!parseResult.ok) {
-    return parseResult as ParseResult<DeclarationResult>;
+    return forwardParseErr<DeclarationResult>(parseResult);
   }
 
   return parseOk({

@@ -244,17 +244,30 @@ function generateSuggestion(issue: ZodIssue, context?: ZodErrorContext): string 
 
     case "unrecognized_keys": {
       const keysIssue = issue as ZodIssueUnrecognizedKeys;
-      const unknownKey = keysIssue.keys[0];
-      const unknownKeyStr = unknownKey ? String(unknownKey) : undefined;
 
-      if (unknownKeyStr && context?.validKeys) {
-        const suggestion = findClosestMatch(unknownKeyStr, context.validKeys);
-        if (suggestion) {
-          return `Did you mean '${suggestion}'?`;
+      // Generate suggestions for all unrecognized keys
+      if (context?.validKeys && keysIssue.keys.length > 0) {
+        const validKeys = context.validKeys; // Type guard: now TypeScript knows it's string[]
+        const suggestions = keysIssue.keys
+          .map((unknownKey) => {
+            const unknownKeyStr = String(unknownKey);
+            const closestMatch = findClosestMatch(unknownKeyStr, validKeys);
+
+            if (closestMatch) {
+              return `Did you mean '${closestMatch}' instead of '${unknownKeyStr}'?`;
+            }
+            return `'${unknownKeyStr}' is not a valid key`;
+          })
+          .filter(Boolean);
+
+        if (suggestions.length > 0) {
+          return suggestions.join(" ");
         }
       }
 
-      return "Check for typos in key name";
+      // Fallback when no context or no keys
+      const keysList = keysIssue.keys.map((k) => `'${String(k)}'`).join(", ");
+      return `Unrecognized key${keysIssue.keys.length > 1 ? "s" : ""}: ${keysList}`;
     }
 
     case "invalid_union": {

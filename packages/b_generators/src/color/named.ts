@@ -13,10 +13,19 @@ const namedColorGeneratorSchema = z
   .strict();
 
 /**
+ * Generate CSS named color string from NamedColor IR.
+ *
+ * Follows the 4-step generator pattern:
+ * 1. Structural validation (Zod schema)
+ * 2. Generate CSS string (always succeeds for valid structure)
+ * 3. Semantic validation (check if color name is recognized)
+ * 4. Attach warnings if needed
+ *
  * @see https://drafts.csswg.org/css-color/#named-colors
  */
 export function generate(color: unknown, context?: GenerateContext): GenerateResult {
-  // 1. Schema validation - validate object structure (not semantic color name)
+  // Step 1: Structural Validation
+  // Validate that the input has the correct shape (object with kind and name)
   const validation = namedColorGeneratorSchema.safeParse(color);
 
   if (!validation.success) {
@@ -30,17 +39,18 @@ export function generate(color: unknown, context?: GenerateContext): GenerateRes
     );
   }
 
-  const validated = validation.data;
+  const { name: colorName } = validation.data;
 
-  // 2. Semantic validation - check if it's a known color
-  // We can always represent a named color, even if it's not valid
-  // Following our philosophy: ok = canRepresent(input), not isValidCSS(input)
-  const colorName = validated.name;
+  // Step 2: Generate CSS
+  // We can always represent a named color as CSS, even if unrecognized
+  // Philosophy: ok = canRepresent(input), not isValidCSS(input)
   let result = generateOk(colorName);
 
-  // Check if it's a known color name
+  // Step 3: Semantic Validation
+  // Check if it's a recognized CSS named color
   const isKnownColor = namedColorsValues.includes(colorName);
 
+  // Step 4: Attach Warnings
   if (!isKnownColor) {
     const closestMatch = findClosestMatch(colorName, namedColorsValues);
 

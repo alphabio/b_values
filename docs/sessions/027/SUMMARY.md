@@ -9,6 +9,7 @@
 ## Mission
 
 Complete Phase 3 polish from feedback:
+
 1. Path propagation through nested generators
 2. Document ParseResult partial success behavior
 3. Improve Zod error context
@@ -70,6 +71,7 @@ Complete Phase 3 polish from feedback:
 **Updated 11 parser files to use forwardParseErr:**
 
 Color parsers:
+
 - `packages/b_parsers/src/color/rgb.ts`
 - `packages/b_parsers/src/color/hsl.ts`
 - `packages/b_parsers/src/color/hwb.ts`
@@ -79,11 +81,13 @@ Color parsers:
 - `packages/b_parsers/src/color/oklch.ts`
 
 Gradient parsers:
+
 - `packages/b_parsers/src/gradient/linear.ts`
 - `packages/b_parsers/src/gradient/radial.ts`
 - `packages/b_parsers/src/gradient/conic.ts`
 
 Other:
+
 - `packages/b_parsers/src/position.ts`
 
 **Removed 30+ unsafe `as ParseResult<T>` type casts.**

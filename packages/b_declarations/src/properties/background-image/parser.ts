@@ -1,5 +1,5 @@
 // b_path:: packages/b_declarations/src/properties/background-image/parser.ts
-import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
+import { createError, parseErr, parseOk, forwardParseErr, type ParseResult } from "@b/types";
 import * as Parsers from "@b/parsers";
 import { isCSSWideKeyword, parseCSSWideKeyword, splitByComma } from "../../utils";
 import type { BackgroundImageIR, ImageLayer } from "./types";
@@ -62,8 +62,7 @@ export function parseBackgroundImage(value: string): ParseResult<BackgroundImage
           }),
         );
       } else {
-        // Error has no value or wrong shape, cast to expected type
-        layerResults.push(urlResult as ParseResult<ImageLayer>);
+        layerResults.push(forwardParseErr<ImageLayer>(urlResult));
       }
       continue;
     }
@@ -79,8 +78,7 @@ export function parseBackgroundImage(value: string): ParseResult<BackgroundImage
           }),
         );
       } else {
-        // Pass through error, no partial value for individual gradient
-        layerResults.push(gradientResult as ParseResult<ImageLayer>);
+        layerResults.push(forwardParseErr<ImageLayer>(gradientResult));
       }
       continue;
     }
@@ -96,7 +94,7 @@ export function parseBackgroundImage(value: string): ParseResult<BackgroundImage
           }),
         );
       } else {
-        layerResults.push(gradientResult as ParseResult<ImageLayer>);
+        layerResults.push(forwardParseErr<ImageLayer>(gradientResult));
       }
       continue;
     }
@@ -112,7 +110,7 @@ export function parseBackgroundImage(value: string): ParseResult<BackgroundImage
           }),
         );
       } else {
-        layerResults.push(gradientResult as ParseResult<ImageLayer>);
+        layerResults.push(forwardParseErr<ImageLayer>(gradientResult));
       }
       continue;
     }
