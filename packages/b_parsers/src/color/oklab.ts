@@ -1,6 +1,6 @@
 // b_path:: packages/b_parsers/src/color/oklab.ts
 import type * as csstree from "css-tree";
-import { err, ok, type Result } from "@b/types";
+import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
 import type { OKLabColor } from "@b/types";
 import { parseCssValueNode, getChildren, getValues } from "@b/utils";
 
@@ -8,15 +8,15 @@ import { parseCssValueNode, getChildren, getValues } from "@b/utils";
  * Parse oklab() function
  * @see https://drafts.csswg.org/css-color/#ok-lab
  */
-export function parseOklabFunction(node: csstree.FunctionNode): Result<OKLabColor, string> {
+export function parseOklabFunction(node: csstree.FunctionNode): ParseResult<OKLabColor> {
   if (node.name !== "oklab") {
-    return err("Expected oklab() function");
+    return parseErr(createError("invalid-syntax", "Expected oklab() function"));
   }
 
   const values = getValues(getChildren(node));
 
   if (values.length < 3 || values.length > 4) {
-    return err(`OKLab function must have 3 or 4 values, got ${values.length}`);
+    return parseErr(createError("invalid-syntax", `OKLab function must have 3 or 4 values, got ${values.length}`));
   }
 
   const lResult = parseCssValueNode(values[0]);
@@ -41,5 +41,5 @@ export function parseOklabFunction(node: csstree.FunctionNode): Result<OKLabColo
     oklab.alpha = alphaResult.value;
   }
 
-  return ok(oklab);
+  return parseOk(oklab);
 }

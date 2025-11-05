@@ -94,7 +94,7 @@ describe("parseCssValueNode", () => {
     const result = parseCssValueNode(childNode);
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.error).toContain("Unsupported node type");
+      expect(result.issues[0]?.message).toContain("Unsupported node type");
     }
   });
 
@@ -168,7 +168,7 @@ describe("parseCssValueNode", () => {
     const result = parseCssValueNode(mockVarNode);
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.error).toContain("expected a custom property name");
+      expect(result.issues[0]?.message).toContain("expected a custom property name");
     }
   });
 
@@ -186,7 +186,7 @@ describe("parseCssValueNode", () => {
     const result = parseCssValueNode(childNode);
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.error).toContain("Unsupported function");
+      expect(result.issues[0]?.message).toContain("Unsupported function");
     }
   });
 
@@ -195,7 +195,7 @@ describe("parseCssValueNode", () => {
     const result = parseCssValueNode(fakeNode as csstree.CssNode);
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.error).toContain("Invalid number value");
+      expect(result.issues[0]?.message).toContain("Invalid number value");
     }
   });
 
@@ -204,7 +204,7 @@ describe("parseCssValueNode", () => {
     const result = parseCssValueNode(fakeNode as csstree.CssNode);
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.error).toContain("Invalid percentage value");
+      expect(result.issues[0]?.message).toContain("Invalid percentage value");
     }
   });
 
@@ -213,7 +213,7 @@ describe("parseCssValueNode", () => {
     const result = parseCssValueNode(fakeNode as csstree.CssNode);
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.error).toContain("Invalid dimension value");
+      expect(result.issues[0]?.message).toContain("Invalid dimension value");
     }
   });
 });

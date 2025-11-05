@@ -114,7 +114,7 @@ describe("parseLchFunction - Error cases", () => {
     const result = parseLchFunction(func);
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.error).toContain("Expected lch()");
+      expect(result.issues[0]?.message).toContain("Expected lch()");
     }
   });
 
@@ -123,7 +123,7 @@ describe("parseLchFunction - Error cases", () => {
     const result = parseLchFunction(func);
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.error).toContain("must have 3 or 4 values");
+      expect(result.issues[0]?.message).toContain("must have 3 or 4 values");
     }
   });
 });

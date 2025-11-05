@@ -1,6 +1,6 @@
 // b_path:: packages/b_parsers/src/color/lch.ts
 import type * as csstree from "css-tree";
-import { err, ok, type Result } from "@b/types";
+import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
 import type { LCHColor } from "@b/types";
 import { parseCssValueNode, getChildren, getValues } from "@b/utils";
 
@@ -8,15 +8,15 @@ import { parseCssValueNode, getChildren, getValues } from "@b/utils";
  * Parse lch() function
  * @see https://drafts.csswg.org/css-color/#lch-colors
  */
-export function parseLchFunction(node: csstree.FunctionNode): Result<LCHColor, string> {
+export function parseLchFunction(node: csstree.FunctionNode): ParseResult<LCHColor> {
   if (node.name !== "lch") {
-    return err("Expected lch() function");
+    return parseErr(createError("invalid-syntax", "Expected lch() function"));
   }
 
   const values = getValues(getChildren(node));
 
   if (values.length < 3 || values.length > 4) {
-    return err(`LCH function must have 3 or 4 values, got ${values.length}`);
+    return parseErr(createError("invalid-syntax", `LCH function must have 3 or 4 values, got ${values.length}`));
   }
 
   const lResult = parseCssValueNode(values[0]);
@@ -41,5 +41,5 @@ export function parseLchFunction(node: csstree.FunctionNode): Result<LCHColor, s
     lch.alpha = alphaResult.value;
   }
 
-  return ok(lch);
+  return parseOk(lch);
 }

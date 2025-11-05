@@ -110,14 +110,14 @@ describe("parseHwbFunction", () => {
       const func = extractFunctionFromValue("rgb(0 0 0)");
       const result = parseHwbFunction(func);
       expect(result.ok).toBe(false);
-      expect(result.error).toContain("Expected hwb()");
+      expect(result.issues[0]?.message).toContain("Expected hwb()");
     });
 
     it("should return error for too few values", () => {
       const func = extractFunctionFromValue("hwb(120 20%)");
       const result = parseHwbFunction(func);
       expect(result.ok).toBe(false);
-      expect(result.error).toContain("must have 3 or 4 values");
+      expect(result.issues[0]?.message).toContain("must have 3 or 4 values");
     });
   });
 });

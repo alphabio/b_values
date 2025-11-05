@@ -21,7 +21,7 @@ export function fromNodes(nodes: csstree.CssNode[]): Result<Type.ColorStop, stri
 
   const colorResult = Color.parseNode(firstNode);
   if (!colorResult.ok) {
-    return err(`Invalid color value: ${colorResult.error}`);
+    return err(`Invalid color value: ${colorResult.issues[0]?.message}`);
   }
 
   if (nodes.length === 1) {

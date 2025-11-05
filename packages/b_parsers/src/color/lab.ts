@@ -1,6 +1,6 @@
 // b_path:: packages/b_parsers/src/color/lab.ts
 import type * as csstree from "css-tree";
-import { err, ok, type Result } from "@b/types";
+import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
 import type { LABColor } from "@b/types";
 import { parseCssValueNode, getChildren, getValues } from "@b/utils";
 
@@ -8,15 +8,15 @@ import { parseCssValueNode, getChildren, getValues } from "@b/utils";
  * Parse lab() function
  * @see https://drafts.csswg.org/css-color/#lab-colors
  */
-export function parseLabFunction(node: csstree.FunctionNode): Result<LABColor, string> {
+export function parseLabFunction(node: csstree.FunctionNode): ParseResult<LABColor> {
   if (node.name !== "lab") {
-    return err("Expected lab() function");
+    return parseErr(createError("invalid-syntax", "Expected lab() function"));
   }
 
   const values = getValues(getChildren(node));
 
   if (values.length < 3 || values.length > 4) {
-    return err(`LAB function must have 3 or 4 values, got ${values.length}`);
+    return parseErr(createError("invalid-syntax", `LAB function must have 3 or 4 values, got ${values.length}`));
   }
 
   const lResult = parseCssValueNode(values[0]);
@@ -41,5 +41,5 @@ export function parseLabFunction(node: csstree.FunctionNode): Result<LABColor, s
     lab.alpha = alphaResult.value;
   }
 
-  return ok(lab);
+  return parseOk(lab);
 }

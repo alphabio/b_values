@@ -1,6 +1,6 @@
 // b_path:: packages/b_parsers/src/color/hwb.ts
 import type * as csstree from "css-tree";
-import { err, ok, type Result } from "@b/types";
+import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
 import type { HWBColor } from "@b/types";
 import { parseCssValueNode, getChildren, getValues } from "@b/utils";
 
@@ -8,15 +8,15 @@ import { parseCssValueNode, getChildren, getValues } from "@b/utils";
  * Parse hwb() function
  * @see https://drafts.csswg.org/css-color/#the-hwb-notation
  */
-export function parseHwbFunction(node: csstree.FunctionNode): Result<HWBColor, string> {
+export function parseHwbFunction(node: csstree.FunctionNode): ParseResult<HWBColor> {
   if (node.name !== "hwb") {
-    return err("Expected hwb() function");
+    return parseErr(createError("invalid-syntax", "Expected hwb() function"));
   }
 
   const values = getValues(getChildren(node));
 
   if (values.length < 3 || values.length > 4) {
-    return err(`HWB function must have 3 or 4 values, got ${values.length}`);
+    return parseErr(createError("invalid-syntax", `HWB function must have 3 or 4 values, got ${values.length}`));
   }
 
   const hResult = parseCssValueNode(values[0]);
@@ -41,5 +41,5 @@ export function parseHwbFunction(node: csstree.FunctionNode): Result<HWBColor, s
     hwb.alpha = alphaResult.value;
   }
 
-  return ok(hwb);
+  return parseOk(hwb);
 }

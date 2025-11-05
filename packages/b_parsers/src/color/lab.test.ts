@@ -96,7 +96,7 @@ describe("parseLabFunction - Error cases", () => {
     const result = parseLabFunction(func);
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.error).toContain("Expected lab()");
+      expect(result.issues[0]?.message).toContain("Expected lab()");
     }
   });
 
@@ -105,7 +105,7 @@ describe("parseLabFunction - Error cases", () => {
     const result = parseLabFunction(func);
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.error).toContain("must have 3 or 4 values");
+      expect(result.issues[0]?.message).toContain("must have 3 or 4 values");
     }
   });
 });

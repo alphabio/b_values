@@ -159,21 +159,21 @@ describe("parseRgbFunction", () => {
       const func = extractFunctionFromValue("hsl(0 0% 0%)");
       const result = parseRgbFunction(func);
       expect(result.ok).toBe(false);
-      expect(result.error).toContain("Expected rgb()");
+      expect(result.issues[0]?.message).toContain("Expected rgb()");
     });
 
     it("should return error for too few values", () => {
       const func = extractFunctionFromValue("rgb(255 0)");
       const result = parseRgbFunction(func);
       expect(result.ok).toBe(false);
-      expect(result.error).toContain("must have 3 or 4 values");
+      expect(result.issues[0]?.message).toContain("must have 3 or 4 values");
     });
 
     it("should return error for too many values", () => {
       const func = extractFunctionFromValue("rgb(255 0 0 0.5 0.5)");
       const result = parseRgbFunction(func);
       expect(result.ok).toBe(false);
-      expect(result.error).toContain("must have 3 or 4 values");
+      expect(result.issues[0]?.message).toContain("must have 3 or 4 values");
     });
   });
 });

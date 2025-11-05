@@ -1,6 +1,6 @@
 // b_path:: packages/b_parsers/src/color/hsl.ts
 import type * as csstree from "css-tree";
-import { err, ok, type Result } from "@b/types";
+import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
 import type { HSLColor } from "@b/types";
 import { parseCssValueNode, getChildren, getValues } from "@b/utils";
 
@@ -8,15 +8,15 @@ import { parseCssValueNode, getChildren, getValues } from "@b/utils";
  * Parse hsl() or hsla() function
  * @see https://drafts.csswg.org/css-color/#the-hsl-notation
  */
-export function parseHslFunction(node: csstree.FunctionNode): Result<HSLColor, string> {
+export function parseHslFunction(node: csstree.FunctionNode): ParseResult<HSLColor> {
   if (node.name !== "hsl" && node.name !== "hsla") {
-    return err("Expected hsl() or hsla() function");
+    return parseErr(createError("invalid-syntax", "Expected hsl() or hsla() function"));
   }
 
   const values = getValues(getChildren(node));
 
   if (values.length < 3 || values.length > 4) {
-    return err(`HSL function must have 3 or 4 values, got ${values.length}`);
+    return parseErr(createError("invalid-syntax", `HSL function must have 3 or 4 values, got ${values.length}`));
   }
 
   const hResult = parseCssValueNode(values[0]);
@@ -41,5 +41,5 @@ export function parseHslFunction(node: csstree.FunctionNode): Result<HSLColor, s
     hsl.alpha = alphaResult.value;
   }
 
-  return ok(hsl);
+  return parseOk(hsl);
 }

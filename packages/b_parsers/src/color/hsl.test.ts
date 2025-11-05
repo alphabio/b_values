@@ -118,14 +118,14 @@ describe("parseHslFunction", () => {
       const func = extractFunctionFromValue("rgb(0 0 0)");
       const result = parseHslFunction(func);
       expect(result.ok).toBe(false);
-      expect(result.error).toContain("Expected hsl()");
+      expect(result.issues[0]?.message).toContain("Expected hsl()");
     });
 
     it("should return error for too few values", () => {
       const func = extractFunctionFromValue("hsl(180deg 50%)");
       const result = parseHslFunction(func);
       expect(result.ok).toBe(false);
-      expect(result.error).toContain("must have 3 or 4 values");
+      expect(result.issues[0]?.message).toContain("must have 3 or 4 values");
     });
   });
 });
