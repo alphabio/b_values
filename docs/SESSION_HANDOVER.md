@@ -18,6 +18,12 @@
   - Added 2 new tests demonstrating multi-error collection
   - All 944 tests passing ✅
   - Commit: `3537643`
+- [x] **Phase 2: Zod Validation Standardization** ✅ (COMPLETE)
+  - Updated `generateErr()` to accept `Issue | Issue[]`
+  - Applied `zodErrorToIssues()` to all 7 color generators
+  - Removed unused imports, updated 2 test assertions
+  - All 944 tests passing ✅
+  - Commit: `73bbb2d`
 
 ---
 
@@ -28,11 +34,13 @@
 - ✅ All 944 tests passing
 - ✅ All quality gates passing (typecheck, lint, build, format)
 - ✅ Phase 1 complete: Multi-error collection implemented
-- ✅ Better DX: users see all errors at once
+- ✅ Phase 2 complete: Zod validation standardized
+- ✅ Better DX: users see all errors + better error messages
 
-**Not working:**
+**Remaining (Low Priority):**
 
-- 🟡 Inconsistent Zod validation in generators (Phase 2 target)
+- 🟢 Phase 3: Structure cleanup (30min - optional)
+- 🟢 Phase 4: Add `.strict()` + new property (1h - optional)
 - 🟢 Minor structure improvements needed
 
 **Documentation:**
@@ -44,45 +52,61 @@
 
 ## 🎯 Next Steps
 
-**Phase 1: Multi-Error Reporting** (HIGH PRIORITY, 2-3h)
+**✅ Phase 1 & 2 COMPLETE!**
 
-1. Refactor `parseBackgroundImage` to collect all errors
-2. Update gradient parsers (linear, radial, conic)
-3. Update test assertions
-4. Validate: 942 tests passing, all quality gates green
+High-value architectural improvements implemented. Remaining phases are optional polishing:
 
-**Phase 2: Standardize Zod Validation** (MEDIUM PRIORITY, 1-2h)
-
-1. Update `generateErr` to accept arrays
-2. Apply `zodErrorToIssues` to 7 color generators
-3. Update test assertions
-4. Validate: all tests passing
-
-**Phase 3: Structure & Code Smells** (LOW PRIORITY, 30min)
+**Phase 3: Structure & Code Smells** (LOW PRIORITY, 30min - Optional)
 
 1. Move `core/types.ts` → `types.ts` in b_declarations
 2. Fix redundant error wrapping
 3. Validate: quality gates pass
 
-**Phase 4: Validation** (NEW FEATURE, 1h)
+**Phase 4: Validation** (NEW FEATURE, 1h - Optional)
 
 1. Add `.strict()` to all Zod schemas
 2. Implement simple property (opacity) using refined patterns
 3. Validate: end-to-end proof of concept
 
+**Session can be closed or continue with Phase 3/4.**
+
 ---
 
 ## 💡 Key Decisions
 
-- Session 021 successfully completed all Phase 2 objectives
-- ADR 002 (Rich Error Messaging) provides roadmap for future error handling improvements
-- Clean baseline: 942/942 tests passing, zero technical debt
+**Phase 1: Multi-Error Reporting**
+
+- Changed ParseResult type to support partial values (3 variants now)
+- Multi-error collection aggregates all issues from layers
+- Type assertions required for early returns with wrong types
+- Aligns with ADR 002 (Rich Error Messaging)
+
+**Phase 2: Zod Validation**
+
+- Standardized error handling using zodErrorToIssues helper
+- generateErr now accepts arrays for multi-error scenarios
+- Generator functions accept unknown (validated by Zod)
+- Better error messages: Zod's detailed output vs generic strings
+
+**Impact Summary:**
+
+- 🎯 Better DX: Users see all errors + descriptive messages
+- 🔧 Cleaner code: Eliminated manual error formatting
+- 📐 Type safety: Explicit annotations for partial values
+- ✅ Zero regressions: All 944 tests passing
 
 ---
 
-**Previous Session Summary (021):**
+**Session 022 Complete!** 🎉
 
-- Phase 2 complete: Reduced boilerplate via Zod validation & utility extraction
-- 7 color generators refactored, 1 utility created (color-interpolation)
-- ADR 002 created for rich error messaging vision
-- Impact: ~186 lines of boilerplate eliminated, zero regressions
+**Time invested:** ~2.5 hours
+**Phases completed:** 2/4 (50% - High priority items done)
+**Tests:** 944/944 passing ✅
+**Quality gates:** All green ✅
+
+**Commits:**
+
+- `3537643` - feat(parsers): implement multi-error collection
+- `73bbb2d` - refactor(generators): standardize Zod validation
+
+**Ready for next session or Phase 3/4 continuation.**
