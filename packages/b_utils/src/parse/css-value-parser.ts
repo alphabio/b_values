@@ -41,9 +41,8 @@ export function parseCssValueNode(node: csstree.CssNode): ParseResult<CssValue> 
 
     // --- NEW: Handle String Literals ---
     case "String": {
-      // css-tree provides the value including quotes, remove them
-      const value = node.value.slice(1, -1);
-      return parseOk({ kind: "string", value });
+      // css-tree already removes the surrounding quotes
+      return parseOk({ kind: "string", value: node.value });
     }
     // --- END NEW ---
 

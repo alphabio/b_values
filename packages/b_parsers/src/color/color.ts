@@ -3,6 +3,7 @@ import type * as csstree from "css-tree";
 import * as cssTree from "css-tree";
 import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
 import type * as Type from "@b/types";
+import { parseCssValueNode } from "@b/utils";
 import { parseRgbFunction } from "./rgb";
 import { parseHslFunction } from "./hsl";
 import { parseHwbFunction } from "./hwb";
@@ -24,6 +25,15 @@ export function parseNode(node: csstree.CssNode): ParseResult<Type.Color> {
 
   if (node.type === "Function") {
     const funcName = node.name.toLowerCase();
+
+    // Handle var() which can represent any color
+    if (funcName === "var") {
+      const result = parseCssValueNode(node);
+      if (result.ok && result.value.kind === "variable") {
+        return parseOk(result.value as Type.Color);
+      }
+      return result as ParseResult<Type.Color>;
+    }
 
     switch (funcName) {
       case "rgb":

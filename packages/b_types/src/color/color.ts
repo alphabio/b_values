@@ -11,6 +11,7 @@ import { oklabColorSchema } from "./oklab";
 import { oklchColorSchema } from "./oklch";
 import { specialColorSchema } from "./special";
 import { colorFunctionSchema } from "./color-function";
+import { variableReferenceSchema } from "../values/css-value";
 
 /**
  * @see https://developer.mozilla.org/en-US/docs/Web/CSS/color_value
@@ -27,6 +28,7 @@ export const colorSchema = z.union([
   oklchColorSchema,
   specialColorSchema,
   colorFunctionSchema,
+  variableReferenceSchema,
 ]);
 
 export type Color = z.infer<typeof colorSchema>;

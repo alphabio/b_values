@@ -1,6 +1,7 @@
 // b_path:: packages/b_generators/src/color/color.ts
-import { type GenerateResult, type GenerateContext, generateErr, createError } from "@b/types";
+import { type GenerateResult, type GenerateContext, generateErr, generateOk, createError } from "@b/types";
 import type * as Type from "@b/types";
+import { cssValueToCss } from "@b/utils";
 import * as ColorFunction from "./color-function";
 import * as Hex from "./hex";
 import * as Hsl from "./hsl";
@@ -58,6 +59,10 @@ export function generate(color: Type.Color, context?: GenerateContext): Generate
 
     case "color":
       return ColorFunction.generate(color);
+
+    case "variable":
+      // Variable can represent any color type
+      return generateOk(cssValueToCss(color));
 
     default:
       return generateErr(

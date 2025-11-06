@@ -80,7 +80,7 @@ describe("parseCssValueNode", () => {
     }
   });
 
-  it("should return error for unsupported node type", () => {
+  it("should parse string literals", () => {
     const ast = csstree.parse('"string"', { context: "value" });
     expect(ast.type).toBe("Value");
     if (ast.type !== "Value") {
@@ -92,9 +92,9 @@ describe("parseCssValueNode", () => {
       throw new Error("Unexpected node");
     }
     const result = parseCssValueNode(childNode);
-    expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.issues[0]?.message).toContain("Unsupported node type");
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value).toEqual({ kind: "string", value: "string" });
     }
   });
 
@@ -172,7 +172,7 @@ describe("parseCssValueNode", () => {
     }
   });
 
-  it("should return error for unsupported function", () => {
+  it("should parse generic function as function call", () => {
     const ast = csstree.parse("calc(10px + 5px)", { context: "value" });
     expect(ast.type).toBe("Value");
     if (ast.type !== "Value") {
@@ -184,9 +184,13 @@ describe("parseCssValueNode", () => {
       throw new Error("Unexpected node");
     }
     const result = parseCssValueNode(childNode);
-    expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.issues[0]?.message).toContain("Unsupported function");
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value.kind).toBe("function");
+      if (result.value.kind === "function") {
+        expect(result.value.name).toBe("calc");
+        expect(result.value.args.length).toBeGreaterThan(0);
+      }
     }
   });
 
