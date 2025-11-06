@@ -56,6 +56,7 @@ packages/b_parsers/src/gradient/
 **File:** `__tests__/linear/direction.test.ts`
 
 **Categories:**
+
 - Angle units (deg, turn, grad, rad)
 - To-side keywords (4 variations)
 - To-corner keywords (4 variations)
@@ -71,6 +72,7 @@ packages/b_parsers/src/gradient/
 **File:** `__tests__/linear/color-interpolation.test.ts`
 
 **Categories:**
+
 - Rectangular color spaces (12 tests)
 - Polar color spaces without hue (4 tests)
 - Polar color spaces with hue methods (16 tests)
@@ -84,6 +86,7 @@ packages/b_parsers/src/gradient/
 **File:** `__tests__/linear/color-stops.test.ts`
 
 **Categories:**
+
 - Basic structures (2, 3, 5, 10, 100+ stops)
 - Position variations (percentage, length, mixed, double positions)
 - Color type coverage (named, hex, rgb, hsl, lch, oklch, etc.)
@@ -98,6 +101,7 @@ packages/b_parsers/src/gradient/
 **File:** `__tests__/linear/combinations.test.ts`
 
 **Categories:**
+
 - Direction + interpolation
 - Direction + positions
 - Interpolation + positions
@@ -113,6 +117,7 @@ packages/b_parsers/src/gradient/
 **File:** `__tests__/linear/round-trip.test.ts`
 
 **Categories:**
+
 - Simple gradients
 - All direction types
 - With interpolation
@@ -129,6 +134,7 @@ packages/b_parsers/src/gradient/
 **File:** `__tests__/linear/error-handling.test.ts` (parsers)
 
 **Categories:**
+
 - Boundary conditions (very long, many stops)
 - Whitespace handling
 - Floating point precision
@@ -185,6 +191,7 @@ mkdir -p packages/b_parsers/src/gradient/__tests__/linear
 ### Phase 3: Implement Tests (3-4 hours)
 
 **Per file workflow:**
+
 1. Create file with proper imports
 2. Add describe block with category name
 3. Implement tests from TEST_IMPLEMENTATION_PLAN
@@ -229,15 +236,12 @@ describe("Linear Gradient Generator - Direction", () => {
     it("generates with degrees", () => {
       const ir: Type.LinearGradient = {
         kind: "linear",
-        direction: { 
-          kind: "angle", 
-          value: { kind: "literal", value: 45, unit: "deg" } 
+        direction: {
+          kind: "angle",
+          value: { kind: "literal", value: 45, unit: "deg" },
         },
-        colorStops: [
-          { color: { kind: "named", name: "red" } },
-          { color: { kind: "named", name: "blue" } }
-        ],
-        repeating: false
+        colorStops: [{ color: { kind: "named", name: "red" } }, { color: { kind: "named", name: "blue" } }],
+        repeating: false,
       };
 
       const result = Linear.generate(ir);
@@ -251,20 +255,34 @@ describe("Linear Gradient Generator - Direction", () => {
   });
 
   describe("To-Side Keywords", () => {
-    it("generates 'to top'", () => { /* ... */ });
-    it("generates 'to right'", () => { /* ... */ });
-    it("generates 'to bottom'", () => { /* ... */ });
-    it("generates 'to left'", () => { /* ... */ });
+    it("generates 'to top'", () => {
+      /* ... */
+    });
+    it("generates 'to right'", () => {
+      /* ... */
+    });
+    it("generates 'to bottom'", () => {
+      /* ... */
+    });
+    it("generates 'to left'", () => {
+      /* ... */
+    });
   });
 
   describe("To-Corner Keywords", () => {
-    it("generates 'to top left'", () => { /* ... */ });
+    it("generates 'to top left'", () => {
+      /* ... */
+    });
     // ... 3 more corners
   });
 
   describe("Dynamic Values", () => {
-    it("generates with var() in direction", () => { /* ... */ });
-    it("generates with calc() in direction", () => { /* ... */ });
+    it("generates with var() in direction", () => {
+      /* ... */
+    });
+    it("generates with calc() in direction", () => {
+      /* ... */
+    });
     // ... more dynamic value tests
   });
 });
@@ -291,7 +309,7 @@ describe("Linear Gradient Parser - Direction", () => {
       if (result.ok) {
         expect(result.value.direction).toEqual({
           kind: "angle",
-          value: { kind: "literal", value: 45, unit: "deg" }
+          value: { kind: "literal", value: 45, unit: "deg" },
         });
         expect(result.value.colorStops).toHaveLength(2);
       }
@@ -301,7 +319,9 @@ describe("Linear Gradient Parser - Direction", () => {
   });
 
   describe("To-Side Keywords", () => {
-    it("parses 'to top'", () => { /* ... */ });
+    it("parses 'to top'", () => {
+      /* ... */
+    });
     // ... 3 more sides
   });
 
@@ -314,26 +334,31 @@ describe("Linear Gradient Parser - Direction", () => {
 ## 🎯 Benefits of This Approach
 
 ### 1. Maintainability ✅
+
 - Small, focused files (~150-300 lines)
 - Easy to find specific test categories
 - Clear separation of concerns
 
 ### 2. Performance ✅
+
 - Vitest can parallelize test files
 - Faster test runs with file-level parallelism
 - Can run specific categories: `pnpm test direction.test.ts`
 
 ### 3. Collaboration ✅
+
 - Multiple people can work on different test files
 - Reduced merge conflicts
 - Clear ownership boundaries
 
 ### 4. Discoverability ✅
+
 - `__tests__/linear/` clearly shows what's tested
 - Test file names match feature categories
 - Mirrors TEST_IMPLEMENTATION_PLAN structure
 
 ### 5. Consistency ✅
+
 - Follows existing pattern (`background-image/__tests__/`)
 - Scales well to radial/conic gradients later
 - Clean separation from implementation
@@ -342,39 +367,41 @@ describe("Linear Gradient Parser - Direction", () => {
 
 ## 📊 Test Count Summary
 
-| File | Tests | Lines | Location |
-|------|-------|-------|----------|
-| **Generators** |
-| direction.test.ts | 35 | ~200 | `b_generators/src/gradient/__tests__/linear/` |
-| color-interpolation.test.ts | 32 | ~250 | " |
-| color-stops.test.ts | 28 | ~300 | " |
-| combinations.test.ts | 15 | ~150 | " |
-| round-trip.test.ts | 12 | ~150 | " |
-| edge-cases.test.ts | 10 | ~100 | " |
-| **Parser** |
-| direction.test.ts | 35 | ~200 | `b_parsers/src/gradient/__tests__/linear/` |
-| color-interpolation.test.ts | 32 | ~250 | " |
-| color-stops.test.ts | 28 | ~300 | " |
-| combinations.test.ts | 15 | ~150 | " |
-| round-trip.test.ts | 12 | ~150 | " |
-| edge-cases.test.ts | 14 | ~150 | " |
-| error-handling.test.ts | 6 | ~100 | " |
-| **TOTALS** |
-| **New test files** | **12** | **~2,400 lines** |
-| **New tests** | **274** |
-| **Existing tests** | **14** | (keep in linear.test.ts) |
-| **Grand Total** | **288 tests** |
+| File                        | Tests         | Lines                    | Location                                      |
+| --------------------------- | ------------- | ------------------------ | --------------------------------------------- |
+| **Generators**              | -             | -                        | -                                             |
+| direction.test.ts           | 35            | ~200                     | `b_generators/src/gradient/__tests__/linear/` |
+| color-interpolation.test.ts | 32            | ~250                     | "                                             |
+| color-stops.test.ts         | 28            | ~300                     | "                                             |
+| combinations.test.ts        | 15            | ~150                     | "                                             |
+| round-trip.test.ts          | 12            | ~150                     | "                                             |
+| edge-cases.test.ts          | 10            | ~100                     | "                                             |
+| **Parser**                  | -             | -                        | -                                             |
+| direction.test.ts           | 35            | ~200                     | `b_parsers/src/gradient/__tests__/linear/`    |
+| color-interpolation.test.ts | 32            | ~250                     | "                                             |
+| color-stops.test.ts         | 28            | ~300                     | "                                             |
+| combinations.test.ts        | 15            | ~150                     | "                                             |
+| round-trip.test.ts          | 12            | ~150                     | "                                             |
+| edge-cases.test.ts          | 14            | ~150                     | "                                             |
+| error-handling.test.ts      | 6             | ~100                     | "                                             |
+| **TOTALS**                  | -             | -                        | -                                             |
+| **New test files**          | **12**        | **~2,400 lines**         | -                                             |
+| **New tests**               | **274**       | -                        | -                                             |
+| **Existing tests**          | **14**        | (keep in linear.test.ts) | -                                             |
+| **Grand Total**             | **288 tests** | -                        | -                                             |
 
 ---
 
 ## ⚠️ File Size Comparison
 
 **Current largest test files:**
+
 - `background-image/generator.test.ts`: 563 lines
 - `color/roundtrip.test.ts`: 540 lines
 - `color/lch.test.ts`: 330 lines
 
 **Our proposed files:**
+
 - Largest: `color-stops.test.ts` at ~300 lines ✅
 - Average: ~200 lines per file ✅
 - Well within acceptable range ✅
@@ -397,4 +424,3 @@ describe("Linear Gradient Parser - Direction", () => {
 10. **Update documentation** (15 min)
 
 **Ready to proceed with organized approach!** ✅
-

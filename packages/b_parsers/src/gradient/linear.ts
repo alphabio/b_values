@@ -20,7 +20,7 @@ function parseDirection(
     return parseErr(createError("missing-value", "Expected direction value"));
   }
 
-  if (node.type === "Dimension" || node.type === "Number") {
+  if (node.type === "Dimension" || node.type === "Number" || node.type === "Function") {
     const angleResult = parseCssValueNodeEnhanced(node);
     if (angleResult.ok) {
       return parseOk({
@@ -104,6 +104,7 @@ export function fromFunction(fn: csstree.FunctionNode): ParseResult<Type.LinearG
     if (
       firstNode.type === "Dimension" ||
       firstNode.type === "Number" ||
+      firstNode.type === "Function" ||
       (firstNode.type === "Identifier" && firstNode.name.toLowerCase() === "to")
     ) {
       const dirResult = parseDirection(children, idx);

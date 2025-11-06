@@ -11,6 +11,7 @@
 ### Existing Test Structure
 
 **3 Test Layers:**
+
 1. **b_types** - Schema validation tests (7 tests in `linear.test.ts`)
 2. **b_parsers** - Parse CSS → IR (8 tests in `linear.test.ts`)
 3. **b_generators** - Generate IR → CSS (6 tests in `linear.test.ts`)
@@ -18,6 +19,7 @@
 **Current Coverage:** 21 tests total for linear gradients
 
 **Test Pattern:**
+
 ```typescript
 // Parser test
 const css = "linear-gradient(45deg, red, blue)";
@@ -45,28 +47,33 @@ if (result.ok) {
 ### 1. Direction Tests (35 tests)
 
 **Angle Units (8 tests):**
+
 - deg: `45deg`, `0deg`, `180deg`, `360deg`
 - turn: `0.25turn`, `0.5turn`, `1turn`
 - grad: `100grad`, `200grad`
 - rad: `1.57rad`, `3.14rad`
 
 **To-Side (4 tests):**
+
 - `to top`
 - `to right`
 - `to bottom`
 - `to left`
 
 **To-Corner (4 tests):**
+
 - `to top left`
 - `to top right`
 - `to bottom left`
 - `to bottom right`
 
 **Default/Missing (2 tests):**
+
 - No direction specified (defaults to `to bottom`)
 - Zero angle: `0deg` vs `0`
 
 **Dynamic Values (5 tests):**
+
 - `var(--angle)`
 - `calc(45deg + 10deg)`
 - `min(45deg, var(--max))`
@@ -74,6 +81,7 @@ if (result.ok) {
 - `clamp(0deg, 45deg, 90deg)`
 
 **Invalid Cases (12 tests):**
+
 - Invalid angle: `45px` (should fail)
 - Invalid side: `to center`
 - Invalid corner: `to left top` (wrong order)
@@ -92,6 +100,7 @@ if (result.ok) {
 ### 2. Color Interpolation Tests (32 tests)
 
 **Rectangular Spaces (12 tests):**
+
 - `in srgb`
 - `in srgb-linear`
 - `in display-p3`
@@ -106,12 +115,14 @@ if (result.ok) {
 - `in xyz-d65`
 
 **Polar Spaces - No Hue Method (4 tests):**
+
 - `in hsl`
 - `in hwb`
 - `in lch`
 - `in oklch`
 
 **Polar Spaces - With Hue Method (16 tests = 4 spaces × 4 methods):**
+
 - `in hsl shorter hue`
 - `in hsl longer hue`
 - `in hsl increasing hue`
@@ -123,6 +134,7 @@ if (result.ok) {
 ### 3. Color Stop Tests (28 tests)
 
 **Basic Structures (6 tests):**
+
 - 2 stops, no positions
 - 2 stops, single positions
 - 3 stops, mixed positions
@@ -131,6 +143,7 @@ if (result.ok) {
 - 100+ stops (extreme stress test)
 
 **Position Variations (8 tests):**
+
 - Percentage positions: `red 0%, blue 100%`
 - Length positions: `red 0px, blue 100px`
 - Mixed units: `red 10px, blue 50%`
@@ -141,6 +154,7 @@ if (result.ok) {
 - Over 100%: `red 150%`
 
 **Color Type Coverage (10 tests):**
+
 - Named: `red`, `blue`, `transparent`
 - Hex: `#ff0000`, `#f00`, `#ff0000ff`
 - RGB: `rgb(255, 0, 0)`, `rgba(255, 0, 0, 0.5)`
@@ -153,6 +167,7 @@ if (result.ok) {
 - Special: `currentColor`
 
 **Dynamic Values in Stops (4 tests):**
+
 - `var(--color-1)`
 - Position with var: `red var(--position)`
 - Position with calc: `red calc(50% - 10px)`
@@ -163,6 +178,7 @@ if (result.ok) {
 ### 4. Combination Tests (15 tests)
 
 **Feature Combinations:**
+
 - Direction + interpolation: `45deg in oklch, red, blue`
 - Direction + positions: `to right, red 0%, blue 100%`
 - Interpolation + positions: `in srgb, red 0%, blue 100%`
@@ -178,6 +194,7 @@ if (result.ok) {
 ### 5. Round-Trip Tests (12 tests)
 
 **Coverage:**
+
 - Simple gradient: `red, blue`
 - With angle: `45deg, red, blue`
 - With to-side: `to right, red, blue`
@@ -196,18 +213,21 @@ if (result.ok) {
 ### 6. Edge Cases & Error Handling (20 tests)
 
 **Boundary Cases:**
+
 - Single color stop (should fail - min 2 required)
 - Empty color stops array (should fail)
 - 100+ color stops (should succeed but stress test)
 - Very long CSS string (10KB+)
 
 **Whitespace Handling:**
+
 - Extra spaces: `linear-gradient(  45deg  ,  red  ,  blue  )`
 - No spaces: `linear-gradient(45deg,red,blue)`
 - Newlines in gradient
 - Tabs vs spaces
 
 **Invalid Syntax:**
+
 - Missing commas: `linear-gradient(red blue)`
 - Extra commas: `linear-gradient(red,, blue)`
 - Trailing comma: `linear-gradient(red, blue,)`
@@ -216,12 +236,14 @@ if (result.ok) {
 - Wrong function: `radial-gradient(45deg, red, blue)` (angle invalid for radial)
 
 **Type Mismatches:**
+
 - String instead of number in IR
 - Missing required fields
 - Extra fields in strict mode
 - Wrong kind field
 
 **Parser Recovery:**
+
 - Partial parse success (some stops fail)
 - Continue parsing after error
 - Issue collection
@@ -257,6 +279,7 @@ packages/b_types/src/gradient/
 **File:** `packages/b_generators/src/gradient/linear.spec.test.ts`
 
 **Structure:**
+
 ```typescript
 import { describe, it, expect } from "vitest";
 import type * as Type from "@b/types";
@@ -270,17 +293,17 @@ describe("Linear Gradient Generator - Spec Compliance", () => {
       it("generates with grads", () => { ... });
       it("generates with radians", () => { ... });
     });
-    
+
     describe("To-Side Keywords", () => {
       it("generates 'to top'", () => { ... });
       // ... all 4 sides
     });
-    
+
     describe("To-Corner Keywords", () => {
       it("generates 'to top left'", () => { ... });
       // ... all 4 corners
     });
-    
+
     describe("Dynamic Values", () => {
       it("generates with var() in direction", () => { ... });
       it("generates with calc() in direction", () => { ... });
@@ -292,7 +315,7 @@ describe("Linear Gradient Generator - Spec Compliance", () => {
       it("generates 'in srgb'", () => { ... });
       // ... all 12 rectangular spaces
     });
-    
+
     describe("Polar Color Spaces", () => {
       it("generates 'in hsl'", () => { ... });
       it("generates 'in hsl shorter hue'", () => { ... });
@@ -316,23 +339,22 @@ describe("Linear Gradient Generator - Spec Compliance", () => {
 ```
 
 **Utilities to Use:**
+
 - `Type.LinearGradient` from `@b/types`
 - `Linear.generate()` function
 - Standard vitest matchers: `toBe()`, `toEqual()`, `toHaveLength()`
 
 **Test Template:**
+
 ```typescript
 it("generates gradient with X", () => {
   const ir: Type.LinearGradient = {
     kind: "linear",
     // ... IR structure
-    colorStops: [
-      { color: { kind: "named", name: "red" } },
-      { color: { kind: "named", name: "blue" } }
-    ],
-    repeating: false
+    colorStops: [{ color: { kind: "named", name: "red" } }, { color: { kind: "named", name: "blue" } }],
+    repeating: false,
   };
-  
+
   const result = Linear.generate(ir);
   expect(result.ok).toBe(true);
   if (result.ok) {
@@ -360,12 +382,12 @@ describe("Linear Gradient Parser - Spec Compliance", () => {
       it("parses degrees", () => {
         const css = "linear-gradient(45deg, red, blue)";
         const result = Linear.parse(css);
-        
+
         expect(result.ok).toBe(true);
         if (result.ok) {
           expect(result.value.direction).toEqual({
             kind: "angle",
-            value: { kind: "literal", value: 45, unit: "deg" }
+            value: { kind: "literal", value: 45, unit: "deg" },
           });
         }
       });
@@ -377,7 +399,7 @@ describe("Linear Gradient Parser - Spec Compliance", () => {
     it("fails with single color stop", () => {
       const css = "linear-gradient(red)";
       const result = Linear.parse(css);
-      
+
       expect(result.ok).toBe(false);
       if (!result.ok) {
         expect(result.issues).toHaveLength(1);
@@ -389,22 +411,22 @@ describe("Linear Gradient Parser - Spec Compliance", () => {
   describe("Round-Trip", () => {
     it("parse → generate → parse produces identical IR", () => {
       const css = "linear-gradient(45deg in oklch, red 0%, blue 100%)";
-      
+
       // Parse 1
       const parse1 = Linear.parse(css);
       expect(parse1.ok).toBe(true);
       if (!parse1.ok) return;
-      
+
       // Generate
       const gen = Generate.Gradient.Linear.generate(parse1.value);
       expect(gen.ok).toBe(true);
       if (!gen.ok) return;
-      
+
       // Parse 2
       const parse2 = Linear.parse(gen.value);
       expect(parse2.ok).toBe(true);
       if (!parse2.ok) return;
-      
+
       // Compare IRs
       expect(parse2.value).toEqual(parse1.value);
     });
@@ -432,6 +454,7 @@ pnpm test --coverage packages/b_parsers/src/gradient/linear
 ```
 
 **Expected Outcome:**
+
 - ~142 total tests (21 existing + ~60 generator + ~61 parser)
 - All tests passing ✅
 - Coverage >95% for linear gradient code
@@ -442,6 +465,7 @@ pnpm test --coverage packages/b_parsers/src/gradient/linear
 ### Phase 4: Documentation (30 min)
 
 Update `SESSION_HANDOVER.md`:
+
 - Test count: 21 → 142
 - Coverage: basic → comprehensive
 - Spec compliance: validated
@@ -452,17 +476,17 @@ Update `SESSION_HANDOVER.md`:
 
 ## 📊 Test Count Summary
 
-| Category | Generator | Parser | Total |
-|----------|-----------|--------|-------|
-| Direction | 35 | 35 | 70 |
-| Color Interpolation | 32 | 32 | 64 |
-| Color Stops | 28 | 28 | 56 |
-| Combinations | 15 | 15 | 30 |
-| Round-Trip | 6 | 6 | 12 |
-| Edge Cases | 10 | 20 | 30 |
-| **TOTAL NEW** | **126** | **136** | **262** |
-| **Existing** | 6 | 8 | 14 |
-| **GRAND TOTAL** | **132** | **144** | **276** |
+| Category            | Generator | Parser  | Total   |
+| ------------------- | --------- | ------- | ------- |
+| Direction           | 35        | 35      | 70      |
+| Color Interpolation | 32        | 32      | 64      |
+| Color Stops         | 28        | 28      | 56      |
+| Combinations        | 15        | 15      | 30      |
+| Round-Trip          | 6         | 6       | 12      |
+| Edge Cases          | 10        | 20      | 30      |
+| **TOTAL NEW**       | **126**   | **136** | **262** |
+| **Existing**        | 6         | 8       | 14      |
+| **GRAND TOTAL**     | **132**   | **144** | **276** |
 
 **Note:** Some tests may overlap (round-trip tests both parse and generate)
 
@@ -471,30 +495,29 @@ Update `SESSION_HANDOVER.md`:
 ## 🎨 IR Construction Utilities
 
 **Color Helpers:**
+
 ```typescript
 const namedColor = (name: string): Type.Color => ({ kind: "named", name });
 const hexColor = (value: string): Type.Color => ({ kind: "hex", value });
-const rgbColor = (r: number, g: number, b: number): Type.Color => 
-  ({ kind: "rgb", r, g, b });
+const rgbColor = (r: number, g: number, b: number): Type.Color => ({ kind: "rgb", r, g, b });
 ```
 
 **Position Helpers:**
+
 ```typescript
-const pct = (value: number): Type.CssValue => 
-  ({ kind: "literal", value, unit: "%" });
-const px = (value: number): Type.CssValue => 
-  ({ kind: "literal", value, unit: "px" });
-const deg = (value: number): Type.CssValue => 
-  ({ kind: "literal", value, unit: "deg" });
+const pct = (value: number): Type.CssValue => ({ kind: "literal", value, unit: "%" });
+const px = (value: number): Type.CssValue => ({ kind: "literal", value, unit: "px" });
+const deg = (value: number): Type.CssValue => ({ kind: "literal", value, unit: "deg" });
 ```
 
 **Gradient Helpers:**
+
 ```typescript
 const linearGradient = (overrides: Partial<Type.LinearGradient>): Type.LinearGradient => ({
   kind: "linear",
   colorStops: [namedColor("red"), namedColor("blue")],
   repeating: false,
-  ...overrides
+  ...overrides,
 });
 ```
 
@@ -551,4 +574,3 @@ const linearGradient = (overrides: Partial<Type.LinearGradient>): Type.LinearGra
 **Status:** 📋 Plan complete - ready to execute
 **Estimated Time:** 4-5 hours total
 **Expected Outcome:** Production-ready linear gradient support with full spec compliance
-

@@ -7,7 +7,7 @@
 
 ## ✅ Accomplished
 
-- ✅ Session 030 archived successfully  
+- ✅ Session 030 archived successfully
 - ✅ Session 031 initialized
 - ✅ Foundation documents reviewed
 - ✅ Baseline tests verified: 8 tests passing in `linear.test.ts`
@@ -26,6 +26,7 @@
 ## 📊 Current State
 
 **Working:**
+
 - ✅ Phase 2.5 complete (var/calc support in gradients)
 - ✅ 993 total tests passing (baseline)
 - ✅ **+97 new generator tests** - comprehensive linear gradient coverage ✅
@@ -34,6 +35,7 @@
 - ✅ Files are manageable size (~150-500 lines)
 
 **Remaining:**
+
 - 🚧 Parser tests: ~90 more tests needed
   - color-interpolation.test.ts
   - color-stops.test.ts
