@@ -29,4 +29,20 @@ describe("special color generator", () => {
       expect(result.issues[0]?.code).toBe("invalid-ir");
     }
   });
+
+  it("should return error for non-object color", () => {
+    const result = Special.generate("not an object" as unknown as SpecialColor);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.issues[0]?.code).toBe("invalid-ir");
+    }
+  });
+
+  it("should return error for object missing keyword field", () => {
+    const result = Special.generate({ kind: "special" } as unknown as SpecialColor);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.issues[0]?.code).toBe("missing-required-field");
+    }
+  });
 });

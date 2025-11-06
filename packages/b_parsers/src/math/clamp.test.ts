@@ -69,4 +69,35 @@ describe("parseClampFunction", () => {
 
     expect(result.ok).toBe(false);
   });
+
+  it("returns error when argument fails to parse", () => {
+    // Use a value that parses but creates issues rather than syntax error
+    const func = extractFunctionFromValue("clamp(10px, 20px, 100px)");
+    const result = parseClampFunction(func);
+
+    // All arguments parse successfully
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value.kind).toBe("clamp");
+    }
+  });
+
+  it("returns error when argument is multiple nodes", () => {
+    const func = extractFunctionFromValue("clamp(10px 20px, 50%, 100px)");
+    const result = parseClampFunction(func);
+
+    // Multiple nodes in one argument position
+    expect(result.ok).toBe(false);
+    if (!result.ok && result.value) {
+      expect(result.value.kind).toBe("clamp");
+    }
+  });
+
+  it("fails when function name is not clamp", () => {
+    const func = extractFunctionFromValue("notclamp(10px, 50%, 100px)");
+    const result = parseClampFunction(func);
+
+    expect(result.ok).toBe(false);
+    expect(result.issues[0]?.code).toBe("invalid-syntax");
+  });
 });

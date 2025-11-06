@@ -38,4 +38,12 @@ describe("hex generator", () => {
       expect(result.issues[0]?.code).toBe("missing-required-field");
     }
   });
+
+  it("should return error for non-object color", () => {
+    const result = Hex.generate("not an object" as unknown as HexColor);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.issues[0]?.code).toBe("invalid-ir");
+    }
+  });
 });

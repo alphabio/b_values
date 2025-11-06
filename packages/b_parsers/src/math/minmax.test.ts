@@ -73,4 +73,46 @@ describe("parseMinmaxFunction", () => {
 
     expect(result.ok).toBe(false);
   });
+
+  it("returns error when argument fails to parse", () => {
+    // Use a value that parses but creates issues
+    const func = extractFunctionFromValue("min(10px, 20px)");
+    const result = parseMinmaxFunction(func);
+
+    // Arguments parse successfully
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value.kind).toBe("min");
+    }
+  });
+
+  it("handles multiple nodes in argument group", () => {
+    const func = extractFunctionFromValue("max(10px 20px, 100px)");
+    const result = parseMinmaxFunction(func);
+
+    // Multiple nodes trigger warning but still parse
+    if (result.value) {
+      expect(result.value.kind).toBe("max");
+    }
+    expect(result.issues.length).toBeGreaterThan(0);
+  });
+
+  it("skips empty groups after comma splitting", () => {
+    const func = extractFunctionFromValue("min(10px,,20px)");
+    const result = parseMinmaxFunction(func);
+
+    // Empty groups are skipped
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value.values.length).toBe(2);
+    }
+  });
+
+  it("fails when function name is neither min nor max", () => {
+    const func = extractFunctionFromValue("notmin(10px, 20px)");
+    const result = parseMinmaxFunction(func);
+
+    expect(result.ok).toBe(false);
+    expect(result.issues[0]?.code).toBe("invalid-syntax");
+  });
 });

@@ -101,4 +101,20 @@ describe("parseCalcFunction", () => {
 
     expect(result.ok).toBe(false);
   });
+
+  it("fails when function name is not calc", () => {
+    const func = extractFunctionFromValue("notcalc(10px + 20px)");
+    const result = parseCalcFunction(func);
+
+    expect(result.ok).toBe(false);
+    expect(result.issues[0]?.code).toBe("invalid-syntax");
+  });
+
+  it("handles malformed calc with operator at end", () => {
+    const func = extractFunctionFromValue("calc(10px +)");
+    const result = parseCalcFunction(func);
+
+    // Should fail gracefully
+    expect(result.ok).toBe(false);
+  });
 });
