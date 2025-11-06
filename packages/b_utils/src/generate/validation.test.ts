@@ -233,7 +233,17 @@ describe("validation utilities", () => {
         if (result.success) throw new Error("Should fail");
 
         // Manually create edge case by filtering all issues
-        const mockError = { issues: [] } as z.ZodError;
+        const mockError = {
+          issues: [],
+          name: "ZodError" as const,
+          format: () => ({}),
+          flatten: () => ({ formErrors: [], fieldErrors: {} }),
+          toString: () => "",
+          message: "",
+          addIssue: () => {},
+          addIssues: () => {},
+          isEmpty: true,
+        } as unknown as z.ZodError;
         const issues = zodErrorToIssues(mockError, { property: "test" });
 
         expect(issues.length).toBe(1);

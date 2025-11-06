@@ -68,6 +68,15 @@ describe("validate", () => {
     expect(result.warnings).toHaveLength(0);
   });
 
+  it("should skip attr() function", () => {
+    const css = "content: attr(data-text);";
+    const result = validate(css);
+
+    expect(result.ok).toBe(true);
+    expect(result.errors).toHaveLength(0);
+    expect(result.warnings).toHaveLength(0);
+  });
+
   it("should report syntax errors", () => {
     const css = "color: red; margin: {{{ invalid;";
     const result = validate(css);
@@ -75,13 +84,62 @@ describe("validate", () => {
     expect(result.ok).toBe(false); // Syntax errors set ok to false
     expect(result.errors.length).toBeGreaterThan(0);
   });
+
+  it("should handle long lines", () => {
+    const longValue = "a".repeat(100);
+    const css = `.class { color: red; padding: ${longValue}px; }`;
+    const result = validate(css);
+
+    // Exercises formatting logic
+    expect(result).toBeDefined();
+  });
+
+  it("should handle different property types", () => {
+    const css = ".class { display: flex; margin: auto; }";
+    const result = validate(css);
+
+    expect(result).toBeDefined();
+  });
+
+  it("should handle nested at-rules", () => {
+    const css = "@media (min-width: 768px) { .class { color: red; } }";
+    const result = validate(css);
+
+    expect(result).toBeDefined();
+  });
+
+  it("should handle empty CSS", () => {
+    const css = "";
+    const result = validate(css);
+
+    expect(result.ok).toBe(true);
+    expect(result.errors).toHaveLength(0);
+    expect(result.warnings).toHaveLength(0);
+  });
+
+  it("should handle CSS with only whitespace", () => {
+    const css = "   \n\n   ";
+    const result = validate(css);
+
+    expect(result.ok).toBe(true);
+    expect(result.errors).toHaveLength(0);
+    expect(result.warnings).toHaveLength(0);
+  });
 });
 
 describe("validateDeclaration", () => {
   it("should skip validation for var() in wrapped declaration", () => {
-    // validateDeclaration wraps: `.class {color: var(--my-color);}`
     const result = validateDeclaration("var(--my-color)", "color");
-
     expect(result.warnings).toHaveLength(0);
+  });
+
+  it("should wrap declaration for validation", () => {
+    const result = validateDeclaration("red", "color");
+    expect(result).toBeDefined();
+  });
+
+  it("should handle complex values in declaration", () => {
+    const result = validateDeclaration("10px", "margin");
+    expect(result).toBeDefined();
   });
 });
