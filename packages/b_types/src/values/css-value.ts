@@ -54,12 +54,12 @@ export const stringLiteralSchema = z
  * Represents a CSS hex color value
  * (e.g., #RRGGBB or #RGB)
  */
-// export const hexColorSchema = z
-//   .object({
-//     kind: z.literal("hex-color"),
-//     value: z.string().regex(/^#([0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/),
-//   })
-//   .strict();
+export const hexColorValueSchema = z
+  .object({
+    kind: z.literal("hex-color"),
+    value: z.string().regex(/^#([0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/),
+  })
+  .strict();
 
 // --- END NEW SCHEMAS ---
 
@@ -217,7 +217,7 @@ export const allCssValueSchema = [
   calcOperationSchema,
 
   // lchColorSchema,
-  // hexColorSchema,
+  hexColorValueSchema,
   rgbFunctionSchema,
   hslFunctionSchema,
 ];

@@ -92,5 +92,9 @@ export function cssValueToCss(value: CssValue): string {
     case "string": {
       return `"${value.value}"`;
     }
+
+    case "hex-color": {
+      return value.value;
+    }
   }
 }

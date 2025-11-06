@@ -127,3 +127,33 @@ describe("parseConicGradient", () => {
     expect(genResult.ok).toBe(true);
   });
 });
+
+describe("complex gradient with var() and calc()", () => {
+  it("should parse repeating-conic-gradient with var() in fromAngle and calc() in color stops", () => {
+    const css = `repeating-conic-gradient(
+      from var(--angle) at 25% 25%,
+      var(--color-1) calc(5 * var(--angle)) 5%,
+      var(--color-4) 5% 10%
+    )`;
+    const result = Conic.parse(css);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    expect(result.value.repeating).toBe(true);
+    expect(result.value.fromAngle).toBeDefined();
+    expect(result.value.fromAngle?.kind).toBe("variable");
+
+    expect(result.value.position).toBeDefined();
+    expect(result.value.colorStops).toHaveLength(2);
+
+    // First color stop
+    const stop1 = result.value.colorStops[0];
+    expect(stop1?.color.kind).toBe("variable");
+    expect(stop1?.position).toHaveLength(2);
+
+    // Second color stop
+    const stop2 = result.value.colorStops[1];
+    expect(stop2?.color.kind).toBe("variable");
+    expect(stop2?.position).toHaveLength(2);
+  });
+});
