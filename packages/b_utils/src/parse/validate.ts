@@ -46,6 +46,36 @@ export interface Declaration {
   node: csstree.CssNode;
 }
 
+/**
+ * Checks if a CSS value contains dynamic functions (var, calc, etc.)
+ * that csstree cannot validate.
+ *
+ * @param value - The CSS value AST node to check
+ * @returns true if the value contains var(), calc(), or other dynamic functions
+ */
+function containsDynamicValue(value: csstree.Value | csstree.Raw): boolean {
+  let hasDynamic = false;
+
+  csstree.walk(value, (node) => {
+    if (node.type === "Function") {
+      const funcName = node.name.toLowerCase();
+      // Dynamic functions that csstree cannot validate
+      if (
+        funcName === "var" ||
+        funcName === "calc" ||
+        funcName === "min" ||
+        funcName === "max" ||
+        funcName === "clamp" ||
+        funcName === "attr"
+      ) {
+        hasDynamic = true;
+      }
+    }
+  });
+
+  return hasDynamic;
+}
+
 export interface ErrorFormatOptions {
   maxLineWidth: number;
   contextWindowSize?: number;
@@ -135,6 +165,12 @@ export function validate(css: string): StylesheetValidation {
     }
 
     for (const decl of declarations) {
+      // Skip validation for declarations with dynamic values (var, calc, etc.)
+      // csstree cannot validate these and will throw errors
+      if (containsDynamicValue(decl.value)) {
+        continue;
+      }
+
       const match = syntax.matchProperty(decl.property, decl.value);
       const error = match.error as csstree.SyntaxMatchError;
 

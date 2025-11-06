@@ -52,6 +52,7 @@ All objectives achieved:
 8. ✅ Changes committed
 
 **User's complex gradient now works:**
+
 ```css
 repeating-conic-gradient(
   from var(--angle) at 25% 25%,
@@ -105,12 +106,15 @@ const angleResult = parseCssValueNode(angleNode);
 ## 📁 Files Modified and Committed
 
 **Type schemas:**
+
 - `packages/b_types/src/values/css-value.ts` - Renamed hexColorSchema to hexColorValueSchema
 
 **Utils:**
+
 - `packages/b_utils/src/generate/css-value.ts` - Added hex-color case
 
 **Tests:**
+
 - `packages/b_parsers/src/gradient/conic.test.ts` - Added complex gradient test
 
 **Note:** Linear and radial parsers already had CssValue support via parseCssValueNodeEnhanced.
@@ -149,11 +153,13 @@ git log --oneline -5      # See recent commits
 ## 🚀 Summary for Future Agent
 
 Phase 2.5 is **complete and committed**. The parsers now fully support var() and calc() in:
+
 - Gradient angles (conic `from`, linear direction)
 - Gradient positions (conic/radial `at` position)
 - Color stop positions
 
 The architecture changes from previous session were already correct - this session only fixed:
+
 1. A duplicate schema export issue
 2. A missing generator case
 3. Added a comprehensive test
@@ -164,4 +170,3 @@ The architecture changes from previous session were already correct - this sessi
 
 **Session ended:** 2025-11-06 ~09:27 UTC
 **Commit:** ad85568 "fix(types,utils): resolve duplicate hexColorSchema export"
-
