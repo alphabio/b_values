@@ -6,12 +6,15 @@ import { parseCssValueNodeEnhanced } from "../css-value-parser-enhanced";
 import * as Color from "../color";
 
 /**
- * Parse color stop from CSS AST nodes.
- * Now supports CssValue for positions (var, calc, literals).
+ * Parse color stop or color hint from CSS AST nodes.
+ * 
+ * Color hint: A single length/percentage value representing the midpoint transition.
+ * Color stop: A color value optionally followed by 1-2 position values.
  *
  * @see https://developer.mozilla.org/en-US/docs/Web/CSS/gradient/linear-gradient#color-stops
+ * @see https://developer.mozilla.org/en-US/docs/Web/CSS/gradient/linear-gradient#color-hints
  */
-export function fromNodes(nodes: csstree.CssNode[]): ParseResult<Type.ColorStop> {
+export function fromNodes(nodes: csstree.CssNode[]): ParseResult<Type.ColorStopOrHint> {
   if (nodes.length === 0) {
     return parseErr(createError("missing-value", "Color stop requires at least a color value"));
   }
@@ -21,7 +24,33 @@ export function fromNodes(nodes: csstree.CssNode[]): ParseResult<Type.ColorStop>
     return parseErr(createError("missing-value", "Color stop requires at least a color value"));
   }
 
+  // Try parsing as color first
   const colorResult = Color.parseNode(firstNode);
+  
+  // If it's not a color and we only have one node, it might be a color hint
+  if (!colorResult.ok && nodes.length === 1) {
+    // Try parsing as a length/percentage (color hint)
+    const hintResult = parseCssValueNodeEnhanced(firstNode);
+    if (hintResult.ok) {
+      const hint = hintResult.value;
+      // Validate that it's actually a length-percentage (not just any CSS value)
+      // Color hints must be <length-percentage> per CSS spec
+      if (
+        hint.kind === "literal" && (hint.unit === "%" || hint.unit === "px" || hint.unit === "em" || hint.unit === "rem" || hint.unit === "vw" || hint.unit === "vh" || hint.unit === "vmin" || hint.unit === "vmax") ||
+        hint.kind === "variable" ||
+        hint.kind === "calc"
+      ) {
+        return parseOk({
+          kind: "hint" as const,
+          position: hint,
+        });
+      }
+    }
+    // Not a color or valid hint
+    return parseErr(createError("invalid-value", `Invalid color value: ${colorResult.issues[0]?.message}`));
+  }
+  
+  // Must be a color stop
   if (!colorResult.ok) {
     return parseErr(createError("invalid-value", `Invalid color value: ${colorResult.issues[0]?.message}`));
   }

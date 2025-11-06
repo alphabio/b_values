@@ -149,4 +149,90 @@ describe("oklch generator", () => {
       }
     });
   });
+
+  describe("percentage values", () => {
+    it("should generate OKLCH with percentage lightness", () => {
+      const color: OKLCHColor = {
+        kind: "oklch",
+        l: { kind: "literal", value: 80, unit: "%" },
+        c: lit(0.3),
+        h: lit(150),
+      };
+      const result = OKLCH.generate(color);
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.value).toBe("oklch(80% 0.3 150)");
+        expect(result.issues).toHaveLength(0); // No warnings for valid percentage
+      }
+    });
+
+    it("should generate OKLCH with percentage lightness and alpha", () => {
+      const color: OKLCHColor = {
+        kind: "oklch",
+        l: { kind: "literal", value: 50, unit: "%" },
+        c: lit(0.2),
+        h: lit(120),
+        alpha: { kind: "literal", value: 90, unit: "%" },
+      };
+      const result = OKLCH.generate(color);
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.value).toBe("oklch(50% 0.2 120 / 90%)");
+        expect(result.issues).toHaveLength(0);
+      }
+    });
+
+    it("should warn on out-of-range percentage lightness", () => {
+      const color: OKLCHColor = {
+        kind: "oklch",
+        l: { kind: "literal", value: 150, unit: "%" },
+        c: lit(0.2),
+        h: lit(180),
+      };
+      const result = OKLCH.generate(color);
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.value).toBe("oklch(150% 0.2 180)");
+        expect(result.issues).toHaveLength(1);
+        expect(result.issues[0]?.code).toBe("invalid-value");
+        expect(result.issues[0]?.severity).toBe("warning");
+        expect(result.issues[0]?.message).toContain("150%");
+        expect(result.issues[0]?.message).toContain("0-100%");
+      }
+    });
+
+    it("should accept valid number lightness (0-1)", () => {
+      const color: OKLCHColor = {
+        kind: "oklch",
+        l: lit(0.8),
+        c: lit(0.3),
+        h: lit(150),
+      };
+      const result = OKLCH.generate(color);
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.value).toBe("oklch(0.8 0.3 150)");
+        expect(result.issues).toHaveLength(0);
+      }
+    });
+
+    it("should warn on out-of-range number lightness", () => {
+      const color: OKLCHColor = {
+        kind: "oklch",
+        l: lit(1.5),
+        c: lit(0.2),
+        h: lit(180),
+      };
+      const result = OKLCH.generate(color);
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.value).toBe("oklch(1.5 0.2 180)");
+        expect(result.issues).toHaveLength(1);
+        expect(result.issues[0]?.code).toBe("invalid-value");
+        expect(result.issues[0]?.severity).toBe("warning");
+        expect(result.issues[0]?.message).toContain("1.5");
+        expect(result.issues[0]?.message).toContain("0-1");
+      }
+    });
+  });
 });

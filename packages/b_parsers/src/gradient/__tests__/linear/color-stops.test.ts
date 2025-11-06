@@ -243,10 +243,128 @@ describe("Linear Gradient Parser - Color Stops", () => {
 
       expect(result.ok).toBe(true);
       if (result.ok) {
-        const pos = result.value.colorStops[0].position;
-        if (pos && !Array.isArray(pos)) {
-          expect(pos.kind).toBe("calc");
+        const stop = result.value.colorStops[0];
+        if (stop && "color" in stop) {
+          const pos = stop.position;
+          if (pos && !Array.isArray(pos)) {
+            expect(pos.kind).toBe("calc");
+          }
         }
+      }
+    });
+  });
+
+  describe("Color Hints", () => {
+    it("parses single color hint between stops", () => {
+      const css = "linear-gradient(red, 30%, blue)";
+      const result = Linear.parse(css);
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.value.colorStops).toHaveLength(3);
+        
+        // First stop: red
+        const stop1 = result.value.colorStops[0];
+        expect(stop1).toHaveProperty("color");
+        if ("color" in stop1) {
+          expect(stop1.color.kind).toBe("named");
+        }
+
+        // Second item: 30% hint
+        const hint = result.value.colorStops[1];
+        expect(hint).toHaveProperty("kind", "hint");
+        if ("kind" in hint && hint.kind === "hint") {
+          expect(hint.position).toEqual({ kind: "literal", value: 30, unit: "%" });
+        }
+
+        // Third stop: blue
+        const stop2 = result.value.colorStops[2];
+        expect(stop2).toHaveProperty("color");
+        if ("color" in stop2) {
+          expect(stop2.color.kind).toBe("named");
+        }
+      }
+    });
+
+    it("parses multiple color hints", () => {
+      const css = "linear-gradient(red, 25%, yellow, 75%, blue)";
+      const result = Linear.parse(css);
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.value.colorStops).toHaveLength(5);
+        
+        // Verify structure: color, hint, color, hint, color
+        expect(result.value.colorStops[0]).toHaveProperty("color");
+        expect(result.value.colorStops[1]).toHaveProperty("kind", "hint");
+        expect(result.value.colorStops[2]).toHaveProperty("color");
+        expect(result.value.colorStops[3]).toHaveProperty("kind", "hint");
+        expect(result.value.colorStops[4]).toHaveProperty("color");
+      }
+    });
+
+    it("parses color hint with positioned stops", () => {
+      const css = "linear-gradient(red 10%, 30%, yellow 50%, blue 90%)";
+      const result = Linear.parse(css);
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.value.colorStops).toHaveLength(4);
+        
+        // red 10%
+        const stop1 = result.value.colorStops[0];
+        if ("color" in stop1) {
+          expect(stop1.position).toEqual({ kind: "literal", value: 10, unit: "%" });
+        }
+
+        // 30% hint
+        const hint = result.value.colorStops[1];
+        expect(hint).toHaveProperty("kind", "hint");
+
+        // yellow 50%
+        const stop2 = result.value.colorStops[2];
+        if ("color" in stop2) {
+          expect(stop2.position).toEqual({ kind: "literal", value: 50, unit: "%" });
+        }
+
+        // blue 90%
+        const stop3 = result.value.colorStops[3];
+        if ("color" in stop3) {
+          expect(stop3.position).toEqual({ kind: "literal", value: 90, unit: "%" });
+        }
+      }
+    });
+
+    it("parses color hint with calc()", () => {
+      const css = "linear-gradient(red, calc(25% + 10px), blue)";
+      const result = Linear.parse(css);
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.value.colorStops).toHaveLength(3);
+        
+        const hint = result.value.colorStops[1];
+        expect(hint).toHaveProperty("kind", "hint");
+        if ("kind" in hint && hint.kind === "hint") {
+          expect(hint.position.kind).toBe("calc");
+        }
+      }
+    });
+
+    it("parses complex example with direction, hints, and positioned stops", () => {
+      const css = "linear-gradient(to top left, red 10%, 30%, yellow, blue 90%)";
+      const result = Linear.parse(css);
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.value.direction).toEqual({ kind: "to-corner", value: "top left" });
+        expect(result.value.colorStops).toHaveLength(4);
+        
+        // Verify mix of stops and hint
+        expect(result.value.colorStops[0]).toHaveProperty("color");
+        expect(result.value.colorStops[1]).toHaveProperty("kind", "hint");
+        expect(result.value.colorStops[2]).toHaveProperty("color");
+        expect(result.value.colorStops[3]).toHaveProperty("color");
       }
     });
   });

@@ -22,7 +22,7 @@ export function generate(color: unknown): GenerateResult {
 
   // 2. Semantic validation (range warnings)
   const warnings = collectWarnings(
-    checkLiteralRange(l, 0, 1, { field: "l", typeName: "OKLCHColor" }),
+    checkAlpha(l, "l", "OKLCHColor"), // Lightness: 0-1 or 0-100%
     checkLiteralRange(c, 0, 0.4, { field: "c", typeName: "OKLCHColor" }),
     checkHue(h, "h", "OKLCHColor"),
     alpha ? checkAlpha(alpha, "alpha", "OKLCHColor") : undefined,

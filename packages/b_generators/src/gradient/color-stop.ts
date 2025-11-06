@@ -1,31 +1,50 @@
 // b_path:: packages/b_generators/src/gradient/color-stop.ts
-import type { GenerateResult, GenerateContext } from "@b/types";
+import { generateOk, type GenerateResult, type GenerateContext } from "@b/types";
 import type * as Type from "@b/types";
 import * as Color from "../color";
 import { cssValueToCss } from "@b/utils";
 
 /**
- * Generate CSS color stop string from ColorStop IR.
+ * Generate CSS color stop or hint string from ColorStopOrHint IR.
  *
  * A color stop consists of a color and an optional position.
+ * A color hint is just a position (transition midpoint).
  * Position can be a length, percentage, or angle (for conic gradients).
  *
- * @param colorStop - ColorStop IR object
- * @returns CSS color stop string
+ * @param stopOrHint - ColorStopOrHint IR object
+ * @returns CSS color stop or hint string
  *
  * @example
+ * Color stops:
  * ```typescript
- * generate({ color: { kind: "named", value: "red" } })
+ * generate({ color: { kind: "named", name: "red" } })
  * // => "red"
  *
  * generate({
- *   color: { kind: "named", value: "blue" },
+ *   color: { kind: "named", name: "blue" },
  *   position: { kind: "literal", value: 50, unit: "%" }
  * })
  * // => "blue 50%"
  * ```
+ *
+ * @example
+ * Color hint:
+ * ```typescript
+ * generate({
+ *   kind: "hint",
+ *   position: { kind: "literal", value: 30, unit: "%" }
+ * })
+ * // => "30%"
+ * ```
  */
-export function generate(colorStop: Type.ColorStop, context?: GenerateContext): GenerateResult {
+export function generate(stopOrHint: Type.ColorStopOrHint, context?: GenerateContext): GenerateResult {
+  // Handle color hint
+  if ("kind" in stopOrHint && stopOrHint.kind === "hint") {
+    return generateOk(cssValueToCss(stopOrHint.position));
+  }
+
+  // Handle color stop
+  const colorStop = stopOrHint as Type.ColorStop;
   const colorResult = Color.generate(colorStop.color, {
     parentPath: [...(context?.parentPath ?? []), "color"],
     property: context?.property,

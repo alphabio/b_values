@@ -379,4 +379,130 @@ describe("Linear Gradient Generator - Color Stops", () => {
       }
     });
   });
+
+  describe("Color Hints", () => {
+    it("generates single color hint between stops", () => {
+      const ir: Type.LinearGradient = {
+        kind: "linear",
+        colorStops: [
+          { color: { kind: "named", name: "red" } },
+          { kind: "hint", position: { kind: "literal", value: 30, unit: "%" } },
+          { color: { kind: "named", name: "blue" } },
+        ],
+        repeating: false,
+      };
+
+      const result = Linear.generate(ir);
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.value).toBe("linear-gradient(red, 30%, blue)");
+      }
+    });
+
+    it("generates multiple color hints", () => {
+      const ir: Type.LinearGradient = {
+        kind: "linear",
+        colorStops: [
+          { color: { kind: "named", name: "red" } },
+          { kind: "hint", position: { kind: "literal", value: 25, unit: "%" } },
+          { color: { kind: "named", name: "yellow" } },
+          { kind: "hint", position: { kind: "literal", value: 75, unit: "%" } },
+          { color: { kind: "named", name: "blue" } },
+        ],
+        repeating: false,
+      };
+
+      const result = Linear.generate(ir);
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.value).toBe("linear-gradient(red, 25%, yellow, 75%, blue)");
+      }
+    });
+
+    it("generates color hints with positioned stops", () => {
+      const ir: Type.LinearGradient = {
+        kind: "linear",
+        colorStops: [
+          { color: { kind: "named", name: "red" }, position: { kind: "literal", value: 10, unit: "%" } },
+          { kind: "hint", position: { kind: "literal", value: 30, unit: "%" } },
+          { color: { kind: "named", name: "yellow" }, position: { kind: "literal", value: 50, unit: "%" } },
+          { color: { kind: "named", name: "blue" }, position: { kind: "literal", value: 90, unit: "%" } },
+        ],
+        repeating: false,
+      };
+
+      const result = Linear.generate(ir);
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.value).toBe("linear-gradient(red 10%, 30%, yellow 50%, blue 90%)");
+      }
+    });
+
+    it("generates color hint with calc()", () => {
+      const ir: Type.LinearGradient = {
+        kind: "linear",
+        colorStops: [
+          { color: { kind: "named", name: "red" } },
+          {
+            kind: "hint",
+            position: {
+              kind: "calc",
+              value: {
+                kind: "calc-operation",
+                operator: "+",
+                left: { kind: "literal", value: 25, unit: "%" },
+                right: { kind: "literal", value: 10, unit: "px" },
+              },
+            },
+          },
+          { color: { kind: "named", name: "blue" } },
+        ],
+        repeating: false,
+      };
+
+      const result = Linear.generate(ir);
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.value).toBe("linear-gradient(red, calc(25% + 10px), blue)");
+      }
+    });
+
+    it("generates complex gradient with direction, hints, and positioned stops", () => {
+      const ir: Type.LinearGradient = {
+        kind: "linear",
+        direction: { kind: "to-corner", value: "top left" },
+        colorStops: [
+          { color: { kind: "named", name: "red" }, position: { kind: "literal", value: 10, unit: "%" } },
+          { kind: "hint", position: { kind: "literal", value: 30, unit: "%" } },
+          { color: { kind: "named", name: "yellow" } },
+          { color: { kind: "named", name: "blue" }, position: { kind: "literal", value: 90, unit: "%" } },
+        ],
+        repeating: false,
+      };
+
+      const result = Linear.generate(ir);
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.value).toBe("linear-gradient(to top left, red 10%, 30%, yellow, blue 90%)");
+      }
+    });
+
+    it("generates repeating gradient with hints", () => {
+      const ir: Type.LinearGradient = {
+        kind: "linear",
+        colorStops: [
+          { color: { kind: "named", name: "red" }, position: { kind: "literal", value: 0, unit: "px" } },
+          { kind: "hint", position: { kind: "literal", value: 5, unit: "px" } },
+          { color: { kind: "named", name: "blue" }, position: { kind: "literal", value: 10, unit: "px" } },
+        ],
+        repeating: true,
+      };
+
+      const result = Linear.generate(ir);
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.value).toBe("repeating-linear-gradient(red 0px, 5px, blue 10px)");
+      }
+    });
+  });
 });

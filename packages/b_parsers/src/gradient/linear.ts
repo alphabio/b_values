@@ -218,7 +218,7 @@ export function fromFunction(fn: csstree.FunctionNode): ParseResult<Type.LinearG
   // Parse color stops
   const stopGroups = Utils.Ast.splitNodesByComma(children, { startIndex: idx });
 
-  const colorStops: Type.ColorStop[] = [];
+  const colorStops: Type.ColorStopOrHint[] = [];
   const issues: Type.Issue[] = [];
 
   for (const stopNodes of stopGroups) {

@@ -46,13 +46,51 @@ import * as decl from "@b/declarations";
 //   ),
 // );
 
+// console.log(
+//   JSON.stringify(
+//     decl.parseDeclaration(`
+//   background-image:
+//     radial-gradient(
+//       farthest-corner at calc(100% - 20px) 30%,
+//       oklch(80% 0.3 150),
+//       transparent
+//     ),
+
+//     conic-gradient(
+//       from 0.25turn at center,
+//       #ff0000,
+//       gold 15%,
+//       #0000ff 15% 30%, /* Hard stop */
+//       lime 50%
+//     ),
+
+//     linear-gradient(
+//       in oklab 135deg,
+//       hsl(200 100% 50% / 0.8),
+//       color(display-p3 1 0.5 0 / 0.2) 75%
+//     ),
+
+//     url("data:image/svg+xml,...");
+// `),
+//     null,
+//     2,
+//   ),
+// );
+
 console.log(
   JSON.stringify(
     decl.parseDeclaration(`
   background-image:
+    linear-gradient(
+      to top left,
+      red 10%,
+      30%,
+      yellow,
+      blue 90%
+    ),
     radial-gradient(
-      farthest-corner at calc(100% - 20px) 30%,
-      oklch(80% 0.3 150),
+      ellipse at top 20px left 15%,
+      rgba(0, 0, 0, 0.5),
       transparent
     );
 `),
