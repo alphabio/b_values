@@ -184,11 +184,13 @@ describe("Conic Gradient - Error Handling", () => {
       expect(result.ok).toBe(false);
     });
 
-    it("fails on missing closing parenthesis", () => {
+    it("warns on missing closing parenthesis", () => {
       const css = "conic-gradient(red, blue";
       const result = Conic.parse(css);
 
-      expect(result.ok).toBe(false);
+      expect(result.ok).toBe(true);
+      expect(result.issues.length).toBeGreaterThan(0);
+      expect(result.issues.some((issue) => issue.severity === "warning")).toBe(true);
     });
 
     it("fails on empty string", () => {

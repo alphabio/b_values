@@ -6,6 +6,7 @@ import type { RadialShape, RadialSizeKeyword } from "@b/keywords";
 import { parsePosition2D } from "../position";
 import { parseCssValueNodeEnhanced } from "../css-value-parser-enhanced";
 import * as ColorStop from "./color-stop";
+import * as SharedParsing from "./shared-parsing";
 import * as Utils from "../utils";
 import { isCssValueFunction } from "../utils/css-value-functions";
 
@@ -245,15 +246,21 @@ export function fromFunction(fn: csstree.FunctionNode): ParseResult<Type.RadialG
  * @see https://developer.mozilla.org/en-US/docs/Web/CSS/gradient/radial-gradient
  */
 export function parse(css: string): ParseResult<Type.RadialGradient> {
-  const astResult = Utils.Ast.parseCssString(css, "value");
-  if (!astResult.ok) {
-    return forwardParseErr<Type.RadialGradient>(astResult);
-  }
-
-  const funcResult = Utils.Ast.findFunctionNode(astResult.value, ["radial-gradient", "repeating-radial-gradient"]);
+  const funcResult = SharedParsing.parseCssToGradientFunction(css, ["radial-gradient", "repeating-radial-gradient"]);
   if (!funcResult.ok) {
     return forwardParseErr<Type.RadialGradient>(funcResult);
   }
 
-  return fromFunction(funcResult.value);
+  const result = fromFunction(funcResult.value);
+
+  // Add warning if parentheses are unbalanced
+  const parenIssue = SharedParsing.validateParentheses(css, "radial");
+  if (result.ok && parenIssue) {
+    return {
+      ...result,
+      issues: [...result.issues, parenIssue],
+    };
+  }
+
+  return result;
 }

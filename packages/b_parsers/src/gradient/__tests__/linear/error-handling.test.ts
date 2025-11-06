@@ -47,4 +47,13 @@ describe("Linear Gradient Parser - Error Handling", () => {
     // Parser treats unrecognized pattern as color stop
     expect(result.ok).toBe(true);
   });
+
+  it("warns on missing closing parenthesis", () => {
+    const css = "linear-gradient(red, blue";
+    const result = Linear.parse(css);
+
+    expect(result.ok).toBe(true);
+    expect(result.issues.length).toBeGreaterThan(0);
+    expect(result.issues.some((issue) => issue.severity === "warning")).toBe(true);
+  });
 });

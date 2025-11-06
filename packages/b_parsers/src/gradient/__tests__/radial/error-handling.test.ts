@@ -69,5 +69,14 @@ describe("Radial Gradient Parser - Error Handling", () => {
 
       expect(result.ok).toBe(false);
     });
+
+    it("warns on missing closing parenthesis", () => {
+      const css = "radial-gradient(red, blue";
+      const result = Radial.parse(css);
+
+      expect(result.ok).toBe(true);
+      expect(result.issues.length).toBeGreaterThan(0);
+      expect(result.issues.some((issue) => issue.severity === "warning")).toBe(true);
+    });
   });
 });

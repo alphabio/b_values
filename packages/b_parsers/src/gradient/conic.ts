@@ -5,6 +5,7 @@ import type * as Type from "@b/types";
 import { parseCssValueNodeEnhanced } from "../css-value-parser-enhanced";
 import { parsePosition2D } from "../position";
 import * as ColorStop from "./color-stop";
+import * as SharedParsing from "./shared-parsing";
 import * as Utils from "../utils";
 
 /**
@@ -142,15 +143,21 @@ export function fromFunction(fn: csstree.FunctionNode): ParseResult<Type.ConicGr
  * @see https://developer.mozilla.org/en-US/docs/Web/CSS/gradient/conic-gradient
  */
 export function parse(css: string): ParseResult<Type.ConicGradient> {
-  const astResult = Utils.Ast.parseCssString(css, "value");
-  if (!astResult.ok) {
-    return forwardParseErr<Type.ConicGradient>(astResult);
-  }
-
-  const funcResult = Utils.Ast.findFunctionNode(astResult.value, ["conic-gradient", "repeating-conic-gradient"]);
+  const funcResult = SharedParsing.parseCssToGradientFunction(css, ["conic-gradient", "repeating-conic-gradient"]);
   if (!funcResult.ok) {
     return forwardParseErr<Type.ConicGradient>(funcResult);
   }
 
-  return fromFunction(funcResult.value);
+  const result = fromFunction(funcResult.value);
+
+  // Add warning if parentheses are unbalanced
+  const parenIssue = SharedParsing.validateParentheses(css, "conic");
+  if (result.ok && parenIssue) {
+    return {
+      ...result,
+      issues: [...result.issues, parenIssue],
+    };
+  }
+
+  return result;
 }

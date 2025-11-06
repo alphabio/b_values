@@ -4,6 +4,7 @@ import { createError, parseErr, parseOk, forwardParseErr, type ParseResult } fro
 import type * as Type from "@b/types";
 import { parseCssValueNodeEnhanced } from "../css-value-parser-enhanced";
 import * as ColorStop from "./color-stop";
+import * as SharedParsing from "./shared-parsing";
 import * as Utils from "../utils";
 import { isCssValueFunction } from "../utils/css-value-functions";
 import { disambiguateFirstArg } from "./disambiguation";
@@ -179,15 +180,21 @@ export function fromFunction(fn: csstree.FunctionNode): ParseResult<Type.LinearG
  * @see https://developer.mozilla.org/en-US/docs/Web/CSS/gradient/linear-gradient
  */
 export function parse(css: string): ParseResult<Type.LinearGradient> {
-  const astResult = Utils.Ast.parseCssString(css, "value");
-  if (!astResult.ok) {
-    return forwardParseErr<Type.LinearGradient>(astResult);
-  }
-
-  const funcResult = Utils.Ast.findFunctionNode(astResult.value, ["linear-gradient", "repeating-linear-gradient"]);
+  const funcResult = SharedParsing.parseCssToGradientFunction(css, ["linear-gradient", "repeating-linear-gradient"]);
   if (!funcResult.ok) {
     return forwardParseErr<Type.LinearGradient>(funcResult);
   }
 
-  return fromFunction(funcResult.value);
+  const result = fromFunction(funcResult.value);
+
+  // Add warning if parentheses are unbalanced
+  const parenIssue = SharedParsing.validateParentheses(css, "linear");
+  if (result.ok && parenIssue) {
+    return {
+      ...result,
+      issues: [...result.issues, parenIssue],
+    };
+  }
+
+  return result;
 }

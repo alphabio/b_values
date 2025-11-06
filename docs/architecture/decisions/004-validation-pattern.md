@@ -11,13 +11,15 @@
 When validating CSS using `csstree`, we cannot rely on parse success (`ok: true/false`) to determine if CSS is valid. This leads to false positives in both directions:
 
 **False Positive (accepts invalid CSS):**
+
 ```typescript
-const css = "conic-gradient(red, blue";  // missing closing )
+const css = "conic-gradient(red, blue"; // missing closing )
 const ast = csstree.parse(css, { context: "value" });
 // Parses successfully! But CSS is incomplete/malformed
 ```
 
 **False Negative (rejects valid CSS):**
+
 ```typescript
 // Some valid CSS might fail to parse in certain contexts
 // but would be valid in the full document
@@ -44,11 +46,11 @@ Instead, use this pattern:
 ```typescript
 export function validateProperty(css: string, property: string) {
   const issues: Issue[] = [];
-  
+
   try {
     const ast = csstree.parse(css, { context: "value" });
     const result = csstree.lexer.matchProperty(property, ast);
-    
+
     // Don't check result.error directly
     // Instead, check for formattedWarning
     if (result.error?.formattedWarning) {
@@ -56,7 +58,7 @@ export function validateProperty(css: string, property: string) {
         severity: "warning",
         code: "invalid-value",
         message: result.error.formattedWarning,
-        prop: property
+        prop: property,
       });
     }
   } catch (error) {
@@ -67,7 +69,7 @@ export function validateProperty(css: string, property: string) {
       message: extractMessage(error),
     });
   }
-  
+
   return { issues };
 }
 ```
@@ -93,6 +95,7 @@ export function validateProperty(css: string, property: string) {
 ### Why css-tree is lenient
 
 css-tree is designed for tools like:
+
 - **Code editors** - need to parse incomplete code as you type
 - **Formatters** - need to handle malformed input gracefully
 - **Error recovery** - parser continues after errors
@@ -103,9 +106,9 @@ This is correct behavior for these use cases, but wrong for validation.
 
 ```typescript
 // Syntactically valid (parses), semantically invalid (incomplete)
-"conic-gradient(red, blue"  // missing )
-"conic-gradient(from, red, blue)"  // from without angle
-"background: rgb(300, 0, 0)"  // out of range values
+"conic-gradient(red, blue"; // missing )
+"conic-gradient(from, red, blue)"; // from without angle
+"background: rgb(300, 0, 0)"; // out of range values
 ```
 
 These all parse successfully, but are invalid CSS.
@@ -145,7 +148,7 @@ These all parse successfully, but are invalid CSS.
 function parse(css: string) {
   try {
     const ast = csstree.parse(css, { context: "value" });
-    return { ok: true, value: ast };  // ❌ Assumes valid if parsed
+    return { ok: true, value: ast }; // ❌ Assumes valid if parsed
   } catch (error) {
     return { ok: false, error };
   }
@@ -157,16 +160,16 @@ function parse(css: string) {
 ```typescript
 function parse(css: string) {
   const issues: Issue[] = [];
-  
+
   try {
     const ast = csstree.parse(css, { context: "value" });
     const result = csstree.lexer.matchProperty(property, ast);
-    
+
     // Check for validation warnings
     if (result.error?.formattedWarning) {
       issues.push(warning("invalid-value", result.error.formattedWarning));
     }
-    
+
     // Can still return parsed result even with warnings
     return { value: ast, issues };
   } catch (error) {

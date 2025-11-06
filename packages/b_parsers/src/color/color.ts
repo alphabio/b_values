@@ -11,6 +11,7 @@ import { parseLabFunction } from "./lab";
 import { parseLchFunction } from "./lch";
 import { parseOklabFunction } from "./oklab";
 import { parseOklchFunction } from "./oklch";
+import { parseColorFunction } from "./color-function";
 
 /**
  * Parse color AST node with auto-detection.
@@ -57,6 +58,8 @@ export function parseNode(node: csstree.CssNode): ParseResult<Type.Color> {
         return parseOklabFunction(node);
       case "oklch":
         return parseOklchFunction(node);
+      case "color":
+        return parseColorFunction(node);
       default:
         return parseErr(createError("unsupported-kind", `Unsupported color function: ${funcName}`));
     }
