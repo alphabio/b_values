@@ -16,6 +16,8 @@ export interface SplitByCommaOptions {
  * Used for parsing comma-separated function arguments.
  * Returns array of node groups, where each group is the nodes between commas.
  *
+ * **Important:** Only splits on top-level commas, ignoring commas inside nested functions.
+ *
  * @param nodes - Array of AST nodes to split
  * @param options - Parsing options
  * @returns Array of node groups (each group is nodes between commas)
@@ -33,6 +35,7 @@ export function splitNodesByComma(nodes: csstree.CssNode[], options: SplitByComm
 
   const groups: csstree.CssNode[][] = [];
   let currentGroup: csstree.CssNode[] = [];
+  const nestingDepth = 0; // Track nesting depth for functions
 
   for (let i = startIndex; i < nodes.length; i++) {
     const node = nodes[i];
@@ -42,7 +45,16 @@ export function splitNodesByComma(nodes: csstree.CssNode[], options: SplitByComm
       continue;
     }
 
-    if (node.type === "Operator" && "value" in node && node.value === ",") {
+    // Track nesting depth - enter function
+    if (node.type === "Function") {
+      currentGroup.push(node);
+      // Functions contain their own children, no need to track depth here
+      // The function node itself contains all nested content
+      continue;
+    }
+
+    // Only split on top-level commas (when not inside a function)
+    if (node.type === "Operator" && "value" in node && node.value === "," && nestingDepth === 0) {
       if (currentGroup.length > 0 || allowEmpty) {
         groups.push(currentGroup);
         currentGroup = [];

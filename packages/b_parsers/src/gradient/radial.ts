@@ -9,6 +9,16 @@ import * as ColorStop from "./color-stop";
 import * as Utils from "../utils";
 
 /**
+ * Check if a Function node is a CSS value function (var, calc, clamp, min, max)
+ * and not a color function (rgb, hsl, etc.)
+ */
+function isCssValueFunction(node: csstree.CssNode): boolean {
+  if (node.type !== "Function") return false;
+  const funcName = node.name.toLowerCase();
+  return ["var", "calc", "clamp", "min", "max"].includes(funcName);
+}
+
+/**
  * Parse radial gradient shape and size from nodes.
  */
 function parseShapeAndSize(
@@ -45,7 +55,10 @@ function parseShapeAndSize(
           };
           idx++;
         }
-      } else if (nextNode?.type === "Dimension" || nextNode?.type === "Percentage") {
+      } else if (
+        nextNode &&
+        (nextNode.type === "Dimension" || nextNode.type === "Percentage" || isCssValueFunction(nextNode))
+      ) {
         if (shape === "circle") {
           const radiusResult = parseCssValueNodeEnhanced(nextNode);
           if (radiusResult.ok) {
@@ -60,7 +73,7 @@ function parseShapeAndSize(
           if (rxResult.ok) {
             idx++;
             const ryNode = nodes[idx];
-            if (ryNode && (ryNode.type === "Dimension" || ryNode.type === "Percentage")) {
+            if (ryNode && (ryNode.type === "Dimension" || ryNode.type === "Percentage" || isCssValueFunction(ryNode))) {
               const ryResult = parseCssValueNodeEnhanced(ryNode);
               if (ryResult.ok) {
                 size = {
@@ -91,12 +104,17 @@ function parseShapeAndSize(
       }
     }
   } else if (node.type === "Dimension" || node.type === "Percentage") {
+    // Only parse bare dimensions/percentages as sizes, not functions
+    // Functions as first node are likely colors (rgb, hsl, var, etc.)
     const firstResult = parseCssValueNodeEnhanced(node);
     if (firstResult.ok) {
       idx++;
       const secondNode = nodes[idx];
 
-      if (secondNode && (secondNode.type === "Dimension" || secondNode.type === "Percentage")) {
+      if (
+        secondNode &&
+        (secondNode.type === "Dimension" || secondNode.type === "Percentage" || isCssValueFunction(secondNode))
+      ) {
         const secondResult = parseCssValueNodeEnhanced(secondNode);
         if (secondResult.ok) {
           size = {
