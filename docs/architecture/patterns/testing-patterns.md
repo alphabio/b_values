@@ -74,7 +74,7 @@ describe("Feature Parser - Aspect", () => {
       if (result.ok) {
         expect(result.value.property).toEqual({
           kind: "variable",
-          name: "--custom"
+          name: "--custom",
         });
       }
     });
@@ -187,8 +187,8 @@ describe("Feature Generator - Aspect", () => {
 ```typescript
 // ❌ BAD - TypeScript error
 const colors = ["red", "blue", "green"];
-const colorStops = colors.map((name) => ({ 
-  color: { kind: "named", name } 
+const colorStops = colors.map((name) => ({
+  color: { kind: "named", name },
 }));
 // Error: 'string' is not assignable to named color union
 ```
@@ -198,8 +198,8 @@ const colorStops = colors.map((name) => ({
 ```typescript
 // ✅ GOOD - Use const assertion on array
 const colors = ["red", "blue", "green"] as const;
-const colorStops = colors.map((name) => ({ 
-  color: { kind: "named" as const, name } 
+const colorStops = colors.map((name) => ({
+  color: { kind: "named" as const, name },
 }));
 ```
 
@@ -207,9 +207,12 @@ const colorStops = colors.map((name) => ({
 
 ```typescript
 // ✅ GOOD - Type the return value
-const colorStops = Array.from({ length: 100 }, (_, i): Type.ColorStop => ({
-  color: { kind: "named", name: i % 2 === 0 ? "red" : "blue" },
-}));
+const colorStops = Array.from(
+  { length: 100 },
+  (_, i): Type.ColorStop => ({
+    color: { kind: "named", name: i % 2 === 0 ? "red" : "blue" },
+  })
+);
 ```
 
 ### Problem: Position Array vs Single Value
@@ -261,9 +264,8 @@ it("debug var()", () => {
 
 ```typescript
 // In parser implementation:
-if (node.type === "Dimension" || 
-    node.type === "Number" || 
-    node.type === "Function") {  // ← Add Function support
+if (node.type === "Dimension" || node.type === "Number" || node.type === "Function") {
+  // ← Add Function support
   const valueResult = parseCssValueNodeEnhanced(node);
   // ...
 }
@@ -305,8 +307,8 @@ if (firstNode?.type === "Function" || firstNode?.type === "Dimension") {
 { kind: "variable", name: "--prop", fallback: {...} }
 
 // Calc
-{ 
-  kind: "calc", 
+{
+  kind: "calc",
   value: {
     kind: "calc-operation",
     operator: "+",
@@ -334,8 +336,8 @@ if (firstNode?.type === "Function" || firstNode?.type === "Dimension") {
 { colorSpace: "srgb" }
 
 // With hue interpolation (full string)
-{ 
-  colorSpace: "lch", 
+{
+  colorSpace: "lch",
   hueInterpolationMethod: "longer hue"  // ← Full string, not just "longer"
 }
 ```
@@ -382,15 +384,18 @@ for (const angle of angles) {
 ```typescript
 // Generate 100+ items
 it("handles 100+ items", () => {
-  const items = Array.from({ length: 101 }, (_, i): Type.Item => ({
-    // Generate item
-  }));
-  
+  const items = Array.from(
+    { length: 101 },
+    (_, i): Type.Item => ({
+      // Generate item
+    })
+  );
+
   const ir: Type.Feature = {
     kind: "feature",
     items: items,
   };
-  
+
   const result = Feature.generate(ir);
   expect(result.ok).toBe(true);
 });
@@ -416,15 +421,15 @@ describe("{Feature} {Parser|Generator} - {Aspect}", () => {
 
 ```typescript
 // ✅ GOOD - Descriptive, clear intent
-it("parses gradient with 100+ color stops")
-it("generates 'in oklch shorter hue'")
-it("handles whitespace variations")
-it("fails on single color stop")
+it("parses gradient with 100+ color stops");
+it("generates 'in oklch shorter hue'");
+it("handles whitespace variations");
+it("fails on single color stop");
 
 // ❌ BAD - Vague, unclear
-it("works")
-it("test1")
-it("edge case")
+it("works");
+it("test1");
+it("edge case");
 ```
 
 ---
@@ -468,6 +473,7 @@ When creating comprehensive tests for a new feature:
 - Session 031 documents in `docs/sessions/031/`
 
 **Key Files:**
+
 - `color-interpolation.test.ts` - Complex enum testing
 - `edge-cases.test.ts` - Stress testing patterns
 - `combinations.test.ts` - Integration testing

@@ -28,24 +28,24 @@ describe("radialGradientSizeSchema", () => {
   it("validates circle explicit size", () => {
     const result = radialGradientSizeSchema.parse({
       kind: "circle-explicit",
-      radius: { value: 100, unit: "px" },
+      radius: { kind: "literal", value: 100, unit: "px" },
     });
     expect(result).toEqual({
       kind: "circle-explicit",
-      radius: { value: 100, unit: "px" },
+      radius: { kind: "literal", value: 100, unit: "px" },
     });
   });
 
   it("validates ellipse explicit size", () => {
     const result = radialGradientSizeSchema.parse({
       kind: "ellipse-explicit",
-      radiusX: { value: 50, unit: "%" },
-      radiusY: { value: 100, unit: "px" },
+      radiusX: { kind: "literal", value: 50, unit: "%" },
+      radiusY: { kind: "literal", value: 100, unit: "px" },
     });
     expect(result).toEqual({
       kind: "ellipse-explicit",
-      radiusX: { value: 50, unit: "%" },
-      radiusY: { value: 100, unit: "px" },
+      radiusX: { kind: "literal", value: 50, unit: "%" },
+      radiusY: { kind: "literal", value: 100, unit: "px" },
     });
   });
 
@@ -61,7 +61,7 @@ describe("radialGradientSizeSchema", () => {
     expect(() =>
       radialGradientSizeSchema.parse({
         kind: "ellipse-explicit",
-        radiusX: { value: 50, unit: "%" },
+        radiusX: { kind: "literal", value: 50, unit: "%" },
       }),
     ).toThrow();
   });

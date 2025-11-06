@@ -2,8 +2,8 @@
 import { generateOk, type GenerateResult, type GenerateContext } from "@b/types";
 import type * as Type from "@b/types";
 import * as Position from "../position";
-import * as Length from "../length";
 import * as ColorStop from "./color-stop";
+import { cssValueToCss } from "@b/utils";
 
 /**
  * Generate CSS radial gradient size string from RadialGradientSize IR.
@@ -17,18 +17,13 @@ function generateSize(size: Type.RadialGradientSize): GenerateResult {
   }
 
   if (size.kind === "circle-explicit") {
-    const radiusResult = Length.generateLengthPercentage(size.radius);
-    if (!radiusResult.ok) return radiusResult;
-    return generateOk(radiusResult.value);
+    return generateOk(cssValueToCss(size.radius));
   }
 
-  const rxResult = Length.generateLengthPercentage(size.radiusX);
-  if (!rxResult.ok) return rxResult;
+  const radiusX = cssValueToCss(size.radiusX);
+  const radiusY = cssValueToCss(size.radiusY);
 
-  const ryResult = Length.generateLengthPercentage(size.radiusY);
-  if (!ryResult.ok) return ryResult;
-
-  return generateOk(`${rxResult.value} ${ryResult.value}`);
+  return generateOk(`${radiusX} ${radiusY}`);
 }
 
 /**

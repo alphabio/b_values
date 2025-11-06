@@ -1,7 +1,7 @@
 // b_path:: packages/b_types/src/gradient/radial-size.ts
 import { z } from "zod";
 import { radialSizeKeywordSchema } from "@b/keywords";
-import { lengthPercentageSchema } from "../length-percentage";
+import { cssValueSchema } from "../values";
 
 /**
  * @see https://developer.mozilla.org/en-US/docs/Web/CSS/gradient/radial-gradient
@@ -16,14 +16,14 @@ export const radialGradientSizeSchema = z.union([
   z
     .object({
       kind: z.literal("circle-explicit"),
-      radius: lengthPercentageSchema,
+      radius: cssValueSchema,
     })
     .strict(),
   z
     .object({
       kind: z.literal("ellipse-explicit"),
-      radiusX: lengthPercentageSchema,
-      radiusY: lengthPercentageSchema,
+      radiusX: cssValueSchema,
+      radiusY: cssValueSchema,
     })
     .strict(),
 ]);

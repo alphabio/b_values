@@ -67,7 +67,7 @@ describe("Radial Gradient Generator", () => {
   it("generates radial gradient with explicit circle size", () => {
     const ir: Type.RadialGradient = {
       kind: "radial",
-      size: { kind: "circle-explicit", radius: { value: 50, unit: "px" } },
+      size: { kind: "circle-explicit", radius: { kind: "literal", value: 50, unit: "px" } },
       colorStops: [{ color: { kind: "named", name: "red" } }, { color: { kind: "named", name: "blue" } }],
       repeating: false,
     };
@@ -84,8 +84,8 @@ describe("Radial Gradient Generator", () => {
       kind: "radial",
       size: {
         kind: "ellipse-explicit",
-        radiusX: { value: 50, unit: "px" },
-        radiusY: { value: 100, unit: "px" },
+        radiusX: { kind: "literal", value: 50, unit: "px" },
+        radiusY: { kind: "literal", value: 100, unit: "px" },
       },
       colorStops: [{ color: { kind: "named", name: "red" } }, { color: { kind: "named", name: "blue" } }],
       repeating: false,

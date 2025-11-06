@@ -3,8 +3,8 @@ import type * as csstree from "css-tree";
 import { createError, parseErr, parseOk, forwardParseErr, type ParseResult } from "@b/types";
 import type * as Type from "@b/types";
 import type { RadialShape, RadialSizeKeyword } from "@b/keywords";
-import { parseLengthPercentageNode } from "../length";
 import { parsePosition2D } from "../position";
+import { parseCssValueNodeEnhanced } from "../css-value-parser-enhanced";
 import * as ColorStop from "./color-stop";
 import * as Utils from "../utils";
 
@@ -47,7 +47,7 @@ function parseShapeAndSize(
         }
       } else if (nextNode?.type === "Dimension" || nextNode?.type === "Percentage") {
         if (shape === "circle") {
-          const radiusResult = parseLengthPercentageNode(nextNode);
+          const radiusResult = parseCssValueNodeEnhanced(nextNode);
           if (radiusResult.ok) {
             size = {
               kind: "circle-explicit",
@@ -56,12 +56,12 @@ function parseShapeAndSize(
             idx++;
           }
         } else {
-          const rxResult = parseLengthPercentageNode(nextNode);
+          const rxResult = parseCssValueNodeEnhanced(nextNode);
           if (rxResult.ok) {
             idx++;
             const ryNode = nodes[idx];
             if (ryNode && (ryNode.type === "Dimension" || ryNode.type === "Percentage")) {
-              const ryResult = parseLengthPercentageNode(ryNode);
+              const ryResult = parseCssValueNodeEnhanced(ryNode);
               if (ryResult.ok) {
                 size = {
                   kind: "ellipse-explicit",
@@ -91,13 +91,13 @@ function parseShapeAndSize(
       }
     }
   } else if (node.type === "Dimension" || node.type === "Percentage") {
-    const firstResult = parseLengthPercentageNode(node);
+    const firstResult = parseCssValueNodeEnhanced(node);
     if (firstResult.ok) {
       idx++;
       const secondNode = nodes[idx];
 
       if (secondNode && (secondNode.type === "Dimension" || secondNode.type === "Percentage")) {
-        const secondResult = parseLengthPercentageNode(secondNode);
+        const secondResult = parseCssValueNodeEnhanced(secondNode);
         if (secondResult.ok) {
           size = {
             kind: "ellipse-explicit",
