@@ -9,8 +9,9 @@
 ## 🎯 Objectives
 
 Ensure **full, production-ready coverage** of all three gradient types:
+
 1. Linear gradients
-2. Radial gradients  
+2. Radial gradients
 3. Conic gradients
 
 **Goal:** Rock-solid parsing, generation, validation, and testing for background-image gradients.
@@ -22,11 +23,13 @@ Ensure **full, production-ready coverage** of all three gradient types:
 ### Implementation Coverage
 
 **Files per gradient type:**
+
 - **Types:** 6 schema files (linear, radial, conic, direction, radial-size, color-stop)
 - **Parsers:** 5 parser files (linear, radial, conic, color-stop, index)
 - **Generators:** 5 generator files (linear, radial, conic, color-stop, index)
 
 **Test Coverage:**
+
 - 12 test files across types/parsers/generators
 - ~892 lines of test code
 - ~58 test cases
@@ -34,6 +37,7 @@ Ensure **full, production-ready coverage** of all three gradient types:
 ### What Works ✅
 
 From Session 030:
+
 - ✅ var() and calc() support in angles, positions, color stops
 - ✅ Complex gradients parse correctly
 - ✅ All existing tests passing (993 total)
@@ -47,6 +51,7 @@ From Session 030:
 For each gradient type, verify support for:
 
 #### Linear Gradients
+
 - [ ] Direction syntax variations:
   - [ ] Angle values (45deg, 0.5turn, 100grad, 1.57rad)
   - [ ] Side/corner keywords (to top, to bottom right, etc.)
@@ -62,6 +67,7 @@ For each gradient type, verify support for:
 - [ ] Repeating variants (repeating-linear-gradient)
 
 #### Radial Gradients
+
 - [ ] Shape: circle, ellipse (default)
 - [ ] Size keywords: closest-side, farthest-side, closest-corner, farthest-corner
 - [ ] Explicit size:
@@ -73,6 +79,7 @@ For each gradient type, verify support for:
 - [ ] Repeating variants
 
 #### Conic Gradients
+
 - [ ] From angle: from 45deg, from var(--angle)
 - [ ] Position: at center, at 50% 50%, at calc(...)
 - [ ] Color stops with angles (red 0deg 45deg)
@@ -100,6 +107,7 @@ For each gradient type, verify support for:
 ### 3. Round-Trip Testing
 
 For each gradient type, ensure:
+
 - [ ] Parse → Generate → Parse produces identical IR
 - [ ] Generate → Parse → Generate produces identical CSS
 - [ ] Preservation of var() and calc()
@@ -108,25 +116,33 @@ For each gradient type, ensure:
 ### 4. Real-World Examples
 
 Test with actual CSS Editor use cases:
+
 - [ ] **Simple gradients:**
+
   ```css
   linear-gradient(red, blue)
   radial-gradient(circle, red, blue)
   conic-gradient(red, yellow, green, blue, red)
   ```
+
 - [ ] **Complex gradients:**
+
   ```css
   linear-gradient(45deg, rgba(255,0,0,0.5) 0%, transparent 100%)
   radial-gradient(ellipse at top left, red, yellow 20%, blue 40%, green)
   ```
+
 - [ ] **Design system gradients:**
+
   ```css
   linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%)
   repeating-radial-gradient(circle at center, var(--ring-color) 0px, transparent 10px)
   ```
+
 - [ ] **Animated gradients:**
+
   ```css
-  conic-gradient(from var(--angle) at 50% 50%, 
+  conic-gradient(from var(--angle) at 50% 50%,
     var(--color-1) 0deg,
     var(--color-2) 120deg,
     var(--color-3) 240deg,
@@ -183,24 +199,28 @@ packages/
 ## 🚀 Action Plan for Session 031
 
 ### Phase 1: Assessment (30 min)
+
 1. Review all gradient test files
 2. Identify coverage gaps
 3. List missing edge cases
 4. Check error handling completeness
 
 ### Phase 2: Feature Audit (45 min)
+
 1. Test each feature from checklist above
 2. Document what works vs what's missing
 3. Find any parsing bugs
 4. Check generator output quality
 
 ### Phase 3: Fill Gaps (variable time)
+
 1. Add missing tests for uncovered features
 2. Fix any bugs discovered
 3. Add edge case handling
 4. Improve error messages
 
 ### Phase 4: Documentation (30 min)
+
 1. Update gradient documentation
 2. Add usage examples
 3. Document known limitations
@@ -225,16 +245,19 @@ Session 031 is complete when:
 ## 📚 Reference Materials
 
 **CSS Specifications:**
+
 - [CSS Images Module Level 3](https://drafts.csswg.org/css-images-3/#gradients)
 - [CSS Images Module Level 4](https://drafts.csswg.org/css-images-4/)
 
 **MDN Documentation:**
+
 - [linear-gradient()](https://developer.mozilla.org/en-US/docs/Web/CSS/gradient/linear-gradient)
 - [radial-gradient()](https://developer.mozilla.org/en-US/docs/Web/CSS/gradient/radial-gradient)
 - [conic-gradient()](https://developer.mozilla.org/en-US/docs/Web/CSS/gradient/conic-gradient)
-- [repeating-*-gradient()](https://developer.mozilla.org/en-US/docs/Web/CSS/gradient)
+- [repeating-\*-gradient()](https://developer.mozilla.org/en-US/docs/Web/CSS/gradient)
 
 **Test Resources:**
+
 - Real gradient examples from popular design systems
 - CSS gradient generators (cssgradient.io, etc.)
 - Browser developer tools gradient picker outputs

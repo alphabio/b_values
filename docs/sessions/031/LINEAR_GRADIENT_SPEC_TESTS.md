@@ -11,11 +11,11 @@
 ### Linear Gradient Syntax
 
 ```
-<linear-gradient()> = 
-  linear-gradient( [ <linear-gradient-syntax> ] )  
+<linear-gradient()> =
+  linear-gradient( [ <linear-gradient-syntax> ] )
 
-<linear-gradient-syntax> = 
-  [ [ <angle> | <zero> | to <side-or-corner> ] || <color-interpolation-method> ]? , <color-stop-list>  
+<linear-gradient-syntax> =
+  [ [ <angle> | <zero> | to <side-or-corner> ] || <color-interpolation-method> ]? , <color-stop-list>
 ```
 
 ### Key Components to Test
@@ -44,6 +44,7 @@
 Location: `packages/b_types/src/gradient/linear.ts`
 
 **Expected fields:**
+
 ```typescript
 {
   kind: "linear"
@@ -55,6 +56,7 @@ Location: `packages/b_types/src/gradient/linear.ts`
 ```
 
 **Questions to answer:**
+
 1. ✅ Does `GradientDirection` support all direction types?
    - angle values
    - `to <side-or-corner>` keywords
@@ -72,6 +74,7 @@ Location: `packages/b_types/src/gradient/linear.ts`
 ### Test Structure
 
 For each combination, generate CSS and verify:
+
 1. Valid syntax
 2. Matches expected pattern
 3. Can be parsed back
@@ -96,7 +99,7 @@ For each combination, generate CSS and verify:
 { direction: { kind: "to-side", value: "top" }, ... }
 // → "linear-gradient(to top, red, blue)"
 
-// Corner keywords (4 tests)  
+// Corner keywords (4 tests)
 { direction: { kind: "to-corner", value: "top left" }, ... }
 // → "linear-gradient(to top left, red, blue)"
 ```
@@ -134,29 +137,29 @@ For each combination, generate CSS and verify:
 
 ```typescript
 // Basic: 2 stops, no positions
-{ 
+{
   colorStops: [
     { color: { kind: "named", value: "red" } },
     { color: { kind: "named", value: "blue" } }
-  ] 
+  ]
 }
 // → "linear-gradient(red, blue)"
 
 // With single position
-{ 
+{
   colorStops: [
     { color: { kind: "named", value: "red" }, position: { kind: "literal", value: 0, unit: "%" } },
     { color: { kind: "named", value: "blue" }, position: { kind: "literal", value: 100, unit: "%" } }
-  ] 
+  ]
 }
 // → "linear-gradient(red 0%, blue 100%)"
 
 // With double position (color band)
-{ 
+{
   colorStops: [
     { color: { kind: "named", value: "red" }, position: { kind: "list", values: [20%, 40%] } },
     { color: { kind: "named", value: "blue" } }
-  ] 
+  ]
 }
 // → "linear-gradient(red 20% 40%, blue)"
 
@@ -179,7 +182,7 @@ For each combination, generate CSS and verify:
 
 ```typescript
 // Direction + interpolation
-{ 
+{
   direction: { kind: "angle", value: 45deg },
   colorInterpolationMethod: { colorSpace: "oklab" },
   colorStops: [...]
@@ -213,7 +216,7 @@ For each combination, generate CSS and verify:
 { colorStops: [red, orange, yellow, ..., blue] } // 100 stops
 
 // var() in all positions
-{ 
+{
   direction: { kind: "angle", value: { kind: "variable", name: "--angle" } },
   colorStops: [
     { color: { kind: "variable", name: "--color-1" } },
@@ -370,6 +373,7 @@ describe("Linear Gradient Parser - Spec Compliance", () => {
 ### Step 5: Document Findings (30 min)
 
 Create an ADR or report documenting:
+
 - ✅ What works perfectly
 - ⚠️ What has issues
 - ❌ What's missing from the model
@@ -412,6 +416,7 @@ pnpm test --coverage packages/b_generators/src/gradient/
 ## 📝 Next: Radial & Conic
 
 Once linear is complete, repeat this process for:
+
 - `radial-gradient()` - similar approach with shape/size/position variants
 - `conic-gradient()` - similar approach with from-angle/position variants
 

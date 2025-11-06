@@ -13,13 +13,15 @@
 **File:** `gradient-direction.ts`
 
 **Spec Requirements:**
+
 ```
-<side-or-corner> = 
+<side-or-corner> =
   [ left | right ]  ||
   [ top | bottom ]
 ```
 
 **Current Implementation:**
+
 ```typescript
 gradientSideSchema = "top" | "right" | "bottom" | "left"  ✅
 gradientCornerSchema = "top left" | "top right" | "bottom left" | "bottom right"  ✅
@@ -34,22 +36,24 @@ gradientCornerSchema = "top left" | "top right" | "bottom left" | "bottom right"
 **File:** `color-interpolation.ts`
 
 **Spec Requirements:**
+
 ```
-<rectangular-color-space> = 
-  srgb | srgb-linear | display-p3 | display-p3-linear | 
+<rectangular-color-space> =
+  srgb | srgb-linear | display-p3 | display-p3-linear |
   a98-rgb | prophoto-rgb | rec2020 | lab | oklab | <xyz-space>
 
-<polar-color-space> = 
+<polar-color-space> =
   hsl | hwb | lch | oklch
 
-<xyz-space> = 
+<xyz-space> =
   xyz | xyz-d50 | xyz-d65
 
-<hue-interpolation-method> = 
+<hue-interpolation-method> =
   [ shorter | longer | increasing | decreasing ] hue
 ```
 
 **Current Implementation:**
+
 ```typescript
 rectangularColorSpaceSchema:
   ✅ "srgb"
@@ -95,8 +99,8 @@ radialShapeSchema = "circle" | "ellipse"  ✅
 **File:** `radial-size.ts`
 
 ```typescript
-radialSizeKeywordSchema = 
-  "closest-side" | "closest-corner" | 
+radialSizeKeywordSchema =
+  "closest-side" | "closest-corner" |
   "farthest-side" | "farthest-corner"  ✅
 ```
 
@@ -111,12 +115,14 @@ radialSizeKeywordSchema =
 **File:** `angle.ts`
 
 **Spec Requirements:**
+
 ```
 <angle> = <number><angle-unit>
 <angle-unit> = deg | grad | rad | turn
 ```
 
 **Current Implementation:**
+
 ```typescript
 angleUnitSchema = "deg" | "grad" | "rad" | "turn"  ✅
 ANGLE_UNITS = ["deg", "grad", "rad", "turn"]  ✅
@@ -133,6 +139,7 @@ ANGLE_UNITS = ["deg", "grad", "rad", "turn"]  ✅
 Lengths are used in gradient positions and sizes.
 
 **Current Implementation:**
+
 ```typescript
 ABSOLUTE_LENGTH_UNITS = ["cm", "mm", "Q", "in", "pc", "pt", "px"]  ✅
 FONT_LENGTH_UNITS = ["em", "rem", "ex", "rex", "cap", "rcap", "ch", "rch", "ic", "ric", "lh", "rlh"]  ✅
@@ -162,16 +169,18 @@ percentageUnitSchema = z.literal("%")  ✅
 **File:** `color-interpolation-method.ts`
 
 **Spec Requirements:**
+
 ```
-<color-interpolation-method> = 
-  in [ <rectangular-color-space> | 
-       <polar-color-space> <hue-interpolation-method>? | 
+<color-interpolation-method> =
+  in [ <rectangular-color-space> |
+       <polar-color-space> <hue-interpolation-method>? |
        <custom-color-space> ]
 ```
 
 **Current Implementation:**
+
 ```typescript
-colorInterpolationMethodSchema = 
+colorInterpolationMethodSchema =
   | { colorSpace: RectangularColorSpace }  ✅
   | { colorSpace: PolarColorSpace, hueInterpolationMethod?: HueInterpolationMethod }  ✅
 ```
@@ -187,13 +196,15 @@ colorInterpolationMethodSchema =
 **File:** `gradient/direction.ts`
 
 **Spec Requirements:**
+
 ```
 <angle> | <zero> | to <side-or-corner>
 ```
 
 **Current Implementation:**
+
 ```typescript
-gradientDirectionSchema = 
+gradientDirectionSchema =
   | { kind: "angle", value: CssValue }  ✅ (supports angle, var, calc)
   | { kind: "to-side", value: GradientSide }  ✅
   | { kind: "to-corner", value: GradientCorner }  ✅
@@ -210,12 +221,14 @@ gradientDirectionSchema =
 **File:** `color-stop.ts`
 
 **Spec Requirements:**
+
 ```
 <color-stop> = <color> <color-stop-length>?
 <color-stop-length> = <length-percentage>{1,2}
 ```
 
 **Current Implementation:**
+
 ```typescript
 colorStopSchema = {
   color: Color,
@@ -228,6 +241,7 @@ colorStopListSchema = ColorStop[].min(2)  ✅
 **Status:** ✅ **COMPLETE**
 
 **Coverage:**
+
 - ✅ No position (optional)
 - ✅ Single position (CssValue)
 - ✅ Double position (tuple) - color bands
@@ -240,14 +254,16 @@ colorStopListSchema = ColorStop[].min(2)  ✅
 **File:** `gradient/linear.ts`
 
 **Spec Requirements:**
+
 ```
-<linear-gradient-syntax> = 
-  [ [ <angle> | <zero> | to <side-or-corner> ] || 
-    <color-interpolation-method> ]? , 
+<linear-gradient-syntax> =
+  [ [ <angle> | <zero> | to <side-or-corner> ] ||
+    <color-interpolation-method> ]? ,
   <color-stop-list>
 ```
 
 **Current Implementation:**
+
 ```typescript
 linearGradientSchema = {
   kind: "linear",
@@ -267,6 +283,7 @@ linearGradientSchema = {
 **File:** `gradient/radial.ts`
 
 **Current Implementation:**
+
 ```typescript
 radialGradientSchema = {
   kind: "radial",
@@ -288,6 +305,7 @@ radialGradientSchema = {
 **File:** `gradient/conic.ts`
 
 **Current Implementation:**
+
 ```typescript
 conicGradientSchema = {
   kind: "conic",
@@ -306,17 +324,20 @@ conicGradientSchema = {
 ## 📊 Summary: Foundation Status
 
 ### Keywords Layer
+
 ✅ Gradient directions (sides, corners)
 ✅ Color interpolation spaces (rectangular, polar, xyz)
 ✅ Hue interpolation methods
 ✅ Radial shapes and sizes
 
 ### Units Layer
+
 ✅ Angle units (deg, grad, rad, turn)
 ✅ Length units (absolute, font-relative, viewport)
 ✅ Percentage unit
 
 ### Types Layer
+
 ✅ ColorInterpolationMethod
 ✅ GradientDirection (with CssValue for var/calc)
 ✅ ColorStop (0, 1, 2 positions)
@@ -372,6 +393,7 @@ All keywords, units, and types match the CSS spec. We can now confidently:
 ### Optional Enhancements
 
 If visual editor needs more precision, consider:
+
 - **Color hints** - for explicit transition midpoints
 - **Custom color spaces** - for advanced users
 

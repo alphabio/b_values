@@ -111,9 +111,9 @@ export function validate(css: string): StylesheetValidation {
   const ast = csstree.parse(css, {
     context: "declarationList",
     positions: true,
-    parseAtrulePrelude: true,
-    parseRulePrelude: true,
-    parseCustomProperty: true,
+    parseAtrulePrelude: false,
+    parseRulePrelude: false,
+    parseCustomProperty: false,
     onParseError(err: csstree.SyntaxParseError) {
       // biome-ignore lint/correctness/noUnusedVariables: remove stack from err
       const { stack, ...rest } = err;

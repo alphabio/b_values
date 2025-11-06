@@ -2465,7 +2465,7 @@ import type * as csstree from "css-tree";
 import * as cssTree from "css-tree";
 import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
 import type * as Type from "@b/types";
-import { parseCssValueNode } from "@b/utils";
+import { parseCssValueNodeEnhanced } from "../css-value-parser-enhanced";
 import { parseRgbFunction } from "./rgb";
 import { parseHslFunction } from "./hsl";
 import { parseHwbFunction } from "./hwb";
@@ -2490,7 +2490,7 @@ export function parseNode(node: csstree.CssNode): ParseResult<Type.Color> {
 
     // Handle var() which can represent any color
     if (funcName === "var") {
-      const result = parseCssValueNode(node);
+      const result = parseCssValueNodeEnhanced(node);
       if (result.ok && result.value.kind === "variable") {
         return parseOk(result.value as Type.Color);
       }
@@ -2568,7 +2568,8 @@ export function parse(value: string): ParseResult<Type.Color> {
 import type * as csstree from "css-tree";
 import { createError, parseErr, parseOk, forwardParseErr, type ParseResult } from "@b/types";
 import type { HSLColor } from "@b/types";
-import { parseCssValueNode, getChildren, getValues } from "@b/utils";
+import { parseCssValueNodeEnhanced } from "../css-value-parser-enhanced";
+import { getChildren, getValues } from "@b/utils";
 
 /**
  * Parse hsl() or hsla() function
@@ -2585,13 +2586,13 @@ export function parseHslFunction(node: csstree.FunctionNode): ParseResult<HSLCol
     return parseErr(createError("invalid-syntax", `HSL function must have 3 or 4 values, got ${values.length}`));
   }
 
-  const hResult = parseCssValueNode(values[0]);
+  const hResult = parseCssValueNodeEnhanced(values[0]);
   if (!hResult.ok) return forwardParseErr<HSLColor>(hResult);
 
-  const sResult = parseCssValueNode(values[1]);
+  const sResult = parseCssValueNodeEnhanced(values[1]);
   if (!sResult.ok) return forwardParseErr<HSLColor>(sResult);
 
-  const lResult = parseCssValueNode(values[2]);
+  const lResult = parseCssValueNodeEnhanced(values[2]);
   if (!lResult.ok) return forwardParseErr<HSLColor>(lResult);
 
   const hsl: HSLColor = {
@@ -2602,7 +2603,7 @@ export function parseHslFunction(node: csstree.FunctionNode): ParseResult<HSLCol
   };
 
   if (values.length === 4) {
-    const alphaResult = parseCssValueNode(values[3]);
+    const alphaResult = parseCssValueNodeEnhanced(values[3]);
     if (!alphaResult.ok) return forwardParseErr<HSLColor>(alphaResult);
     hsl.alpha = alphaResult.value;
   }
@@ -2616,7 +2617,8 @@ export function parseHslFunction(node: csstree.FunctionNode): ParseResult<HSLCol
 import type * as csstree from "css-tree";
 import { createError, parseErr, parseOk, forwardParseErr, type ParseResult } from "@b/types";
 import type { HWBColor } from "@b/types";
-import { parseCssValueNode, getChildren, getValues } from "@b/utils";
+import { parseCssValueNodeEnhanced } from "../css-value-parser-enhanced";
+import { getChildren, getValues } from "@b/utils";
 
 /**
  * Parse hwb() function
@@ -2633,13 +2635,13 @@ export function parseHwbFunction(node: csstree.FunctionNode): ParseResult<HWBCol
     return parseErr(createError("invalid-syntax", `HWB function must have 3 or 4 values, got ${values.length}`));
   }
 
-  const hResult = parseCssValueNode(values[0]);
+  const hResult = parseCssValueNodeEnhanced(values[0]);
   if (!hResult.ok) return forwardParseErr<HWBColor>(hResult);
 
-  const wResult = parseCssValueNode(values[1]);
+  const wResult = parseCssValueNodeEnhanced(values[1]);
   if (!wResult.ok) return forwardParseErr<HWBColor>(wResult);
 
-  const bResult = parseCssValueNode(values[2]);
+  const bResult = parseCssValueNodeEnhanced(values[2]);
   if (!bResult.ok) return forwardParseErr<HWBColor>(bResult);
 
   const hwb: HWBColor = {
@@ -2650,7 +2652,7 @@ export function parseHwbFunction(node: csstree.FunctionNode): ParseResult<HWBCol
   };
 
   if (values.length === 4) {
-    const alphaResult = parseCssValueNode(values[3]);
+    const alphaResult = parseCssValueNodeEnhanced(values[3]);
     if (!alphaResult.ok) return forwardParseErr<HWBColor>(alphaResult);
     hwb.alpha = alphaResult.value;
   }
@@ -2677,7 +2679,8 @@ export * from "./oklch";
 import type * as csstree from "css-tree";
 import { createError, parseErr, parseOk, forwardParseErr, type ParseResult } from "@b/types";
 import type { LABColor } from "@b/types";
-import { parseCssValueNode, getChildren, getValues } from "@b/utils";
+import { parseCssValueNodeEnhanced } from "../css-value-parser-enhanced";
+import { getChildren, getValues } from "@b/utils";
 
 /**
  * Parse lab() function
@@ -2694,13 +2697,13 @@ export function parseLabFunction(node: csstree.FunctionNode): ParseResult<LABCol
     return parseErr(createError("invalid-syntax", `LAB function must have 3 or 4 values, got ${values.length}`));
   }
 
-  const lResult = parseCssValueNode(values[0]);
+  const lResult = parseCssValueNodeEnhanced(values[0]);
   if (!lResult.ok) return forwardParseErr<LABColor>(lResult);
 
-  const aResult = parseCssValueNode(values[1]);
+  const aResult = parseCssValueNodeEnhanced(values[1]);
   if (!aResult.ok) return forwardParseErr<LABColor>(aResult);
 
-  const bResult = parseCssValueNode(values[2]);
+  const bResult = parseCssValueNodeEnhanced(values[2]);
   if (!bResult.ok) return forwardParseErr<LABColor>(bResult);
 
   const lab: LABColor = {
@@ -2711,7 +2714,7 @@ export function parseLabFunction(node: csstree.FunctionNode): ParseResult<LABCol
   };
 
   if (values.length === 4) {
-    const alphaResult = parseCssValueNode(values[3]);
+    const alphaResult = parseCssValueNodeEnhanced(values[3]);
     if (!alphaResult.ok) return forwardParseErr<LABColor>(alphaResult);
     lab.alpha = alphaResult.value;
   }
@@ -2725,7 +2728,8 @@ export function parseLabFunction(node: csstree.FunctionNode): ParseResult<LABCol
 import type * as csstree from "css-tree";
 import { createError, parseErr, parseOk, forwardParseErr, type ParseResult } from "@b/types";
 import type { LCHColor } from "@b/types";
-import { parseCssValueNode, getChildren, getValues } from "@b/utils";
+import { parseCssValueNodeEnhanced } from "../css-value-parser-enhanced";
+import { getChildren, getValues } from "@b/utils";
 
 /**
  * Parse lch() function
@@ -2742,13 +2746,13 @@ export function parseLchFunction(node: csstree.FunctionNode): ParseResult<LCHCol
     return parseErr(createError("invalid-syntax", `LCH function must have 3 or 4 values, got ${values.length}`));
   }
 
-  const lResult = parseCssValueNode(values[0]);
+  const lResult = parseCssValueNodeEnhanced(values[0]);
   if (!lResult.ok) return forwardParseErr<LCHColor>(lResult);
 
-  const cResult = parseCssValueNode(values[1]);
+  const cResult = parseCssValueNodeEnhanced(values[1]);
   if (!cResult.ok) return forwardParseErr<LCHColor>(cResult);
 
-  const hResult = parseCssValueNode(values[2]);
+  const hResult = parseCssValueNodeEnhanced(values[2]);
   if (!hResult.ok) return forwardParseErr<LCHColor>(hResult);
 
   const lch: LCHColor = {
@@ -2759,7 +2763,7 @@ export function parseLchFunction(node: csstree.FunctionNode): ParseResult<LCHCol
   };
 
   if (values.length === 4) {
-    const alphaResult = parseCssValueNode(values[3]);
+    const alphaResult = parseCssValueNodeEnhanced(values[3]);
     if (!alphaResult.ok) return forwardParseErr<LCHColor>(alphaResult);
     lch.alpha = alphaResult.value;
   }
@@ -2773,7 +2777,8 @@ export function parseLchFunction(node: csstree.FunctionNode): ParseResult<LCHCol
 import type * as csstree from "css-tree";
 import { createError, parseErr, parseOk, forwardParseErr, type ParseResult } from "@b/types";
 import type { OKLabColor } from "@b/types";
-import { parseCssValueNode, getChildren, getValues } from "@b/utils";
+import { parseCssValueNodeEnhanced } from "../css-value-parser-enhanced";
+import { getChildren, getValues } from "@b/utils";
 
 /**
  * Parse oklab() function
@@ -2790,13 +2795,13 @@ export function parseOklabFunction(node: csstree.FunctionNode): ParseResult<OKLa
     return parseErr(createError("invalid-syntax", `OKLab function must have 3 or 4 values, got ${values.length}`));
   }
 
-  const lResult = parseCssValueNode(values[0]);
+  const lResult = parseCssValueNodeEnhanced(values[0]);
   if (!lResult.ok) return forwardParseErr<OKLabColor>(lResult);
 
-  const aResult = parseCssValueNode(values[1]);
+  const aResult = parseCssValueNodeEnhanced(values[1]);
   if (!aResult.ok) return forwardParseErr<OKLabColor>(aResult);
 
-  const bResult = parseCssValueNode(values[2]);
+  const bResult = parseCssValueNodeEnhanced(values[2]);
   if (!bResult.ok) return forwardParseErr<OKLabColor>(bResult);
 
   const oklab: OKLabColor = {
@@ -2807,7 +2812,7 @@ export function parseOklabFunction(node: csstree.FunctionNode): ParseResult<OKLa
   };
 
   if (values.length === 4) {
-    const alphaResult = parseCssValueNode(values[3]);
+    const alphaResult = parseCssValueNodeEnhanced(values[3]);
     if (!alphaResult.ok) return forwardParseErr<OKLabColor>(alphaResult);
     oklab.alpha = alphaResult.value;
   }
@@ -2821,7 +2826,8 @@ export function parseOklabFunction(node: csstree.FunctionNode): ParseResult<OKLa
 import type * as csstree from "css-tree";
 import { createError, parseErr, parseOk, forwardParseErr, type ParseResult } from "@b/types";
 import type { OKLCHColor } from "@b/types";
-import { parseCssValueNode, getChildren, getValues } from "@b/utils";
+import { parseCssValueNodeEnhanced } from "../css-value-parser-enhanced";
+import { getChildren, getValues } from "@b/utils";
 
 /**
  * Parse oklch() function
@@ -2838,13 +2844,13 @@ export function parseOklchFunction(node: csstree.FunctionNode): ParseResult<OKLC
     return parseErr(createError("invalid-syntax", `OKLCH function must have 3 or 4 values, got ${values.length}`));
   }
 
-  const lResult = parseCssValueNode(values[0]);
+  const lResult = parseCssValueNodeEnhanced(values[0]);
   if (!lResult.ok) return forwardParseErr<OKLCHColor>(lResult);
 
-  const cResult = parseCssValueNode(values[1]);
+  const cResult = parseCssValueNodeEnhanced(values[1]);
   if (!cResult.ok) return forwardParseErr<OKLCHColor>(cResult);
 
-  const hResult = parseCssValueNode(values[2]);
+  const hResult = parseCssValueNodeEnhanced(values[2]);
   if (!hResult.ok) return forwardParseErr<OKLCHColor>(hResult);
 
   const oklch: OKLCHColor = {
@@ -2855,7 +2861,7 @@ export function parseOklchFunction(node: csstree.FunctionNode): ParseResult<OKLC
   };
 
   if (values.length === 4) {
-    const alphaResult = parseCssValueNode(values[3]);
+    const alphaResult = parseCssValueNodeEnhanced(values[3]);
     if (!alphaResult.ok) return forwardParseErr<OKLCHColor>(alphaResult);
     oklch.alpha = alphaResult.value;
   }
@@ -2869,7 +2875,8 @@ export function parseOklchFunction(node: csstree.FunctionNode): ParseResult<OKLC
 import type * as csstree from "css-tree";
 import { createError, parseErr, parseOk, forwardParseErr, type ParseResult } from "@b/types";
 import type { RGBColor } from "@b/types";
-import { parseCssValueNode, getChildren, getValues } from "@b/utils";
+import { parseCssValueNodeEnhanced } from "../css-value-parser-enhanced";
+import { getChildren, getValues } from "@b/utils";
 
 /**
  * Parse rgb() or rgba() function from css-tree AST.
@@ -2887,13 +2894,13 @@ export function parseRgbFunction(node: csstree.FunctionNode): ParseResult<RGBCol
     return parseErr(createError("invalid-syntax", `RGB function must have 3 or 4 values, got ${values.length}`));
   }
 
-  const rResult = parseCssValueNode(values[0]);
+  const rResult = parseCssValueNodeEnhanced(values[0]);
   if (!rResult.ok) return forwardParseErr<RGBColor>(rResult);
 
-  const gResult = parseCssValueNode(values[1]);
+  const gResult = parseCssValueNodeEnhanced(values[1]);
   if (!gResult.ok) return forwardParseErr<RGBColor>(gResult);
 
-  const bResult = parseCssValueNode(values[2]);
+  const bResult = parseCssValueNodeEnhanced(values[2]);
   if (!bResult.ok) return forwardParseErr<RGBColor>(bResult);
 
   const rgb: RGBColor = {
@@ -2904,12 +2911,49 @@ export function parseRgbFunction(node: csstree.FunctionNode): ParseResult<RGBCol
   };
 
   if (values.length === 4) {
-    const alphaResult = parseCssValueNode(values[3]);
+    const alphaResult = parseCssValueNodeEnhanced(values[3]);
     if (!alphaResult.ok) return forwardParseErr<RGBColor>(alphaResult);
     rgb.alpha = alphaResult.value;
   }
 
   return parseOk(rgb);
+}
+
+
+=== File: packages/b_parsers/src/css-value-parser-enhanced.ts ===
+// b_path:: packages/b_parsers/src/css-value-parser-enhanced.ts
+import type * as csstree from "css-tree";
+import { forwardParseErr, type ParseResult, type CssValue } from "@b/types";
+import { parseCssValueNode } from "@b/utils";
+import { parseComplexFunction } from "./function-dispatcher";
+
+/**
+ * Enhanced CSS value parser that delegates complex functions to specialized parsers.
+ *
+ * This wrapper combines the basic parseCssValueNode from @b/utils with the
+ * complex function dispatcher from @b/parsers, solving the circular dependency issue.
+ *
+ * Use this function instead of parseCssValueNode when you want calc(), min(), max(),
+ * clamp(), rgb(), hsl(), etc. to be parsed into their semantic IR structures.
+ *
+ * @param node - CSS AST node to parse
+ * @returns ParseResult with CssValue (may include complex function IRs)
+ */
+export function parseCssValueNodeEnhanced(node: csstree.CssNode): ParseResult<CssValue> {
+  // For function nodes, try the complex function dispatcher first
+  if (node.type === "Function") {
+    const complexResult = parseComplexFunction(node);
+    if (complexResult) {
+      if (complexResult.ok) {
+        return complexResult;
+      }
+      // The complex parser encountered an error while parsing
+      return forwardParseErr<CssValue>(complexResult);
+    }
+  }
+
+  // Fall back to basic parser for primitives and unknown functions
+  return parseCssValueNode(node);
 }
 
 
@@ -2976,7 +3020,7 @@ export function parseComplexFunction(node: csstree.FunctionNode): ParseResult<Cs
 import type * as csstree from "css-tree";
 import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
 import type * as Type from "@b/types";
-import { parseCssValueNode } from "@b/utils";
+import { parseCssValueNodeEnhanced } from "../css-value-parser-enhanced";
 import * as Color from "../color";
 
 /**
@@ -3011,7 +3055,7 @@ export function fromNodes(nodes: csstree.CssNode[]): ParseResult<Type.ColorStop>
     const posNode = nodes[i];
     if (!posNode) continue;
 
-    const posResult = parseCssValueNode(posNode);
+    const posResult = parseCssValueNodeEnhanced(posNode);
     if (posResult.ok) {
       positions.push(posResult.value);
     } else {
@@ -3046,7 +3090,7 @@ export function fromNodes(nodes: csstree.CssNode[]): ParseResult<Type.ColorStop>
 import type * as csstree from "css-tree";
 import { createError, parseErr, parseOk, forwardParseErr, type ParseResult } from "@b/types";
 import type * as Type from "@b/types";
-import { parseCssValueNode } from "@b/utils";
+import { parseCssValueNodeEnhanced } from "../css-value-parser-enhanced";
 import { parsePosition2D } from "../position";
 import * as ColorStop from "./color-stop";
 import * as Utils from "../utils";
@@ -3082,8 +3126,8 @@ export function fromFunction(fn: csstree.FunctionNode): ParseResult<Type.ConicGr
     idx++;
     const angleNode = children[idx];
     if (angleNode) {
-      // Use parseCssValueNode to support var(), calc(), and literals
-      const angleResult = parseCssValueNode(angleNode);
+      // Use parseCssValueNodeEnhanced to support var(), calc(), and literals
+      const angleResult = parseCssValueNodeEnhanced(angleNode);
       if (angleResult.ok) {
         fromAngle = angleResult.value;
         idx++;
@@ -3200,7 +3244,7 @@ export * as Conic from "./conic";
 import type * as csstree from "css-tree";
 import { createError, parseErr, parseOk, forwardParseErr, type ParseResult } from "@b/types";
 import type * as Type from "@b/types";
-import { parseCssValueNode } from "@b/utils";
+import { parseCssValueNodeEnhanced } from "../css-value-parser-enhanced";
 import * as ColorStop from "./color-stop";
 import * as Utils from "../utils";
 
@@ -3219,7 +3263,7 @@ function parseDirection(
   }
 
   if (node.type === "Dimension" || node.type === "Number") {
-    const angleResult = parseCssValueNode(node);
+    const angleResult = parseCssValueNodeEnhanced(node);
     if (angleResult.ok) {
       return parseOk({
         direction: {
@@ -3647,6 +3691,7 @@ export * as Url from "./url";
 export * as Utils from "./utils";
 export * as Math from "./math";
 export * from "./function-dispatcher";
+export { parseCssValueNodeEnhanced } from "./css-value-parser-enhanced";
 
 
 === File: packages/b_parsers/src/length.ts ===
@@ -3749,7 +3794,7 @@ export function parseNumberNode(node: csstree.CssNode): ParseResult<number> {
 // b_path:: packages/b_parsers/src/math/calc.ts
 import type * as csstree from "css-tree";
 import { createError, parseErr, parseOk, type ParseResult, type CssValue } from "@b/types";
-import { parseCssValueNode } from "@b/utils";
+import { parseCssValueNodeEnhanced } from "../css-value-parser-enhanced";
 
 /**
  * Parses a calc() expression from AST nodes.
@@ -3781,7 +3826,7 @@ function parseCalcExpression(nodes: csstree.CssNode[]): ParseResult<CssValue> {
       }
     } else {
       // Recursively parse operands (can be literals, variables, nested calcs)
-      const operandResult = parseCssValueNode(node);
+      const operandResult = parseCssValueNodeEnhanced(node);
       if (operandResult.ok) {
         values.push(operandResult.value);
       } else {
@@ -3872,7 +3917,7 @@ export function parseCalcFunction(node: csstree.FunctionNode): ParseResult<{ kin
 // b_path:: packages/b_parsers/src/math/clamp.ts
 import type * as csstree from "css-tree";
 import { createError, parseErr, parseOk, type ParseResult, type CssValue } from "@b/types";
-import { parseCssValueNode } from "@b/utils";
+import { parseCssValueNodeEnhanced } from "../css-value-parser-enhanced";
 import { splitNodesByComma } from "../utils/ast";
 
 /**
@@ -3908,7 +3953,7 @@ export function parseClampFunction(
       continue;
     }
 
-    const result = parseCssValueNode(group[0]);
+    const result = parseCssValueNodeEnhanced(group[0]);
 
     if (result.ok) {
       args.push(result.value);
@@ -3957,7 +4002,7 @@ export * from "./clamp";
 // b_path:: packages/b_parsers/src/math/minmax.ts
 import type * as csstree from "css-tree";
 import { createError, parseErr, parseOk, type ParseResult, type CssValue } from "@b/types";
-import { parseCssValueNode } from "@b/utils";
+import { parseCssValueNodeEnhanced } from "../css-value-parser-enhanced";
 import { splitNodesByComma } from "../utils/ast";
 
 /**
@@ -3991,7 +4036,7 @@ export function parseMinmaxFunction(
 
     // Handle single-node arguments
     if (group.length === 1) {
-      const result = parseCssValueNode(group[0]);
+      const result = parseCssValueNodeEnhanced(group[0]);
 
       if (result.ok) {
         values.push(result.value);
@@ -4008,7 +4053,7 @@ export function parseMinmaxFunction(
       issues.push(createError("invalid-syntax", `Unexpected multiple nodes in ${funcName}() argument`));
 
       // Try parsing first node anyway
-      const result = parseCssValueNode(group[0]);
+      const result = parseCssValueNodeEnhanced(group[0]);
       if (result.value) {
         values.push(result.value);
       }
@@ -4038,7 +4083,7 @@ export function parseMinmaxFunction(
 import type * as csstree from "css-tree";
 import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
 import type * as Type from "@b/types";
-import { parseCssValueNode } from "@b/utils";
+import { parseCssValueNodeEnhanced } from "./css-value-parser-enhanced";
 
 /**
  * Parse 2D position from array of AST nodes.
@@ -4064,7 +4109,7 @@ export function parsePosition2D(
     return parseErr(createError("invalid-syntax", "Missing first position value"));
   }
 
-  const firstValue = parseCssValueNode(firstNode);
+  const firstValue = parseCssValueNodeEnhanced(firstNode);
   if (!firstValue.ok) {
     return parseErr(createError("invalid-value", "Invalid first position value"));
   }
@@ -4075,7 +4120,7 @@ export function parsePosition2D(
   if (idx < nodes.length) {
     const secondNode = nodes[idx];
     if (secondNode && secondNode.type !== "Operator") {
-      const secondValue = parseCssValueNode(secondNode);
+      const secondValue = parseCssValueNodeEnhanced(secondNode);
       if (secondValue.ok) {
         positionValues.push(secondValue.value);
         idx++;
@@ -5902,12 +5947,12 @@ export const stringLiteralSchema = z
  * Represents a CSS hex color value
  * (e.g., #RRGGBB or #RGB)
  */
-// export const hexColorSchema = z
-//   .object({
-//     kind: z.literal("hex-color"),
-//     value: z.string().regex(/^#([0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/),
-//   })
-//   .strict();
+export const hexColorValueSchema = z
+  .object({
+    kind: z.literal("hex-color"),
+    value: z.string().regex(/^#([0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/),
+  })
+  .strict();
 
 // --- END NEW SCHEMAS ---
 
@@ -6065,7 +6110,7 @@ export const allCssValueSchema = [
   calcOperationSchema,
 
   // lchColorSchema,
-  // hexColorSchema,
+  hexColorValueSchema,
   rgbFunctionSchema,
   hslFunctionSchema,
 ];
@@ -6376,6 +6421,10 @@ export function cssValueToCss(value: CssValue): string {
 
     case "string": {
       return `"${value.value}"`;
+    }
+
+    case "hex-color": {
+      return value.value;
     }
   }
 }
@@ -6884,8 +6933,8 @@ export function parseCssValueNode(node: csstree.CssNode): ParseResult<CssValue> 
       }
 
       // 2. FALLBACK: Generic Function Call (for all other functions)
-      // NOTE: Complex functions (calc, rgb, etc.) are handled by specialized
-      // parsers in @b/parsers which use parseComplexFunction dispatcher.
+      // NOTE: Complex functions (calc, rgb, etc.) should be handled by calling
+      // parseCssValueNodeEnhanced from @b/parsers instead of this function directly.
       // This fallback handles unknown functions generically.
       const args: CssValue[] = [];
       const argumentNodes = children.filter((n) => n.type !== "WhiteSpace" && n.type !== "Operator");
@@ -7068,6 +7117,36 @@ export interface Declaration {
   node: csstree.CssNode;
 }
 
+/**
+ * Checks if a CSS value contains dynamic functions (var, calc, etc.)
+ * that csstree cannot validate.
+ *
+ * @param value - The CSS value AST node to check
+ * @returns true if the value contains var(), calc(), or other dynamic functions
+ */
+function containsDynamicValue(value: csstree.Value | csstree.Raw): boolean {
+  let hasDynamic = false;
+
+  csstree.walk(value, (node) => {
+    if (node.type === "Function") {
+      const funcName = node.name.toLowerCase();
+      // Dynamic functions that csstree cannot validate
+      if (
+        funcName === "var" ||
+        funcName === "calc" ||
+        funcName === "min" ||
+        funcName === "max" ||
+        funcName === "clamp" ||
+        funcName === "attr"
+      ) {
+        hasDynamic = true;
+      }
+    }
+  });
+
+  return hasDynamic;
+}
+
 export interface ErrorFormatOptions {
   maxLineWidth: number;
   contextWindowSize?: number;
@@ -7103,9 +7182,9 @@ export function validate(css: string): StylesheetValidation {
   const ast = csstree.parse(css, {
     context: "declarationList",
     positions: true,
-    parseAtrulePrelude: true,
-    parseRulePrelude: true,
-    parseCustomProperty: true,
+    parseAtrulePrelude: false,
+    parseRulePrelude: false,
+    parseCustomProperty: false,
     onParseError(err: csstree.SyntaxParseError) {
       // biome-ignore lint/correctness/noUnusedVariables: remove stack from err
       const { stack, ...rest } = err;
@@ -7157,6 +7236,12 @@ export function validate(css: string): StylesheetValidation {
     }
 
     for (const decl of declarations) {
+      // Skip validation for declarations with dynamic values (var, calc, etc.)
+      // csstree cannot validate these and will throw errors
+      if (containsDynamicValue(decl.value)) {
+        continue;
+      }
+
       const match = syntax.matchProperty(decl.property, decl.value);
       const error = match.error as csstree.SyntaxMatchError;
 
