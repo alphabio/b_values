@@ -100,25 +100,13 @@ export function parseCssValueNode(node: csstree.CssNode): ParseResult<CssValue> 
           name: varName,
           ...(fallback && { fallback }),
         });
-
-        // 2. Handle all other functions as a Generic Function Call
-        //    (This unblocks recursive parsing for calc, min, rgb, etc.)
-        //    Note: Special functions like calc() should ideally be parsed by
-        //    a dedicated function *before* this point or delegated dynamically.
-        //    Since they recursively use parseCssValueNode, returning them as
-        //    functionCallSchema here might lose their semantic structure,
-        //    but it stops the fatal error.
       }
 
-      // When a complex function (calc, rgb) is an argument, the logic should be:
-      // Inside parseRgbFunction: Call to parseCssValueNode(calcNode)
-
-      // Since we cannot safely delegate to complex parsers here due to dependency issues,
-      // we must implement the generic function parsing now, and rely on the consuming
-      // code (like argument validation in RGB, HSL) to handle semantic checks.
-
+      // 2. FALLBACK: Generic Function Call (for all other functions)
+      // NOTE: Complex functions (calc, rgb, etc.) are handled by specialized
+      // parsers in @b/parsers which use parseComplexFunction dispatcher.
+      // This fallback handles unknown functions generically.
       const args: CssValue[] = [];
-      // Filter out commas and whitespace from arguments
       const argumentNodes = children.filter((n) => n.type !== "WhiteSpace" && n.type !== "Operator");
 
       for (const child of argumentNodes) {
