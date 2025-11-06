@@ -1,7 +1,7 @@
 // b_path:: packages/b_parsers/src/math/clamp.ts
 import type * as csstree from "css-tree";
 import { createError, parseErr, parseOk, type ParseResult, type CssValue } from "@b/types";
-import { parseCssValueNode } from "@b/utils";
+import { parseCssValueNodeEnhanced } from "../css-value-parser-enhanced";
 import { splitNodesByComma } from "../utils/ast";
 
 /**
@@ -37,7 +37,7 @@ export function parseClampFunction(
       continue;
     }
 
-    const result = parseCssValueNode(group[0]);
+    const result = parseCssValueNodeEnhanced(group[0]);
 
     if (result.ok) {
       args.push(result.value);

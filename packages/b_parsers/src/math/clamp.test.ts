@@ -34,11 +34,7 @@ describe("parseClampFunction", () => {
     expect(result.ok).toBe(true);
     if (!result.ok) return;
 
-    // parseCssValueNode returns calc as generic function
-    expect(result.value.preferred.kind).toBe("function");
-    if (result.value.preferred.kind === "function") {
-      expect(result.value.preferred.name).toBe("calc");
-    }
+    expect(result.value.preferred.kind).toBe("calc");
   });
 
   it("parses clamp() with nested min/max as generic functions", () => {
@@ -49,8 +45,8 @@ describe("parseClampFunction", () => {
     if (!result.ok) return;
 
     // Both are generic functions since no dispatcher in parseCssValueNode
-    expect(result.value.min.kind).toBe("function");
-    expect(result.value.max.kind).toBe("function");
+    expect(result.value.min.kind).toBe("min");
+    expect(result.value.max.kind).toBe("max");
   });
 
   it("fails with two arguments", () => {

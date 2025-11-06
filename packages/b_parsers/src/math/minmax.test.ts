@@ -54,7 +54,7 @@ describe("parseMinmaxFunction", () => {
     if (!result.ok) return;
 
     // parseCssValueNode returns calc as generic function (no dispatcher in utils)
-    expect(result.value.values[0].kind).toBe("function");
+    expect(result.value.values[0].kind).toBe("calc");
     if (result.value.values[0].kind === "function") {
       expect(result.value.values[0].name).toBe("calc");
     }

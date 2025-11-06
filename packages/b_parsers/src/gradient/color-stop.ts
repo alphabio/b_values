@@ -2,7 +2,7 @@
 import type * as csstree from "css-tree";
 import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
 import type * as Type from "@b/types";
-import { parseCssValueNode } from "@b/utils";
+import { parseCssValueNodeEnhanced } from "../css-value-parser-enhanced";
 import * as Color from "../color";
 
 /**
@@ -37,7 +37,7 @@ export function fromNodes(nodes: csstree.CssNode[]): ParseResult<Type.ColorStop>
     const posNode = nodes[i];
     if (!posNode) continue;
 
-    const posResult = parseCssValueNode(posNode);
+    const posResult = parseCssValueNodeEnhanced(posNode);
     if (posResult.ok) {
       positions.push(posResult.value);
     } else {

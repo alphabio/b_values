@@ -2,7 +2,8 @@
 import type * as csstree from "css-tree";
 import { createError, parseErr, parseOk, forwardParseErr, type ParseResult } from "@b/types";
 import type { HWBColor } from "@b/types";
-import { parseCssValueNode, getChildren, getValues } from "@b/utils";
+import { parseCssValueNodeEnhanced } from "../css-value-parser-enhanced";
+import { getChildren, getValues } from "@b/utils";
 
 /**
  * Parse hwb() function
@@ -19,13 +20,13 @@ export function parseHwbFunction(node: csstree.FunctionNode): ParseResult<HWBCol
     return parseErr(createError("invalid-syntax", `HWB function must have 3 or 4 values, got ${values.length}`));
   }
 
-  const hResult = parseCssValueNode(values[0]);
+  const hResult = parseCssValueNodeEnhanced(values[0]);
   if (!hResult.ok) return forwardParseErr<HWBColor>(hResult);
 
-  const wResult = parseCssValueNode(values[1]);
+  const wResult = parseCssValueNodeEnhanced(values[1]);
   if (!wResult.ok) return forwardParseErr<HWBColor>(wResult);
 
-  const bResult = parseCssValueNode(values[2]);
+  const bResult = parseCssValueNodeEnhanced(values[2]);
   if (!bResult.ok) return forwardParseErr<HWBColor>(bResult);
 
   const hwb: HWBColor = {
@@ -36,7 +37,7 @@ export function parseHwbFunction(node: csstree.FunctionNode): ParseResult<HWBCol
   };
 
   if (values.length === 4) {
-    const alphaResult = parseCssValueNode(values[3]);
+    const alphaResult = parseCssValueNodeEnhanced(values[3]);
     if (!alphaResult.ok) return forwardParseErr<HWBColor>(alphaResult);
     hwb.alpha = alphaResult.value;
   }

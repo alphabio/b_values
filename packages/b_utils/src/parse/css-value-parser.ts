@@ -103,8 +103,8 @@ export function parseCssValueNode(node: csstree.CssNode): ParseResult<CssValue> 
       }
 
       // 2. FALLBACK: Generic Function Call (for all other functions)
-      // NOTE: Complex functions (calc, rgb, etc.) are handled by specialized
-      // parsers in @b/parsers which use parseComplexFunction dispatcher.
+      // NOTE: Complex functions (calc, rgb, etc.) should be handled by calling
+      // parseCssValueNodeEnhanced from @b/parsers instead of this function directly.
       // This fallback handles unknown functions generically.
       const args: CssValue[] = [];
       const argumentNodes = children.filter((n) => n.type !== "WhiteSpace" && n.type !== "Operator");

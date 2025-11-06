@@ -2,7 +2,7 @@
 import type * as csstree from "css-tree";
 import { createError, parseErr, parseOk, forwardParseErr, type ParseResult } from "@b/types";
 import type * as Type from "@b/types";
-import { parseCssValueNode } from "@b/utils";
+import { parseCssValueNodeEnhanced } from "../css-value-parser-enhanced";
 import { parsePosition2D } from "../position";
 import * as ColorStop from "./color-stop";
 import * as Utils from "../utils";
@@ -38,8 +38,8 @@ export function fromFunction(fn: csstree.FunctionNode): ParseResult<Type.ConicGr
     idx++;
     const angleNode = children[idx];
     if (angleNode) {
-      // Use parseCssValueNode to support var(), calc(), and literals
-      const angleResult = parseCssValueNode(angleNode);
+      // Use parseCssValueNodeEnhanced to support var(), calc(), and literals
+      const angleResult = parseCssValueNodeEnhanced(angleNode);
       if (angleResult.ok) {
         fromAngle = angleResult.value;
         idx++;

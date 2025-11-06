@@ -1,7 +1,7 @@
 // b_path:: packages/b_parsers/src/math/calc.ts
 import type * as csstree from "css-tree";
 import { createError, parseErr, parseOk, type ParseResult, type CssValue } from "@b/types";
-import { parseCssValueNode } from "@b/utils";
+import { parseCssValueNodeEnhanced } from "../css-value-parser-enhanced";
 
 /**
  * Parses a calc() expression from AST nodes.
@@ -33,7 +33,7 @@ function parseCalcExpression(nodes: csstree.CssNode[]): ParseResult<CssValue> {
       }
     } else {
       // Recursively parse operands (can be literals, variables, nested calcs)
-      const operandResult = parseCssValueNode(node);
+      const operandResult = parseCssValueNodeEnhanced(node);
       if (operandResult.ok) {
         values.push(operandResult.value);
       } else {

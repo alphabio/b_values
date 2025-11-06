@@ -2,7 +2,7 @@
 import type * as csstree from "css-tree";
 import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
 import type * as Type from "@b/types";
-import { parseCssValueNode } from "@b/utils";
+import { parseCssValueNodeEnhanced } from "./css-value-parser-enhanced";
 
 /**
  * Parse 2D position from array of AST nodes.
@@ -28,7 +28,7 @@ export function parsePosition2D(
     return parseErr(createError("invalid-syntax", "Missing first position value"));
   }
 
-  const firstValue = parseCssValueNode(firstNode);
+  const firstValue = parseCssValueNodeEnhanced(firstNode);
   if (!firstValue.ok) {
     return parseErr(createError("invalid-value", "Invalid first position value"));
   }
@@ -39,7 +39,7 @@ export function parsePosition2D(
   if (idx < nodes.length) {
     const secondNode = nodes[idx];
     if (secondNode && secondNode.type !== "Operator") {
-      const secondValue = parseCssValueNode(secondNode);
+      const secondValue = parseCssValueNodeEnhanced(secondNode);
       if (secondValue.ok) {
         positionValues.push(secondValue.value);
         idx++;
