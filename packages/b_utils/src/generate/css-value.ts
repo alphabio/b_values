@@ -73,5 +73,24 @@ export function cssValueToCss(value: CssValue): string {
       result += ")";
       return result;
     }
+
+    case "function": {
+      const { name, args } = value;
+      const argsStr = args.map((arg) => cssValueToCss(arg)).join(", ");
+      return `${name}(${argsStr})`;
+    }
+
+    case "rgb":
+    case "rgba":
+    case "hsl":
+    case "hsla": {
+      const { components } = value;
+      const componentsStr = components.map((c) => cssValueToCss(c)).join(", ");
+      return `${value.kind}(${componentsStr})`;
+    }
+
+    case "string": {
+      return `"${value.value}"`;
+    }
   }
 }

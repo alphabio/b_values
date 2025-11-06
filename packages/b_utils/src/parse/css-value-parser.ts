@@ -136,10 +136,10 @@ export function parseCssValueNode(node: csstree.CssNode): ParseResult<CssValue> 
     }
 
     // Hash nodes (#RRGGBB) are typically handled by Color.parseNode, but if CssValue
-    // is called on a standalone hash, we need to recognize it.
+    // is called on a standalone hash, treat it as a keyword for now
     case "Hash": {
       const value = node.value.toLowerCase();
-      return parseOk({ kind: "hex", value: `#${value}` });
+      return parseOk({ kind: "keyword", value: `#${value}` });
     }
 
     default: {
