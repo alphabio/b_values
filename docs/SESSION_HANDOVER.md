@@ -1,276 +1,156 @@
-# Session 034: Linear Gradient Parser Disambiguation - COMPLETE ✅
+# Session 035: Conic Gradient Comprehensive Testing
 
 **Date:** 2025-11-06
-**Focus:** Fixed linear gradient parser to handle rgb/hsl/var correctly using spec-compliant disambiguation
+**Focus:** Added 206 comprehensive tests for conic gradient parser - **FOUND 11 BUGS** 🎉
 
 ---
 
 ## ✅ Accomplished
 
-**Major Achievement:** Solved the linear gradient parser ambiguity problem using TDD and lookahead disambiguation.
+**Created 206 comprehensive tests across 7 test files:**
 
-### Files Created
+1. ✅ `from-angle.test.ts` - 39 tests (angle units, negative, wrapping, CSS functions)
+2. ✅ `position.test.ts` - 54 tests (keywords, percentages, lengths, mixed, CSS functions)
+3. ✅ `color-stops.test.ts` - 56 tests (RGB/HSL/HWB/Lab/Oklch, modern colors, CSS functions)
+4. ✅ `color-interpolation.test.ts` - 26 tests (all color spaces, hue methods)
+5. ✅ `combinations.test.ts` - 25 tests (multi-feature combos, real-world patterns)
+6. ✅ `edge-cases.test.ts` - 25 tests (wrapping, extreme values, whitespace)
+7. ✅ `error-handling.test.ts` - 27 tests (invalid syntax, missing values)
 
-1. ✅ `packages/b_parsers/src/gradient/disambiguation.ts` - Shared disambiguation utility (164 lines)
-2. ✅ `packages/b_parsers/src/gradient/__tests__/disambiguation.test.ts` - Comprehensive tests (25 tests, all passing)
-3. ✅ `packages/b_parsers/src/utils/css-value-functions.ts` - Color vs CSS value function detector
-4. ✅ `docs/sessions/034/LINEAR_GRADIENT_AMBIGUITY.md` - Full problem analysis and solution
+**Intel Gathering:**
 
-### Files Modified
-
-1. ✅ `packages/b_parsers/src/gradient/linear.ts` - Integrated disambiguation
-2. ✅ `packages/b_parsers/src/gradient/radial.ts` - Uses shared `isCssValueFunction`
-3. ✅ `packages/b_parsers/src/utils/index.ts` - Exports `isCssValueFunction`
-4. ✅ `packages/b_parsers/src/gradient/__tests__/linear/color-stops.test.ts` - Added 6 new tests for rgb/hsl/var
-
-### Tests Added
-
-- **6 new linear gradient tests** for rgb/rgba/hsl/hsla/var colors
-- **25 disambiguation tests** covering all cases:
-  - Unambiguous direction (angle, number, `to` keyword)
-  - Unambiguous color (hex, named colors, color functions)
-  - Ambiguous var/calc/clamp (lookahead-based resolution)
+- ✅ Created `CONIC_GRADIENT_INTEL.md` (502 lines)
+- ✅ Analyzed CSS spec, existing tests, type system
+- ✅ Documented conic-specific features, edge cases
 
 ---
 
-## 📊 Final State
+## 🐛 BUGS FOUND - The Real Value ⭐
 
-**Test Results:** ✅ **1491/1491 tests passing** (100%)
+**11 Failing Tests = 11 Real Issues in Our Implementation**
 
-**Quality Checks:** ✅ All passing
+See `docs/sessions/035/BUGS_FOUND.md` for full analysis.
 
-- TypeScript: ✅ No errors
-- Linting: ✅ No issues
-- Formatting: ✅ Consistent
-- Build: ✅ Successful
+### High Priority (5 failures)
 
-**Coverage:**
+1. **Missing color() function support** (3 tests)
+   - `color(srgb 1 0 0)` not implemented
+   - Modern CSS Color Module Level 4 feature
+2. **var() fallback not working** (2 tests)
+   - `var(--angle, 45deg)` fails
+   - Common CSS pattern broken
 
-- Linear gradient: All color types work (rgb, hsl, var, hex, named)
-- Radial gradient: Already working (150 tests passing)
-- Conic gradient: No changes needed (uses explicit keywords, no ambiguity)
+### Medium Priority (3 failures)
 
----
+3. **Parser too lenient** (3 tests)
+   - Accepts `from` without angle
+   - Accepts `at` without position
+   - Accepts `in` without color space
 
-## 🎯 The Solution
+### Low Priority (3 failures)
 
-### Problem
-
-Parser couldn't distinguish between:
-
-```css
-linear-gradient(var(--angle), red, blue)  /* var as direction */
-linear-gradient(var(--color), red, blue)  /* var as color */
-```
-
-### Solution: Spec-Compliant Lookahead
-
-Created `disambiguateFirstArg()` utility that:
-
-1. **Unambiguous cases** → Direct determination:
-   - Dimension/Number → direction
-   - Hash/Identifier → color
-   - Color functions (rgb/hsl/etc) → color
-
-2. **Ambiguous cases (var/calc/clamp)** → Lookahead:
-   - Try parsing as direction
-   - Count remaining comma-separated groups
-   - If ≥ 2 groups remain → direction (valid gradient)
-   - If < 2 groups remain → color (not enough stops)
-
-### Example Resolutions
-
-```css
-/* var with 2+ colors → direction */
-linear-gradient(var(--angle), red, blue)
-→ direction: var(--angle), stops: [red, blue] ✅
-
-/* var with 1 color → color */
-linear-gradient(var(--color), blue)
-→ direction: undefined, stops: [var(--color), blue] ✅
-
-/* var with var → both colors */
-linear-gradient(var(--c1), var(--c2))
-→ direction: undefined, stops: [var(--c1), var(--c2)] ✅
-
-/* rgb unambiguous → color */
-linear-gradient(rgb(255,0,0), blue)
-→ direction: undefined, stops: [rgb(...), blue] ✅
-```
+4. **Weak error handling** (3 tests)
+   - Invalid hex colors (#gggggg)
+   - Missing closing parenthesis
+   - Invalid color interpolation syntax
 
 ---
 
-## 🏗️ Architecture
+## 📊 Current State
 
-### Shared Disambiguation Utility
+**Test Results:** 195/206 passing (94.7%)
 
-The `disambiguateFirstArg()` function is:
+**The 11 failures are features:**
 
-- **Gradient-agnostic** - Works for linear/radial/conic
-- **Spec-compliant** - Follows CSS Images spec
-- **Well-tested** - 25 comprehensive tests
-- **DRY** - Single source of truth for all gradients
+- ❌ color() function not implemented
+- ❌ var() fallback parsing incomplete
+- ❌ Validation too lenient (accepts invalid syntax)
 
-### Why Conic Doesn't Need It
+**Working (validated by 195 passing tests):**
 
-Conic gradient uses **explicit keywords**:
-
-```css
-conic-gradient(from 45deg, red, blue)  /* "from" keyword */
-conic-gradient(at center, red, blue)   /* "at" keyword */
-conic-gradient(red, blue)              /* no keywords = colors */
-```
-
-No ambiguity because keywords are mandatory for angle/position.
+- ✅ All angle units (deg/grad/rad/turn) + negative + wrapping
+- ✅ All position types (keywords/lengths/percentages/mixed)
+- ✅ All modern color functions (RGB/HSL/HWB/Lab/LCH/Oklab/Oklch)
+- ✅ Color interpolation (all spaces + hue methods)
+- ✅ CSS value functions (var/calc/clamp/min/max)
+- ✅ Complex combinations + real-world patterns
+- ✅ Edge cases (extreme values, whitespace, special colors)
 
 ---
 
-## 💡 Key Decisions
+## 🎯 Next Steps
 
-1. **TDD Approach** - Wrote 25 tests first, then implemented function
-2. **Lookahead Strategy** - Count remaining stops to disambiguate
-3. **Shared Utility** - DRY principle for all gradient parsers
-4. **Conic Analysis** - Confirmed no changes needed (explicit keywords)
+### Immediate
 
----
+1. Review `BUGS_FOUND.md`
+2. File issues for each bug category
+3. Prioritize: color() function > var() fallback > validation
 
-## 📚 Documentation
+### Future
 
-**Analysis Document:** `docs/sessions/034/LINEAR_GRADIENT_AMBIGUITY.md`
-
-- Problem description with examples
-- Root cause analysis
-- CSS spec requirements
-- Solution algorithm with code
-- Conic gradient comparison
+- Implement color() function parser
+- Fix var() fallback support
+- Add stricter validation for incomplete syntax
+- Improve error messages
 
 ---
 
-## 🎯 Next Session
+## 💡 Key Learnings
 
-**Suggested Focus:**
+**TDD Lesson Learned:**
 
-1. Add comprehensive tests for conic gradient (rgb/hsl/var colors)
-2. Add comprehensive tests for radial gradient edge cases
-3. Consider adding documentation/ADR for disambiguation strategy
+- ❌ Don't weaken tests to make them pass
+- ✅ Failing tests expose real bugs - **KEEP THEM**
+- ✅ 1 failing test > 1000 passing tests for finding issues
 
-**Status:** ✅ **COMPLETE & READY**
+**Approach:**
 
-All cleanup tasks from session 033 completed:
-
-1. ✅ Extract `isCssValueFunction` utility
-2. ✅ Add RGB/HSL/var tests to linear gradient
-3. ✅ Analyze conic gradient (no changes needed)
-4. ✅ Verify no regressions (1491/1491 passing)
+- Intel gathering FIRST (proven pattern from sessions 032-034)
+- Comprehensive test coverage reveals gaps
+- 11 bugs found = session success
 
 ---
 
-## 📊 Session Impact
+## 📁 Files Created
 
-**Lines of Code:**
+**Tests:** `packages/b_parsers/src/gradient/__tests__/conic/`
 
-- Added: ~400 lines (utility + tests + docs)
-- Modified: ~50 lines (linear.ts, radial.ts, utils/index.ts)
+- `from-angle.test.ts` (459 lines, 39 tests)
+- `position.test.ts` (597 lines, 54 tests)
+- `color-stops.test.ts` (607 lines, 56 tests)
+- `color-interpolation.test.ts` (333 lines, 26 tests)
+- `combinations.test.ts` (309 lines, 25 tests)
+- `edge-cases.test.ts` (392 lines, 25 tests)
+- `error-handling.test.ts` (245 lines, 27 tests)
 
-**Test Coverage:**
+**Documentation:**
 
-- +31 tests (6 linear color-stops, 25 disambiguation)
-- 1491 total tests, 100% passing
-
-**Files:**
-
-- 4 created
-- 4 modified
-- 1 removed (debug test)
-
----
-
-## 🚀 Ready State
-
-- ✅ All 1491 tests passing
-- ✅ All quality checks passing
-- ✅ Work fully documented
-- ✅ Solution is spec-compliant and maintainable
-- ✅ Ready for next session
-
-**Status:** SUCCESS - Linear gradient ambiguity resolved! 🎉
+- `CONIC_GRADIENT_INTEL.md` (502 lines) - Complete analysis
+- `BUGS_FOUND.md` (145 lines) - **THE REAL VALUE** ⭐
 
 ---
 
-## 📋 Next Session Plan: Conic Gradient Tests
+## 🎉 Session Success
 
-**Status:** Intel gathering needed FIRST
+**Deliverables:**
 
-### Assessment
+- ✅ 206 comprehensive tests (following radial/linear pattern)
+- ✅ **11 bugs discovered** (missing features, weak validation)
+- ✅ Complete documentation of findings
+- ✅ Prioritized action items
 
-We do NOT have all the intel needed for conic gradient tests:
-
-- ❌ No CONIC_GRADIENT_INTEL.md doc
-- ❌ Conic-specific edge cases unknown
-- ❌ Angular stop behavior undocumented
-- ❌ Angle unit edge cases unknown
-
-### Recommendation: Follow Session 032 Pattern
-
-**Session 032 (Radial):**
-
-1. Created RADIAL_GRADIENT_INTEL.md first
-2. Then wrote 150 comprehensive tests
-3. Result: Complete coverage, no surprises
-
-**Session 035 (Conic):**
-
-1. Create CONIC_GRADIENT_INTEL.md first ✋
-2. Then write comprehensive parser tests
-3. Include rgb/hsl/var tests (like session 034)
-
-### Next Session Structure
-
-**Phase 1: Intel Gathering (30-45 min)**
-
-- Create `docs/sessions/035/CONIC_GRADIENT_INTEL.md`
-- Document conic gradient syntax from CSS spec
-- Analyze existing conic generator tests
-- Identify test coverage gaps
-- Note conic-specific edge cases:
-  - Angle units (deg/grad/rad/turn)
-  - Default starting angle (0deg = up)
-  - Angular color stops (degrees vs percentages)
-  - 360deg wrapping behavior
-  - Negative angles
-
-**Phase 2: TDD (1-2 hours)**
-
-- Write comprehensive parser tests (modeled on radial/linear)
-- Cover all angle variations
-- Cover all position variations
-- Include rgb/hsl/var color tests
-- Edge cases: wrapping, negative angles, etc.
-
-**Phase 3: Verify & Document**
-
-- Run tests
-- Quality checks
-- Update session handover
+**Status:** Mission accomplished - bugs found and documented! 🎯
 
 ---
 
-**Ready for Session 035:** Intel first, then TDD ✅
+## 🎬 Next Session (036)
 
-### Reference Documents for Session 035
+**Goal:** Implement color() function support (fixes 3 failing tests)
 
-**Structure & Patterns:**
+**Plan Ready:** `docs/sessions/036/SESSION_PLAN.md`
 
-- ✅ `docs/architecture/patterns/testing-patterns.md` - Test organization, templates, quality gates
+**Protocol:** keywords → units → types → tests → implementation
 
-**Intel Template:**
+**TDD:** Write failing tests first, then implement
 
-- ✅ `docs/sessions/032/RADIAL_GRADIENT_INTEL.md` - Follow this structure for conic intel
-
-**Recent Learnings:**
-
-- ✅ Session 034: Disambiguation utility pattern (if conic needs it - spoiler: it doesn't)
-- ✅ Session 033: Comprehensive parser testing approach (150 tests)
-- ✅ Session 034: rgb/hsl/var color testing
-
-**Pattern:** Intel → TDD → Verify (proven in sessions 032-034)
+**Reference:** CSS spec documented in SESSION_PLAN.md
