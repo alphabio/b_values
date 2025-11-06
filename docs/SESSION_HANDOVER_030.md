@@ -167,17 +167,21 @@ Phase 2.5 is **complete and committed**. The parsers now fully support var() and
 - Gradient positions (conic/radial `at` position)
 - Color stop positions
 
-The architecture changes from previous session were already correct - this session only fixed:
+The architecture changes from previous session were already correct - this session fixed:
 
 1. A duplicate schema export issue
 2. A missing generator case
 3. Added a comprehensive test
+4. Validation false positives for dynamic values
+5. **Inconsistent color function schemas (commented out rgb/hsl)**
 
 **All systems green!** ✅ Tests: 993 | Typecheck: ✅ | Build: ✅ | Validation: No false positives!
 
 ---
 
-**Session ended:** 2025-11-06 ~09:40 UTC
-**Commits:** 
+**Session ended:** 2025-11-06 ~09:50 UTC
+**Commits:**
+
 - ad85568 "fix(types,utils): resolve duplicate hexColorSchema export"
 - 4afdffe "fix(utils): skip validation for dynamic CSS values"
+- 1592210 "refactor(types,utils): comment out inconsistent rgb/hsl function schemas"
