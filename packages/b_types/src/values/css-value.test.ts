@@ -9,6 +9,30 @@ import {
 } from "./css-value";
 
 describe("CssValue schemas", () => {
+  describe("calcFunction", () => {
+    it("should validate simple calc function with literal values", () => {
+      const value: CssValue = {
+        kind: "calc",
+        value: {
+          kind: "calc-operation",
+          operator: "+",
+          left: {
+            kind: "literal",
+            value: 100,
+            unit: "px",
+          },
+          right: {
+            kind: "literal",
+            value: 50,
+            unit: "px",
+          },
+        },
+      };
+      const result = cssValueSchema.safeParse(value);
+      expect(result.success).toBe(true);
+    });
+  });
+
   describe("LiteralValue", () => {
     it("should validate literal number without unit", () => {
       const value: CssValue = {

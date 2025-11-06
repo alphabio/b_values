@@ -1,11 +1,17 @@
 // b_path:: packages/b_utils/src/parse/css-value-parser.ts
 import type * as csstree from "css-tree";
-import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
+import { createError, forwardParseErr, parseErr, parseOk, type ParseResult } from "@b/types";
 import type { CssValue } from "@b/types";
 
 /**
  * Parse a CSS node into a CssValue.
  * Handles numbers, dimensions, percentages, keywords, and var() functions.
+ */
+
+/**
+ * Parse a CSS node into a CssValue.
+ * Handles numbers, dimensions, percentages, keywords, var(),
+ * string literals, and falls back to generic function calls for all others.
  */
 export function parseCssValueNode(node: csstree.CssNode): ParseResult<CssValue> {
   switch (node.type) {
@@ -33,66 +39,107 @@ export function parseCssValueNode(node: csstree.CssNode): ParseResult<CssValue> 
       return parseOk({ kind: "literal", value, unit: node.unit });
     }
 
+    // --- NEW: Handle String Literals ---
+    case "String": {
+      // css-tree provides the value including quotes, remove them
+      const value = node.value.slice(1, -1);
+      return parseOk({ kind: "string", value });
+    }
+    // --- END NEW ---
+
     case "Identifier": {
       return parseOk({ kind: "keyword", value: node.name });
     }
 
     case "Function": {
-      // We only handle var() for now.
-      if (node.name.toLowerCase() !== "var") {
-        return parseErr(createError("unsupported-kind", `Unsupported function: ${node.name}`));
-      }
-
+      const funcName = node.name.toLowerCase();
       const children = node.children.toArray();
-      const varNameNode = children[0];
 
-      // 1. Guard against an empty var() function like `var()`
-      if (!varNameNode) {
-        return parseErr(createError("invalid-syntax", "Invalid var() function: missing custom property name"));
-      }
+      // 1. Handle var() (Needs special inline parsing due to fallback)
+      if (funcName === "var") {
+        const varNameNode = children.find((n) => n.type !== "WhiteSpace");
 
-      // 2. Check if the varNameNode is an Identifier with a name starting with '--'
-      if (varNameNode.type !== "Identifier" || !varNameNode.name.startsWith("--")) {
-        return parseErr(
-          createError(
-            "invalid-syntax",
-            `Invalid var() function: expected a custom property name (--*), got ${varNameNode.type}`,
-          ),
-        );
-      }
+        if (!varNameNode) {
+          return parseErr(createError("invalid-syntax", "Invalid var() function: missing custom property name"));
+        }
 
-      // Now TypeScript knows it's an Identifier, so you can safely access its properties.
-      const varName = varNameNode.name;
-
-      let fallback: CssValue | undefined;
-
-      // The fallback consists of a comma and then the value node.
-      // children[0] is the name, children[1] is the comma.
-      if (children.length > 1) {
-        if (children[1].type !== "Operator" || children[1].value !== ",") {
+        if (varNameNode.type !== "Identifier" || !varNameNode.name.startsWith("--")) {
           return parseErr(
-            createError("invalid-syntax", "Invalid var() function: expected a comma before the fallback value"),
+            createError(
+              "invalid-syntax",
+              `Invalid var() function: expected a custom property name (--*), got ${varNameNode.type}`,
+            ),
           );
         }
 
-        const fallbackNode = children[2];
-        if (!fallbackNode) {
-          return parseErr(createError("invalid-syntax", "Invalid var() function: missing fallback value after comma"));
+        const varName = varNameNode.name;
+        let fallback: CssValue | undefined;
+        const commaIndex = children.findIndex((n) => n.type === "Operator" && n.value === ",");
+
+        // Handle fallback logic
+        if (commaIndex !== -1) {
+          const fallbackNodes = children.slice(commaIndex + 1).filter((n) => n.type !== "WhiteSpace");
+
+          if (fallbackNodes.length === 0) {
+            return parseErr(
+              createError("invalid-syntax", "Invalid var() function: missing fallback value after comma"),
+            );
+          }
+
+          // RECURSION: Parse the content of the fallback argument
+          // In complex scenarios, the fallback might be a list,
+          // but we take the first node for simple fallbacks.
+          const fallbackResult = parseCssValueNode(fallbackNodes[0]);
+          if (!fallbackResult.ok) {
+            return fallbackResult;
+          }
+          fallback = fallbackResult.value;
         }
 
-        // RECURSION: Parse the fallback node.
-        const fallbackResult = parseCssValueNode(fallbackNode);
-        if (!fallbackResult.ok) {
-          return fallbackResult; // Propagate the parsing error from the fallback.
-        }
-        fallback = fallbackResult.value;
+        return parseOk({
+          kind: "variable",
+          name: varName,
+          ...(fallback && { fallback }),
+        });
+
+        // 2. Handle all other functions as a Generic Function Call
+        //    (This unblocks recursive parsing for calc, min, rgb, etc.)
+        //    Note: Special functions like calc() should ideally be parsed by
+        //    a dedicated function *before* this point or delegated dynamically.
+        //    Since they recursively use parseCssValueNode, returning them as
+        //    functionCallSchema here might lose their semantic structure,
+        //    but it stops the fatal error.
       }
 
-      return parseOk({
-        kind: "variable",
-        name: varName,
-        ...(fallback && { fallback }),
-      });
+      // When a complex function (calc, rgb) is an argument, the logic should be:
+      // Inside parseRgbFunction: Call to parseCssValueNode(calcNode)
+
+      // Since we cannot safely delegate to complex parsers here due to dependency issues,
+      // we must implement the generic function parsing now, and rely on the consuming
+      // code (like argument validation in RGB, HSL) to handle semantic checks.
+
+      const args: CssValue[] = [];
+      // Filter out commas and whitespace from arguments
+      const argumentNodes = children.filter((n) => n.type !== "WhiteSpace" && n.type !== "Operator");
+
+      for (const child of argumentNodes) {
+        // RECURSION: This handles the nested primitives or other functions inside
+        const argResult = parseCssValueNode(child);
+        if (argResult.ok) {
+          args.push(argResult.value);
+        } else {
+          return forwardParseErr<CssValue>(argResult);
+        }
+      }
+
+      return parseOk({ kind: "function", name: node.name, args: args });
+    }
+
+    // Hash nodes (#RRGGBB) are typically handled by Color.parseNode, but if CssValue
+    // is called on a standalone hash, we need to recognize it.
+    case "Hash": {
+      const value = node.value.toLowerCase();
+      return parseOk({ kind: "hex", value: `#${value}` });
     }
 
     default: {

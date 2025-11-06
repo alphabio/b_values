@@ -14,6 +14,13 @@ export const literalValueSchema = z
   })
   .strict();
 
+export const keywordValueSchema = z
+  .object({
+    kind: z.literal("keyword"),
+    value: z.string(),
+  })
+  .strict();
+
 /**
  * Represents a CSS custom property reference (var() function)
  * @see https://drafts.csswg.org/css-variables/#using-variables
@@ -30,16 +37,31 @@ export const variableReferenceSchema: z.ZodType<{
   })
   .strict();
 
+// --- NEW SCHEMAS ---
+
 /**
- * Represents a CSS keyword value
- * @see https://drafts.csswg.org/css-values-4/#keywords
+ * Represents a CSS string literal (e.g., "Hello World")
+ * @see https://drafts.csswg.org/css-values-4/#strings
  */
-export const keywordValueSchema = z
+export const stringLiteralSchema = z
   .object({
-    kind: z.literal("keyword"),
+    kind: z.literal("string"),
     value: z.string(),
   })
   .strict();
+
+/**
+ * Represents a CSS hex color value
+ * (e.g., #RRGGBB or #RGB)
+ */
+// export const hexColorSchema = z
+//   .object({
+//     kind: z.literal("hex-color"),
+//     value: z.string().regex(/^#([0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/),
+//   })
+//   .strict();
+
+// --- END NEW SCHEMAS ---
 
 export const listValueSchema: z.ZodType<{
   kind: "list";
@@ -131,6 +153,44 @@ export const attrFunctionSchema: z.ZodType<{
   .strict();
 
 /**
+ * Represents an RGB/HSL color function
+ */
+export const rgbFunctionSchema: z.ZodType<{
+  kind: "rgb" | "rgba";
+  components: CssValue[];
+}> = z
+  .object({
+    kind: z.union([z.literal("rgb"), z.literal("rgba")]),
+    components: z.array(z.lazy((): z.ZodType<CssValue> => cssValueSchema)),
+  })
+  .strict();
+
+export const hslFunctionSchema: z.ZodType<{
+  kind: "hsl" | "hsla";
+  components: CssValue[];
+}> = z
+  .object({
+    kind: z.union([z.literal("hsl"), z.literal("hsla")]),
+    components: z.array(z.lazy((): z.ZodType<CssValue> => cssValueSchema)),
+  })
+  .strict();
+
+/**
+ * Represents a generic CSS function call (e.g., linear-gradient(...))
+ */
+export const functionCallSchema: z.ZodType<{
+  kind: "function";
+  name: string;
+  args: CssValue[];
+}> = z
+  .object({
+    kind: z.literal("function"),
+    name: z.string(),
+    args: z.array(z.lazy((): z.ZodType<CssValue> => cssValueSchema)),
+  })
+  .strict();
+
+/**
  * Union of all possible CSS value representations
  * This is the foundation for representing authored CSS values
  * that may contain symbolic references (var()), keywords, or literals
@@ -138,24 +198,28 @@ export const attrFunctionSchema: z.ZodType<{
 // export const cssValueSchema = z.union([literalValueSchema, variableReferenceSchema, keywordValueSchema]);
 
 export const allCssValueSchema = [
-  // Primitives
-  literalValueSchema,
-  variableReferenceSchema,
-  keywordValueSchema,
-
-  // Functions
-  calcFunctionSchema,
-  calcOperationSchema, // Operations inside calc() expressions
-  minmaxFunctionSchema,
-  clampFunctionSchema,
-  urlFunctionSchema,
-  attrFunctionSchema,
-
-  // lchColorSchema,
-  // rgbColorSchema, etc.
-
   // Structural
   listValueSchema,
+
+  // Primitives
+  literalValueSchema,
+  keywordValueSchema,
+  stringLiteralSchema,
+  variableReferenceSchema,
+
+  // Functions
+  urlFunctionSchema,
+  functionCallSchema,
+  calcFunctionSchema,
+  attrFunctionSchema,
+  clampFunctionSchema,
+  minmaxFunctionSchema,
+  calcOperationSchema,
+
+  // lchColorSchema,
+  // hexColorSchema,
+  rgbFunctionSchema,
+  hslFunctionSchema,
 ];
 
 const allCssValues = allCssValueSchema.flatMap(getLiteralValues);

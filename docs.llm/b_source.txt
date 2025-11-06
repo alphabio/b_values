@@ -1,3 +1,4 @@
+=== File: packages/b_declarations/src/core/index.ts ===
 // b_path:: packages/b_declarations/src/core/index.ts
 export * from "./registry";
 
@@ -163,12 +164,20 @@ export * from "./properties";
 
 === File: packages/b_declarations/src/parser.ts ===
 // b_path:: packages/b_declarations/src/parser.ts
-import { createError, parseErr, parseOk, forwardParseErr, type ParseResult } from "@b/types";
+import { createError, createInfo, parseErr, parseOk, forwardParseErr, type ParseResult, type Issue } from "@b/types";
+import { validate } from "@b/utils";
 import { propertyRegistry } from "./core";
 import type { CSSDeclaration, DeclarationResult } from "./types";
+import { generateDeclaration } from "./generator";
 
 /**
  * Parse a CSS declaration string or object into its IR representation.
+ *
+ * Enhanced with css-tree validation and generator warnings:
+ * 1. Validates syntax with css-tree (fail fast on syntax errors)
+ * 2. Parses with our system (semantic validation)
+ * 3. Adds css-tree warnings for visual context
+ * 4. Runs generator to collect semantic warnings (if parse succeeded)
  *
  * @param input - CSS declaration string (e.g., "color: red;" or "color: red") or object
  * @returns Result with the parsed IR or an error
@@ -202,25 +211,84 @@ export function parseDeclaration(input: string | CSSDeclaration): ParseResult<De
     value = input.value;
   }
 
-  // Look up property definition
+  // Step 1: Validate with css-tree (fail fast on TRUE syntax errors)
+  const validation = validate(`${property}: ${value}`);
+
+  if (!validation.ok) {
+    // CSS has syntax errors - cannot parse at all
+    const syntaxIssues: Issue[] = validation.errors.map((err) =>
+      createError("invalid-syntax", err.message, {
+        property: err.property || property,
+      }),
+    );
+    return {
+      ok: false,
+      issues: syntaxIssues,
+      property,
+    };
+  }
+
+  // Step 2: Look up property definition
   const definition = propertyRegistry.get(property);
 
   if (!definition) {
     return parseErr(createError("invalid-value", `Unknown CSS property: ${property}`));
   }
 
-  // Parse the value using the property's parser
+  // Step 3: Parse the value using the property's parser
   const parseResult = definition.parser(value);
 
-  if (!parseResult.ok) {
-    return forwardParseErr<DeclarationResult>(parseResult);
+  // Step 4: Collect all issues
+  const allIssues: Issue[] = [...parseResult.issues];
+
+  // Add css-tree warnings for visual context
+  if (validation.warnings.length > 0) {
+    const contextIssues = validation.warnings.map((w) =>
+      createInfo("invalid-syntax", w.formattedWarning || w.name, {
+        property: w.property,
+      }),
+    );
+    allIssues.push(...contextIssues);
   }
 
-  return parseOk({
-    property,
-    ir: parseResult.value,
-    original: value,
-  });
+  // Step 5: Try generation to get semantic warnings (even if parse failed but has partial IR)
+  if (parseResult.value) {
+    try {
+      // Type assertion needed for generic generateDeclaration signature
+      const genResult = generateDeclaration({
+        property: property as never,
+        ir: parseResult.value as never,
+      });
+
+      if (genResult.issues.length > 0) {
+        // Add generator warnings (deduplicate by message to avoid duplicates)
+        const existingMessages = new Set(allIssues.map((i) => i.message));
+        const newIssues = genResult.issues.filter((i) => !existingMessages.has(i.message));
+        allIssues.push(...newIssues);
+      }
+    } catch (_err) {
+      // Generator threw - ignore, we still have parse result
+    }
+  }
+
+  // Step 6: Return result
+  if (!parseResult.ok) {
+    return {
+      ok: false,
+      value: parseResult.value as DeclarationResult | undefined,
+      issues: allIssues,
+      property,
+    };
+  }
+
+  return {
+    ...parseOk({
+      property,
+      ir: parseResult.value,
+      original: value,
+    }),
+    issues: allIssues,
+  };
 }
 
 /**
@@ -437,7 +505,19 @@ export function parseBackgroundImage(value: string): ParseResult<BackgroundImage
           }),
         );
       } else {
-        layerResults.push(forwardParseErr<ImageLayer>(gradientResult));
+        // Preserve partial gradient value for generator inspection
+        if (gradientResult.value) {
+          layerResults.push({
+            ok: false,
+            value: {
+              kind: "gradient",
+              gradient: gradientResult.value,
+            },
+            issues: gradientResult.issues,
+          });
+        } else {
+          layerResults.push(forwardParseErr<ImageLayer>(gradientResult));
+        }
       }
       continue;
     }
@@ -453,7 +533,19 @@ export function parseBackgroundImage(value: string): ParseResult<BackgroundImage
           }),
         );
       } else {
-        layerResults.push(forwardParseErr<ImageLayer>(gradientResult));
+        // Preserve partial gradient value for generator inspection
+        if (gradientResult.value) {
+          layerResults.push({
+            ok: false,
+            value: {
+              kind: "gradient",
+              gradient: gradientResult.value,
+            },
+            issues: gradientResult.issues,
+          });
+        } else {
+          layerResults.push(forwardParseErr<ImageLayer>(gradientResult));
+        }
       }
       continue;
     }
@@ -469,7 +561,19 @@ export function parseBackgroundImage(value: string): ParseResult<BackgroundImage
           }),
         );
       } else {
-        layerResults.push(forwardParseErr<ImageLayer>(gradientResult));
+        // Preserve partial gradient value for generator inspection
+        if (gradientResult.value) {
+          layerResults.push({
+            ok: false,
+            value: {
+              kind: "gradient",
+              gradient: gradientResult.value,
+            },
+            issues: gradientResult.issues,
+          });
+        } else {
+          layerResults.push(forwardParseErr<ImageLayer>(gradientResult));
+        }
       }
       continue;
     }
@@ -486,10 +590,13 @@ export function parseBackgroundImage(value: string): ParseResult<BackgroundImage
   // Aggregate all issues from layer results
   const allIssues = layerResults.flatMap((r) => r.issues);
   const successfulLayers = layerResults.filter((r) => r.ok).map((r) => r.value as ImageLayer);
+  // Also collect partial layers (failed but has value) to enable generator warnings
+  const partialLayers = layerResults.filter((r) => !r.ok && r.value).map((r) => r.value as ImageLayer);
+  const allLayers = [...successfulLayers, ...partialLayers];
 
   const finalValue: BackgroundImageIR = {
     kind: "layers",
-    layers: successfulLayers,
+    layers: allLayers,
   };
 
   // If there are any errors, return failure with all issues but still include successful layers
@@ -2420,6 +2527,55 @@ export function parseNode(node: csstree.CssNode): ParseResult<Type.Color> {
         return parseOklabFunction(node);
       case "oklch":
         return parseOklchFunction(node);
+      case "var": {
+        // Parse var() as a variable reference that represents a color
+        const children = node.children.toArray();
+        const varNameNode = children[0];
+
+        if (!varNameNode) {
+          return parseErr(createError("invalid-syntax", "Invalid var() function: missing custom property name"));
+        }
+
+        if (varNameNode.type !== "Identifier" || !varNameNode.name.startsWith("--")) {
+          return parseErr(
+            createError(
+              "invalid-syntax",
+              `Invalid var() function: expected a custom property name (--*), got ${varNameNode.type}`,
+            ),
+          );
+        }
+
+        const varName = varNameNode.name;
+        let fallback: Type.CssValue | undefined;
+
+        if (children.length > 1) {
+          if (children[1].type !== "Operator" || children[1].value !== ",") {
+            return parseErr(
+              createError("invalid-syntax", "Invalid var() function: expected a comma before the fallback value"),
+            );
+          }
+
+          const fallbackNode = children[2];
+          if (!fallbackNode) {
+            return parseErr(
+              createError("invalid-syntax", "Invalid var() function: missing fallback value after comma"),
+            );
+          }
+
+          // Parse fallback as a color
+          const fallbackResult = parseNode(fallbackNode);
+          if (!fallbackResult.ok) {
+            return fallbackResult;
+          }
+          fallback = fallbackResult.value as Type.CssValue;
+        }
+
+        return parseOk({
+          kind: "variable",
+          name: varName,
+          ...(fallback && { fallback }),
+        } as Type.Color);
+      }
       default:
         return parseErr(createError("unsupported-kind", `Unsupported color function: ${funcName}`));
     }
@@ -3006,7 +3162,19 @@ export function fromFunction(fn: csstree.FunctionNode): ParseResult<Type.ConicGr
   }
 
   if (issues.length > 0) {
-    return { ok: false, issues };
+    // Return partial gradient to enable generator warnings on successfully parsed stops
+    return {
+      ok: false,
+      value: {
+        kind: "conic",
+        fromAngle,
+        position,
+        colorInterpolationMethod,
+        colorStops,
+        repeating: isRepeating,
+      },
+      issues,
+    };
   }
 
   if (colorStops.length < 2) {
@@ -3192,7 +3360,18 @@ export function fromFunction(fn: csstree.FunctionNode): ParseResult<Type.LinearG
   }
 
   if (issues.length > 0) {
-    return { ok: false, issues };
+    // Return partial gradient to enable generator warnings on successfully parsed stops
+    return {
+      ok: false,
+      value: {
+        kind: "linear",
+        direction,
+        colorInterpolationMethod,
+        colorStops,
+        repeating: isRepeating,
+      },
+      issues,
+    };
   }
 
   if (colorStops.length < 2) {
@@ -3430,7 +3609,20 @@ export function fromFunction(fn: csstree.FunctionNode): ParseResult<Type.RadialG
   }
 
   if (issues.length > 0) {
-    return { ok: false, issues };
+    // Return partial gradient to enable generator warnings on successfully parsed stops
+    return {
+      ok: false,
+      value: {
+        kind: "radial",
+        shape,
+        size,
+        position,
+        colorInterpolationMethod,
+        colorStops,
+        repeating: isRepeating,
+      },
+      issues,
+    };
   }
 
   if (colorStops.length < 2) {
@@ -4176,6 +4368,7 @@ import { oklabColorSchema } from "./oklab";
 import { oklchColorSchema } from "./oklch";
 import { specialColorSchema } from "./special";
 import { colorFunctionSchema } from "./color-function";
+import { variableReferenceSchema } from "../values/css-value";
 
 /**
  * @see https://developer.mozilla.org/en-US/docs/Web/CSS/color_value
@@ -4192,6 +4385,7 @@ export const colorSchema = z.union([
   oklchColorSchema,
   specialColorSchema,
   colorFunctionSchema,
+  variableReferenceSchema,
 ]);
 
 export type Color = z.infer<typeof colorSchema>;
@@ -5481,6 +5675,13 @@ export const literalValueSchema = z
   })
   .strict();
 
+export const keywordValueSchema = z
+  .object({
+    kind: z.literal("keyword"),
+    value: z.string(),
+  })
+  .strict();
+
 /**
  * Represents a CSS custom property reference (var() function)
  * @see https://drafts.csswg.org/css-variables/#using-variables
@@ -5497,16 +5698,31 @@ export const variableReferenceSchema: z.ZodType<{
   })
   .strict();
 
+// --- NEW SCHEMAS ---
+
 /**
- * Represents a CSS keyword value
- * @see https://drafts.csswg.org/css-values-4/#keywords
+ * Represents a CSS string literal (e.g., "Hello World")
+ * @see https://drafts.csswg.org/css-values-4/#strings
  */
-export const keywordValueSchema = z
+export const stringLiteralSchema = z
   .object({
-    kind: z.literal("keyword"),
+    kind: z.literal("string"),
     value: z.string(),
   })
   .strict();
+
+/**
+ * Represents a CSS hex color value
+ * (e.g., #RRGGBB or #RGB)
+ */
+export const hexColorSchema = z
+  .object({
+    kind: z.literal("hex-color"),
+    value: z.string().regex(/^#([0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/),
+  })
+  .strict();
+
+// --- END NEW SCHEMAS ---
 
 export const listValueSchema: z.ZodType<{
   kind: "list";
@@ -5598,6 +5814,44 @@ export const attrFunctionSchema: z.ZodType<{
   .strict();
 
 /**
+ * Represents an RGB/HSL color function
+ */
+export const rgbFunctionSchema: z.ZodType<{
+  kind: "rgb" | "rgba";
+  components: CssValue[];
+}> = z
+  .object({
+    kind: z.union([z.literal("rgb"), z.literal("rgba")]),
+    components: z.array(z.lazy((): z.ZodType<CssValue> => cssValueSchema)),
+  })
+  .strict();
+
+export const hslFunctionSchema: z.ZodType<{
+  kind: "hsl" | "hsla";
+  components: CssValue[];
+}> = z
+  .object({
+    kind: z.union([z.literal("hsl"), z.literal("hsla")]),
+    components: z.array(z.lazy((): z.ZodType<CssValue> => cssValueSchema)),
+  })
+  .strict();
+
+/**
+ * Represents a generic CSS function call (e.g., linear-gradient(...))
+ */
+export const functionCallSchema: z.ZodType<{
+  kind: "function";
+  name: string;
+  args: CssValue[];
+}> = z
+  .object({
+    kind: z.literal("function"),
+    name: z.string(),
+    args: z.array(z.lazy((): z.ZodType<CssValue> => cssValueSchema)),
+  })
+  .strict();
+
+/**
  * Union of all possible CSS value representations
  * This is the foundation for representing authored CSS values
  * that may contain symbolic references (var()), keywords, or literals
@@ -5605,24 +5859,28 @@ export const attrFunctionSchema: z.ZodType<{
 // export const cssValueSchema = z.union([literalValueSchema, variableReferenceSchema, keywordValueSchema]);
 
 export const allCssValueSchema = [
-  // Primitives
-  literalValueSchema,
-  variableReferenceSchema,
-  keywordValueSchema,
-
-  // Functions
-  calcFunctionSchema,
-  calcOperationSchema, // Operations inside calc() expressions
-  minmaxFunctionSchema,
-  clampFunctionSchema,
-  urlFunctionSchema,
-  attrFunctionSchema,
-
-  // lchColorSchema,
-  // rgbColorSchema, etc.
-
   // Structural
   listValueSchema,
+
+  // Primitives
+  literalValueSchema,
+  keywordValueSchema,
+  stringLiteralSchema,
+  variableReferenceSchema,
+
+  // Functions
+  urlFunctionSchema,
+  functionCallSchema,
+  calcFunctionSchema,
+  attrFunctionSchema,
+  clampFunctionSchema,
+  minmaxFunctionSchema,
+  calcOperationSchema,
+
+  // lchColorSchema,
+  hexColorSchema,
+  rgbFunctionSchema,
+  hslFunctionSchema,
 ];
 
 const allCssValues = allCssValueSchema.flatMap(getLiteralValues);
@@ -7287,6 +7545,23 @@ import tsconfigPaths from "vite-tsconfig-paths";
 export default defineConfig({
   plugins: [tsconfigPaths()],
 });
+
+
+=== File: packages/b_values/src/agent.ts ===
+// b_path:: packages/b_values/src/agent.ts
+// // DO NOT DELETE THIS FILE. IT IS BY THE AGENT FOR ADHOC TESTING PURPOSES ONLY.
+
+import * as decl from "@b/declarations";
+
+// Simple test: var() as a color
+const css1 = `background-image: linear-gradient(var(--color-1), red)`;
+console.log("Test 1: var() as color");
+console.log(JSON.stringify(decl.parseDeclaration(css1), null, 2));
+
+// Test: var() in angle position
+const css2 = `background-image: conic-gradient(from var(--angle), red, blue)`;
+console.log("\nTest 2: var() as angle");
+console.log(JSON.stringify(decl.parseDeclaration(css2), null, 2));
 
 
 === File: packages/b_values/src/color/index.ts ===
