@@ -153,27 +153,32 @@ export const attrFunctionSchema: z.ZodType<{
   .strict();
 
 /**
- * Represents an RGB/HSL color function
+ * NOTE: RGB/HSL color function schemas commented out - we are not sure these need to be here.
+ * These create an inconsistency: why RGB/HSL but not LCH/OKLCH/LAB/etc?
+ * Generic functionCallSchema handles all color functions consistently.
+ * Specific color parsing happens in dedicated color parsers (packages/b_parsers/src/color/).
+ *
+ * If needed, uncomment and add ALL color function schemas, not just RGB/HSL.
  */
-export const rgbFunctionSchema: z.ZodType<{
-  kind: "rgb" | "rgba";
-  components: CssValue[];
-}> = z
-  .object({
-    kind: z.union([z.literal("rgb"), z.literal("rgba")]),
-    components: z.array(z.lazy((): z.ZodType<CssValue> => cssValueSchema)),
-  })
-  .strict();
+// export const rgbFunctionSchema: z.ZodType<{
+//   kind: "rgb" | "rgba";
+//   components: CssValue[];
+// }> = z
+//   .object({
+//     kind: z.union([z.literal("rgb"), z.literal("rgba")]),
+//     components: z.array(z.lazy((): z.ZodType<CssValue> => cssValueSchema)),
+//   })
+//   .strict();
 
-export const hslFunctionSchema: z.ZodType<{
-  kind: "hsl" | "hsla";
-  components: CssValue[];
-}> = z
-  .object({
-    kind: z.union([z.literal("hsl"), z.literal("hsla")]),
-    components: z.array(z.lazy((): z.ZodType<CssValue> => cssValueSchema)),
-  })
-  .strict();
+// export const hslFunctionSchema: z.ZodType<{
+//   kind: "hsl" | "hsla";
+//   components: CssValue[];
+// }> = z
+//   .object({
+//     kind: z.union([z.literal("hsl"), z.literal("hsla")]),
+//     components: z.array(z.lazy((): z.ZodType<CssValue> => cssValueSchema)),
+//   })
+//   .strict();
 
 /**
  * Represents a generic CSS function call (e.g., linear-gradient(...))
@@ -216,10 +221,13 @@ export const allCssValueSchema = [
   minmaxFunctionSchema,
   calcOperationSchema,
 
-  // lchColorSchema,
+  // NOTE: Color function schemas commented out for consistency
+  // Only hexColorValueSchema remains as it's a simple literal type
   hexColorValueSchema,
-  rgbFunctionSchema,
-  hslFunctionSchema,
+  // All color functions (rgb, hsl, lch, oklch, lab, etc.) handled by functionCallSchema
+  // lchColorSchema,
+  // rgbFunctionSchema,
+  // hslFunctionSchema,
 ];
 
 const allCssValues = allCssValueSchema.flatMap(getLiteralValues);

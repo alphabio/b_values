@@ -80,14 +80,16 @@ export function cssValueToCss(value: CssValue): string {
       return `${name}(${argsStr})`;
     }
 
-    case "rgb":
-    case "rgba":
-    case "hsl":
-    case "hsla": {
-      const { components } = value;
-      const componentsStr = components.map((c) => cssValueToCss(c)).join(", ");
-      return `${value.kind}(${componentsStr})`;
-    }
+    // NOTE: RGB/HSL cases commented out - now handled by generic "function" case above
+    // Keeping this comment for reference in case we need to restore special handling
+    // case "rgb":
+    // case "rgba":
+    // case "hsl":
+    // case "hsla": {
+    //   const { components } = value;
+    //   const componentsStr = components.map((c) => cssValueToCss(c)).join(", ");
+    //   return `${value.kind}(${componentsStr})`;
+    // }
 
     case "string": {
       return `"${value.value}"`;
