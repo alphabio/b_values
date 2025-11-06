@@ -279,6 +279,7 @@ conic-gradient(from var(--angle), red, blue) /* angle with keyword */
 ### Why Conic Is Safe
 
 The conic gradient syntax requires **explicit keywords** for optional parameters:
+
 - `from <angle>` - angle requires "from" keyword
 - `at <position>` - position requires "at" keyword
 
@@ -289,6 +290,7 @@ Without these keywords, the first node **must be a color stop**. No ambiguity!
 ✅ **No changes needed** - The current conic gradient parser is already correct and unambiguous.
 
 The only potential issue is if `var()/calc()` are used AFTER the keywords:
+
 ```css
 conic-gradient(from var(--angle), ...)  /* OK - unambiguous */
 conic-gradient(at var(--x) var(--y), ...) /* OK - unambiguous */
