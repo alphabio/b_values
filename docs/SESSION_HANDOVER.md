@@ -9,10 +9,15 @@
 
 - [x] Session 029 initialized
 - [x] Session 028 archived
-- [x] Identified root cause: `var()` not handled at color level
-- [x] Added `variableReferenceSchema` to color union type
-- [x] Implemented `var()` parsing in color parser
-- [x] Discovered `cssValueToCss` utility for CssValue generation
+- [x] Fixed compile issues from previous session
+- [x] **Phase 1 Complete: var() Support**
+  - [x] Added variableReferenceSchema to Color union type
+  - [x] Implemented var() parsing in color parser
+  - [x] Implemented variable case in color generator
+  - [x] Added String literal support to parseCssValueNode
+  - [x] Added generic function fallback to parseCssValueNode
+  - [x] Updated tests (all 995 passing)
+  - [x] Verified round-trip parsing/generation
 
 ---
 
@@ -20,44 +25,43 @@
 
 **Working:**
 
-- ✅ All 994 tests passing (from session 028)
+- ✅ All 995 tests passing
 - ✅ All quality checks passing
-- ✅ `var()` parsing implemented in `packages/b_parsers/src/color/color.ts`
-- ✅ Color type schema updated to include `variableReferenceSchema`
-- ✅ `cssValueToCss` utility exists and handles var(), calc(), etc.
+- ✅ **Phase 1 Complete: var() support working end-to-end**
+  - ✅ `var()` as complete color value
+  - ✅ `var()` in gradients
+  - ✅ Round-trip parsing/generation
+  - ✅ String literals supported
+  - ✅ Generic function fallback in place
 
-**In Progress:**
+**Ready for Phase 2:**
 
-- 🔄 Color generator needs to use `cssValueToCss` for variable colors
-- 🔄 Need to handle `var()` as entire color (not just color components)
-
-**Testing:**
-
-```typescript
-// Test case 1: var() as complete color
-"background-image: linear-gradient(var(--color-1), red)";
-// Currently: Parses ✅ but generates ❌ "Unknown color kind: variable"
-
-// Test case 2: var() in conic gradient angle position
-"background-image: conic-gradient(from var(--angle), red, blue)";
-// Currently: Parses ✅ but generates ❌ "Unknown color kind: variable"
-```
-
-**Key Discovery:**
-
-- Color components (h, s, l, etc.) already support `CssValue` which includes var()
-- The issue is when `var()` represents the **entire color**, not just a component
-- Solution: Add case for `"variable"` in color generator that uses `cssValueToCss`
+- 🎯 Function Dispatcher Infrastructure (4-5 hours)
+  - Create math module structure (calc, min/max, clamp)
+  - Create centralized function dispatcher
+  - Update parseCssValueNode to use dispatcher
+  - Create math generators
 
 ---
 
 ## 🎯 Next Steps
 
-1. **Update color generator** - Add `case "variable"` that uses `cssValueToCss`
-2. **Test the fix** - Verify var() works as complete color
-3. **Test original use case** - Complex gradients with multiple var() references
-4. **Run quality checks** - Ensure all tests pass
-5. **Consider edge cases** - var() with fallback colors
+**Phase 2: Function Dispatcher Infrastructure (4-5 hours)**
+
+1. Create math module structure (`packages/b_parsers/src/math/`)
+   - `calc.ts` - calc() parser
+   - `minmax.ts` - min()/max() parser
+   - `clamp.ts` - clamp() parser
+2. Create centralized function dispatcher
+3. Update parseCssValueNode to delegate to dispatcher
+4. Create math generators
+5. Test and validate
+
+**Future Phases:**
+
+- Phase 3: Transform Functions (5-8 hours)
+- Phase 4: Time/Frequency Support (2-3 hours)
+- Phase 6: Testing/Documentation (6-9 hours)
 
 ---
 
