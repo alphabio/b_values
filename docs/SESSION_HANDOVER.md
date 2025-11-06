@@ -183,4 +183,8 @@
 
 **Impact:** Medium - Affects 4-value position syntax (less common than 2-value)
 
-**See:** `docs/sessions/040/POSITION_4VALUE_ISSUE.md` for full analysis and fix plan
+**See:** 
+- `docs/sessions/040/POSITION_4VALUE_ISSUE.md` - Issue description and fix plan
+- `docs/sessions/040/POSITION_PARSER_RESEARCH.md` - Detailed implementation research
+
+**Estimated Effort:** 7-11 hours
