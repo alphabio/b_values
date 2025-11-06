@@ -30,11 +30,16 @@
   - [x] `color-stop.ts` - positions use parseCssValueNodeEnhanced
 - [x] **Generator updated**
   - [x] Added `hex-color` case to cssValueToCss
+- [x] **Validation fixed**
+  - [x] Added `containsDynamicValue()` helper to detect var()/calc()/min()/max()/clamp()/attr()
+  - [x] Skip csstree validation for dynamic values (prevents false positives)
+  - [x] Added 8 comprehensive validation tests
 - [x] **Tests passing**
-  - [x] All 985 tests passing (added complex gradient test)
+  - [x] All 993 tests passing (985 + 8 new validation tests)
   - [x] Test validates var() and calc() in all gradient positions
 - [x] **Committed successfully**
   - Commit: ad85568 "fix(types,utils): resolve duplicate hexColorSchema export"
+  - Commit: 4afdffe "fix(utils): skip validation for dynamic CSS values"
 
 ---
 
@@ -46,10 +51,12 @@ All objectives achieved:
 2. ✅ Added missing `hex-color` case to generator
 3. ✅ Verified parsers already support CssValue (linear, radial, conic)
 4. ✅ Added comprehensive test for complex gradient with var() and calc()
-5. ✅ All 985 tests passing
-6. ✅ All quality checks passing (format, lint, typecheck)
-7. ✅ Build successful
-8. ✅ Changes committed
+5. ✅ **Fixed validation to skip dynamic values (var, calc, min, max, clamp, attr)**
+6. ✅ **Added 8 validation tests ensuring no false positives**
+7. ✅ All 993 tests passing (985 + 8 new validation tests)
+8. ✅ All quality checks passing (format, lint, typecheck)
+9. ✅ Build successful
+10. ✅ Changes committed (2 commits)
 
 **User's complex gradient now works:**
 
@@ -60,6 +67,8 @@ repeating-conic-gradient(
   var(--color-4) 5% 10%
 )
 ```
+
+**No validation warnings for dynamic values!** ✅
 
 ---
 
@@ -142,10 +151,10 @@ git log --oneline -5      # See recent commits
 ## 📊 Session Stats
 
 - **Phase 2 Complete:** ✅ 1017 tests passing, committed (previous session)
-- **Phase 2.5 Complete:** ✅ 985 tests passing, committed (this session)
-- **Files modified:** 3 core files + 1 test file
-- **Issues fixed:** 2 (duplicate export, missing generator case)
-- **Session duration:** ~3 minutes
+- **Phase 2.5 Complete:** ✅ 993 tests passing, committed (this session)
+- **Files modified:** 4 core files + 2 test files
+- **Issues fixed:** 3 (duplicate export, missing generator case, validation false positives)
+- **Session duration:** ~10 minutes
 - **Status:** Ready for production ✅
 
 ---
@@ -164,9 +173,11 @@ The architecture changes from previous session were already correct - this sessi
 2. A missing generator case
 3. Added a comprehensive test
 
-**All systems green!** ✅ Tests: 985 | Typecheck: ✅ | Build: ✅
+**All systems green!** ✅ Tests: 993 | Typecheck: ✅ | Build: ✅ | Validation: No false positives!
 
 ---
 
-**Session ended:** 2025-11-06 ~09:27 UTC
-**Commit:** ad85568 "fix(types,utils): resolve duplicate hexColorSchema export"
+**Session ended:** 2025-11-06 ~09:40 UTC
+**Commits:** 
+- ad85568 "fix(types,utils): resolve duplicate hexColorSchema export"
+- 4afdffe "fix(utils): skip validation for dynamic CSS values"
