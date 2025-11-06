@@ -137,6 +137,66 @@ describe("Linear Gradient Parser - Color Stops", () => {
       }
     });
 
+    it("parses rgb colors", () => {
+      const css = "linear-gradient(rgb(255, 0, 0), rgb(0, 0, 255))";
+      const result = Linear.parse(css);
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.value.colorStops).toHaveLength(2);
+        expect(result.value.colorStops[0].color.kind).toBe("rgb");
+        expect(result.value.colorStops[1].color.kind).toBe("rgb");
+      }
+    });
+
+    it("parses rgba colors", () => {
+      const css = "linear-gradient(rgba(255, 0, 0, 0.5), rgba(0, 0, 255, 1))";
+      const result = Linear.parse(css);
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.value.colorStops).toHaveLength(2);
+        expect(result.value.colorStops[0].color.kind).toBe("rgb");
+        expect(result.value.colorStops[1].color.kind).toBe("rgb");
+      }
+    });
+
+    it("parses hsl colors", () => {
+      const css = "linear-gradient(hsl(0, 100%, 50%), hsl(240, 100%, 50%))";
+      const result = Linear.parse(css);
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.value.colorStops).toHaveLength(2);
+        expect(result.value.colorStops[0].color.kind).toBe("hsl");
+        expect(result.value.colorStops[1].color.kind).toBe("hsl");
+      }
+    });
+
+    it("parses hsla colors", () => {
+      const css = "linear-gradient(hsla(0, 100%, 50%, 0.5), hsla(240, 100%, 50%, 1))";
+      const result = Linear.parse(css);
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.value.colorStops).toHaveLength(2);
+        expect(result.value.colorStops[0].color.kind).toBe("hsl");
+        expect(result.value.colorStops[1].color.kind).toBe("hsl");
+      }
+    });
+
+    it("parses var() in color", () => {
+      const css = "linear-gradient(var(--color-1), var(--color-2))";
+      const result = Linear.parse(css);
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.value.colorStops).toHaveLength(2);
+        expect(result.value.colorStops[0].color).toEqual({ kind: "variable", name: "--color-1" });
+        expect(result.value.colorStops[1].color).toEqual({ kind: "variable", name: "--color-2" });
+      }
+    });
+
     it("parses mixed color types", () => {
       const css = "linear-gradient(red, #00ff00, hsl(60, 100%, 50%))";
       const result = Linear.parse(css);
@@ -147,6 +207,20 @@ describe("Linear Gradient Parser - Color Stops", () => {
         expect(result.value.colorStops[0].color.kind).toBe("named");
         expect(result.value.colorStops[1].color.kind).toBe("hex");
         expect(result.value.colorStops[2].color.kind).toBe("hsl");
+      }
+    });
+
+    it("parses rgb/hsl with positions", () => {
+      const css = "linear-gradient(rgb(255, 0, 0) 0%, hsl(240, 100%, 50%) 100%)";
+      const result = Linear.parse(css);
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.value.colorStops).toHaveLength(2);
+        expect(result.value.colorStops[0].color.kind).toBe("rgb");
+        expect(result.value.colorStops[0].position).toEqual({ kind: "literal", value: 0, unit: "%" });
+        expect(result.value.colorStops[1].color.kind).toBe("hsl");
+        expect(result.value.colorStops[1].position).toEqual({ kind: "literal", value: 100, unit: "%" });
       }
     });
   });

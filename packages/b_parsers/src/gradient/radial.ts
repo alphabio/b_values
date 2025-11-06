@@ -7,16 +7,7 @@ import { parsePosition2D } from "../position";
 import { parseCssValueNodeEnhanced } from "../css-value-parser-enhanced";
 import * as ColorStop from "./color-stop";
 import * as Utils from "../utils";
-
-/**
- * Check if a Function node is a CSS value function (var, calc, clamp, min, max)
- * and not a color function (rgb, hsl, etc.)
- */
-function isCssValueFunction(node: csstree.CssNode): boolean {
-  if (node.type !== "Function") return false;
-  const funcName = node.name.toLowerCase();
-  return ["var", "calc", "clamp", "min", "max"].includes(funcName);
-}
+import { isCssValueFunction } from "../utils/css-value-functions";
 
 /**
  * Parse radial gradient shape and size from nodes.

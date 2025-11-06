@@ -5,6 +5,8 @@ import type * as Type from "@b/types";
 import { parseCssValueNodeEnhanced } from "../css-value-parser-enhanced";
 import * as ColorStop from "./color-stop";
 import * as Utils from "../utils";
+import { isCssValueFunction } from "../utils/css-value-functions";
+import { disambiguateFirstArg } from "./disambiguation";
 
 /**
  * Parse gradient direction from nodes.
@@ -20,7 +22,7 @@ function parseDirection(
     return parseErr(createError("missing-value", "Expected direction value"));
   }
 
-  if (node.type === "Dimension" || node.type === "Number" || node.type === "Function") {
+  if (node.type === "Dimension" || node.type === "Number" || isCssValueFunction(node)) {
     const angleResult = parseCssValueNodeEnhanced(node);
     if (angleResult.ok) {
       return parseOk({
@@ -99,18 +101,23 @@ export function fromFunction(fn: csstree.FunctionNode): ParseResult<Type.LinearG
 
   let idx = 0;
 
-  const firstNode = children[idx];
-  if (firstNode) {
-    if (
-      firstNode.type === "Dimension" ||
-      firstNode.type === "Number" ||
-      firstNode.type === "Function" ||
-      (firstNode.type === "Identifier" && firstNode.name.toLowerCase() === "to")
-    ) {
-      const dirResult = parseDirection(children, idx);
-      if (dirResult.ok) {
-        direction = dirResult.value.direction;
-        idx = dirResult.value.nextIdx;
+  // Use disambiguation to determine if first argument is direction or color stop
+  const shouldParseDirection = disambiguateFirstArg(children);
+
+  if (shouldParseDirection === "direction") {
+    const firstNode = children[idx];
+    if (firstNode) {
+      if (
+        firstNode.type === "Dimension" ||
+        firstNode.type === "Number" ||
+        firstNode.type === "Function" ||
+        (firstNode.type === "Identifier" && firstNode.name.toLowerCase() === "to")
+      ) {
+        const dirResult = parseDirection(children, idx);
+        if (dirResult.ok) {
+          direction = dirResult.value.direction;
+          idx = dirResult.value.nextIdx;
+        }
       }
     }
   }
