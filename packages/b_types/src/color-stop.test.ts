@@ -1,6 +1,6 @@
 // b_path:: packages/b_types/src/color-stop.test.ts
 import { describe, expect, it } from "vitest";
-import { angularColorHintSchema, colorStopListSchema, colorStopSchema } from "./color-stop";
+import { colorStopListSchema, colorStopSchema } from "./color-stop";
 
 describe("colorStopSchema", () => {
   it("validates color only", () => {
@@ -15,33 +15,33 @@ describe("colorStopSchema", () => {
   it("validates color with single percentage position", () => {
     const result = colorStopSchema.parse({
       color: { kind: "named", name: "blue" },
-      position: { value: 50, unit: "%" },
+      position: { kind: "literal", value: 50, unit: "%" },
     });
     expect(result).toEqual({
       color: { kind: "named", name: "blue" },
-      position: { value: 50, unit: "%" },
+      position: { kind: "literal", value: 50, unit: "%" },
     });
   });
 
   it("validates color with single length position", () => {
     const result = colorStopSchema.parse({
       color: { kind: "hex", value: "#FF0000" },
-      position: { value: 10, unit: "px" },
+      position: { kind: "literal", value: 10, unit: "px" },
     });
     expect(result).toEqual({
       color: { kind: "hex", value: "#FF0000" },
-      position: { value: 10, unit: "px" },
+      position: { kind: "literal", value: 10, unit: "px" },
     });
   });
 
   it("validates color with single angle position", () => {
     const result = colorStopSchema.parse({
       color: { kind: "named", name: "green" },
-      position: { value: 45, unit: "deg" },
+      position: { kind: "literal", value: 45, unit: "deg" },
     });
     expect(result).toEqual({
       color: { kind: "named", name: "green" },
-      position: { value: 45, unit: "deg" },
+      position: { kind: "literal", value: 45, unit: "deg" },
     });
   });
 
@@ -49,15 +49,15 @@ describe("colorStopSchema", () => {
     const result = colorStopSchema.parse({
       color: { kind: "named", name: "red" },
       position: [
-        { value: 10, unit: "%" },
-        { value: 30, unit: "%" },
+        { kind: "literal", value: 10, unit: "%" },
+        { kind: "literal", value: 30, unit: "%" },
       ],
     });
     expect(result).toEqual({
       color: { kind: "named", name: "red" },
       position: [
-        { value: 10, unit: "%" },
-        { value: 30, unit: "%" },
+        { kind: "literal", value: 10, unit: "%" },
+        { kind: "literal", value: 30, unit: "%" },
       ],
     });
   });
@@ -66,38 +66,21 @@ describe("colorStopSchema", () => {
     const result = colorStopSchema.parse({
       color: { kind: "named", name: "blue" },
       position: [
-        { value: 0, unit: "deg" },
-        { value: 90, unit: "deg" },
+        { kind: "literal", value: 0, unit: "deg" },
+        { kind: "literal", value: 90, unit: "deg" },
       ],
     });
     expect(result).toEqual({
       color: { kind: "named", name: "blue" },
       position: [
-        { value: 0, unit: "deg" },
-        { value: 90, unit: "deg" },
+        { kind: "literal", value: 0, unit: "deg" },
+        { kind: "literal", value: 90, unit: "deg" },
       ],
     });
   });
 
   it("rejects missing color", () => {
-    expect(() => colorStopSchema.parse({ position: { value: 50, unit: "%" } })).toThrow();
-  });
-});
-
-describe("angularColorHintSchema", () => {
-  it("validates angle hint", () => {
-    const result = angularColorHintSchema.parse({ value: 45, unit: "deg" });
-    expect(result).toEqual({ value: 45, unit: "deg" });
-  });
-
-  it("validates percentage hint", () => {
-    const result = angularColorHintSchema.parse({ value: 50, unit: "%" });
-    expect(result).toEqual({ value: 50, unit: "%" });
-  });
-
-  it("validates zero without unit", () => {
-    const result = angularColorHintSchema.parse({ value: 0 });
-    expect(result).toEqual({ value: 0 });
+    expect(() => colorStopSchema.parse({ position: { kind: "literal", value: 50, unit: "%" } })).toThrow();
   });
 });
 
@@ -113,7 +96,7 @@ describe("colorStopListSchema", () => {
   it("validates multiple color stops with positions", () => {
     const result = colorStopListSchema.parse([
       { color: { kind: "named", name: "red" } },
-      { color: { kind: "named", name: "yellow" }, position: { value: 50, unit: "%" } },
+      { color: { kind: "named", name: "yellow" }, position: { kind: "literal", value: 50, unit: "%" } },
       { color: { kind: "named", name: "blue" } },
     ]);
     expect(result).toHaveLength(3);
@@ -124,8 +107,8 @@ describe("colorStopListSchema", () => {
       {
         color: { kind: "named", name: "red" },
         position: [
-          { value: 0, unit: "%" },
-          { value: 25, unit: "%" },
+          { kind: "literal", value: 0, unit: "%" },
+          { kind: "literal", value: 25, unit: "%" },
         ],
       },
       { color: { kind: "named", name: "blue" } },

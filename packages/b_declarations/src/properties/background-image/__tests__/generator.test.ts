@@ -198,8 +198,8 @@ describe("generateBackgroundImage", () => {
             gradient: {
               kind: "linear",
               colorStops: [
-                { color: { kind: "hex", value: "#000000" }, position: { value: 0, unit: "px" } },
-                { color: { kind: "hex", value: "#ffffff" }, position: { value: 10, unit: "px" } },
+                { color: { kind: "hex", value: "#000000" }, position: { kind: "literal", value: 0, unit: "px" } },
+                { color: { kind: "hex", value: "#ffffff" }, position: { kind: "literal", value: 10, unit: "px" } },
               ],
               repeating: true,
             },
@@ -324,9 +324,9 @@ describe("generateBackgroundImage", () => {
             gradient: {
               kind: "linear",
               colorStops: [
-                { color: { kind: "hex", value: "#ff0000" }, position: { value: 0, unit: "%" } },
-                { color: { kind: "hex", value: "#00ff00" }, position: { value: 50, unit: "%" } },
-                { color: { kind: "hex", value: "#0000ff" }, position: { value: 100, unit: "%" } },
+                { color: { kind: "hex", value: "#ff0000" }, position: { kind: "literal", value: 0, unit: "%" } },
+                { color: { kind: "hex", value: "#00ff00" }, position: { kind: "literal", value: 50, unit: "%" } },
+                { color: { kind: "hex", value: "#0000ff" }, position: { kind: "literal", value: 100, unit: "%" } },
               ],
               repeating: false,
             },
@@ -429,8 +429,8 @@ describe("generateBackgroundImage", () => {
               shape: "circle",
               size: { kind: "keyword", value: "closest-side" },
               position: {
-                horizontal: { value: 0, unit: "%" },
-                vertical: { value: 0, unit: "%" },
+                horizontal: { kind: "literal", value: 0, unit: "%" },
+                vertical: { kind: "literal", value: 0, unit: "%" },
               },
               colorStops: [
                 {

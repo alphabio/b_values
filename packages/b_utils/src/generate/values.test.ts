@@ -1,7 +1,7 @@
 // b_path:: packages/b_utils/src/generate/values.test.ts
 import { describe, expect, it } from "vitest";
 import * as Values from "./values";
-import type { Angle, Length, LengthPercentage, Position2D, PositionValue } from "@b/types";
+import type { Angle, Length, LengthPercentage, Position2D } from "@b/types";
 
 describe("values generators", () => {
   describe("lengthToCss", () => {
@@ -83,80 +83,43 @@ describe("values generators", () => {
     });
   });
 
-  describe("positionValueToCss", () => {
-    it("should generate keyword position", () => {
-      const value: PositionValue = "center";
-      expect(Values.positionValueToCss(value)).toBe("center");
-    });
-
-    it("should generate left keyword", () => {
-      const value: PositionValue = "left";
-      expect(Values.positionValueToCss(value)).toBe("left");
-    });
-
-    it("should generate right keyword", () => {
-      const value: PositionValue = "right";
-      expect(Values.positionValueToCss(value)).toBe("right");
-    });
-
-    it("should generate top keyword", () => {
-      const value: PositionValue = "top";
-      expect(Values.positionValueToCss(value)).toBe("top");
-    });
-
-    it("should generate bottom keyword", () => {
-      const value: PositionValue = "bottom";
-      expect(Values.positionValueToCss(value)).toBe("bottom");
-    });
-
-    it("should generate length-percentage", () => {
-      const value: PositionValue = { value: 50, unit: "%" };
-      expect(Values.positionValueToCss(value)).toBe("50%");
-    });
-
-    it("should generate px position", () => {
-      const value: PositionValue = { value: 100, unit: "px" };
-      expect(Values.positionValueToCss(value)).toBe("100px");
-    });
-  });
-
   describe("position2DToCss", () => {
     it("should generate center center", () => {
       const position: Position2D = {
-        horizontal: "center",
-        vertical: "center",
+        horizontal: { kind: "keyword", value: "center" },
+        vertical: { kind: "keyword", value: "center" },
       };
       expect(Values.position2DToCss(position)).toBe("center center");
     });
 
     it("should generate left top", () => {
       const position: Position2D = {
-        horizontal: "left",
-        vertical: "top",
+        horizontal: { kind: "keyword", value: "left" },
+        vertical: { kind: "keyword", value: "top" },
       };
       expect(Values.position2DToCss(position)).toBe("left top");
     });
 
     it("should generate percentage positions", () => {
       const position: Position2D = {
-        horizontal: { value: 25, unit: "%" },
-        vertical: { value: 75, unit: "%" },
+        horizontal: { kind: "literal", value: 25, unit: "%" },
+        vertical: { kind: "literal", value: 75, unit: "%" },
       };
       expect(Values.position2DToCss(position)).toBe("25% 75%");
     });
 
     it("should generate mixed keyword and length", () => {
       const position: Position2D = {
-        horizontal: "left",
-        vertical: { value: 50, unit: "px" },
+        horizontal: { kind: "keyword", value: "left" },
+        vertical: { kind: "literal", value: 50, unit: "px" },
       };
       expect(Values.position2DToCss(position)).toBe("left 50px");
     });
 
     it("should generate px positions", () => {
       const position: Position2D = {
-        horizontal: { value: 100, unit: "px" },
-        vertical: { value: 200, unit: "px" },
+        horizontal: { kind: "literal", value: 100, unit: "px" },
+        vertical: { kind: "literal", value: 200, unit: "px" },
       };
       expect(Values.position2DToCss(position)).toBe("100px 200px");
     });

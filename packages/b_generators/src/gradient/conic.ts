@@ -1,9 +1,9 @@
 // b_path:: packages/b_generators/src/gradient/conic.ts
 import { generateOk, type GenerateResult, type GenerateContext } from "@b/types";
 import type * as Type from "@b/types";
-import * as Angle from "../angle";
 import * as Position from "../position";
 import * as ColorStop from "./color-stop";
+import { cssValueToCss } from "@b/utils";
 
 /**
  * Generate CSS color interpolation method string.
@@ -46,7 +46,7 @@ function generateColorInterpolation(method: Type.ColorInterpolationMethod): Gene
  * ```typescript
  * generate({
  *   kind: "conic",
- *   fromAngle: { value: 45, unit: "deg" },
+ *   fromAngle: { kind: "literal", value: 45, unit: "deg" },
  *   colorStops: [
  *     { color: { kind: "named", value: "red" } },
  *     { color: { kind: "named", value: "blue" } }
@@ -61,7 +61,10 @@ function generateColorInterpolation(method: Type.ColorInterpolationMethod): Gene
  * ```typescript
  * generate({
  *   kind: "conic",
- *   position: { horizontal: "center", vertical: "center" },
+ *   position: {
+ *     horizontal: { kind: "keyword", value: "center" },
+ *     vertical: { kind: "keyword", value: "center" }
+ *   },
  *   colorStops: [
  *     { color: { kind: "named", value: "red" } },
  *     { color: { kind: "named", value: "blue" } }
@@ -78,10 +81,7 @@ export function generate(ir: Type.ConicGradient, context?: GenerateContext): Gen
   const allIssues: Type.Issue[] = [];
 
   if (ir.fromAngle) {
-    const angleResult = Angle.generate(ir.fromAngle);
-    if (!angleResult.ok) return angleResult;
-    firstPart.push(`from ${angleResult.value}`);
-    allIssues.push(...angleResult.issues);
+    firstPart.push(`from ${cssValueToCss(ir.fromAngle)}`);
   }
 
   if (ir.position) {

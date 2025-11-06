@@ -101,7 +101,7 @@ describe("Radial Gradient Generator", () => {
   it("generates radial gradient with position", () => {
     const ir: Type.RadialGradient = {
       kind: "radial",
-      position: { horizontal: "center", vertical: "top" },
+      position: { horizontal: { kind: "keyword", value: "center" }, vertical: { kind: "keyword", value: "top" } },
       colorStops: [{ color: { kind: "named", name: "red" } }, { color: { kind: "named", name: "blue" } }],
       repeating: false,
     };
@@ -118,7 +118,10 @@ describe("Radial Gradient Generator", () => {
       kind: "radial",
       shape: "circle",
       size: { kind: "keyword", value: "farthest-corner" },
-      position: { horizontal: { value: 30, unit: "%" }, vertical: { value: 40, unit: "%" } },
+      position: {
+        horizontal: { kind: "literal", value: 30, unit: "%" },
+        vertical: { kind: "literal", value: 40, unit: "%" },
+      },
       colorStops: [{ color: { kind: "named", name: "red" } }, { color: { kind: "named", name: "blue" } }],
       repeating: false,
     };
@@ -134,8 +137,8 @@ describe("Radial Gradient Generator", () => {
     const ir: Type.RadialGradient = {
       kind: "radial",
       colorStops: [
-        { color: { kind: "named", name: "red" }, position: { value: 0, unit: "px" } },
-        { color: { kind: "named", name: "blue" }, position: { value: 20, unit: "px" } },
+        { color: { kind: "named", name: "red" }, position: { kind: "literal", value: 0, unit: "px" } },
+        { color: { kind: "named", name: "blue" }, position: { kind: "literal", value: 20, unit: "px" } },
       ],
       repeating: true,
     };
@@ -152,9 +155,9 @@ describe("Radial Gradient Generator", () => {
       kind: "radial",
       shape: "circle",
       colorStops: [
-        { color: { kind: "named", name: "red" }, position: { value: 0, unit: "%" } },
-        { color: { kind: "named", name: "yellow" }, position: { value: 50, unit: "%" } },
-        { color: { kind: "named", name: "blue" }, position: { value: 100, unit: "%" } },
+        { color: { kind: "named", name: "red" }, position: { kind: "literal", value: 0, unit: "%" } },
+        { color: { kind: "named", name: "yellow" }, position: { kind: "literal", value: 50, unit: "%" } },
+        { color: { kind: "named", name: "blue" }, position: { kind: "literal", value: 100, unit: "%" } },
       ],
       repeating: false,
     };

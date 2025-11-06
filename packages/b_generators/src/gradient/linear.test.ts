@@ -21,7 +21,7 @@ describe("Linear Gradient Generator", () => {
   it("generates linear gradient with angle direction", () => {
     const ir: Type.LinearGradient = {
       kind: "linear",
-      direction: { kind: "angle", value: { value: 45, unit: "deg" } },
+      direction: { kind: "angle", value: { kind: "literal", value: 45, unit: "deg" } },
       colorStops: [{ color: { kind: "named", name: "red" } }, { color: { kind: "named", name: "blue" } }],
       repeating: false,
     };
@@ -67,8 +67,8 @@ describe("Linear Gradient Generator", () => {
     const ir: Type.LinearGradient = {
       kind: "linear",
       colorStops: [
-        { color: { kind: "named", name: "red" }, position: { value: 0, unit: "px" } },
-        { color: { kind: "named", name: "blue" }, position: { value: 20, unit: "px" } },
+        { color: { kind: "named", name: "red" }, position: { kind: "literal", value: 0, unit: "px" } },
+        { color: { kind: "named", name: "blue" }, position: { kind: "literal", value: 20, unit: "px" } },
       ],
       repeating: true,
     };
@@ -84,9 +84,9 @@ describe("Linear Gradient Generator", () => {
     const ir: Type.LinearGradient = {
       kind: "linear",
       colorStops: [
-        { color: { kind: "named", name: "red" }, position: { value: 0, unit: "%" } },
-        { color: { kind: "named", name: "blue" }, position: { value: 50, unit: "%" } },
-        { color: { kind: "named", name: "green" }, position: { value: 100, unit: "%" } },
+        { color: { kind: "named", name: "red" }, position: { kind: "literal", value: 0, unit: "%" } },
+        { color: { kind: "named", name: "blue" }, position: { kind: "literal", value: 50, unit: "%" } },
+        { color: { kind: "named", name: "green" }, position: { kind: "literal", value: 100, unit: "%" } },
       ],
       repeating: false,
     };

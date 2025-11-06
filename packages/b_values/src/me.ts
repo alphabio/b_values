@@ -8,7 +8,7 @@ console.log(
   JSON.stringify(
     decl.parseDeclaration(`
       background-image:
-        repeating-conic-gradient(from  at 25% 25%, var(--color-1) 0% 5%, var(--color-4) 5% 10%);
+        repeating-conic-gradient(from var(--angle) at 25% 25%, var(--color-1) calc(5 * var(--angle)) 5%, var(--color-4) 5% 10%);
 `),
     null,
     2,

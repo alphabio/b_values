@@ -6,11 +6,11 @@ describe("gradientDirectionSchema", () => {
   it("validates angle direction", () => {
     const result = gradientDirectionSchema.parse({
       kind: "angle",
-      value: { value: 45, unit: "deg" },
+      value: { kind: "literal", value: 45, unit: "deg" },
     });
     expect(result).toEqual({
       kind: "angle",
-      value: { value: 45, unit: "deg" },
+      value: { kind: "literal", value: 45, unit: "deg" },
     });
   });
 

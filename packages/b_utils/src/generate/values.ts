@@ -1,5 +1,6 @@
 // b_path:: packages/b_utils/src/generate/values.ts
 import type * as Type from "@b/types";
+import { cssValueToCss } from "./css-value";
 
 /**
  * @see https://drafts.csswg.org/css-values-4/#lengths
@@ -32,18 +33,8 @@ export function numberToCss(number: number): string {
 /**
  * @see https://drafts.csswg.org/css-backgrounds-3/#typedef-bg-position
  */
-export function positionValueToCss(value: Type.PositionValue): string {
-  if (typeof value === "string") {
-    return value;
-  }
-  return lengthPercentageToCss(value);
-}
-
-/**
- * @see https://drafts.csswg.org/css-backgrounds-3/#typedef-bg-position
- */
 export function position2DToCss(position: Type.Position2D): string {
-  return `${positionValueToCss(position.horizontal)} ${positionValueToCss(position.vertical)}`;
+  return `${cssValueToCss(position.horizontal)} ${cssValueToCss(position.vertical)}`;
 }
 
 export function joinCssValues(values: string[]): string {

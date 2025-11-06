@@ -1,7 +1,7 @@
 // b_path:: packages/b_types/src/gradient/direction.ts
 import { z } from "zod";
 import { gradientCornerSchema, gradientSideSchema } from "@b/keywords";
-import { angleSchema } from "../angle";
+import { cssValueSchema } from "../values";
 
 /**
  * @see https://developer.mozilla.org/en-US/docs/Web/CSS/gradient/linear-gradient
@@ -10,7 +10,7 @@ export const gradientDirectionSchema = z.union([
   z
     .object({
       kind: z.literal("angle"),
-      value: angleSchema,
+      value: cssValueSchema, // Changed from angleSchema to support var/calc
     })
     .strict(),
   z

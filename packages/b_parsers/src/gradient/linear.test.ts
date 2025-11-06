@@ -25,7 +25,7 @@ describe("Linear Gradient Parser", () => {
     if (result.ok) {
       expect(result.value.direction).toEqual({
         kind: "angle",
-        value: { value: 45, unit: "deg" },
+        value: { kind: "literal", value: 45, unit: "deg" },
       });
       expect(result.value.colorStops).toHaveLength(2);
     }
@@ -64,8 +64,8 @@ describe("Linear Gradient Parser", () => {
     expect(result.ok).toBe(true);
     if (result.ok) {
       expect(result.value.repeating).toBe(true);
-      expect(result.value.colorStops[0]?.position).toEqual({ value: 0, unit: "px" });
-      expect(result.value.colorStops[1]?.position).toEqual({ value: 20, unit: "px" });
+      expect(result.value.colorStops[0]?.position).toEqual({ kind: "literal", value: 0, unit: "px" });
+      expect(result.value.colorStops[1]?.position).toEqual({ kind: "literal", value: 20, unit: "px" });
     }
   });
 
@@ -76,9 +76,9 @@ describe("Linear Gradient Parser", () => {
     expect(result.ok).toBe(true);
     if (result.ok) {
       expect(result.value.colorStops).toHaveLength(3);
-      expect(result.value.colorStops[0]?.position).toEqual({ value: 0, unit: "%" });
-      expect(result.value.colorStops[1]?.position).toEqual({ value: 50, unit: "%" });
-      expect(result.value.colorStops[2]?.position).toEqual({ value: 100, unit: "%" });
+      expect(result.value.colorStops[0]?.position).toEqual({ kind: "literal", value: 0, unit: "%" });
+      expect(result.value.colorStops[1]?.position).toEqual({ kind: "literal", value: 50, unit: "%" });
+      expect(result.value.colorStops[2]?.position).toEqual({ kind: "literal", value: 100, unit: "%" });
     }
   });
 

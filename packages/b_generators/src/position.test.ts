@@ -5,8 +5,8 @@ import { generate } from "./position";
 describe("Position generator", () => {
   it("should generate position with keywords", () => {
     const result = generate({
-      horizontal: "center",
-      vertical: "top",
+      horizontal: { kind: "keyword", value: "center" },
+      vertical: { kind: "keyword", value: "top" },
     });
     expect(result.ok).toBe(true);
     if (result.ok) {
@@ -16,8 +16,8 @@ describe("Position generator", () => {
 
   it("should generate position with percentages", () => {
     const result = generate({
-      horizontal: { value: 50, unit: "%" },
-      vertical: { value: 25, unit: "%" },
+      horizontal: { kind: "literal", value: 50, unit: "%" },
+      vertical: { kind: "literal", value: 25, unit: "%" },
     });
     expect(result.ok).toBe(true);
     if (result.ok) {
@@ -27,8 +27,8 @@ describe("Position generator", () => {
 
   it("should generate position with lengths", () => {
     const result = generate({
-      horizontal: { value: 10, unit: "px" },
-      vertical: { value: 20, unit: "px" },
+      horizontal: { kind: "literal", value: 10, unit: "px" },
+      vertical: { kind: "literal", value: 20, unit: "px" },
     });
     expect(result.ok).toBe(true);
     if (result.ok) {
@@ -38,8 +38,8 @@ describe("Position generator", () => {
 
   it("should generate position with mixed values", () => {
     const result = generate({
-      horizontal: "left",
-      vertical: { value: 10, unit: "px" },
+      horizontal: { kind: "keyword", value: "left" },
+      vertical: { kind: "literal", value: 10, unit: "px" },
     });
     expect(result.ok).toBe(true);
     if (result.ok) {
@@ -49,8 +49,8 @@ describe("Position generator", () => {
 
   it("should generate center center", () => {
     const result = generate({
-      horizontal: "center",
-      vertical: "center",
+      horizontal: { kind: "keyword", value: "center" },
+      vertical: { kind: "keyword", value: "center" },
     });
     expect(result.ok).toBe(true);
     if (result.ok) {
@@ -60,8 +60,8 @@ describe("Position generator", () => {
 
   it("should generate zero position", () => {
     const result = generate({
-      horizontal: { value: 0, unit: "px" },
-      vertical: { value: 0, unit: "px" },
+      horizontal: { kind: "literal", value: 0, unit: "px" },
+      vertical: { kind: "literal", value: 0, unit: "px" },
     });
     expect(result.ok).toBe(true);
     if (result.ok) {

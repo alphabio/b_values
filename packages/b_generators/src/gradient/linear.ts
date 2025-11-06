@@ -1,8 +1,8 @@
 // b_path:: packages/b_generators/src/gradient/linear.ts
 import { generateOk, type GenerateResult, type GenerateContext } from "@b/types";
 import type * as Type from "@b/types";
-import * as Angle from "../angle";
 import * as ColorStop from "./color-stop";
+import { cssValueToCss } from "@b/utils";
 
 /**
  * Generate CSS direction string from GradientDirection IR.
@@ -12,7 +12,7 @@ import * as ColorStop from "./color-stop";
  */
 function generateDirection(direction: Type.GradientDirection): GenerateResult {
   if (direction.kind === "angle") {
-    return Angle.generate(direction.value);
+    return generateOk(cssValueToCss(direction.value));
   }
 
   if (direction.kind === "to-side") {

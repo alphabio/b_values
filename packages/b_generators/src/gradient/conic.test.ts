@@ -21,7 +21,7 @@ describe("Conic Gradient Generator", () => {
   it("generates conic gradient with from angle", () => {
     const ir: Type.ConicGradient = {
       kind: "conic",
-      fromAngle: { value: 45, unit: "deg" },
+      fromAngle: { kind: "literal", value: 45, unit: "deg" },
       colorStops: [{ color: { kind: "named", name: "red" } }, { color: { kind: "named", name: "blue" } }],
       repeating: false,
     };
@@ -36,7 +36,7 @@ describe("Conic Gradient Generator", () => {
   it("generates conic gradient with position", () => {
     const ir: Type.ConicGradient = {
       kind: "conic",
-      position: { horizontal: "center", vertical: "center" },
+      position: { horizontal: { kind: "keyword", value: "center" }, vertical: { kind: "keyword", value: "center" } },
       colorStops: [{ color: { kind: "named", name: "red" } }, { color: { kind: "named", name: "blue" } }],
       repeating: false,
     };
@@ -51,8 +51,11 @@ describe("Conic Gradient Generator", () => {
   it("generates conic gradient with from angle and position", () => {
     const ir: Type.ConicGradient = {
       kind: "conic",
-      fromAngle: { value: 90, unit: "deg" },
-      position: { horizontal: { value: 30, unit: "%" }, vertical: { value: 40, unit: "%" } },
+      fromAngle: { kind: "literal", value: 90, unit: "deg" },
+      position: {
+        horizontal: { kind: "literal", value: 30, unit: "%" },
+        vertical: { kind: "literal", value: 40, unit: "%" },
+      },
       colorStops: [{ color: { kind: "named", name: "red" } }, { color: { kind: "named", name: "blue" } }],
       repeating: false,
     };
@@ -68,8 +71,8 @@ describe("Conic Gradient Generator", () => {
     const ir: Type.ConicGradient = {
       kind: "conic",
       colorStops: [
-        { color: { kind: "named", name: "red" }, position: { value: 0, unit: "deg" } },
-        { color: { kind: "named", name: "blue" }, position: { value: 45, unit: "deg" } },
+        { color: { kind: "named", name: "red" }, position: { kind: "literal", value: 0, unit: "deg" } },
+        { color: { kind: "named", name: "blue" }, position: { kind: "literal", value: 45, unit: "deg" } },
       ],
       repeating: true,
     };
@@ -85,10 +88,10 @@ describe("Conic Gradient Generator", () => {
     const ir: Type.ConicGradient = {
       kind: "conic",
       colorStops: [
-        { color: { kind: "named", name: "red" }, position: { value: 0, unit: "deg" } },
-        { color: { kind: "named", name: "yellow" }, position: { value: 120, unit: "deg" } },
-        { color: { kind: "named", name: "blue" }, position: { value: 240, unit: "deg" } },
-        { color: { kind: "named", name: "red" }, position: { value: 360, unit: "deg" } },
+        { color: { kind: "named", name: "red" }, position: { kind: "literal", value: 0, unit: "deg" } },
+        { color: { kind: "named", name: "yellow" }, position: { kind: "literal", value: 120, unit: "deg" } },
+        { color: { kind: "named", name: "blue" }, position: { kind: "literal", value: 240, unit: "deg" } },
+        { color: { kind: "named", name: "red" }, position: { kind: "literal", value: 360, unit: "deg" } },
       ],
       repeating: false,
     };
@@ -103,7 +106,7 @@ describe("Conic Gradient Generator", () => {
   it("generates conic gradient with turn unit", () => {
     const ir: Type.ConicGradient = {
       kind: "conic",
-      fromAngle: { value: 0.25, unit: "turn" },
+      fromAngle: { kind: "literal", value: 0.25, unit: "turn" },
       colorStops: [{ color: { kind: "named", name: "red" } }, { color: { kind: "named", name: "blue" } }],
       repeating: false,
     };
@@ -136,16 +139,16 @@ describe("Conic Gradient Generator", () => {
   it("generates conic gradient with all options", () => {
     const ir: Type.ConicGradient = {
       kind: "conic",
-      fromAngle: { value: 45, unit: "deg" },
-      position: { horizontal: "center", vertical: "center" },
+      fromAngle: { kind: "literal", value: 45, unit: "deg" },
+      position: { horizontal: { kind: "keyword", value: "center" }, vertical: { kind: "keyword", value: "center" } },
       colorInterpolationMethod: {
         colorSpace: "oklch",
         hueInterpolationMethod: undefined,
       },
       colorStops: [
-        { color: { kind: "named", name: "red" }, position: { value: 0, unit: "deg" } },
-        { color: { kind: "named", name: "blue" }, position: { value: 180, unit: "deg" } },
-        { color: { kind: "named", name: "red" }, position: { value: 360, unit: "deg" } },
+        { color: { kind: "named", name: "red" }, position: { kind: "literal", value: 0, unit: "deg" } },
+        { color: { kind: "named", name: "blue" }, position: { kind: "literal", value: 180, unit: "deg" } },
+        { color: { kind: "named", name: "red" }, position: { kind: "literal", value: 360, unit: "deg" } },
       ],
       repeating: false,
     };

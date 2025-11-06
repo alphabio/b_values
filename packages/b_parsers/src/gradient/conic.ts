@@ -2,7 +2,7 @@
 import type * as csstree from "css-tree";
 import { createError, parseErr, parseOk, forwardParseErr, type ParseResult } from "@b/types";
 import type * as Type from "@b/types";
-import { parseAngleNode } from "../angle";
+import { parseCssValueNode } from "@b/utils";
 import { parsePosition2D } from "../position";
 import * as ColorStop from "./color-stop";
 import * as Utils from "../utils";
@@ -27,7 +27,7 @@ export function fromFunction(fn: csstree.FunctionNode): ParseResult<Type.ConicGr
     return parseErr(createError("missing-value", "conic-gradient requires at least 2 color stops"));
   }
 
-  let fromAngle: Type.Angle | undefined;
+  let fromAngle: Type.CssValue | undefined;
   let position: Type.Position2D | undefined;
   let colorInterpolationMethod: Type.ColorInterpolationMethod | undefined;
 
@@ -38,7 +38,8 @@ export function fromFunction(fn: csstree.FunctionNode): ParseResult<Type.ConicGr
     idx++;
     const angleNode = children[idx];
     if (angleNode) {
-      const angleResult = parseAngleNode(angleNode);
+      // Use parseCssValueNode to support var(), calc(), and literals
+      const angleResult = parseCssValueNode(angleNode);
       if (angleResult.ok) {
         fromAngle = angleResult.value;
         idx++;

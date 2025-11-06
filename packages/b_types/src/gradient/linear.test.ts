@@ -17,11 +17,11 @@ describe("linearGradientSchema", () => {
   it("validates gradient with angle direction", () => {
     const result = linearGradientSchema.parse({
       kind: "linear",
-      direction: { kind: "angle", value: { value: 45, unit: "deg" } },
+      direction: { kind: "angle", value: { kind: "literal", value: 90, unit: "deg" } },
       colorStops: [{ color: { kind: "named", name: "red" } }, { color: { kind: "named", name: "blue" } }],
       repeating: false,
     });
-    expect(result.direction).toEqual({ kind: "angle", value: { value: 45, unit: "deg" } });
+    expect(result.direction).toEqual({ kind: "angle", value: { kind: "literal", value: 90, unit: "deg" } });
   });
 
   it("validates gradient with to-side direction", () => {

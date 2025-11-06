@@ -47,11 +47,14 @@ describe("radialGradientSchema", () => {
   it("validates gradient with position", () => {
     const result = radialGradientSchema.parse({
       kind: "radial",
-      position: { horizontal: "left", vertical: "top" },
+      position: { horizontal: { kind: "keyword", value: "left" }, vertical: { kind: "keyword", value: "top" } },
       colorStops: [{ color: { kind: "named", name: "red" } }, { color: { kind: "named", name: "blue" } }],
       repeating: false,
     });
-    expect(result.position).toEqual({ horizontal: "left", vertical: "top" });
+    expect(result.position).toEqual({
+      horizontal: { kind: "keyword", value: "left" },
+      vertical: { kind: "keyword", value: "top" },
+    });
   });
 
   it("validates gradient with color space", () => {

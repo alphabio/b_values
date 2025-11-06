@@ -2,7 +2,7 @@
 import type * as csstree from "css-tree";
 import { createError, parseErr, parseOk, forwardParseErr, type ParseResult } from "@b/types";
 import type * as Type from "@b/types";
-import { parseAngleNode } from "../angle";
+import { parseCssValueNode } from "@b/utils";
 import * as ColorStop from "./color-stop";
 import * as Utils from "../utils";
 
@@ -21,7 +21,7 @@ function parseDirection(
   }
 
   if (node.type === "Dimension" || node.type === "Number") {
-    const angleResult = parseAngleNode(node);
+    const angleResult = parseCssValueNode(node);
     if (angleResult.ok) {
       return parseOk({
         direction: {

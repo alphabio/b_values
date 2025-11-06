@@ -1,6 +1,6 @@
 // b_path:: packages/b_types/src/gradient/conic.ts
 import { z } from "zod";
-import { angleSchema } from "../angle";
+import { cssValueSchema } from "../values";
 import { colorStopListSchema } from "../color-stop";
 import { colorInterpolationMethodSchema } from "../color-interpolation-method";
 import { position2DSchema } from "../position";
@@ -11,7 +11,7 @@ import { position2DSchema } from "../position";
 export const conicGradientSchema = z
   .object({
     kind: z.literal("conic"),
-    fromAngle: angleSchema.optional(),
+    fromAngle: cssValueSchema.optional(), // Changed from angleSchema to support var/calc
     position: position2DSchema.optional(),
     colorInterpolationMethod: colorInterpolationMethodSchema.optional(),
     colorStops: colorStopListSchema,
