@@ -1,7 +1,7 @@
 # ADR-004: CSS Validation Pattern - Check Warnings, Not Parse Success
 
-**Status:** Accepted  
-**Date:** 2025-11-06  
+**Status:** Accepted
+**Date:** 2025-11-06
 **Context:** Session 037
 
 ---
@@ -119,15 +119,15 @@ These all parse successfully, but are invalid CSS.
 
 ### Positive
 
-✅ Catch incomplete syntax (missing parentheses, etc.)  
-✅ Catch semantic errors (invalid values, missing required parts)  
-✅ Clear separation: parse for structure, validate for correctness  
+✅ Catch incomplete syntax (missing parentheses, etc.)
+✅ Catch semantic errors (invalid values, missing required parts)
+✅ Clear separation: parse for structure, validate for correctness
 ✅ Consistent error handling across all parsers
 
 ### Negative
 
-⚠️ More verbose validation code  
-⚠️ Need to understand css-tree validation API  
+⚠️ More verbose validation code
+⚠️ Need to understand css-tree validation API
 ⚠️ Different pattern than typical parser usage
 
 ---

@@ -111,3 +111,14 @@
 
 Coverage target achieved! Ready for new features or improvements.
 
+**Hot Topic:** Gradient flexible component ordering
+- See: `docs/sessions/039/GRADIENT_FLEXIBLE_ORDERING_PROPOSAL.md`
+- **Key finding:** No lookahead needed! Can use switch-on-token-type pattern
+- Implementation estimated: 8-10 hours total for all gradients
+- Achieves 100% spec compliance for `||` operator
+- **TDD tests created:** 159 tests (all failing - RED phase) ✅
+  - Radial: 38 tests covering all permutations
+  - Linear: 42 tests covering flexible ordering
+  - Conic: 79 tests covering all permutations
+- Ready for GREEN phase implementation
+
