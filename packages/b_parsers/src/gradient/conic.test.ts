@@ -148,11 +148,15 @@ describe("complex gradient with var() and calc()", () => {
 
     // First color stop
     const stop1 = result.value.colorStops[0];
+    expect(stop1).toBeDefined();
+    if (stop1?.kind === "hint") throw new Error("Expected color stop, got hint");
     expect(stop1?.color.kind).toBe("variable");
     expect(stop1?.position).toHaveLength(2);
 
     // Second color stop
     const stop2 = result.value.colorStops[1];
+    expect(stop2).toBeDefined();
+    if (stop2?.kind === "hint") throw new Error("Expected color stop, got hint");
     expect(stop2?.color.kind).toBe("variable");
     expect(stop2?.position).toHaveLength(2);
   });

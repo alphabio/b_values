@@ -5,11 +5,26 @@ import { cssValueToCss } from "@b/utils";
 
 /**
  * Generate CSS position string from Position2D IR
+ * Supports both simple values and edge+offset syntax
  * @see https://drafts.csswg.org/css-backgrounds-3/#typedef-bg-position
  */
 export function generate(position: Type.Position2D): GenerateResult {
-  const horizontal = cssValueToCss(position.horizontal);
-  const vertical = cssValueToCss(position.vertical);
+  const horizontal = generatePositionComponent(position.horizontal);
+  const vertical = generatePositionComponent(position.vertical);
 
   return generateOk(`${horizontal} ${vertical}`);
+}
+
+/**
+ * Generate CSS for a single position component (horizontal or vertical)
+ */
+function generatePositionComponent(component: Type.CssValue | Type.PositionEdgeOffset): string {
+  // Check if it's edge+offset structure
+  if ("edge" in component) {
+    const offset = cssValueToCss(component.offset);
+    return `${component.edge} ${offset}`;
+  }
+
+  // Simple value
+  return cssValueToCss(component);
 }

@@ -29,10 +29,12 @@ This is **WRONG** - it's mixing up the keyword-offset pairs.
 **4-value syntax:** `[keyword] [offset] [keyword] [offset]`
 
 Each keyword-offset pair belongs together:
+
 - First pair: edge + offset
 - Second pair: edge + offset
 
 For `at top 20px left 15%`:
+
 - `top 20px` → vertical position (from top edge, offset by 20px)
 - `left 15%` → horizontal position (from left edge, offset by 15%)
 
@@ -60,11 +62,11 @@ For `at top 20px left 15%`:
 From CSS spec:
 
 ```
-<position> = 
+<position> =
   [ left | center | right ] || [ top | center | bottom ] |
-  [ left | center | right | <length-percentage> ] 
+  [ left | center | right | <length-percentage> ]
     [ top | center | bottom | <length-percentage> ]? |
-  [ [ left | right ] <length-percentage> ] && 
+  [ [ left | right ] <length-percentage> ] &&
     [ [ top | bottom ] <length-percentage> ]
 ```
 
@@ -80,11 +82,13 @@ From CSS spec:
 ## Impact
 
 **Affected:**
+
 - Radial gradients: `radial-gradient(at top 20px left 15%, ...)`
 - Conic gradients: `conic-gradient(at top 20px left 15%, ...)`
 - Background positions: `background-position: top 20px left 15%`
 
 **Not affected:**
+
 - 2-value syntax: `at 50% 50%` (works correctly)
 - 1-value syntax: `at center` (works correctly)
 
@@ -116,13 +120,13 @@ From CSS spec:
 export type Position = {
   horizontal: CssValue;
   vertical: CssValue;
-}
+};
 
 // Proposed (correct)
 export type Position = {
   horizontal: CssValue | { edge: "left" | "right"; offset: CssValue };
   vertical: CssValue | { edge: "top" | "bottom"; offset: CssValue };
-}
+};
 ```
 
 ### Parser Strategy
@@ -149,10 +153,10 @@ export type Position = {
 ```typescript
 // 4-value syntax
 "at left 15% top 20px"     → left 15% from left, 20px from top
-"at right 10% bottom 30px" → 10% from right, 30px from bottom  
+"at right 10% bottom 30px" → 10% from right, 30px from bottom
 "at top 20px left 15%"     → 20px from top, 15% from left (order matters!)
 
-// 3-value syntax  
+// 3-value syntax
 "at left 15% top"          → 15% from left, top edge
 "at right 10% center"      → 10% from right, center vertically
 
@@ -176,14 +180,14 @@ if (position.horizontal.kind === "literal") {
   // horizontal is a value
 }
 
-// New position  
+// New position
 if ("edge" in position.horizontal) {
   // 4-value syntax: edge + offset
-  console.log(position.horizontal.edge);    // "left" | "right"
-  console.log(position.horizontal.offset);  // CssValue
+  console.log(position.horizontal.edge); // "left" | "right"
+  console.log(position.horizontal.offset); // CssValue
 } else {
   // 2-value syntax: just a value
-  console.log(position.horizontal);  // CssValue
+  console.log(position.horizontal); // CssValue
 }
 ```
 
@@ -192,6 +196,7 @@ if ("edge" in position.horizontal) {
 ## Priority
 
 **Medium-High** - This affects correctness of position interpretation, but:
+
 - Many gradients use simpler 2-value syntax (works correctly)
 - 4-value syntax is less common
 - Generator will still output valid CSS (but with wrong semantics)

@@ -7,7 +7,7 @@ import * as Color from "../color";
 
 /**
  * Parse color stop or color hint from CSS AST nodes.
- * 
+ *
  * Color hint: A single length/percentage value representing the midpoint transition.
  * Color stop: A color value optionally followed by 1-2 position values.
  *
@@ -26,7 +26,7 @@ export function fromNodes(nodes: csstree.CssNode[]): ParseResult<Type.ColorStopO
 
   // Try parsing as color first
   const colorResult = Color.parseNode(firstNode);
-  
+
   // If it's not a color and we only have one node, it might be a color hint
   if (!colorResult.ok && nodes.length === 1) {
     // Try parsing as a length/percentage (color hint)
@@ -36,7 +36,15 @@ export function fromNodes(nodes: csstree.CssNode[]): ParseResult<Type.ColorStopO
       // Validate that it's actually a length-percentage (not just any CSS value)
       // Color hints must be <length-percentage> per CSS spec
       if (
-        hint.kind === "literal" && (hint.unit === "%" || hint.unit === "px" || hint.unit === "em" || hint.unit === "rem" || hint.unit === "vw" || hint.unit === "vh" || hint.unit === "vmin" || hint.unit === "vmax") ||
+        (hint.kind === "literal" &&
+          (hint.unit === "%" ||
+            hint.unit === "px" ||
+            hint.unit === "em" ||
+            hint.unit === "rem" ||
+            hint.unit === "vw" ||
+            hint.unit === "vh" ||
+            hint.unit === "vmin" ||
+            hint.unit === "vmax")) ||
         hint.kind === "variable" ||
         hint.kind === "calc"
       ) {
@@ -49,7 +57,7 @@ export function fromNodes(nodes: csstree.CssNode[]): ParseResult<Type.ColorStopO
     // Not a color or valid hint
     return parseErr(createError("invalid-value", `Invalid color value: ${colorResult.issues[0]?.message}`));
   }
-  
+
   // Must be a color stop
   if (!colorResult.ok) {
     return parseErr(createError("invalid-value", `Invalid color value: ${colorResult.issues[0]?.message}`));

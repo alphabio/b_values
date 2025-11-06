@@ -411,8 +411,11 @@ describe("Conic Gradient - Position", () => {
       if (!result.ok) return;
 
       expect(result.value.position).toBeDefined();
-      expect(result.value.position?.horizontal.kind).toBe("variable");
-      expect(result.value.position?.vertical.kind).toBe("variable");
+      const pos = result.value.position;
+      if (pos && "kind" in pos.horizontal && "kind" in pos.vertical) {
+        expect(pos.horizontal.kind).toBe("variable");
+        expect(pos.vertical.kind).toBe("variable");
+      }
 
       const genResult = Generate.Gradient.Conic.generate(result.value);
       expect(genResult.ok).toBe(true);
@@ -426,7 +429,10 @@ describe("Conic Gradient - Position", () => {
       if (!result.ok) return;
 
       expect(result.value.position).toBeDefined();
-      expect(result.value.position?.horizontal.kind).toBe("calc");
+      const pos = result.value.position;
+      if (pos && "kind" in pos.horizontal) {
+        expect(pos.horizontal.kind).toBe("calc");
+      }
 
       const genResult = Generate.Gradient.Conic.generate(result.value);
       expect(genResult.ok).toBe(true);
@@ -440,7 +446,10 @@ describe("Conic Gradient - Position", () => {
       if (!result.ok) return;
 
       expect(result.value.position).toBeDefined();
-      expect(result.value.position?.vertical.kind).toBe("calc");
+      const pos = result.value.position;
+      if (pos && "kind" in pos.vertical) {
+        expect(pos.vertical.kind).toBe("calc");
+      }
 
       const genResult = Generate.Gradient.Conic.generate(result.value);
       expect(genResult.ok).toBe(true);
@@ -454,7 +463,10 @@ describe("Conic Gradient - Position", () => {
       if (!result.ok) return;
 
       expect(result.value.position).toBeDefined();
-      expect(result.value.position?.horizontal.kind).toBe("clamp");
+      const pos = result.value.position;
+      if (pos && "kind" in pos.horizontal) {
+        expect(pos.horizontal.kind).toBe("clamp");
+      }
 
       const genResult = Generate.Gradient.Conic.generate(result.value);
       expect(genResult.ok).toBe(true);
@@ -468,8 +480,11 @@ describe("Conic Gradient - Position", () => {
       if (!result.ok) return;
 
       expect(result.value.position).toBeDefined();
-      expect(result.value.position?.horizontal.kind).toBe("min");
-      expect(result.value.position?.vertical.kind).toBe("max");
+      const pos = result.value.position;
+      if (pos && "kind" in pos.horizontal && "kind" in pos.vertical) {
+        expect(pos.horizontal.kind).toBe("min");
+        expect(pos.vertical.kind).toBe("max");
+      }
 
       const genResult = Generate.Gradient.Conic.generate(result.value);
       expect(genResult.ok).toBe(true);
@@ -558,8 +573,11 @@ describe("Conic Gradient - Position", () => {
       if (!result.ok) return;
 
       expect(result.value.fromAngle?.kind).toBe("variable");
-      expect(result.value.position?.horizontal.kind).toBe("variable");
-      expect(result.value.position?.vertical.kind).toBe("variable");
+      const pos = result.value.position;
+      if (pos && "kind" in pos.horizontal && "kind" in pos.vertical) {
+        expect(pos.horizontal.kind).toBe("variable");
+        expect(pos.vertical.kind).toBe("variable");
+      }
 
       const genResult = Generate.Gradient.Conic.generate(result.value);
       expect(genResult.ok).toBe(true);
@@ -587,7 +605,10 @@ describe("Conic Gradient - Position", () => {
       if (!result.ok) return;
 
       expect(result.value.fromAngle?.kind).toBe("calc");
-      expect(result.value.position?.horizontal.kind).toBe("calc");
+      const pos3 = result.value.position;
+      if (pos3 && "kind" in pos3.horizontal) {
+        expect(pos3.horizontal.kind).toBe("calc");
+      }
 
       const genResult = Generate.Gradient.Conic.generate(result.value);
       expect(genResult.ok).toBe(true);

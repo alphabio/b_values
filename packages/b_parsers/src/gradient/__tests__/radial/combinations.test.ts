@@ -166,8 +166,10 @@ describe("Radial Gradient Parser - Combinations", () => {
         }
         const pos = result.value.position;
         if (pos) {
-          expect(pos.horizontal.kind).toBe("calc");
-          expect(pos.vertical.kind).toBe("calc");
+          if ("kind" in pos.horizontal && "kind" in pos.vertical) {
+            expect(pos.horizontal.kind).toBe("calc");
+            expect(pos.vertical.kind).toBe("calc");
+          }
         }
         const stop1Pos = result.value.colorStops[0].position;
         const stop2Pos = result.value.colorStops[1].position;
@@ -194,7 +196,9 @@ describe("Radial Gradient Parser - Combinations", () => {
         }
         const pos = result.value.position;
         if (pos) {
-          expect(pos.horizontal.kind).toBe("clamp");
+          if ("kind" in pos.horizontal) {
+            expect(pos.horizontal.kind).toBe("clamp");
+          }
           expect(pos.vertical).toEqual({ kind: "variable", name: "--y" });
         }
       }

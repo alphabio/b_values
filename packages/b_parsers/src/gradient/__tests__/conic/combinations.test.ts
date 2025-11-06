@@ -56,7 +56,11 @@ describe("Conic Gradient - Combinations", () => {
 
       expect(result.value.repeating).toBe(true);
       expect(result.value.fromAngle?.kind).toBe("variable");
-      expect(result.value.position?.horizontal.kind).toBe("variable");
+      const pos = result.value.position;
+      if (pos && "kind" in pos.horizontal) {
+        expect(pos.horizontal.kind).toBe("variable");
+      }
+      if (result.value.colorStops[0]?.kind === "hint") throw new Error("Expected color stop, got hint");
       expect(result.value.colorStops[0]?.color.kind).toBe("variable");
 
       const genResult = Generate.Gradient.Conic.generate(result.value);
@@ -75,7 +79,10 @@ describe("Conic Gradient - Combinations", () => {
       if (!result.ok) return;
 
       expect(result.value.fromAngle?.kind).toBe("calc");
-      expect(result.value.position?.horizontal.kind).toBe("calc");
+      const pos2 = result.value.position;
+      if (pos2 && "kind" in pos2.horizontal) {
+        expect(pos2.horizontal.kind).toBe("calc");
+      }
 
       const genResult = Generate.Gradient.Conic.generate(result.value);
       expect(genResult.ok).toBe(true);

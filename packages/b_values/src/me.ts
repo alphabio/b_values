@@ -77,23 +77,54 @@ import * as decl from "@b/declarations";
 //   ),
 // );
 
+// console.log(
+//   JSON.stringify(
+//     decl.parseDeclaration(`
+//   background-image:
+//     linear-gradient(
+//       to top left,
+//       red 10%,
+//       30%,
+//       yellow,
+//       blue 90%
+//     ),
+//     radial-gradient(
+//       ellipse at top 20px left 15%,
+//       rgba(0, 0, 0, 0.5),
+//       transparent
+//     );
+// `),
+//     null,
+//     2,
+//   ),
+// );
+
 console.log(
   JSON.stringify(
     decl.parseDeclaration(`
   background-image:
-    linear-gradient(
-      to top left,
-      red 10%,
-      30%,
-      yellow,
-      blue 90%
+   linear-gradient(
+      blue,
+      25%,
+      yellow 50%,
+      75%,
+      green
     ),
+
     radial-gradient(
-      ellipse at top 20px left 15%,
-      rgba(0, 0, 0, 0.5),
-      transparent
+      10em 20%,
+      at center,
+      #ff00ff,
+      transparent calc(50% + 20px)
+    ),
+
+    conic-gradient(
+      from -100grad,
+      hsl(50 100% 50% / 0.5) 0%,
+      hsl(100 100% 50% / 0.9) 12.5%,
+      hsl(150 100% 50%) 100%
     );
-`),
+  `),
     null,
     2,
   ),

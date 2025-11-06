@@ -34,7 +34,17 @@ export function numberToCss(number: number): string {
  * @see https://drafts.csswg.org/css-backgrounds-3/#typedef-bg-position
  */
 export function position2DToCss(position: Type.Position2D): string {
-  return `${cssValueToCss(position.horizontal)} ${cssValueToCss(position.vertical)}`;
+  const h =
+    "edge" in position.horizontal
+      ? `${position.horizontal.edge} ${cssValueToCss(position.horizontal.offset)}`
+      : cssValueToCss(position.horizontal);
+
+  const v =
+    "edge" in position.vertical
+      ? `${position.vertical.edge} ${cssValueToCss(position.vertical.offset)}`
+      : cssValueToCss(position.vertical);
+
+  return `${h} ${v}`;
 }
 
 export function joinCssValues(values: string[]): string {

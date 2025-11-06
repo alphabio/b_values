@@ -30,11 +30,11 @@ export function parsePosition2D(nodes, startIdx) {
   // Parse first value
   const firstValue = parseCssValueNodeEnhanced(firstNode);
   positionValues.push(firstValue.value);
-  
+
   // Parse second value if present
   const secondValue = parseCssValueNodeEnhanced(secondNode);
   positionValues.push(secondValue.value);
-  
+
   // Build position (1 or 2 values only)
   if (positionValues.length === 1) {
     // Handle single keyword
@@ -73,31 +73,35 @@ From CSS Backgrounds Level 3:
 <position> =
   [ [ left | center | right ] || [ top | center | bottom ] ]
 |
-  [ [ left | center | right | <length-percentage> ] 
+  [ [ left | center | right | <length-percentage> ]
     [ top | center | bottom | <length-percentage> ]? ]
 |
-  [ [ left | right ] <length-percentage> ] && 
+  [ [ left | right ] <length-percentage> ] &&
     [ [ top | bottom ] <length-percentage> ]
 ```
 
 ### Syntax Breakdown
 
 **1-value:**
+
 - `center` → 50% 50%
 - `left` → left center → 0% 50%
 - `50%` → 50% center → 50% 50%
 
 **2-value:**
+
 - `left top` → 0% 0%
 - `50% 75%` → 50% 75%
 - `center bottom` → 50% 100%
 
 **3-value:**
+
 - `left 15% top` → 15% from left, top edge → (15%, 0%)
 - `right 10% center` → 10% from right, center vertical → (90%, 50%)
 - `center top 20px` → center horizontal, 20px from top → (50%, 20px)
 
 **4-value:**
+
 - `left 15% top 20px` → 15% from left, 20px from top
 - `right 10% bottom 30px` → 10% from right, 30px from bottom
 - `top 20px left 15%` → 20px from top, 15% from left (order doesn't matter for axes)
@@ -130,6 +134,7 @@ left 15% top 20px  ≡  top 20px left 15%
 Both mean: 15% from left, 20px from top
 
 **Axis determination:**
+
 - `left`/`right` → horizontal
 - `top`/`bottom` → vertical
 - First pair determines its axis by keyword
@@ -154,11 +159,13 @@ export type PositionEdgeOffset = {
 ```
 
 **Pros:**
+
 - Backward compatible with simple values
 - Clear representation of 4-value syntax
 - Easy to detect which variant is being used
 
 **Cons:**
+
 - Consumer code needs to check which variant
 - Slightly more complex type checking
 
@@ -174,10 +181,12 @@ export type Position2D = {
 ```
 
 **Pros:**
+
 - Always has simple horizontal/vertical values
 - Optional edge fields for 4-value
 
 **Cons:**
+
 - Less clear that edge+offset are paired
 - Values have different meanings depending on edge presence
 
@@ -210,11 +219,16 @@ while (idx < nodes.length && !isCommaOrEnd(nodes[idx])) {
 
 ```typescript
 switch (values.length) {
-  case 1: return parse1Value(values);
-  case 2: return parse2Value(values);
-  case 3: return parse3Value(values);
-  case 4: return parse4Value(values);
-  default: return error;
+  case 1:
+    return parse1Value(values);
+  case 2:
+    return parse2Value(values);
+  case 3:
+    return parse3Value(values);
+  case 4:
+    return parse4Value(values);
+  default:
+    return error;
 }
 ```
 
@@ -224,33 +238,33 @@ switch (values.length) {
 function parse4Value(values: CssValue[]): Position2D {
   // Pattern: [keyword] [offset] [keyword] [offset]
   // Validate: values[0] and values[2] must be edge keywords
-  
+
   const edge1 = getEdgeKeyword(values[0]);
   const offset1 = values[1];
   const edge2 = getEdgeKeyword(values[2]);
   const offset2 = values[3];
-  
+
   if (!edge1 || !edge2) {
     return error("Expected edge keywords");
   }
-  
+
   // Determine which pair is horizontal vs vertical
   const isHorizontal1 = edge1 === "left" || edge1 === "right";
   const isHorizontal2 = edge2 === "left" || edge2 === "right";
-  
+
   if (isHorizontal1 === isHorizontal2) {
     return error("Both pairs on same axis");
   }
-  
+
   if (isHorizontal1) {
     return {
       horizontal: { edge: edge1, offset: offset1 },
-      vertical: { edge: edge2, offset: offset2 }
+      vertical: { edge: edge2, offset: offset2 },
     };
   } else {
     return {
       horizontal: { edge: edge2, offset: offset2 },
-      vertical: { edge: edge1, offset: offset1 }
+      vertical: { edge: edge1, offset: offset1 },
     };
   }
 }
@@ -322,23 +336,23 @@ export function generate(position: Type.Position2D): string {
 ```typescript
 export function generate(position: Type.Position2D): string {
   let css = "";
-  
+
   // Horizontal
   if ("edge" in position.horizontal) {
     css += `${position.horizontal.edge} ${cssValueToCss(position.horizontal.offset)}`;
   } else {
     css += cssValueToCss(position.horizontal);
   }
-  
+
   css += " ";
-  
+
   // Vertical
   if ("edge" in position.vertical) {
     css += `${position.vertical.edge} ${cssValueToCss(position.vertical.offset)}`;
   } else {
     css += cssValueToCss(position.vertical);
   }
-  
+
   return css;
 }
 ```
@@ -360,12 +374,8 @@ const x = position.horizontal;
 const y = position.vertical;
 
 // After
-const x = "edge" in position.horizontal 
-  ? position.horizontal.offset 
-  : position.horizontal;
-const y = "edge" in position.vertical
-  ? position.vertical.offset
-  : position.vertical;
+const x = "edge" in position.horizontal ? position.horizontal.offset : position.horizontal;
+const y = "edge" in position.vertical ? position.vertical.offset : position.vertical;
 ```
 
 ### Affected Areas

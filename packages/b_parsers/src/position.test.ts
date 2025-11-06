@@ -155,4 +155,194 @@ describe("parsePosition2D", () => {
     if (!result.ok) {
     }
   });
+
+  // 3-value syntax tests
+  describe("3-value syntax", () => {
+    it("should parse left 15% top", () => {
+      const nodes: csstree.CssNode[] = [
+        { type: "Identifier", name: "left" },
+        { type: "Percentage", value: "15" },
+        { type: "Identifier", name: "top" },
+      ];
+      const result = parsePosition2D(nodes, 0);
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.value.position).toEqual({
+          horizontal: {
+            edge: "left",
+            offset: { kind: "literal", value: 15, unit: "%" },
+          },
+          vertical: { kind: "keyword", value: "top" },
+        });
+        expect(result.value.nextIdx).toBe(3);
+      }
+    });
+
+    it("should parse right 10% center", () => {
+      const nodes: csstree.CssNode[] = [
+        { type: "Identifier", name: "right" },
+        { type: "Percentage", value: "10" },
+        { type: "Identifier", name: "center" },
+      ];
+      const result = parsePosition2D(nodes, 0);
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.value.position).toEqual({
+          horizontal: {
+            edge: "right",
+            offset: { kind: "literal", value: 10, unit: "%" },
+          },
+          vertical: { kind: "keyword", value: "center" },
+        });
+      }
+    });
+
+    it("should parse top 20px left", () => {
+      const nodes: csstree.CssNode[] = [
+        { type: "Identifier", name: "top" },
+        { type: "Dimension", value: "20", unit: "px" },
+        { type: "Identifier", name: "left" },
+      ];
+      const result = parsePosition2D(nodes, 0);
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.value.position).toEqual({
+          horizontal: { kind: "keyword", value: "left" },
+          vertical: {
+            edge: "top",
+            offset: { kind: "literal", value: 20, unit: "px" },
+          },
+        });
+      }
+    });
+
+    it("should parse center top 20px", () => {
+      const nodes: csstree.CssNode[] = [
+        { type: "Identifier", name: "center" },
+        { type: "Identifier", name: "top" },
+        { type: "Dimension", value: "20", unit: "px" },
+      ];
+      const result = parsePosition2D(nodes, 0);
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.value.position).toEqual({
+          horizontal: { kind: "keyword", value: "center" },
+          vertical: {
+            edge: "top",
+            offset: { kind: "literal", value: 20, unit: "px" },
+          },
+        });
+      }
+    });
+  });
+
+  // 4-value syntax tests
+  describe("4-value syntax", () => {
+    it("should parse left 15% top 20px", () => {
+      const nodes: csstree.CssNode[] = [
+        { type: "Identifier", name: "left" },
+        { type: "Percentage", value: "15" },
+        { type: "Identifier", name: "top" },
+        { type: "Dimension", value: "20", unit: "px" },
+      ];
+      const result = parsePosition2D(nodes, 0);
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.value.position).toEqual({
+          horizontal: {
+            edge: "left",
+            offset: { kind: "literal", value: 15, unit: "%" },
+          },
+          vertical: {
+            edge: "top",
+            offset: { kind: "literal", value: 20, unit: "px" },
+          },
+        });
+        expect(result.value.nextIdx).toBe(4);
+      }
+    });
+
+    it("should parse top 20px left 15% (order independent)", () => {
+      const nodes: csstree.CssNode[] = [
+        { type: "Identifier", name: "top" },
+        { type: "Dimension", value: "20", unit: "px" },
+        { type: "Identifier", name: "left" },
+        { type: "Percentage", value: "15" },
+      ];
+      const result = parsePosition2D(nodes, 0);
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.value.position).toEqual({
+          horizontal: {
+            edge: "left",
+            offset: { kind: "literal", value: 15, unit: "%" },
+          },
+          vertical: {
+            edge: "top",
+            offset: { kind: "literal", value: 20, unit: "px" },
+          },
+        });
+      }
+    });
+
+    it("should parse right 10% bottom 30px", () => {
+      const nodes: csstree.CssNode[] = [
+        { type: "Identifier", name: "right" },
+        { type: "Percentage", value: "10" },
+        { type: "Identifier", name: "bottom" },
+        { type: "Dimension", value: "30", unit: "px" },
+      ];
+      const result = parsePosition2D(nodes, 0);
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.value.position).toEqual({
+          horizontal: {
+            edge: "right",
+            offset: { kind: "literal", value: 10, unit: "%" },
+          },
+          vertical: {
+            edge: "bottom",
+            offset: { kind: "literal", value: 30, unit: "px" },
+          },
+        });
+      }
+    });
+
+    it("should parse bottom 5px right 8%", () => {
+      const nodes: csstree.CssNode[] = [
+        { type: "Identifier", name: "bottom" },
+        { type: "Dimension", value: "5", unit: "px" },
+        { type: "Identifier", name: "right" },
+        { type: "Percentage", value: "8" },
+      ];
+      const result = parsePosition2D(nodes, 0);
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.value.position).toEqual({
+          horizontal: {
+            edge: "right",
+            offset: { kind: "literal", value: 8, unit: "%" },
+          },
+          vertical: {
+            edge: "bottom",
+            offset: { kind: "literal", value: 5, unit: "px" },
+          },
+        });
+      }
+    });
+
+    it("should reject same axis edges", () => {
+      const nodes: csstree.CssNode[] = [
+        { type: "Identifier", name: "left" },
+        { type: "Percentage", value: "15" },
+        { type: "Identifier", name: "right" },
+        { type: "Percentage", value: "10" },
+      ];
+      const result = parsePosition2D(nodes, 0);
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.issues[0]?.message).toContain("same axis");
+      }
+    });
+  });
 });

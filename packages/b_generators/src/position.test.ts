@@ -68,4 +68,87 @@ describe("Position generator", () => {
       expect(result.value).toBe("0px 0px");
     }
   });
+
+  // 3-value syntax tests
+  describe("edge+offset syntax", () => {
+    it("should generate left 15% top", () => {
+      const result = generate({
+        horizontal: {
+          edge: "left",
+          offset: { kind: "literal", value: 15, unit: "%" },
+        },
+        vertical: { kind: "keyword", value: "top" },
+      });
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.value).toBe("left 15% top");
+      }
+    });
+
+    it("should generate center top 20px", () => {
+      const result = generate({
+        horizontal: { kind: "keyword", value: "center" },
+        vertical: {
+          edge: "top",
+          offset: { kind: "literal", value: 20, unit: "px" },
+        },
+      });
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.value).toBe("center top 20px");
+      }
+    });
+
+    // 4-value syntax tests
+    it("should generate left 15% top 20px", () => {
+      const result = generate({
+        horizontal: {
+          edge: "left",
+          offset: { kind: "literal", value: 15, unit: "%" },
+        },
+        vertical: {
+          edge: "top",
+          offset: { kind: "literal", value: 20, unit: "px" },
+        },
+      });
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.value).toBe("left 15% top 20px");
+      }
+    });
+
+    it("should generate right 10% bottom 30px", () => {
+      const result = generate({
+        horizontal: {
+          edge: "right",
+          offset: { kind: "literal", value: 10, unit: "%" },
+        },
+        vertical: {
+          edge: "bottom",
+          offset: { kind: "literal", value: 30, unit: "px" },
+        },
+      });
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.value).toBe("right 10% bottom 30px");
+      }
+    });
+
+    it("should generate bottom 5px right 8%", () => {
+      const result = generate({
+        horizontal: {
+          edge: "right",
+          offset: { kind: "literal", value: 8, unit: "%" },
+        },
+        vertical: {
+          edge: "bottom",
+          offset: { kind: "literal", value: 5, unit: "px" },
+        },
+      });
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.value).toBe("right 8% bottom 5px");
+      }
+    });
+  });
 });

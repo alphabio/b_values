@@ -215,29 +215,15 @@ export function parseDeclaration(input: string | CSSDeclaration): ParseResult<De
     value = input.value;
   }
 
-  // Step 1: Validate with css-tree (fail fast on TRUE syntax errors)
-  const validation = validate(`${property}: ${value}`);
-
-  if (!validation.ok) {
-    // CSS has syntax errors - cannot parse at all
-    const syntaxIssues: Issue[] = validation.errors.map((err) =>
-      createError("invalid-syntax", err.message, {
-        property: err.property || property,
-      }),
-    );
-    return {
-      ok: false,
-      issues: syntaxIssues,
-      property,
-    };
-  }
-
-  // Step 2: Look up property definition
+  // Step 1: Look up property definition
   const definition = propertyRegistry.get(property);
 
   if (!definition) {
     return parseErr(createError("invalid-value", `Unknown CSS property: ${property}`));
   }
+
+  // Step 2: Validate with css-tree and collect any formatted warnings
+  const validation = validate(`${property}: ${value}`);
 
   // Step 3: Parse the value using the property's parser
   const parseResult = definition.parser(value);
@@ -1343,7 +1329,7 @@ export function generate(color: unknown): GenerateResult {
 
   // 2. Semantic validation (range warnings)
   const warnings = collectWarnings(
-    checkLiteralRange(l, 0, 1, { field: "l", typeName: "OKLCHColor" }),
+    checkAlpha(l, "l", "OKLCHColor"), // Lightness: 0-1 or 0-100%
     checkLiteralRange(c, 0, 0.4, { field: "c", typeName: "OKLCHColor" }),
     checkHue(h, "h", "OKLCHColor"),
     alpha ? checkAlpha(alpha, "alpha", "OKLCHColor") : undefined,
@@ -1450,33 +1436,52 @@ export function generate(color: SpecialColor): GenerateResult {
 
 === File: packages/b_generators/src/gradient/color-stop.ts ===
 // b_path:: packages/b_generators/src/gradient/color-stop.ts
-import type { GenerateResult, GenerateContext } from "@b/types";
+import { generateOk, type GenerateResult, type GenerateContext } from "@b/types";
 import type * as Type from "@b/types";
 import * as Color from "../color";
 import { cssValueToCss } from "@b/utils";
 
 /**
- * Generate CSS color stop string from ColorStop IR.
+ * Generate CSS color stop or hint string from ColorStopOrHint IR.
  *
  * A color stop consists of a color and an optional position.
+ * A color hint is just a position (transition midpoint).
  * Position can be a length, percentage, or angle (for conic gradients).
  *
- * @param colorStop - ColorStop IR object
- * @returns CSS color stop string
+ * @param stopOrHint - ColorStopOrHint IR object
+ * @returns CSS color stop or hint string
  *
  * @example
+ * Color stops:
  * ```typescript
- * generate({ color: { kind: "named", value: "red" } })
+ * generate({ color: { kind: "named", name: "red" } })
  * // => "red"
  *
  * generate({
- *   color: { kind: "named", value: "blue" },
+ *   color: { kind: "named", name: "blue" },
  *   position: { kind: "literal", value: 50, unit: "%" }
  * })
  * // => "blue 50%"
  * ```
+ *
+ * @example
+ * Color hint:
+ * ```typescript
+ * generate({
+ *   kind: "hint",
+ *   position: { kind: "literal", value: 30, unit: "%" }
+ * })
+ * // => "30%"
+ * ```
  */
-export function generate(colorStop: Type.ColorStop, context?: GenerateContext): GenerateResult {
+export function generate(stopOrHint: Type.ColorStopOrHint, context?: GenerateContext): GenerateResult {
+  // Handle color hint
+  if ("kind" in stopOrHint && stopOrHint.kind === "hint") {
+    return generateOk(cssValueToCss(stopOrHint.position));
+  }
+
+  // Handle color stop
+  const colorStop = stopOrHint as Type.ColorStop;
   const colorResult = Color.generate(colorStop.color, {
     parentPath: [...(context?.parentPath ?? []), "color"],
     property: context?.property,
@@ -1816,8 +1821,8 @@ export function generate(ir: Type.LinearGradient, context?: GenerateContext): Ge
 import { generateOk, type GenerateResult, type GenerateContext } from "@b/types";
 import type * as Type from "@b/types";
 import * as Position from "../position";
-import * as Length from "../length";
 import * as ColorStop from "./color-stop";
+import { cssValueToCss } from "@b/utils";
 
 /**
  * Generate CSS radial gradient size string from RadialGradientSize IR.
@@ -1831,18 +1836,13 @@ function generateSize(size: Type.RadialGradientSize): GenerateResult {
   }
 
   if (size.kind === "circle-explicit") {
-    const radiusResult = Length.generateLengthPercentage(size.radius);
-    if (!radiusResult.ok) return radiusResult;
-    return generateOk(radiusResult.value);
+    return generateOk(cssValueToCss(size.radius));
   }
 
-  const rxResult = Length.generateLengthPercentage(size.radiusX);
-  if (!rxResult.ok) return rxResult;
+  const radiusX = cssValueToCss(size.radiusX);
+  const radiusY = cssValueToCss(size.radiusY);
 
-  const ryResult = Length.generateLengthPercentage(size.radiusY);
-  if (!ryResult.ok) return ryResult;
-
-  return generateOk(`${rxResult.value} ${ryResult.value}`);
+  return generateOk(`${radiusX} ${radiusY}`);
 }
 
 /**
@@ -2005,13 +2005,28 @@ import { cssValueToCss } from "@b/utils";
 
 /**
  * Generate CSS position string from Position2D IR
+ * Supports both simple values and edge+offset syntax
  * @see https://drafts.csswg.org/css-backgrounds-3/#typedef-bg-position
  */
 export function generate(position: Type.Position2D): GenerateResult {
-  const horizontal = cssValueToCss(position.horizontal);
-  const vertical = cssValueToCss(position.vertical);
+  const horizontal = generatePositionComponent(position.horizontal);
+  const vertical = generatePositionComponent(position.vertical);
 
   return generateOk(`${horizontal} ${vertical}`);
+}
+
+/**
+ * Generate CSS for a single position component (horizontal or vertical)
+ */
+function generatePositionComponent(component: Type.CssValue | Type.PositionEdgeOffset): string {
+  // Check if it's edge+offset structure
+  if ("edge" in component) {
+    const offset = cssValueToCss(component.offset);
+    return `${component.edge} ${offset}`;
+  }
+
+  // Simple value
+  return cssValueToCss(component);
 }
 
 
@@ -2091,6 +2106,29 @@ export const colorInterpolationSchema = z.union([rectangularColorSpaceSchema, po
 export type ColorInterpolation = z.infer<typeof colorInterpolationSchema>;
 
 
+=== File: packages/b_keywords/src/color-space.ts ===
+// b_path:: packages/b_keywords/src/color-space.ts
+import { z } from "zod";
+
+/**
+ * Color spaces supported by the color() function
+ * @see https://www.w3.org/TR/css-color-4/#color-function
+ */
+export const colorFunctionSpaceSchema = z.union([
+  z.literal("srgb"),
+  z.literal("srgb-linear"),
+  z.literal("display-p3"),
+  z.literal("a98-rgb"),
+  z.literal("prophoto-rgb"),
+  z.literal("rec2020"),
+  z.literal("xyz"),
+  z.literal("xyz-d50"),
+  z.literal("xyz-d65"),
+]);
+
+export type ColorFunctionSpace = z.infer<typeof colorFunctionSpaceSchema>;
+
+
 === File: packages/b_keywords/src/gradient-direction.ts ===
 // b_path:: packages/b_keywords/src/gradient-direction.ts
 import { z } from "zod";
@@ -2119,6 +2157,7 @@ export type GradientCorner = z.infer<typeof gradientCornerSchema>;
 === File: packages/b_keywords/src/index.ts ===
 // b_path:: packages/b_keywords/src/index.ts
 export * from "./color-interpolation";
+export * from "./color-space";
 export * from "./gradient-direction";
 export * from "./named-colors";
 export * from "./position";
@@ -2459,6 +2498,74 @@ export function parseAngleNode(node: csstree.CssNode): ParseResult<Type.Angle> {
 }
 
 
+=== File: packages/b_parsers/src/color/color-function.ts ===
+// b_path:: packages/b_parsers/src/color/color-function.ts
+import type * as csstree from "css-tree";
+import { createError, parseErr, parseOk, forwardParseErr, type ParseResult } from "@b/types";
+import type { ColorFunction } from "@b/types";
+import { parseCssValueNodeEnhanced } from "../css-value-parser-enhanced";
+import { getChildren, getValues } from "@b/utils";
+import { colorFunctionSpaceSchema } from "@b/keywords";
+
+/**
+ * Parse color() function from css-tree AST.
+ *
+ * @see https://www.w3.org/TR/css-color-4/#color-function
+ */
+export function parseColorFunction(node: csstree.FunctionNode): ParseResult<ColorFunction> {
+  if (node.name !== "color") {
+    return parseErr(createError("invalid-syntax", "Expected color() function"));
+  }
+
+  const values = getValues(getChildren(node));
+
+  if (values.length < 4) {
+    return parseErr(
+      createError(
+        "invalid-syntax",
+        `color() function must have at least 4 values (space + 3 channels), got ${values.length}`,
+      ),
+    );
+  }
+
+  // First value must be the color space identifier
+  const colorSpaceNode = values[0];
+  if (!colorSpaceNode || colorSpaceNode.type !== "Identifier") {
+    return parseErr(createError("invalid-syntax", "color() function must start with a color space identifier"));
+  }
+
+  const colorSpaceResult = colorFunctionSpaceSchema.safeParse(colorSpaceNode.name);
+  if (!colorSpaceResult.success) {
+    return parseErr(createError("invalid-syntax", `Invalid color space: ${colorSpaceNode.name}`));
+  }
+
+  // Parse the three channel values
+  const c1Result = parseCssValueNodeEnhanced(values[1]);
+  if (!c1Result.ok) return forwardParseErr<ColorFunction>(c1Result);
+
+  const c2Result = parseCssValueNodeEnhanced(values[2]);
+  if (!c2Result.ok) return forwardParseErr<ColorFunction>(c2Result);
+
+  const c3Result = parseCssValueNodeEnhanced(values[3]);
+  if (!c3Result.ok) return forwardParseErr<ColorFunction>(c3Result);
+
+  const colorFunc: ColorFunction = {
+    kind: "color",
+    colorSpace: colorSpaceResult.data,
+    channels: [c1Result.value, c2Result.value, c3Result.value],
+  };
+
+  // Optional alpha channel (5th value after the 4 required)
+  if (values.length === 5) {
+    const alphaResult = parseCssValueNodeEnhanced(values[4]);
+    if (!alphaResult.ok) return forwardParseErr<ColorFunction>(alphaResult);
+    colorFunc.alpha = alphaResult.value;
+  }
+
+  return parseOk(colorFunc);
+}
+
+
 === File: packages/b_parsers/src/color/color.ts ===
 // b_path:: packages/b_parsers/src/color/color.ts
 import type * as csstree from "css-tree";
@@ -2473,6 +2580,7 @@ import { parseLabFunction } from "./lab";
 import { parseLchFunction } from "./lch";
 import { parseOklabFunction } from "./oklab";
 import { parseOklchFunction } from "./oklch";
+import { parseColorFunction } from "./color-function";
 
 /**
  * Parse color AST node with auto-detection.
@@ -2482,6 +2590,11 @@ import { parseOklchFunction } from "./oklch";
 export function parseNode(node: csstree.CssNode): ParseResult<Type.Color> {
   if (node.type === "Hash") {
     const value = node.value.toLowerCase();
+    // Validate hex color format (3, 4, 6, or 8 hex digits)
+    const hexPattern = /^[0-9a-f]{3}$|^[0-9a-f]{4}$|^[0-9a-f]{6}$|^[0-9a-f]{8}$/;
+    if (!hexPattern.test(value)) {
+      return parseErr(createError("invalid-value", `Invalid hex color: #${value}`));
+    }
     return parseOk({ kind: "hex", value: `#${value}` } as Type.Color);
   }
 
@@ -2514,6 +2627,8 @@ export function parseNode(node: csstree.CssNode): ParseResult<Type.Color> {
         return parseOklabFunction(node);
       case "oklch":
         return parseOklchFunction(node);
+      case "color":
+        return parseColorFunction(node);
       default:
         return parseErr(createError("unsupported-kind", `Unsupported color function: ${funcName}`));
     }
@@ -2665,6 +2780,7 @@ export function parseHwbFunction(node: csstree.FunctionNode): ParseResult<HWBCol
 // b_path:: packages/b_parsers/src/color/index.ts
 export * from "@b/utils";
 export * from "./color";
+export * from "./color-function";
 export * from "./rgb";
 export * from "./hsl";
 export * from "./hwb";
@@ -3024,12 +3140,15 @@ import { parseCssValueNodeEnhanced } from "../css-value-parser-enhanced";
 import * as Color from "../color";
 
 /**
- * Parse color stop from CSS AST nodes.
- * Now supports CssValue for positions (var, calc, literals).
+ * Parse color stop or color hint from CSS AST nodes.
+ *
+ * Color hint: A single length/percentage value representing the midpoint transition.
+ * Color stop: A color value optionally followed by 1-2 position values.
  *
  * @see https://developer.mozilla.org/en-US/docs/Web/CSS/gradient/linear-gradient#color-stops
+ * @see https://developer.mozilla.org/en-US/docs/Web/CSS/gradient/linear-gradient#color-hints
  */
-export function fromNodes(nodes: csstree.CssNode[]): ParseResult<Type.ColorStop> {
+export function fromNodes(nodes: csstree.CssNode[]): ParseResult<Type.ColorStopOrHint> {
   if (nodes.length === 0) {
     return parseErr(createError("missing-value", "Color stop requires at least a color value"));
   }
@@ -3039,7 +3158,41 @@ export function fromNodes(nodes: csstree.CssNode[]): ParseResult<Type.ColorStop>
     return parseErr(createError("missing-value", "Color stop requires at least a color value"));
   }
 
+  // Try parsing as color first
   const colorResult = Color.parseNode(firstNode);
+
+  // If it's not a color and we only have one node, it might be a color hint
+  if (!colorResult.ok && nodes.length === 1) {
+    // Try parsing as a length/percentage (color hint)
+    const hintResult = parseCssValueNodeEnhanced(firstNode);
+    if (hintResult.ok) {
+      const hint = hintResult.value;
+      // Validate that it's actually a length-percentage (not just any CSS value)
+      // Color hints must be <length-percentage> per CSS spec
+      if (
+        (hint.kind === "literal" &&
+          (hint.unit === "%" ||
+            hint.unit === "px" ||
+            hint.unit === "em" ||
+            hint.unit === "rem" ||
+            hint.unit === "vw" ||
+            hint.unit === "vh" ||
+            hint.unit === "vmin" ||
+            hint.unit === "vmax")) ||
+        hint.kind === "variable" ||
+        hint.kind === "calc"
+      ) {
+        return parseOk({
+          kind: "hint" as const,
+          position: hint,
+        });
+      }
+    }
+    // Not a color or valid hint
+    return parseErr(createError("invalid-value", `Invalid color value: ${colorResult.issues[0]?.message}`));
+  }
+
+  // Must be a color stop
   if (!colorResult.ok) {
     return parseErr(createError("invalid-value", `Invalid color value: ${colorResult.issues[0]?.message}`));
   }
@@ -3093,10 +3246,12 @@ import type * as Type from "@b/types";
 import { parseCssValueNodeEnhanced } from "../css-value-parser-enhanced";
 import { parsePosition2D } from "../position";
 import * as ColorStop from "./color-stop";
+import * as SharedParsing from "./shared-parsing";
 import * as Utils from "../utils";
 
 /**
- * Parse conic gradient from CSS function AST.
+ * Parse conic gradient from CSS function AST with flexible component ordering.
+ * Supports CSS spec: [ [ [ from <angle> ]? [ at <position> ]? ] || <color-interpolation-method> ]?
  *
  * @see https://developer.mozilla.org/en-US/docs/Web/CSS/gradient/conic-gradient
  */
@@ -3120,56 +3275,123 @@ export function fromFunction(fn: csstree.FunctionNode): ParseResult<Type.ConicGr
   let colorInterpolationMethod: Type.ColorInterpolationMethod | undefined;
 
   let idx = 0;
+  let hasFromAngle = false;
+  let hasPosition = false;
+  let hasInterpolation = false;
 
-  const fromNode = children[idx];
-  if (fromNode?.type === "Identifier" && fromNode.name.toLowerCase() === "from") {
-    idx++;
-    const angleNode = children[idx];
-    if (angleNode) {
-      // Use parseCssValueNodeEnhanced to support var(), calc(), and literals
-      const angleResult = parseCssValueNodeEnhanced(angleNode);
-      if (angleResult.ok) {
+  // Flexible component parsing: accept components in any order
+  while (idx < children.length) {
+    const node = children[idx];
+    if (!node) break;
+
+    // Skip commas between components (backwards compatibility)
+    if (node.type === "Operator" && node.value === ",") {
+      idx++;
+      continue;
+    }
+
+    // Recognize component by first token
+    if (node.type === "Identifier") {
+      const value = node.name.toLowerCase();
+
+      // From angle: "from <angle>"
+      if (value === "from") {
+        if (hasFromAngle) {
+          return parseErr(createError("invalid-syntax", "Duplicate 'from' angle component"));
+        }
+        hasFromAngle = true;
+        idx++;
+
+        const angleNode = children[idx];
+        if (
+          !angleNode ||
+          angleNode.type === "Operator" ||
+          (angleNode.type === "Identifier" && ["at", "in", "from"].includes(angleNode.name.toLowerCase()))
+        ) {
+          return parseErr(createError("invalid-syntax", "conic-gradient 'from' keyword requires an angle value"));
+        }
+
+        const angleResult = parseCssValueNodeEnhanced(angleNode);
+        if (!angleResult.ok) {
+          return forwardParseErr<Type.ConicGradient>(angleResult);
+        }
         fromAngle = angleResult.value;
         idx++;
+        continue;
       }
-    }
-  }
 
-  const atNode = children[idx];
-  if (atNode?.type === "Identifier" && atNode.name.toLowerCase() === "at") {
-    idx++;
-    const positionNodes: csstree.CssNode[] = [];
+      // Position: "at <position>"
+      if (value === "at") {
+        if (hasPosition) {
+          return parseErr(createError("invalid-syntax", "Duplicate position component"));
+        }
+        hasPosition = true;
+        idx++;
 
-    while (idx < children.length) {
-      const node = children[idx];
-      if (!node) break;
-      if (node.type === "Operator" && node.value === ",") break;
-      if (node.type === "Identifier" && node.name.toLowerCase() === "in") break;
+        const positionNodes: csstree.CssNode[] = [];
+        while (idx < children.length) {
+          const posNode = children[idx];
+          if (!posNode) break;
+          if (posNode.type === "Operator" && posNode.value === ",") break;
+          if (posNode.type === "Identifier" && posNode.name.toLowerCase() === "at") break;
+          if (posNode.type === "Identifier" && posNode.name.toLowerCase() === "in") break;
+          if (posNode.type === "Identifier" && posNode.name.toLowerCase() === "from") break;
 
-      positionNodes.push(node);
-      idx++;
-    }
+          positionNodes.push(posNode);
+          idx++;
+        }
 
-    if (positionNodes.length > 0) {
-      const posResult = parsePosition2D(positionNodes, 0);
-      if (posResult.ok) {
+        if (positionNodes.length === 0) {
+          return parseErr(createError("invalid-syntax", "conic-gradient 'at' keyword requires position values"));
+        }
+        const posResult = parsePosition2D(positionNodes, 0);
+        if (!posResult.ok) {
+          return forwardParseErr<Type.ConicGradient>(posResult);
+        }
         position = posResult.value.position;
+        continue;
       }
+
+      // Color interpolation: "in <colorspace>"
+      if (value === "in") {
+        if (hasInterpolation) {
+          return parseErr(createError("invalid-syntax", "Duplicate color interpolation method"));
+        }
+        hasInterpolation = true;
+
+        const interpolationResult = Utils.parseColorInterpolationMethod(children, idx);
+        if (!interpolationResult) {
+          return parseErr(createError("invalid-syntax", "conic-gradient 'in' keyword requires a color space"));
+        }
+        colorInterpolationMethod = interpolationResult.method;
+        idx = interpolationResult.nextIndex;
+        continue;
+      }
+
+      // Could be a color stop (named color) - break to color stop parsing
+      break;
     }
+
+    // Function or Hash → color stop
+    if (node.type === "Function" || node.type === "Hash") {
+      break;
+    }
+
+    // Dimension, Number, Percentage → could be angle or color stop
+    // If we have fromAngle already, it's likely a color stop
+    if (node.type === "Dimension" || node.type === "Number" || node.type === "Percentage") {
+      // Without 'from' keyword, dimensions are likely color stops
+      break;
+    }
+
+    // Unknown token
+    return parseErr(createError("invalid-value", `Unexpected token in gradient: ${node.type}`));
   }
 
-  idx = Utils.Ast.skipComma(children, idx);
-
-  const interpolationResult = Utils.parseColorInterpolationMethod(children, idx);
-  if (interpolationResult) {
-    colorInterpolationMethod = interpolationResult.method;
-    idx = interpolationResult.nextIndex;
-    idx = Utils.Ast.skipComma(children, idx);
-  }
-
+  // Parse color stops
   const stopGroups = Utils.Ast.splitNodesByComma(children, { startIndex: idx });
 
-  const colorStops: Type.ColorStop[] = [];
+  const colorStops: Type.ColorStopOrHint[] = [];
   const issues: Type.Issue[] = [];
 
   for (const stopNodes of stopGroups) {
@@ -3182,7 +3404,6 @@ export function fromFunction(fn: csstree.FunctionNode): ParseResult<Type.ConicGr
   }
 
   if (issues.length > 0) {
-    // Return partial gradient to enable generator warnings on successfully parsed stops
     return {
       ok: false,
       value: {
@@ -3217,17 +3438,225 @@ export function fromFunction(fn: csstree.FunctionNode): ParseResult<Type.ConicGr
  * @see https://developer.mozilla.org/en-US/docs/Web/CSS/gradient/conic-gradient
  */
 export function parse(css: string): ParseResult<Type.ConicGradient> {
-  const astResult = Utils.Ast.parseCssString(css, "value");
-  if (!astResult.ok) {
-    return forwardParseErr<Type.ConicGradient>(astResult);
-  }
-
-  const funcResult = Utils.Ast.findFunctionNode(astResult.value, ["conic-gradient", "repeating-conic-gradient"]);
+  const funcResult = SharedParsing.parseCssToGradientFunction(css, ["conic-gradient", "repeating-conic-gradient"]);
   if (!funcResult.ok) {
     return forwardParseErr<Type.ConicGradient>(funcResult);
   }
 
-  return fromFunction(funcResult.value);
+  const result = fromFunction(funcResult.value);
+
+  // Add warning if parentheses are unbalanced
+  const parenIssue = SharedParsing.validateParentheses(css, "conic");
+  if (result.ok && parenIssue) {
+    return {
+      ...result,
+      issues: [...result.issues, parenIssue],
+    };
+  }
+
+  return result;
+}
+
+
+=== File: packages/b_parsers/src/gradient/disambiguation.ts ===
+// b_path:: packages/b_parsers/src/gradient/disambiguation.ts
+import type * as csstree from "css-tree";
+import * as Utils from "../utils";
+
+/**
+ * Result of first argument disambiguation
+ */
+export type DisambiguationResult = "direction" | "color";
+
+/**
+ * List of CSS color function names
+ */
+const COLOR_FUNCTIONS = ["rgb", "rgba", "hsl", "hsla", "hwb", "lab", "lch", "oklab", "oklch", "color"] as const;
+
+/**
+ * Check if a function name is a color function
+ */
+function isColorFunction(funcName: string): boolean {
+  return COLOR_FUNCTIONS.includes(funcName.toLowerCase() as (typeof COLOR_FUNCTIONS)[number]);
+}
+
+/**
+ * Disambiguate whether the first argument in a gradient should be parsed
+ * as a direction/position or as the first color stop.
+ *
+ * This handles the ambiguity where CSS value functions like var() and calc()
+ * could represent either a direction/angle OR a color value depending on context.
+ *
+ * **Strategy:**
+ * - Unambiguous cases: Explicit types (Dimension, Hash, color functions) → determined directly
+ * - Ambiguous cases (var/calc/clamp/min/max): Use lookahead to count remaining stops
+ *   - If >= 2 stops remain after consuming as direction → parse as direction
+ *   - Otherwise → parse as color stop
+ *
+ * @param children - Array of AST nodes from the gradient function
+ * @returns "direction" if should parse as direction, "color" if should parse as color stop
+ *
+ * @example
+ * ```typescript
+ * // Unambiguous: angle
+ * disambiguateFirstArg([Dimension(45deg), ...]) // "direction"
+ *
+ * // Unambiguous: color
+ * disambiguateFirstArg([Hash(#ff0000), ...]) // "color"
+ * disambiguateFirstArg([Function(rgb), ...]) // "color"
+ *
+ * // Ambiguous: var with 2+ colors
+ * disambiguateFirstArg([Function(var), Identifier(red), Identifier(blue)]) // "direction"
+ *
+ * // Ambiguous: var with 1 color
+ * disambiguateFirstArg([Function(var), Identifier(blue)]) // "color"
+ * ```
+ */
+export function disambiguateFirstArg(children: csstree.CssNode[]): DisambiguationResult {
+  if (children.length === 0) {
+    return "color"; // Default to color for empty
+  }
+
+  const firstNode = children[0];
+  if (!firstNode) {
+    return "color";
+  }
+
+  // Skip leading whitespace
+  let idx = 0;
+  while (children[idx] && children[idx]?.type === "WhiteSpace") {
+    idx++;
+  }
+  const first = children[idx];
+  if (!first) {
+    return "color";
+  }
+
+  // ========================================
+  // UNAMBIGUOUS: Direction
+  // ========================================
+
+  // Explicit angle with unit (45deg, 0.5turn, 100grad, 1.5rad)
+  if (first.type === "Dimension") {
+    return "direction";
+  }
+
+  // Unitless number (treated as degrees: 0, 45, 90, etc)
+  if (first.type === "Number") {
+    return "direction";
+  }
+
+  // Keyword direction (to top, to right, to bottom left, etc)
+  if (first.type === "Identifier" && first.name.toLowerCase() === "to") {
+    return "direction";
+  }
+
+  // ========================================
+  // UNAMBIGUOUS: Color
+  // ========================================
+
+  // Hex color (#ff0000, #f00)
+  if (first.type === "Hash") {
+    return "color";
+  }
+
+  // Named color identifier (red, blue, transparent)
+  // Excludes 'to' which is handled above
+  if (first.type === "Identifier") {
+    return "color";
+  }
+
+  // ========================================
+  // POTENTIALLY AMBIGUOUS: Functions
+  // ========================================
+
+  if (first.type === "Function") {
+    const funcName = first.name.toLowerCase();
+
+    // Color functions are unambiguous
+    if (isColorFunction(funcName)) {
+      return "color";
+    }
+
+    // CSS value functions (var, calc, clamp, min, max) are ambiguous
+    // They could be:
+    // - var(--angle) → direction
+    // - var(--color) → color
+    // - calc(45deg + 10deg) → direction
+    // - calc(rgb(255,0,0) + rgb(0,0,255)) → color (hypothetically)
+
+    // Strategy: Count remaining comma-separated groups after this node
+    // If >= 2 groups remain, then this can be direction with valid gradient
+    // If < 2 groups remain, must be color (gradient needs >= 2 color stops)
+
+    const remainingGroups = Utils.Ast.splitNodesByComma(children, {
+      startIndex: idx + 1,
+      trimWhitespace: true,
+    });
+
+    if (remainingGroups.length >= 2) {
+      // Valid: first arg as direction + 2+ color stops
+      return "direction";
+    }
+
+    // Not enough stops if we consume this as direction
+    // Must be a color stop
+    return "color";
+  }
+
+  // ========================================
+  // DEFAULT: Color
+  // ========================================
+
+  // For any other node type, default to color stop
+  return "color";
+}
+
+
+=== File: packages/b_parsers/src/gradient/gradient.ts ===
+// b_path:: packages/b_parsers/src/gradient/gradient.ts
+import type { ParseResult } from "@b/types";
+import type * as Type from "@b/types";
+import * as Radial from "./radial";
+import * as Linear from "./linear";
+import * as Conic from "./conic";
+
+/**
+ * Unified gradient parser that detects gradient type and dispatches to appropriate parser.
+ *
+ * Supports:
+ * - linear-gradient() / repeating-linear-gradient()
+ * - radial-gradient() / repeating-radial-gradient()
+ * - conic-gradient() / repeating-conic-gradient()
+ *
+ * @param css - CSS gradient function string
+ * @returns Parsed gradient IR
+ */
+export function parse(css: string): ParseResult<Type.Gradient> {
+  const trimmed = css.trim();
+
+  if (trimmed.startsWith("radial-gradient(") || trimmed.startsWith("repeating-radial-gradient(")) {
+    return Radial.parse(css);
+  }
+
+  if (trimmed.startsWith("linear-gradient(") || trimmed.startsWith("repeating-linear-gradient(")) {
+    return Linear.parse(css);
+  }
+
+  if (trimmed.startsWith("conic-gradient(") || trimmed.startsWith("repeating-conic-gradient(")) {
+    return Conic.parse(css);
+  }
+
+  return {
+    ok: false,
+    issues: [
+      {
+        code: "invalid-value",
+        severity: "error",
+        message: `Expected gradient function (linear-gradient, radial-gradient, or conic-gradient), got: ${trimmed.slice(0, 50)}`,
+      },
+    ],
+  };
 }
 
 
@@ -3237,6 +3666,7 @@ export * as ColorStop from "./color-stop";
 export * as Linear from "./linear";
 export * as Radial from "./radial";
 export * as Conic from "./conic";
+export * from "./gradient";
 
 
 === File: packages/b_parsers/src/gradient/linear.ts ===
@@ -3246,7 +3676,9 @@ import { createError, parseErr, parseOk, forwardParseErr, type ParseResult } fro
 import type * as Type from "@b/types";
 import { parseCssValueNodeEnhanced } from "../css-value-parser-enhanced";
 import * as ColorStop from "./color-stop";
+import * as SharedParsing from "./shared-parsing";
 import * as Utils from "../utils";
+import { isCssValueFunction } from "../utils/css-value-functions";
 
 /**
  * Parse gradient direction from nodes.
@@ -3262,7 +3694,7 @@ function parseDirection(
     return parseErr(createError("missing-value", "Expected direction value"));
   }
 
-  if (node.type === "Dimension" || node.type === "Number") {
+  if (node.type === "Dimension" || node.type === "Number" || isCssValueFunction(node)) {
     const angleResult = parseCssValueNodeEnhanced(node);
     if (angleResult.ok) {
       return parseOk({
@@ -3317,7 +3749,9 @@ function parseDirection(
 }
 
 /**
- * Parse linear gradient from CSS function AST.
+ * Parse linear gradient from CSS function AST with flexible component ordering.
+ * Supports CSS spec: [ <linear-gradient-syntax> ]?
+ * Where direction (angle/to-side/to-corner) and interpolation can appear in any order
  *
  * @see https://developer.mozilla.org/en-US/docs/Web/CSS/gradient/linear-gradient
  */
@@ -3340,34 +3774,123 @@ export function fromFunction(fn: csstree.FunctionNode): ParseResult<Type.LinearG
   let colorInterpolationMethod: Type.ColorInterpolationMethod | undefined;
 
   let idx = 0;
+  let hasDirection = false;
+  let hasInterpolation = false;
 
-  const firstNode = children[idx];
-  if (firstNode) {
-    if (
-      firstNode.type === "Dimension" ||
-      firstNode.type === "Number" ||
-      (firstNode.type === "Identifier" && firstNode.name.toLowerCase() === "to")
-    ) {
+  // Flexible component parsing: accept direction and interpolation in any order
+  while (idx < children.length) {
+    const node = children[idx];
+    if (!node) break;
+
+    // Skip commas between components (backwards compatibility)
+    if (node.type === "Operator" && node.value === ",") {
+      idx++;
+      continue;
+    }
+
+    // Recognize component by first token
+    if (node.type === "Identifier") {
+      const value = node.name.toLowerCase();
+
+      // Color interpolation: "in <colorspace>"
+      if (value === "in") {
+        if (hasInterpolation) {
+          return parseErr(createError("invalid-syntax", "Duplicate color interpolation method"));
+        }
+        hasInterpolation = true;
+
+        const interpolationResult = Utils.parseColorInterpolationMethod(children, idx);
+        if (interpolationResult) {
+          colorInterpolationMethod = interpolationResult.method;
+          idx = interpolationResult.nextIndex;
+        }
+        continue;
+      }
+
+      // Direction: "to <side>" or "to <corner>"
+      if (value === "to") {
+        if (hasDirection) {
+          return parseErr(createError("invalid-syntax", "Duplicate direction component"));
+        }
+
+        const dirResult = parseDirection(children, idx);
+        if (dirResult.ok) {
+          hasDirection = true;
+          direction = dirResult.value.direction;
+          idx = dirResult.value.nextIdx;
+          continue;
+        }
+        // Invalid direction (e.g., "to diagonal") - treat as color stop
+        break;
+      }
+
+      // Could be a color stop (named color) - break to color stop parsing
+      break;
+    }
+
+    // Dimension, Number → angle direction
+    if (node.type === "Dimension" || node.type === "Number") {
+      if (hasDirection) {
+        // Could be a color stop position - break to color stop parsing
+        break;
+      }
+      hasDirection = true;
+
       const dirResult = parseDirection(children, idx);
       if (dirResult.ok) {
         direction = dirResult.value.direction;
         idx = dirResult.value.nextIdx;
+      } else {
+        // Not a valid direction, might be color stop
+        hasDirection = false;
+        break;
       }
+      continue;
     }
+
+    // Function (calc/var) → could be angle direction, but be conservative
+    if (isCssValueFunction(node)) {
+      if (!hasDirection) {
+        const funcName = node.type === "Function" ? node.name.toLowerCase() : "";
+
+        // Special case for var(): it's ambiguous
+        // Count total comma-separated groups to disambiguate:
+        // - 2 groups: var(), var() → both are color stops
+        // - 3+ groups: var(), color, color → first is direction
+        if (funcName === "var") {
+          const allGroups = Utils.Ast.splitNodesByComma(children, { startIndex: 0 });
+          if (allGroups.length === 2) {
+            // Only 2 items: must be 2 color stops
+            break;
+          }
+        }
+
+        // Try parsing as direction
+        const dirResult = parseDirection(children, idx);
+        if (dirResult.ok) {
+          hasDirection = true;
+          direction = dirResult.value.direction;
+          idx = dirResult.value.nextIdx;
+          continue;
+        }
+      }
+      // Not a direction, must be color stop
+      break;
+    }
+
+    // Function (color) or Hash → color stop
+    if (node.type === "Function" || node.type === "Hash") {
+      break;
+    }
+
+    // Unknown token
+    return parseErr(createError("invalid-value", `Unexpected token in gradient: ${node.type}`));
   }
 
-  idx = Utils.Ast.skipComma(children, idx);
-
-  const interpolationResult = Utils.parseColorInterpolationMethod(children, idx);
-  if (interpolationResult) {
-    colorInterpolationMethod = interpolationResult.method;
-    idx = interpolationResult.nextIndex;
-    idx = Utils.Ast.skipComma(children, idx);
-  }
-
+  // Parse color stops
   const stopGroups = Utils.Ast.splitNodesByComma(children, { startIndex: idx });
 
-  const colorStops: Type.ColorStop[] = [];
+  const colorStops: Type.ColorStopOrHint[] = [];
   const issues: Type.Issue[] = [];
 
   for (const stopNodes of stopGroups) {
@@ -3380,7 +3903,6 @@ export function fromFunction(fn: csstree.FunctionNode): ParseResult<Type.LinearG
   }
 
   if (issues.length > 0) {
-    // Return partial gradient to enable generator warnings on successfully parsed stops
     return {
       ok: false,
       value: {
@@ -3413,17 +3935,23 @@ export function fromFunction(fn: csstree.FunctionNode): ParseResult<Type.LinearG
  * @see https://developer.mozilla.org/en-US/docs/Web/CSS/gradient/linear-gradient
  */
 export function parse(css: string): ParseResult<Type.LinearGradient> {
-  const astResult = Utils.Ast.parseCssString(css, "value");
-  if (!astResult.ok) {
-    return forwardParseErr<Type.LinearGradient>(astResult);
-  }
-
-  const funcResult = Utils.Ast.findFunctionNode(astResult.value, ["linear-gradient", "repeating-linear-gradient"]);
+  const funcResult = SharedParsing.parseCssToGradientFunction(css, ["linear-gradient", "repeating-linear-gradient"]);
   if (!funcResult.ok) {
     return forwardParseErr<Type.LinearGradient>(funcResult);
   }
 
-  return fromFunction(funcResult.value);
+  const result = fromFunction(funcResult.value);
+
+  // Add warning if parentheses are unbalanced
+  const parenIssue = SharedParsing.validateParentheses(css, "linear");
+  if (result.ok && parenIssue) {
+    return {
+      ...result,
+      issues: [...result.issues, parenIssue],
+    };
+  }
+
+  return result;
 }
 
 
@@ -3433,10 +3961,12 @@ import type * as csstree from "css-tree";
 import { createError, parseErr, parseOk, forwardParseErr, type ParseResult } from "@b/types";
 import type * as Type from "@b/types";
 import type { RadialShape, RadialSizeKeyword } from "@b/keywords";
-import { parseLengthPercentageNode } from "../length";
 import { parsePosition2D } from "../position";
+import { parseCssValueNodeEnhanced } from "../css-value-parser-enhanced";
 import * as ColorStop from "./color-stop";
+import * as SharedParsing from "./shared-parsing";
 import * as Utils from "../utils";
+import { isCssValueFunction } from "../utils/css-value-functions";
 
 /**
  * Parse radial gradient shape and size from nodes.
@@ -3475,9 +4005,12 @@ function parseShapeAndSize(
           };
           idx++;
         }
-      } else if (nextNode?.type === "Dimension" || nextNode?.type === "Percentage") {
+      } else if (
+        nextNode &&
+        (nextNode.type === "Dimension" || nextNode.type === "Percentage" || isCssValueFunction(nextNode))
+      ) {
         if (shape === "circle") {
-          const radiusResult = parseLengthPercentageNode(nextNode);
+          const radiusResult = parseCssValueNodeEnhanced(nextNode);
           if (radiusResult.ok) {
             size = {
               kind: "circle-explicit",
@@ -3486,12 +4019,12 @@ function parseShapeAndSize(
             idx++;
           }
         } else {
-          const rxResult = parseLengthPercentageNode(nextNode);
+          const rxResult = parseCssValueNodeEnhanced(nextNode);
           if (rxResult.ok) {
             idx++;
             const ryNode = nodes[idx];
-            if (ryNode && (ryNode.type === "Dimension" || ryNode.type === "Percentage")) {
-              const ryResult = parseLengthPercentageNode(ryNode);
+            if (ryNode && (ryNode.type === "Dimension" || ryNode.type === "Percentage" || isCssValueFunction(ryNode))) {
+              const ryResult = parseCssValueNodeEnhanced(ryNode);
               if (ryResult.ok) {
                 size = {
                   kind: "ellipse-explicit",
@@ -3521,13 +4054,18 @@ function parseShapeAndSize(
       }
     }
   } else if (node.type === "Dimension" || node.type === "Percentage") {
-    const firstResult = parseLengthPercentageNode(node);
+    // Only parse bare dimensions/percentages as sizes, not functions
+    // Functions as first node are likely colors (rgb, hsl, var, etc.)
+    const firstResult = parseCssValueNodeEnhanced(node);
     if (firstResult.ok) {
       idx++;
       const secondNode = nodes[idx];
 
-      if (secondNode && (secondNode.type === "Dimension" || secondNode.type === "Percentage")) {
-        const secondResult = parseLengthPercentageNode(secondNode);
+      if (
+        secondNode &&
+        (secondNode.type === "Dimension" || secondNode.type === "Percentage" || isCssValueFunction(secondNode))
+      ) {
+        const secondResult = parseCssValueNodeEnhanced(secondNode);
         if (secondResult.ok) {
           size = {
             kind: "ellipse-explicit",
@@ -3535,12 +4073,32 @@ function parseShapeAndSize(
             radiusY: secondResult.value,
           };
           idx++;
+
+          // Check for shape after explicit ellipse size
+          const shapeNode = nodes[idx];
+          if (shapeNode?.type === "Identifier") {
+            const shapeValue = shapeNode.name.toLowerCase();
+            if (shapeValue === "circle" || shapeValue === "ellipse") {
+              shape = shapeValue as RadialShape;
+              idx++;
+            }
+          }
         }
       } else {
         size = {
           kind: "circle-explicit",
           radius: firstResult.value,
         };
+
+        // Check for shape after explicit circle size
+        const shapeNode = nodes[idx];
+        if (shapeNode?.type === "Identifier") {
+          const shapeValue = shapeNode.name.toLowerCase();
+          if (shapeValue === "circle" || shapeValue === "ellipse") {
+            shape = shapeValue as RadialShape;
+            idx++;
+          }
+        }
       }
     }
   }
@@ -3549,7 +4107,8 @@ function parseShapeAndSize(
 }
 
 /**
- * Parse radial gradient from CSS function AST.
+ * Parse radial gradient from CSS function AST with flexible component ordering.
+ * Supports CSS spec: [ [ [ <radial-shape> || <radial-size> ]? [ at <position> ]? ] || <color-interpolation-method> ]?
  *
  * @see https://developer.mozilla.org/en-US/docs/Web/CSS/gradient/radial-gradient
  */
@@ -3574,49 +4133,160 @@ export function fromFunction(fn: csstree.FunctionNode): ParseResult<Type.RadialG
   let colorInterpolationMethod: Type.ColorInterpolationMethod | undefined;
 
   let idx = 0;
+  let hasShape = false;
+  let hasSize = false;
+  let hasPosition = false;
+  let hasInterpolation = false;
 
-  const shapeAndSizeResult = parseShapeAndSize(children, idx);
-  if (shapeAndSizeResult.ok) {
-    shape = shapeAndSizeResult.value.shape;
-    size = shapeAndSizeResult.value.size;
-    idx = shapeAndSizeResult.value.nextIdx;
-  }
+  // Flexible component parsing: accept components in any order
+  while (idx < children.length) {
+    const node = children[idx];
+    if (!node) break;
 
-  const atNode = children[idx];
-  if (atNode?.type === "Identifier" && atNode.name.toLowerCase() === "at") {
-    idx++;
-    const positionNodes: csstree.CssNode[] = [];
-
-    while (idx < children.length) {
-      const node = children[idx];
-      if (!node) break;
-      if (node.type === "Operator" && node.value === ",") break;
-      if (node.type === "Identifier" && node.name.toLowerCase() === "in") break;
-
-      positionNodes.push(node);
+    // Skip commas between components (backwards compatibility)
+    if (node.type === "Operator" && node.value === ",") {
       idx++;
+      continue;
     }
 
-    if (positionNodes.length > 0) {
-      const posResult = parsePosition2D(positionNodes, 0);
-      if (posResult.ok) {
-        position = posResult.value.position;
+    // Recognize component by first token
+    if (node.type === "Identifier") {
+      const value = node.name.toLowerCase();
+
+      // Position component: "at <position>"
+      if (value === "at") {
+        if (hasPosition) {
+          return parseErr(createError("invalid-syntax", "Duplicate position component"));
+        }
+        hasPosition = true;
+        idx++;
+
+        const positionNodes: csstree.CssNode[] = [];
+        while (idx < children.length) {
+          const posNode = children[idx];
+          if (!posNode) break;
+          if (posNode.type === "Operator" && posNode.value === ",") break;
+          if (posNode.type === "Identifier" && posNode.name.toLowerCase() === "at") break;
+          if (posNode.type === "Identifier" && posNode.name.toLowerCase() === "in") break;
+          if (posNode.type === "Identifier" && ["circle", "ellipse"].includes(posNode.name.toLowerCase())) break;
+          if (
+            posNode.type === "Identifier" &&
+            ["closest-side", "closest-corner", "farthest-side", "farthest-corner"].includes(posNode.name.toLowerCase())
+          )
+            break;
+
+          positionNodes.push(posNode);
+          idx++;
+        }
+
+        if (positionNodes.length > 0) {
+          const posResult = parsePosition2D(positionNodes, 0);
+          if (posResult.ok) {
+            position = posResult.value.position;
+          } else {
+            return forwardParseErr<Type.RadialGradient>(posResult);
+          }
+        }
+        continue;
       }
+
+      // Color interpolation: "in <colorspace>"
+      if (value === "in") {
+        if (hasInterpolation) {
+          return parseErr(createError("invalid-syntax", "Duplicate color interpolation method"));
+        }
+        hasInterpolation = true;
+
+        const interpolationResult = Utils.parseColorInterpolationMethod(children, idx);
+        if (interpolationResult) {
+          colorInterpolationMethod = interpolationResult.method;
+          idx = interpolationResult.nextIndex;
+        }
+        continue;
+      }
+
+      // Shape: "circle" or "ellipse" - parse shape and potentially adjacent size
+      if (value === "circle" || value === "ellipse") {
+        if (hasShape || hasSize) {
+          return parseErr(createError("invalid-syntax", "Duplicate shape/size component"));
+        }
+
+        // Use the old parseShapeAndSize function which handles shape+size together
+        const shapeAndSizeResult = parseShapeAndSize(children, idx);
+        if (shapeAndSizeResult.ok) {
+          shape = shapeAndSizeResult.value.shape;
+          size = shapeAndSizeResult.value.size;
+          // Mark both as parsed since they're a combined component
+          hasShape = true;
+          hasSize = true;
+          idx = shapeAndSizeResult.value.nextIdx;
+        } else {
+          return forwardParseErr<Type.RadialGradient>(shapeAndSizeResult);
+        }
+        continue;
+      }
+
+      // Size keyword: "closest-side" etc. - parse size and potentially adjacent shape
+      if (["closest-side", "closest-corner", "farthest-side", "farthest-corner"].includes(value)) {
+        if (hasSize || hasShape) {
+          return parseErr(createError("invalid-syntax", "Duplicate shape/size component"));
+        }
+
+        // Use parseShapeAndSize starting from this size keyword
+        const shapeAndSizeResult = parseShapeAndSize(children, idx);
+        if (shapeAndSizeResult.ok) {
+          shape = shapeAndSizeResult.value.shape;
+          size = shapeAndSizeResult.value.size;
+          // Mark both as parsed since they're a combined component
+          hasShape = true;
+          hasSize = true;
+          idx = shapeAndSizeResult.value.nextIdx;
+        } else {
+          return forwardParseErr<Type.RadialGradient>(shapeAndSizeResult);
+        }
+        continue;
+      }
+
+      // Could be a color stop (named color) - break to color stop parsing
+      break;
     }
+
+    // Dimension or Percentage → explicit size - parse size and potentially adjacent shape
+    if (node.type === "Dimension" || node.type === "Percentage") {
+      if (hasSize || hasShape) {
+        // Could be a color stop position - break to color stop parsing
+        break;
+      }
+
+      // Use parseShapeAndSize starting from this dimension
+      const shapeAndSizeResult = parseShapeAndSize(children, idx);
+      if (shapeAndSizeResult.ok) {
+        shape = shapeAndSizeResult.value.shape;
+        size = shapeAndSizeResult.value.size;
+        // Mark both as parsed since they're a combined component
+        hasShape = true;
+        hasSize = true;
+        idx = shapeAndSizeResult.value.nextIdx;
+      } else {
+        // Not a valid size, might be color stop
+        break;
+      }
+      continue;
+    }
+
+    // Function or Hash → color stop, break to color stop parsing
+    if (node.type === "Function" || node.type === "Hash") {
+      break;
+    }
+
+    // Unknown token
+    return parseErr(createError("invalid-value", `Unexpected token in gradient: ${node.type}`));
   }
 
-  idx = Utils.Ast.skipComma(children, idx);
-
-  const interpolationResult = Utils.parseColorInterpolationMethod(children, idx);
-  if (interpolationResult) {
-    colorInterpolationMethod = interpolationResult.method;
-    idx = interpolationResult.nextIndex;
-    idx = Utils.Ast.skipComma(children, idx);
-  }
-
+  // Parse color stops
   const stopGroups = Utils.Ast.splitNodesByComma(children, { startIndex: idx });
 
-  const colorStops: Type.ColorStop[] = [];
+  const colorStops: Type.ColorStopOrHint[] = [];
   const issues: Type.Issue[] = [];
 
   for (const stopNodes of stopGroups) {
@@ -3629,7 +4299,6 @@ export function fromFunction(fn: csstree.FunctionNode): ParseResult<Type.RadialG
   }
 
   if (issues.length > 0) {
-    // Return partial gradient to enable generator warnings on successfully parsed stops
     return {
       ok: false,
       value: {
@@ -3666,17 +4335,103 @@ export function fromFunction(fn: csstree.FunctionNode): ParseResult<Type.RadialG
  * @see https://developer.mozilla.org/en-US/docs/Web/CSS/gradient/radial-gradient
  */
 export function parse(css: string): ParseResult<Type.RadialGradient> {
-  const astResult = Utils.Ast.parseCssString(css, "value");
-  if (!astResult.ok) {
-    return forwardParseErr<Type.RadialGradient>(astResult);
-  }
-
-  const funcResult = Utils.Ast.findFunctionNode(astResult.value, ["radial-gradient", "repeating-radial-gradient"]);
+  const funcResult = SharedParsing.parseCssToGradientFunction(css, ["radial-gradient", "repeating-radial-gradient"]);
   if (!funcResult.ok) {
     return forwardParseErr<Type.RadialGradient>(funcResult);
   }
 
-  return fromFunction(funcResult.value);
+  const result = fromFunction(funcResult.value);
+
+  // Add warning if parentheses are unbalanced
+  const parenIssue = SharedParsing.validateParentheses(css, "radial");
+  if (result.ok && parenIssue) {
+    return {
+      ...result,
+      issues: [...result.issues, parenIssue],
+    };
+  }
+
+  return result;
+}
+
+
+=== File: packages/b_parsers/src/gradient/shared-parsing.ts ===
+// b_path:: packages/b_parsers/src/gradient/shared-parsing.ts
+import type * as csstree from "css-tree";
+import { createWarning, parseOk, type ParseResult, forwardParseErr } from "@b/types";
+import type * as Type from "@b/types";
+import * as Utils from "../utils";
+
+/**
+ * Parse color interpolation method from "in" keyword.
+ *
+ * Looks for "in <color-space> [<hue-method>]" pattern.
+ *
+ * @returns Result with method and next index, or forwards parse error
+ */
+export function parseColorInterpolationMethod(
+  children: csstree.CssNode[],
+  idx: number,
+): ParseResult<{ method: Type.ColorInterpolationMethod | undefined; nextIdx: number }> {
+  const inNode = children[idx];
+  if (inNode?.type === "Identifier" && inNode.name.toLowerCase() === "in") {
+    const interpolationResult = Utils.parseColorInterpolationMethod(children, idx);
+    if (!interpolationResult) {
+      return parseOk({ method: undefined, nextIdx: idx });
+    }
+    return parseOk({
+      method: interpolationResult.method,
+      nextIdx: interpolationResult.nextIndex,
+    });
+  }
+
+  return parseOk({ method: undefined, nextIdx: idx });
+}
+
+/**
+ * Parse CSS string to gradient function node.
+ *
+ * Validates CSS syntax and finds the gradient function.
+ *
+ * @param css - CSS gradient string
+ * @param gradientNames - Function names to look for (e.g., ["linear-gradient", "repeating-linear-gradient"])
+ * @returns Result with function node
+ */
+export function parseCssToGradientFunction(css: string, gradientNames: string[]): ParseResult<csstree.FunctionNode> {
+  const astResult = Utils.Ast.parseCssString(css, "value");
+  if (!astResult.ok) {
+    return forwardParseErr<csstree.FunctionNode>(astResult);
+  }
+
+  const funcResult = Utils.Ast.findFunctionNode(astResult.value, gradientNames);
+  if (!funcResult.ok) {
+    return forwardParseErr<csstree.FunctionNode>(funcResult);
+  }
+
+  return parseOk(funcResult.value);
+}
+
+/**
+ * Validate parentheses are balanced in CSS string.
+ *
+ * Returns a warning issue if unbalanced, undefined if balanced.
+ *
+ * @param css - CSS gradient string
+ * @param gradientType - Type name for warning message
+ * @returns Warning issue or undefined
+ */
+export function validateParentheses(css: string, gradientType: string): Type.Issue | undefined {
+  const openCount = (css.match(/\(/g) || []).length;
+  const closeCount = (css.match(/\)/g) || []).length;
+
+  if (openCount !== closeCount) {
+    return createWarning("invalid-syntax", `Unbalanced parentheses in ${gradientType}-gradient`, {
+      property: "gradient",
+      suggestion: "Check that all parentheses are properly closed",
+    });
+  }
+
+  return undefined;
 }
 
 
@@ -4087,7 +4842,7 @@ import { parseCssValueNodeEnhanced } from "./css-value-parser-enhanced";
 
 /**
  * Parse 2D position from array of AST nodes.
- * Now supports CssValue (var, calc, keywords, literals).
+ * Supports 1, 2, 3, and 4-value position syntax.
  *
  * @see https://drafts.csswg.org/css-backgrounds-3/#typedef-bg-position
  */
@@ -4101,58 +4856,203 @@ export function parsePosition2D(
     return parseErr(createError("invalid-syntax", "Expected position value"));
   }
 
+  // Collect all position values
   const positionValues: Type.CssValue[] = [];
+  while (idx < nodes.length && nodes[idx]?.type !== "Operator") {
+    const node = nodes[idx];
+    if (!node) break;
 
-  // Parse first value
-  const firstNode = nodes[idx];
-  if (!firstNode) {
-    return parseErr(createError("invalid-syntax", "Missing first position value"));
+    const value = parseCssValueNodeEnhanced(node);
+    if (!value.ok) break;
+
+    positionValues.push(value.value);
+    idx++;
   }
 
-  const firstValue = parseCssValueNodeEnhanced(firstNode);
-  if (!firstValue.ok) {
-    return parseErr(createError("invalid-value", "Invalid first position value"));
+  if (positionValues.length === 0) {
+    return parseErr(createError("invalid-syntax", "Expected position value"));
   }
-  positionValues.push(firstValue.value);
-  idx++;
 
-  // Parse second value if present
-  if (idx < nodes.length) {
-    const secondNode = nodes[idx];
-    if (secondNode && secondNode.type !== "Operator") {
-      const secondValue = parseCssValueNodeEnhanced(secondNode);
-      if (secondValue.ok) {
-        positionValues.push(secondValue.value);
-        idx++;
+  // Parse based on number of values
+  const result = parsePositionValues(positionValues);
+  if (!result.ok) {
+    return parseErr(result.issues[0] ?? createError("invalid-syntax", "Failed to parse position"));
+  }
+
+  return parseOk({ position: result.value, nextIdx: idx });
+}
+
+/**
+ * Parse position values based on count (1, 2, 3, or 4 values)
+ */
+function parsePositionValues(values: Type.CssValue[]): ParseResult<Type.Position2D> {
+  switch (values.length) {
+    case 1:
+      return parse1Value(values);
+    case 2:
+      return parse2Value(values);
+    case 3:
+      return parse3Value(values);
+    case 4:
+      return parse4Value(values);
+    default:
+      return parseErr(createError("invalid-syntax", `Invalid position syntax: ${values.length} values`));
+  }
+}
+
+/**
+ * Parse 1-value syntax: center | left | top | 50%
+ */
+function parse1Value(values: Type.CssValue[]): ParseResult<Type.Position2D> {
+  const val = values[0];
+  if (!val) return parseErr(createError("invalid-syntax", "Missing position value"));
+
+  // Handle axis-specific keywords
+  if (val.kind === "keyword") {
+    if (val.value === "top" || val.value === "bottom") {
+      return parseOk({
+        horizontal: { kind: "keyword", value: "center" },
+        vertical: val,
+      });
+    }
+    if (val.value === "left" || val.value === "right") {
+      return parseOk({
+        horizontal: val,
+        vertical: { kind: "keyword", value: "center" },
+      });
+    }
+    // center
+    return parseOk({
+      horizontal: val,
+      vertical: { kind: "keyword", value: "center" },
+    });
+  }
+
+  // Assume horizontal
+  return parseOk({
+    horizontal: val,
+    vertical: { kind: "keyword", value: "center" },
+  });
+}
+
+/**
+ * Parse 2-value syntax: left top | 50% 75%
+ */
+function parse2Value(values: Type.CssValue[]): ParseResult<Type.Position2D> {
+  const h = values[0];
+  const v = values[1];
+  if (!h || !v) return parseErr(createError("invalid-syntax", "Missing position values"));
+
+  return parseOk({ horizontal: h, vertical: v });
+}
+
+/**
+ * Parse 3-value syntax: left 15% top | center top 20px | right 10% center
+ */
+function parse3Value(values: Type.CssValue[]): ParseResult<Type.Position2D> {
+  const v0 = values[0];
+  const v1 = values[1];
+  const v2 = values[2];
+  if (!v0 || !v1 || !v2) return parseErr(createError("invalid-syntax", "Missing position values"));
+
+  // Pattern 1: [edge] [offset] [keyword/edge]
+  const edge1 = getEdgeKeyword(v0);
+  if (edge1) {
+    // First pair is edge+offset
+    const isHorizontal1 = edge1 === "left" || edge1 === "right";
+
+    // Check if v2 is also an edge
+    const edge2 = getEdgeKeyword(v2);
+    if (edge2) {
+      const isHorizontal2 = edge2 === "left" || edge2 === "right";
+      if (isHorizontal1 === isHorizontal2) {
+        return parseErr(createError("invalid-syntax", "Both edges on same axis"));
       }
     }
+
+    // v2 can be any keyword (edge or center)
+    if (isHorizontal1) {
+      return parseOk({
+        horizontal: { edge: edge1, offset: v1 },
+        vertical: v2,
+      });
+    }
+    return parseOk({
+      horizontal: v2,
+      vertical: { edge: edge1, offset: v1 },
+    });
   }
 
-  // Build position object
-  let position: Type.Position2D;
-
-  if (positionValues.length === 1) {
-    const val = positionValues[0];
-    if (!val) {
-      return parseErr(createError("invalid-syntax", "Missing position value"));
+  // Pattern 2: [keyword] [edge] [offset] - e.g., center top 20px
+  const edge2Alt = getEdgeKeyword(v1);
+  if (edge2Alt) {
+    const isHorizontal = edge2Alt === "left" || edge2Alt === "right";
+    if (isHorizontal) {
+      return parseOk({
+        horizontal: { edge: edge2Alt, offset: v2 },
+        vertical: v0,
+      });
     }
-    // Single value: assume horizontal, vertical is center
-    // Handle keywords if needed (top/bottom vs left/right)
-    if (val.kind === "keyword" && (val.value === "top" || val.value === "bottom")) {
-      position = { horizontal: { kind: "keyword", value: "center" }, vertical: val };
-    } else {
-      position = { horizontal: val, vertical: { kind: "keyword", value: "center" } };
-    }
-  } else {
-    const h = positionValues[0];
-    const v = positionValues[1];
-    if (!h || !v) {
-      return parseErr(createError("invalid-syntax", "Missing position values"));
-    }
-    position = { horizontal: h, vertical: v };
+    return parseOk({
+      horizontal: v0,
+      vertical: { edge: edge2Alt, offset: v2 },
+    });
   }
 
-  return parseOk({ position, nextIdx: idx });
+  return parseErr(createError("invalid-syntax", "Invalid 3-value position syntax"));
+}
+
+/**
+ * Parse 4-value syntax: left 15% top 20px
+ */
+function parse4Value(values: Type.CssValue[]): ParseResult<Type.Position2D> {
+  const v0 = values[0];
+  const v1 = values[1];
+  const v2 = values[2];
+  const v3 = values[3];
+  if (!v0 || !v1 || !v2 || !v3) {
+    return parseErr(createError("invalid-syntax", "Missing position values"));
+  }
+
+  // Pattern: [edge] [offset] [edge] [offset]
+  const edge1 = getEdgeKeyword(v0);
+  const edge2 = getEdgeKeyword(v2);
+
+  if (!edge1 || !edge2) {
+    return parseErr(createError("invalid-syntax", "Expected edge keywords at positions 1 and 3"));
+  }
+
+  // Determine which pair is horizontal vs vertical
+  const isHorizontal1 = edge1 === "left" || edge1 === "right";
+  const isHorizontal2 = edge2 === "left" || edge2 === "right";
+
+  if (isHorizontal1 === isHorizontal2) {
+    return parseErr(createError("invalid-syntax", "Both pairs on same axis"));
+  }
+
+  if (isHorizontal1) {
+    return parseOk({
+      horizontal: { edge: edge1, offset: v1 },
+      vertical: { edge: edge2, offset: v3 },
+    });
+  }
+  return parseOk({
+    horizontal: { edge: edge2, offset: v3 },
+    vertical: { edge: edge1, offset: v1 },
+  });
+}
+
+/**
+ * Get edge keyword from a CssValue, or undefined if not an edge keyword
+ */
+function getEdgeKeyword(value: Type.CssValue): "left" | "right" | "top" | "bottom" | undefined {
+  if (value.kind === "keyword") {
+    const kw = value.value;
+    if (kw === "left" || kw === "right" || kw === "top" || kw === "bottom") {
+      return kw;
+    }
+  }
+  return undefined;
 }
 
 
@@ -4315,6 +5215,8 @@ export interface SplitByCommaOptions {
  * Used for parsing comma-separated function arguments.
  * Returns array of node groups, where each group is the nodes between commas.
  *
+ * **Important:** Only splits on top-level commas, ignoring commas inside nested functions.
+ *
  * @param nodes - Array of AST nodes to split
  * @param options - Parsing options
  * @returns Array of node groups (each group is nodes between commas)
@@ -4332,6 +5234,7 @@ export function splitNodesByComma(nodes: csstree.CssNode[], options: SplitByComm
 
   const groups: csstree.CssNode[][] = [];
   let currentGroup: csstree.CssNode[] = [];
+  const nestingDepth = 0; // Track nesting depth for functions
 
   for (let i = startIndex; i < nodes.length; i++) {
     const node = nodes[i];
@@ -4341,7 +5244,16 @@ export function splitNodesByComma(nodes: csstree.CssNode[], options: SplitByComm
       continue;
     }
 
-    if (node.type === "Operator" && "value" in node && node.value === ",") {
+    // Track nesting depth - enter function
+    if (node.type === "Function") {
+      currentGroup.push(node);
+      // Functions contain their own children, no need to track depth here
+      // The function node itself contains all nested content
+      continue;
+    }
+
+    // Only split on top-level commas (when not inside a function)
+    if (node.type === "Operator" && "value" in node && node.value === "," && nestingDepth === 0) {
       if (currentGroup.length > 0 || allowEmpty) {
         groups.push(currentGroup);
         currentGroup = [];
@@ -4394,6 +5306,9 @@ import type * as csstree from "css-tree";
 import type { ColorInterpolationMethod } from "@b/types";
 import type { HueInterpolationMethod } from "@b/keywords";
 
+// Hue method keywords (not valid color spaces)
+const HUE_METHOD_KEYWORDS = ["longer", "shorter", "increasing", "decreasing"];
+
 /**
  * Parse color interpolation method from gradient nodes.
  *
@@ -4429,6 +5344,12 @@ export function parseColorInterpolationMethod(
   }
 
   const space = spaceNode.name.toLowerCase();
+
+  // Reject hue method keywords as color spaces
+  if (HUE_METHOD_KEYWORDS.includes(space)) {
+    return undefined;
+  }
+
   let method: ColorInterpolationMethod = { colorSpace: space } as ColorInterpolationMethod;
   idx++;
 
@@ -4455,10 +5376,36 @@ export function parseColorInterpolationMethod(
 }
 
 
+=== File: packages/b_parsers/src/utils/css-value-functions.ts ===
+// b_path:: packages/b_parsers/src/utils/css-value-functions.ts
+import type * as csstree from "css-tree";
+
+/**
+ * Check if a Function node is a CSS value function (var, calc, clamp, min, max)
+ * and not a color function (rgb, hsl, hwb, lab, lch, oklch, oklab, etc.)
+ *
+ * This is useful for distinguishing between:
+ * - CSS value functions that can appear in size/position contexts
+ * - Color functions that should be treated as color stops
+ *
+ * @example
+ * isCssValueFunction(varNode) // true - var(--value)
+ * isCssValueFunction(calcNode) // true - calc(50% + 10px)
+ * isCssValueFunction(rgbNode) // false - rgb(255, 0, 0)
+ * isCssValueFunction(hslNode) // false - hsl(0, 100%, 50%)
+ */
+export function isCssValueFunction(node: csstree.CssNode): boolean {
+  if (node.type !== "Function") return false;
+  const funcName = node.name.toLowerCase();
+  return ["var", "calc", "clamp", "min", "max"].includes(funcName);
+}
+
+
 === File: packages/b_parsers/src/utils/index.ts ===
 // b_path:: packages/b_parsers/src/utils/index.ts
 export * as Ast from "./ast";
 export * from "./color-interpolation";
+export * from "./css-value-functions";
 
 
 === File: packages/b_parsers/tsup.config.ts ===
@@ -4538,10 +5485,25 @@ import { cssValueSchema } from "./values";
 import { colorSchema } from "./color";
 
 /**
+ * Color hint (transition midpoint) between color stops.
+ * @see https://developer.mozilla.org/en-US/docs/Web/CSS/gradient/linear-gradient#color-hints
+ */
+export const colorHintSchema = z
+  .object({
+    kind: z.literal("hint"),
+    position: cssValueSchema, // length-percentage
+  })
+  .strict();
+
+export type ColorHint = z.infer<typeof colorHintSchema>;
+
+/**
+ * Color stop in a gradient.
  * @see https://developer.mozilla.org/en-US/docs/Web/CSS/gradient/linear-gradient#color-stops
  */
 export const colorStopSchema = z
   .object({
+    kind: z.literal("stop").optional(), // Optional for backward compatibility
     color: colorSchema,
     position: z
       .union([
@@ -4554,7 +5516,14 @@ export const colorStopSchema = z
 
 export type ColorStop = z.infer<typeof colorStopSchema>;
 
-export const colorStopListSchema = z.array(colorStopSchema).min(2);
+/**
+ * Color stop or hint in a gradient.
+ */
+export const colorStopOrHintSchema = z.union([colorStopSchema, colorHintSchema]);
+
+export type ColorStopOrHint = z.infer<typeof colorStopOrHintSchema>;
+
+export const colorStopListSchema = z.array(colorStopOrHintSchema).min(2);
 
 export type ColorStopList = z.infer<typeof colorStopListSchema>;
 
@@ -4966,7 +5935,7 @@ export type LinearGradient = z.infer<typeof linearGradientSchema>;
 // b_path:: packages/b_types/src/gradient/radial-size.ts
 import { z } from "zod";
 import { radialSizeKeywordSchema } from "@b/keywords";
-import { lengthPercentageSchema } from "../length-percentage";
+import { cssValueSchema } from "../values";
 
 /**
  * @see https://developer.mozilla.org/en-US/docs/Web/CSS/gradient/radial-gradient
@@ -4981,14 +5950,14 @@ export const radialGradientSizeSchema = z.union([
   z
     .object({
       kind: z.literal("circle-explicit"),
-      radius: lengthPercentageSchema,
+      radius: cssValueSchema,
     })
     .strict(),
   z
     .object({
       kind: z.literal("ellipse-explicit"),
-      radiusX: lengthPercentageSchema,
-      radiusY: lengthPercentageSchema,
+      radiusX: cssValueSchema,
+      radiusY: cssValueSchema,
     })
     .strict(),
 ]);
@@ -5103,10 +6072,22 @@ import { cssValueSchema } from "./values";
 /**
  * @see https://developer.mozilla.org/en-US/docs/Web/CSS/position_value
  */
+
+// Edge offset for 3/4-value position syntax
+export const positionEdgeOffsetSchema = z
+  .object({
+    edge: z.enum(["left", "right", "top", "bottom"]),
+    offset: cssValueSchema,
+  })
+  .strict();
+
+export type PositionEdgeOffset = z.infer<typeof positionEdgeOffsetSchema>;
+
+// Position can be simple value or edge+offset
 export const position2DSchema = z
   .object({
-    horizontal: cssValueSchema,
-    vertical: cssValueSchema,
+    horizontal: z.union([cssValueSchema, positionEdgeOffsetSchema]),
+    vertical: z.union([cssValueSchema, positionEdgeOffsetSchema]),
   })
   .strict();
 
@@ -6046,27 +7027,32 @@ export const attrFunctionSchema: z.ZodType<{
   .strict();
 
 /**
- * Represents an RGB/HSL color function
+ * NOTE: RGB/HSL color function schemas commented out - we are not sure these need to be here.
+ * These create an inconsistency: why RGB/HSL but not LCH/OKLCH/LAB/etc?
+ * Generic functionCallSchema handles all color functions consistently.
+ * Specific color parsing happens in dedicated color parsers (packages/b_parsers/src/color/).
+ *
+ * If needed, uncomment and add ALL color function schemas, not just RGB/HSL.
  */
-export const rgbFunctionSchema: z.ZodType<{
-  kind: "rgb" | "rgba";
-  components: CssValue[];
-}> = z
-  .object({
-    kind: z.union([z.literal("rgb"), z.literal("rgba")]),
-    components: z.array(z.lazy((): z.ZodType<CssValue> => cssValueSchema)),
-  })
-  .strict();
+// export const rgbFunctionSchema: z.ZodType<{
+//   kind: "rgb" | "rgba";
+//   components: CssValue[];
+// }> = z
+//   .object({
+//     kind: z.union([z.literal("rgb"), z.literal("rgba")]),
+//     components: z.array(z.lazy((): z.ZodType<CssValue> => cssValueSchema)),
+//   })
+//   .strict();
 
-export const hslFunctionSchema: z.ZodType<{
-  kind: "hsl" | "hsla";
-  components: CssValue[];
-}> = z
-  .object({
-    kind: z.union([z.literal("hsl"), z.literal("hsla")]),
-    components: z.array(z.lazy((): z.ZodType<CssValue> => cssValueSchema)),
-  })
-  .strict();
+// export const hslFunctionSchema: z.ZodType<{
+//   kind: "hsl" | "hsla";
+//   components: CssValue[];
+// }> = z
+//   .object({
+//     kind: z.union([z.literal("hsl"), z.literal("hsla")]),
+//     components: z.array(z.lazy((): z.ZodType<CssValue> => cssValueSchema)),
+//   })
+//   .strict();
 
 /**
  * Represents a generic CSS function call (e.g., linear-gradient(...))
@@ -6109,10 +7095,13 @@ export const allCssValueSchema = [
   minmaxFunctionSchema,
   calcOperationSchema,
 
-  // lchColorSchema,
+  // NOTE: Color function schemas commented out for consistency
+  // Only hexColorValueSchema remains as it's a simple literal type
   hexColorValueSchema,
-  rgbFunctionSchema,
-  hslFunctionSchema,
+  // All color functions (rgb, hsl, lch, oklch, lab, etc.) handled by functionCallSchema
+  // lchColorSchema,
+  // rgbFunctionSchema,
+  // hslFunctionSchema,
 ];
 
 const allCssValues = allCssValueSchema.flatMap(getLiteralValues);
@@ -6410,14 +7399,16 @@ export function cssValueToCss(value: CssValue): string {
       return `${name}(${argsStr})`;
     }
 
-    case "rgb":
-    case "rgba":
-    case "hsl":
-    case "hsla": {
-      const { components } = value;
-      const componentsStr = components.map((c) => cssValueToCss(c)).join(", ");
-      return `${value.kind}(${componentsStr})`;
-    }
+    // NOTE: RGB/HSL cases commented out - now handled by generic "function" case above
+    // Keeping this comment for reference in case we need to restore special handling
+    // case "rgb":
+    // case "rgba":
+    // case "hsl":
+    // case "hsla": {
+    //   const { components } = value;
+    //   const componentsStr = components.map((c) => cssValueToCss(c)).join(", ");
+    //   return `${value.kind}(${componentsStr})`;
+    // }
 
     case "string": {
       return `"${value.value}"`;
@@ -6807,7 +7798,17 @@ export function numberToCss(number: number): string {
  * @see https://drafts.csswg.org/css-backgrounds-3/#typedef-bg-position
  */
 export function position2DToCss(position: Type.Position2D): string {
-  return `${cssValueToCss(position.horizontal)} ${cssValueToCss(position.vertical)}`;
+  const h =
+    "edge" in position.horizontal
+      ? `${position.horizontal.edge} ${cssValueToCss(position.horizontal.offset)}`
+      : cssValueToCss(position.horizontal);
+
+  const v =
+    "edge" in position.vertical
+      ? `${position.vertical.edge} ${cssValueToCss(position.vertical.offset)}`
+      : cssValueToCss(position.vertical);
+
+  return `${h} ${v}`;
 }
 
 export function joinCssValues(values: string[]): string {
@@ -6829,7 +7830,7 @@ export * from "./validation";
 
 === File: packages/b_utils/src/parse/css-value-parser.ts ===
 // b_path:: packages/b_utils/src/parse/css-value-parser.ts
-import type * as csstree from "css-tree";
+import * as csstree from "css-tree";
 import { createError, forwardParseErr, parseErr, parseOk, type ParseResult } from "@b/types";
 import type { CssValue } from "@b/types";
 
@@ -6915,14 +7916,33 @@ export function parseCssValueNode(node: csstree.CssNode): ParseResult<CssValue> 
             );
           }
 
-          // RECURSION: Parse the content of the fallback argument
-          // In complex scenarios, the fallback might be a list,
-          // but we take the first node for simple fallbacks.
-          const fallbackResult = parseCssValueNode(fallbackNodes[0]);
-          if (!fallbackResult.ok) {
-            return fallbackResult;
+          // Handle Raw nodes - css-tree sometimes parses fallback values as Raw
+          const firstNode = fallbackNodes[0];
+          if (firstNode.type === "Raw") {
+            // Parse the raw string as a CSS value
+            try {
+              const rawAst = csstree.parse(firstNode.value.trim(), { context: "value" });
+              // biome-ignore lint/suspicious/noExplicitAny: css-tree List type not exposed in type definitions
+              const rawChildren = (rawAst as any).children?.toArray();
+              if (rawChildren && rawChildren.length > 0) {
+                const fallbackResult = parseCssValueNode(rawChildren[0]);
+                if (!fallbackResult.ok) {
+                  return fallbackResult;
+                }
+                fallback = fallbackResult.value;
+              }
+            } catch {
+              // If parsing fails, treat as invalid
+              return parseErr(createError("invalid-syntax", `Invalid var() fallback value: ${firstNode.value}`));
+            }
+          } else {
+            // RECURSION: Parse the content of the fallback argument
+            const fallbackResult = parseCssValueNode(firstNode);
+            if (!fallbackResult.ok) {
+              return fallbackResult;
+            }
+            fallback = fallbackResult.value;
           }
-          fallback = fallbackResult.value;
         }
 
         return parseOk({

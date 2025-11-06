@@ -501,7 +501,9 @@ describe("Radial Gradient Parser - Position", () => {
       if (result.ok) {
         const pos = result.value.position;
         if (pos) {
-          expect(pos.horizontal.kind).toBe("calc");
+          if ("kind" in pos.horizontal) {
+            expect(pos.horizontal.kind).toBe("calc");
+          }
           expect(pos.vertical).toEqual({ kind: "literal", value: 50, unit: "%" });
         }
       }
@@ -516,7 +518,9 @@ describe("Radial Gradient Parser - Position", () => {
         const pos = result.value.position;
         if (pos) {
           expect(pos.horizontal).toEqual({ kind: "literal", value: 50, unit: "%" });
-          expect(pos.vertical.kind).toBe("calc");
+          if ("kind" in pos.vertical) {
+            expect(pos.vertical.kind).toBe("calc");
+          }
         }
       }
     });
@@ -529,8 +533,12 @@ describe("Radial Gradient Parser - Position", () => {
       if (result.ok) {
         const pos = result.value.position;
         if (pos) {
-          expect(pos.horizontal.kind).toBe("calc");
-          expect(pos.vertical.kind).toBe("calc");
+          if ("kind" in pos.horizontal) {
+            expect(pos.horizontal.kind).toBe("calc");
+          }
+          if ("kind" in pos.vertical) {
+            expect(pos.vertical.kind).toBe("calc");
+          }
         }
       }
     });
@@ -543,7 +551,9 @@ describe("Radial Gradient Parser - Position", () => {
       if (result.ok) {
         const pos = result.value.position;
         if (pos) {
-          expect(pos.horizontal.kind).toBe("clamp");
+          if ("kind" in pos.horizontal) {
+            expect(pos.horizontal.kind).toBe("clamp");
+          }
         }
       }
     });

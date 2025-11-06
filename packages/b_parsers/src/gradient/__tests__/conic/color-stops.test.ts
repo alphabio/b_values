@@ -13,7 +13,9 @@ describe("Conic Gradient - Color Stops", () => {
       if (!result.ok) return;
 
       expect(result.value.colorStops).toHaveLength(2);
-      expect(result.value.colorStops[0]?.color.kind).toBe("rgb");
+      const firstStop = result.value.colorStops[0];
+      if (firstStop?.kind === "hint") throw new Error("Expected color stop, got hint");
+      expect(firstStop?.color.kind).toBe("rgb");
 
       const genResult = Generate.Gradient.Conic.generate(result.value);
       expect(genResult.ok).toBe(true);
@@ -25,6 +27,7 @@ describe("Conic Gradient - Color Stops", () => {
 
       expect(result.ok).toBe(true);
       if (!result.ok) return;
+      if (result.value.colorStops[0]?.kind === "hint") throw new Error("Expected color stop, got hint");
 
       expect(result.value.colorStops[0]?.color.kind).toBe("rgb");
 
@@ -38,6 +41,7 @@ describe("Conic Gradient - Color Stops", () => {
 
       expect(result.ok).toBe(true);
       if (!result.ok) return;
+      if (result.value.colorStops[0]?.kind === "hint") throw new Error("Expected color stop, got hint");
 
       expect(result.value.colorStops[0]?.color.kind).toBe("rgb");
 
@@ -51,6 +55,7 @@ describe("Conic Gradient - Color Stops", () => {
 
       expect(result.ok).toBe(true);
       if (!result.ok) return;
+      if (result.value.colorStops[0]?.kind === "hint") throw new Error("Expected color stop, got hint");
 
       expect(result.value.colorStops[0]?.color.kind).toBe("rgb");
 
@@ -64,6 +69,7 @@ describe("Conic Gradient - Color Stops", () => {
 
       expect(result.ok).toBe(true);
       if (!result.ok) return;
+      if (result.value.colorStops[0]?.kind === "hint") throw new Error("Expected color stop, got hint");
 
       expect(result.value.colorStops[0]?.color.kind).toBe("rgb");
 
@@ -77,6 +83,9 @@ describe("Conic Gradient - Color Stops", () => {
 
       expect(result.ok).toBe(true);
       if (!result.ok) return;
+      if (result.value.colorStops[0]?.kind === "hint") throw new Error("Expected color stop, got hint");
+      if (result.value.colorStops[1]?.kind === "hint") throw new Error("Expected color stop, got hint");
+      if (result.value.colorStops[2]?.kind === "hint") throw new Error("Expected color stop, got hint");
 
       expect(result.value.colorStops).toHaveLength(3);
       expect(result.value.colorStops[0]?.color.kind).toBe("rgb");
@@ -95,6 +104,7 @@ describe("Conic Gradient - Color Stops", () => {
 
       expect(result.ok).toBe(true);
       if (!result.ok) return;
+      if (result.value.colorStops[0]?.kind === "hint") throw new Error("Expected color stop, got hint");
 
       expect(result.value.colorStops[0]?.color.kind).toBe("hsl");
 
@@ -108,6 +118,7 @@ describe("Conic Gradient - Color Stops", () => {
 
       expect(result.ok).toBe(true);
       if (!result.ok) return;
+      if (result.value.colorStops[0]?.kind === "hint") throw new Error("Expected color stop, got hint");
 
       expect(result.value.colorStops[0]?.color.kind).toBe("hsl");
 
@@ -121,6 +132,7 @@ describe("Conic Gradient - Color Stops", () => {
 
       expect(result.ok).toBe(true);
       if (!result.ok) return;
+      if (result.value.colorStops[0]?.kind === "hint") throw new Error("Expected color stop, got hint");
 
       expect(result.value.colorStops[0]?.color.kind).toBe("hsl");
 
@@ -134,6 +146,7 @@ describe("Conic Gradient - Color Stops", () => {
 
       expect(result.ok).toBe(true);
       if (!result.ok) return;
+      if (result.value.colorStops[0]?.kind === "hint") throw new Error("Expected color stop, got hint");
 
       expect(result.value.colorStops[0]?.color.kind).toBe("hsl");
 
@@ -147,6 +160,9 @@ describe("Conic Gradient - Color Stops", () => {
 
       expect(result.ok).toBe(true);
       if (!result.ok) return;
+      if (result.value.colorStops[0]?.kind === "hint") throw new Error("Expected color stop, got hint");
+      if (result.value.colorStops[1]?.kind === "hint") throw new Error("Expected color stop, got hint");
+      if (result.value.colorStops[2]?.kind === "hint") throw new Error("Expected color stop, got hint");
 
       expect(result.value.colorStops).toHaveLength(3);
       expect(result.value.colorStops[0]?.color.kind).toBe("hsl");
@@ -165,6 +181,7 @@ describe("Conic Gradient - Color Stops", () => {
 
       expect(result.ok).toBe(true);
       if (!result.ok) return;
+      if (result.value.colorStops[0]?.kind === "hint") throw new Error("Expected color stop, got hint");
 
       expect(result.value.colorStops[0]?.color.kind).toBe("hwb");
 
@@ -178,6 +195,7 @@ describe("Conic Gradient - Color Stops", () => {
 
       expect(result.ok).toBe(true);
       if (!result.ok) return;
+      if (result.value.colorStops[0]?.kind === "hint") throw new Error("Expected color stop, got hint");
 
       expect(result.value.colorStops[0]?.color.kind).toBe("hwb");
 
@@ -191,6 +209,7 @@ describe("Conic Gradient - Color Stops", () => {
 
       expect(result.ok).toBe(true);
       if (!result.ok) return;
+      if (result.value.colorStops[0]?.kind === "hint") throw new Error("Expected color stop, got hint");
 
       expect(result.value.colorStops).toHaveLength(3);
 
@@ -206,6 +225,7 @@ describe("Conic Gradient - Color Stops", () => {
 
       expect(result.ok).toBe(true);
       if (!result.ok) return;
+      if (result.value.colorStops[0]?.kind === "hint") throw new Error("Expected color stop, got hint");
 
       expect(result.value.colorStops[0]?.color.kind).toBe("lab");
 
@@ -219,6 +239,7 @@ describe("Conic Gradient - Color Stops", () => {
 
       expect(result.ok).toBe(true);
       if (!result.ok) return;
+      if (result.value.colorStops[0]?.kind === "hint") throw new Error("Expected color stop, got hint");
 
       expect(result.value.colorStops[0]?.color.kind).toBe("lab");
 
@@ -232,6 +253,7 @@ describe("Conic Gradient - Color Stops", () => {
 
       expect(result.ok).toBe(true);
       if (!result.ok) return;
+      if (result.value.colorStops[0]?.kind === "hint") throw new Error("Expected color stop, got hint");
 
       expect(result.value.colorStops[0]?.color.kind).toBe("lch");
 
@@ -245,6 +267,7 @@ describe("Conic Gradient - Color Stops", () => {
 
       expect(result.ok).toBe(true);
       if (!result.ok) return;
+      if (result.value.colorStops[0]?.kind === "hint") throw new Error("Expected color stop, got hint");
 
       expect(result.value.colorStops[0]?.color.kind).toBe("lch");
 
@@ -260,6 +283,7 @@ describe("Conic Gradient - Color Stops", () => {
 
       expect(result.ok).toBe(true);
       if (!result.ok) return;
+      if (result.value.colorStops[0]?.kind === "hint") throw new Error("Expected color stop, got hint");
 
       expect(result.value.colorStops[0]?.color.kind).toBe("oklab");
 
@@ -273,6 +297,7 @@ describe("Conic Gradient - Color Stops", () => {
 
       expect(result.ok).toBe(true);
       if (!result.ok) return;
+      if (result.value.colorStops[0]?.kind === "hint") throw new Error("Expected color stop, got hint");
 
       expect(result.value.colorStops[0]?.color.kind).toBe("oklab");
 
@@ -286,6 +311,7 @@ describe("Conic Gradient - Color Stops", () => {
 
       expect(result.ok).toBe(true);
       if (!result.ok) return;
+      if (result.value.colorStops[0]?.kind === "hint") throw new Error("Expected color stop, got hint");
 
       expect(result.value.colorStops[0]?.color.kind).toBe("oklch");
 
@@ -299,6 +325,7 @@ describe("Conic Gradient - Color Stops", () => {
 
       expect(result.ok).toBe(true);
       if (!result.ok) return;
+      if (result.value.colorStops[0]?.kind === "hint") throw new Error("Expected color stop, got hint");
 
       expect(result.value.colorStops[0]?.color.kind).toBe("oklch");
 
@@ -314,6 +341,7 @@ describe("Conic Gradient - Color Stops", () => {
 
       expect(result.ok).toBe(true);
       if (!result.ok) return;
+      if (result.value.colorStops[0]?.kind === "hint") throw new Error("Expected color stop, got hint");
 
       expect(result.value.colorStops[0]?.color.kind).toBe("color");
 
@@ -327,6 +355,7 @@ describe("Conic Gradient - Color Stops", () => {
 
       expect(result.ok).toBe(true);
       if (!result.ok) return;
+      if (result.value.colorStops[0]?.kind === "hint") throw new Error("Expected color stop, got hint");
 
       expect(result.value.colorStops[0]?.color.kind).toBe("color");
 
@@ -340,6 +369,7 @@ describe("Conic Gradient - Color Stops", () => {
 
       expect(result.ok).toBe(true);
       if (!result.ok) return;
+      if (result.value.colorStops[0]?.kind === "hint") throw new Error("Expected color stop, got hint");
 
       expect(result.value.colorStops[0]?.color.kind).toBe("color");
 
@@ -355,6 +385,7 @@ describe("Conic Gradient - Color Stops", () => {
 
       expect(result.ok).toBe(true);
       if (!result.ok) return;
+      if (result.value.colorStops[0]?.kind === "hint") throw new Error("Expected color stop, got hint");
 
       expect(result.value.colorStops).toHaveLength(5);
       expect(result.value.colorStops[0]?.position).toBeDefined();
@@ -370,6 +401,7 @@ describe("Conic Gradient - Color Stops", () => {
 
       expect(result.ok).toBe(true);
       if (!result.ok) return;
+      if (result.value.colorStops[0]?.kind === "hint") throw new Error("Expected color stop, got hint");
 
       expect(result.value.colorStops).toHaveLength(5);
 
@@ -383,6 +415,7 @@ describe("Conic Gradient - Color Stops", () => {
 
       expect(result.ok).toBe(true);
       if (!result.ok) return;
+      if (result.value.colorStops[0]?.kind === "hint") throw new Error("Expected color stop, got hint");
 
       expect(result.value.colorStops).toHaveLength(3);
 
@@ -396,6 +429,7 @@ describe("Conic Gradient - Color Stops", () => {
 
       expect(result.ok).toBe(true);
       if (!result.ok) return;
+      if (result.value.colorStops[0]?.kind === "hint") throw new Error("Expected color stop, got hint");
 
       expect(result.value.colorStops).toHaveLength(3);
 
@@ -409,6 +443,7 @@ describe("Conic Gradient - Color Stops", () => {
 
       expect(result.ok).toBe(true);
       if (!result.ok) return;
+      if (result.value.colorStops[0]?.kind === "hint") throw new Error("Expected color stop, got hint");
 
       expect(result.value.colorStops).toHaveLength(3);
 
@@ -424,6 +459,7 @@ describe("Conic Gradient - Color Stops", () => {
 
       expect(result.ok).toBe(true);
       if (!result.ok) return;
+      if (result.value.colorStops[0]?.kind === "hint") throw new Error("Expected color stop, got hint");
 
       expect(result.value.colorStops[0]?.color.kind).toBe("variable");
 
@@ -437,6 +473,9 @@ describe("Conic Gradient - Color Stops", () => {
 
       expect(result.ok).toBe(true);
       if (!result.ok) return;
+      if (result.value.colorStops[0]?.kind === "hint") throw new Error("Expected color stop, got hint");
+      if (result.value.colorStops[1]?.kind === "hint") throw new Error("Expected color stop, got hint");
+      if (result.value.colorStops[2]?.kind === "hint") throw new Error("Expected color stop, got hint");
 
       expect(result.value.colorStops).toHaveLength(3);
       expect(result.value.colorStops[0]?.color.kind).toBe("variable");
@@ -453,6 +492,7 @@ describe("Conic Gradient - Color Stops", () => {
 
       expect(result.ok).toBe(true);
       if (!result.ok) return;
+      if (result.value.colorStops[0]?.kind === "hint") throw new Error("Expected color stop, got hint");
 
       expect(result.value.colorStops[0]?.color.kind).toBe("variable");
       expect(result.value.colorStops[0]?.position).toBeDefined();
@@ -467,6 +507,7 @@ describe("Conic Gradient - Color Stops", () => {
 
       expect(result.ok).toBe(true);
       if (!result.ok) return;
+      if (result.value.colorStops[0]?.kind === "hint") throw new Error("Expected color stop, got hint");
 
       expect(result.value.colorStops[0]?.color.kind).toBe("rgb");
 
@@ -480,6 +521,7 @@ describe("Conic Gradient - Color Stops", () => {
 
       expect(result.ok).toBe(true);
       if (!result.ok) return;
+      if (result.value.colorStops[0]?.kind === "hint") throw new Error("Expected color stop, got hint");
 
       expect(result.value.colorStops[0]?.color.kind).toBe("hsl");
 
@@ -495,6 +537,7 @@ describe("Conic Gradient - Color Stops", () => {
 
       expect(result.ok).toBe(true);
       if (!result.ok) return;
+      if (result.value.colorStops[0]?.kind === "hint") throw new Error("Expected color stop, got hint");
 
       expect(result.value.colorStops[0]?.position).toBeDefined();
       expect(result.value.colorStops[1]?.position).toBeDefined();
@@ -509,6 +552,7 @@ describe("Conic Gradient - Color Stops", () => {
 
       expect(result.ok).toBe(true);
       if (!result.ok) return;
+      if (result.value.colorStops[0]?.kind === "hint") throw new Error("Expected color stop, got hint");
 
       expect(result.value.colorStops[0]?.position).toBeDefined();
 
@@ -522,6 +566,7 @@ describe("Conic Gradient - Color Stops", () => {
 
       expect(result.ok).toBe(true);
       if (!result.ok) return;
+      if (result.value.colorStops[0]?.kind === "hint") throw new Error("Expected color stop, got hint");
 
       expect(result.value.colorStops[0]?.position).toBeDefined();
 
@@ -537,6 +582,7 @@ describe("Conic Gradient - Color Stops", () => {
 
       expect(result.ok).toBe(true);
       if (!result.ok) return;
+      if (result.value.colorStops[0]?.kind === "hint") throw new Error("Expected color stop, got hint");
 
       expect(result.value.colorStops[0]?.position).toHaveLength(2);
       expect(result.value.colorStops[1]?.position).toHaveLength(2);
@@ -551,6 +597,7 @@ describe("Conic Gradient - Color Stops", () => {
 
       expect(result.ok).toBe(true);
       if (!result.ok) return;
+      if (result.value.colorStops[0]?.kind === "hint") throw new Error("Expected color stop, got hint");
 
       expect(result.value.colorStops[0]?.position).toHaveLength(2);
       expect(result.value.colorStops[1]?.position).toHaveLength(2);
@@ -567,6 +614,9 @@ describe("Conic Gradient - Color Stops", () => {
 
       expect(result.ok).toBe(true);
       if (!result.ok) return;
+      if (result.value.colorStops[0]?.kind === "hint") throw new Error("Expected color stop, got hint");
+      if (result.value.colorStops[1]?.kind === "hint") throw new Error("Expected color stop, got hint");
+      if (result.value.colorStops[2]?.kind === "hint") throw new Error("Expected color stop, got hint");
 
       expect(result.value.colorStops).toHaveLength(3);
       expect(result.value.colorStops[0]?.color.kind).toBe("named");
@@ -583,6 +633,7 @@ describe("Conic Gradient - Color Stops", () => {
 
       expect(result.ok).toBe(true);
       if (!result.ok) return;
+      if (result.value.colorStops[0]?.kind === "hint") throw new Error("Expected color stop, got hint");
 
       expect(result.value.colorStops).toHaveLength(3);
 
@@ -596,6 +647,7 @@ describe("Conic Gradient - Color Stops", () => {
 
       expect(result.ok).toBe(true);
       if (!result.ok) return;
+      if (result.value.colorStops[0]?.kind === "hint") throw new Error("Expected color stop, got hint");
 
       expect(result.value.colorStops).toHaveLength(3);
 

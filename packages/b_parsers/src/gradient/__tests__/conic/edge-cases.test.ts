@@ -352,6 +352,7 @@ describe("Conic Gradient - Edge Cases", () => {
 
       expect(result.ok).toBe(true);
       if (!result.ok) return;
+      if (result.value.colorStops[0]?.kind === "hint") throw new Error("Expected color stop, got hint");
 
       expect(result.value.colorStops[0]?.color.kind).toBe("special");
 
@@ -365,6 +366,7 @@ describe("Conic Gradient - Edge Cases", () => {
 
       expect(result.ok).toBe(true);
       if (!result.ok) return;
+      if (result.value.colorStops[0]?.kind === "hint") throw new Error("Expected color stop, got hint");
 
       expect(result.value.colorStops[0]?.color.kind).toBe("special");
 
