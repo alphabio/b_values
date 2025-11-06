@@ -15,28 +15,28 @@ Implement CSS Color Module Level 4 `color()` function parser to fix 3 failing te
 ## 📋 CSS Spec
 
 ```
-<color()> = 
-  color( [ from <color> ]? <colorspace-params> [ / [ <alpha-value> | none ] ]? )  
+<color()> =
+  color( [ from <color> ]? <colorspace-params> [ / [ <alpha-value> | none ] ]? )
 
-<colorspace-params> = 
+<colorspace-params> =
   <custom-params>          |
   <predefined-rgb-params>  |
-  <xyz-params>             
+  <xyz-params>
 
-<alpha-value> = 
+<alpha-value> =
   <number>      |
-  <percentage>  
+  <percentage>
 
-<custom-params> = 
-  <dashed-ident> [ <number> | <percentage> | none ]+  
+<custom-params> =
+  <dashed-ident> [ <number> | <percentage> | none ]+
 
-<predefined-rgb-params> = 
-  <predefined-rgb> [ <number> | <percentage> | none ]{3}  
+<predefined-rgb-params> =
+  <predefined-rgb> [ <number> | <percentage> | none ]{3}
 
-<xyz-params> = 
-  <xyz-space> [ <number> | <percentage> | none ]{3}  
+<xyz-params> =
+  <xyz-space> [ <number> | <percentage> | none ]{3}
 
-<predefined-rgb> = 
+<predefined-rgb> =
   srgb               |
   srgb-linear        |
   display-p3         |
@@ -46,12 +46,12 @@ Implement CSS Color Module Level 4 `color()` function parser to fix 3 failing te
   rec2020            |
   rec2100-pq         |
   rec2100-hlg        |
-  rec2100-linear     
+  rec2100-linear
 
-<xyz-space> = 
+<xyz-space> =
   xyz      |
   xyz-d50  |
-  xyz-d65  
+  xyz-d65
 ```
 
 ---
@@ -79,14 +79,10 @@ export const PredefinedRgbColorSpace = [
   "rec2100-linear",
 ] as const;
 
-export const XyzColorSpace = [
-  "xyz",
-  "xyz-d50",
-  "xyz-d65",
-] as const;
+export const XyzColorSpace = ["xyz", "xyz-d50", "xyz-d65"] as const;
 
-export type PredefinedRgbColorSpace = typeof PredefinedRgbColorSpace[number];
-export type XyzColorSpace = typeof XyzColorSpace[number];
+export type PredefinedRgbColorSpace = (typeof PredefinedRgbColorSpace)[number];
+export type XyzColorSpace = (typeof XyzColorSpace)[number];
 ```
 
 **Co-located tests:** `packages/b_keywords/src/color-space.test.ts`
@@ -104,7 +100,7 @@ Skip or verify existing units suffice.
 Add to existing color union:
 
 ```typescript
-export type ColorFunction = 
+export type ColorFunction =
   | NamedColor
   | HexColor
   | RgbColor
@@ -114,7 +110,7 @@ export type ColorFunction =
   | LchColor
   | OklabColor
   | OklchColor
-  | ColorSpaceColor  // NEW
+  | ColorSpaceColor // NEW
   | SpecialColor
   | CssValueFunction;
 
@@ -128,6 +124,7 @@ export interface ColorSpaceColor {
 ```
 
 **Co-located tests:** `packages/b_types/src/color.test.ts`
+
 - Validate Zod schema
 - Test all color space values
 - Test with/without alpha
@@ -142,36 +139,64 @@ Write comprehensive TDD tests FIRST:
 ```typescript
 describe("color() Function Parser", () => {
   describe("Predefined RGB Color Spaces", () => {
-    it("parses color(srgb 1 0 0)", () => { /* ... */ });
-    it("parses color(display-p3 1 0 0)", () => { /* ... */ });
-    it("parses color(srgb 1 0 0 / 0.5)", () => { /* ... */ }); // with alpha
+    it("parses color(srgb 1 0 0)", () => {
+      /* ... */
+    });
+    it("parses color(display-p3 1 0 0)", () => {
+      /* ... */
+    });
+    it("parses color(srgb 1 0 0 / 0.5)", () => {
+      /* ... */
+    }); // with alpha
     // ... all predefined-rgb spaces
   });
 
   describe("XYZ Color Spaces", () => {
-    it("parses color(xyz 0.5 0.3 0.2)", () => { /* ... */ });
-    it("parses color(xyz-d50 0.5 0.3 0.2)", () => { /* ... */ });
-    it("parses color(xyz-d65 0.5 0.3 0.2)", () => { /* ... */ });
+    it("parses color(xyz 0.5 0.3 0.2)", () => {
+      /* ... */
+    });
+    it("parses color(xyz-d50 0.5 0.3 0.2)", () => {
+      /* ... */
+    });
+    it("parses color(xyz-d65 0.5 0.3 0.2)", () => {
+      /* ... */
+    });
   });
 
   describe("Custom Color Spaces", () => {
-    it("parses color(--custom 0.5 0.3 0.2)", () => { /* ... */ });
-    it("parses custom with 4+ values", () => { /* ... */ });
+    it("parses color(--custom 0.5 0.3 0.2)", () => {
+      /* ... */
+    });
+    it("parses custom with 4+ values", () => {
+      /* ... */
+    });
   });
 
   describe("Relative Colors (from)", () => {
-    it("parses color(from red srgb r g b)", () => { /* ... */ });
-    it("parses color(from var(--base) display-p3 r g b)", () => { /* ... */ });
+    it("parses color(from red srgb r g b)", () => {
+      /* ... */
+    });
+    it("parses color(from var(--base) display-p3 r g b)", () => {
+      /* ... */
+    });
   });
 
   describe("None Values", () => {
-    it("parses color(srgb none 0 0)", () => { /* ... */ });
-    it("parses color(srgb 1 0 0 / none)", () => { /* ... */ });
+    it("parses color(srgb none 0 0)", () => {
+      /* ... */
+    });
+    it("parses color(srgb 1 0 0 / none)", () => {
+      /* ... */
+    });
   });
 
   describe("CSS Value Functions", () => {
-    it("parses var() in color values", () => { /* ... */ });
-    it("parses calc() in color values", () => { /* ... */ });
+    it("parses var() in color values", () => {
+      /* ... */
+    });
+    it("parses calc() in color values", () => {
+      /* ... */
+    });
   });
 });
 ```
@@ -205,6 +230,7 @@ Then implement generator.
 ### Phase 7: Integration
 
 Update main color parser to include `color()` function:
+
 - `packages/b_parsers/src/color/index.ts`
 - Add to color parser switch/chain
 
@@ -228,12 +254,14 @@ Update main color parser to include `color()` function:
 ## 📝 Notes
 
 **TDD Approach:**
+
 - Write tests FIRST for each module (keywords, types, parser, generator)
 - Tests should FAIL initially
 - Implement to make them pass
 - Co-locate tests with source files
 
 **Following Session 032-035 Pattern:**
+
 - Intel gathering is done ✅ (this doc)
 - Protocol established ✅
 - Ready to execute

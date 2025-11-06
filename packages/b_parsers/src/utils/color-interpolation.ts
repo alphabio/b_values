@@ -3,6 +3,9 @@ import type * as csstree from "css-tree";
 import type { ColorInterpolationMethod } from "@b/types";
 import type { HueInterpolationMethod } from "@b/keywords";
 
+// Hue method keywords (not valid color spaces)
+const HUE_METHOD_KEYWORDS = ["longer", "shorter", "increasing", "decreasing"];
+
 /**
  * Parse color interpolation method from gradient nodes.
  *
@@ -38,6 +41,12 @@ export function parseColorInterpolationMethod(
   }
 
   const space = spaceNode.name.toLowerCase();
+
+  // Reject hue method keywords as color spaces
+  if (HUE_METHOD_KEYWORDS.includes(space)) {
+    return undefined;
+  }
+
   let method: ColorInterpolationMethod = { colorSpace: space } as ColorInterpolationMethod;
   idx++;
 

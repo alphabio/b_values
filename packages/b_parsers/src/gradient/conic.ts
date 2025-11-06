@@ -37,14 +37,20 @@ export function fromFunction(fn: csstree.FunctionNode): ParseResult<Type.ConicGr
   if (fromNode?.type === "Identifier" && fromNode.name.toLowerCase() === "from") {
     idx++;
     const angleNode = children[idx];
-    if (angleNode) {
-      // Use parseCssValueNodeEnhanced to support var(), calc(), and literals
-      const angleResult = parseCssValueNodeEnhanced(angleNode);
-      if (angleResult.ok) {
-        fromAngle = angleResult.value;
-        idx++;
-      }
+    if (
+      !angleNode ||
+      angleNode.type === "Operator" ||
+      (angleNode.type === "Identifier" && ["at", "in", "from"].includes(angleNode.name.toLowerCase()))
+    ) {
+      return parseErr(createError("invalid-syntax", "conic-gradient 'from' keyword requires an angle value"));
     }
+    // Use parseCssValueNodeEnhanced to support var(), calc(), and literals
+    const angleResult = parseCssValueNodeEnhanced(angleNode);
+    if (!angleResult.ok) {
+      return forwardParseErr<Type.ConicGradient>(angleResult);
+    }
+    fromAngle = angleResult.value;
+    idx++;
   }
 
   const atNode = children[idx];
@@ -62,18 +68,25 @@ export function fromFunction(fn: csstree.FunctionNode): ParseResult<Type.ConicGr
       idx++;
     }
 
-    if (positionNodes.length > 0) {
-      const posResult = parsePosition2D(positionNodes, 0);
-      if (posResult.ok) {
-        position = posResult.value.position;
-      }
+    if (positionNodes.length === 0) {
+      return parseErr(createError("invalid-syntax", "conic-gradient 'at' keyword requires position values"));
     }
+    const posResult = parsePosition2D(positionNodes, 0);
+    if (!posResult.ok) {
+      return forwardParseErr<Type.ConicGradient>(posResult);
+    }
+    position = posResult.value.position;
   }
 
   idx = Utils.Ast.skipComma(children, idx);
 
-  const interpolationResult = Utils.parseColorInterpolationMethod(children, idx);
-  if (interpolationResult) {
+  // Check for "in" keyword and validate it has a color space
+  const inNode = children[idx];
+  if (inNode?.type === "Identifier" && inNode.name.toLowerCase() === "in") {
+    const interpolationResult = Utils.parseColorInterpolationMethod(children, idx);
+    if (!interpolationResult) {
+      return parseErr(createError("invalid-syntax", "conic-gradient 'in' keyword requires a color space"));
+    }
     colorInterpolationMethod = interpolationResult.method;
     idx = interpolationResult.nextIndex;
     idx = Utils.Ast.skipComma(children, idx);

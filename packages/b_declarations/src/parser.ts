@@ -46,29 +46,15 @@ export function parseDeclaration(input: string | CSSDeclaration): ParseResult<De
     value = input.value;
   }
 
-  // Step 1: Validate with css-tree (fail fast on TRUE syntax errors)
-  const validation = validate(`${property}: ${value}`);
-
-  if (!validation.ok) {
-    // CSS has syntax errors - cannot parse at all
-    const syntaxIssues: Issue[] = validation.errors.map((err) =>
-      createError("invalid-syntax", err.message, {
-        property: err.property || property,
-      }),
-    );
-    return {
-      ok: false,
-      issues: syntaxIssues,
-      property,
-    };
-  }
-
-  // Step 2: Look up property definition
+  // Step 1: Look up property definition
   const definition = propertyRegistry.get(property);
 
   if (!definition) {
     return parseErr(createError("invalid-value", `Unknown CSS property: ${property}`));
   }
+
+  // Step 2: Validate with css-tree and collect any formatted warnings
+  const validation = validate(`${property}: ${value}`);
 
   // Step 3: Parse the value using the property's parser
   const parseResult = definition.parser(value);

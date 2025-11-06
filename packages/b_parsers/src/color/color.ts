@@ -20,6 +20,11 @@ import { parseOklchFunction } from "./oklch";
 export function parseNode(node: csstree.CssNode): ParseResult<Type.Color> {
   if (node.type === "Hash") {
     const value = node.value.toLowerCase();
+    // Validate hex color format (3, 4, 6, or 8 hex digits)
+    const hexPattern = /^[0-9a-f]{3}$|^[0-9a-f]{4}$|^[0-9a-f]{6}$|^[0-9a-f]{8}$/;
+    if (!hexPattern.test(value)) {
+      return parseErr(createError("invalid-value", `Invalid hex color: #${value}`));
+    }
     return parseOk({ kind: "hex", value: `#${value}` } as Type.Color);
   }
 

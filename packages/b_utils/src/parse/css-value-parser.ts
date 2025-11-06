@@ -1,5 +1,5 @@
 // b_path:: packages/b_utils/src/parse/css-value-parser.ts
-import type * as csstree from "css-tree";
+import * as csstree from "css-tree";
 import { createError, forwardParseErr, parseErr, parseOk, type ParseResult } from "@b/types";
 import type { CssValue } from "@b/types";
 
@@ -85,14 +85,33 @@ export function parseCssValueNode(node: csstree.CssNode): ParseResult<CssValue> 
             );
           }
 
-          // RECURSION: Parse the content of the fallback argument
-          // In complex scenarios, the fallback might be a list,
-          // but we take the first node for simple fallbacks.
-          const fallbackResult = parseCssValueNode(fallbackNodes[0]);
-          if (!fallbackResult.ok) {
-            return fallbackResult;
+          // Handle Raw nodes - css-tree sometimes parses fallback values as Raw
+          const firstNode = fallbackNodes[0];
+          if (firstNode.type === "Raw") {
+            // Parse the raw string as a CSS value
+            try {
+              const rawAst = csstree.parse(firstNode.value.trim(), { context: "value" });
+              // biome-ignore lint/suspicious/noExplicitAny: css-tree List type not exposed in type definitions
+              const rawChildren = (rawAst as any).children?.toArray();
+              if (rawChildren && rawChildren.length > 0) {
+                const fallbackResult = parseCssValueNode(rawChildren[0]);
+                if (!fallbackResult.ok) {
+                  return fallbackResult;
+                }
+                fallback = fallbackResult.value;
+              }
+            } catch {
+              // If parsing fails, treat as invalid
+              return parseErr(createError("invalid-syntax", `Invalid var() fallback value: ${firstNode.value}`));
+            }
+          } else {
+            // RECURSION: Parse the content of the fallback argument
+            const fallbackResult = parseCssValueNode(firstNode);
+            if (!fallbackResult.ok) {
+              return fallbackResult;
+            }
+            fallback = fallbackResult.value;
           }
-          fallback = fallbackResult.value;
         }
 
         return parseOk({
