@@ -93,7 +93,19 @@ export function fromFunction(fn: csstree.FunctionNode): ParseResult<Type.ConicGr
   }
 
   if (issues.length > 0) {
-    return { ok: false, issues };
+    // Return partial gradient to enable generator warnings on successfully parsed stops
+    return {
+      ok: false,
+      value: {
+        kind: "conic",
+        fromAngle,
+        position,
+        colorInterpolationMethod,
+        colorStops,
+        repeating: isRepeating,
+      },
+      issues,
+    };
   }
 
   if (colorStops.length < 2) {

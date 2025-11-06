@@ -26,6 +26,7 @@
     "@b/keywords": "workspace:*",
     "@b/parsers": "workspace:*",
     "@b/types": "workspace:*",
+    "@b/utils": "workspace:*",
     "@types/css-tree": "catalog:",
     "css-tree": "catalog:",
     "zod": "catalog:"

@@ -138,7 +138,18 @@ export function fromFunction(fn: csstree.FunctionNode): ParseResult<Type.LinearG
   }
 
   if (issues.length > 0) {
-    return { ok: false, issues };
+    // Return partial gradient to enable generator warnings on successfully parsed stops
+    return {
+      ok: false,
+      value: {
+        kind: "linear",
+        direction,
+        colorInterpolationMethod,
+        colorStops,
+        repeating: isRepeating,
+      },
+      issues,
+    };
   }
 
   if (colorStops.length < 2) {

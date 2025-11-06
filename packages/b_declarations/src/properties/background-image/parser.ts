@@ -78,7 +78,19 @@ export function parseBackgroundImage(value: string): ParseResult<BackgroundImage
           }),
         );
       } else {
-        layerResults.push(forwardParseErr<ImageLayer>(gradientResult));
+        // Preserve partial gradient value for generator inspection
+        if (gradientResult.value) {
+          layerResults.push({
+            ok: false,
+            value: {
+              kind: "gradient",
+              gradient: gradientResult.value,
+            },
+            issues: gradientResult.issues,
+          });
+        } else {
+          layerResults.push(forwardParseErr<ImageLayer>(gradientResult));
+        }
       }
       continue;
     }
@@ -94,7 +106,19 @@ export function parseBackgroundImage(value: string): ParseResult<BackgroundImage
           }),
         );
       } else {
-        layerResults.push(forwardParseErr<ImageLayer>(gradientResult));
+        // Preserve partial gradient value for generator inspection
+        if (gradientResult.value) {
+          layerResults.push({
+            ok: false,
+            value: {
+              kind: "gradient",
+              gradient: gradientResult.value,
+            },
+            issues: gradientResult.issues,
+          });
+        } else {
+          layerResults.push(forwardParseErr<ImageLayer>(gradientResult));
+        }
       }
       continue;
     }
@@ -110,7 +134,19 @@ export function parseBackgroundImage(value: string): ParseResult<BackgroundImage
           }),
         );
       } else {
-        layerResults.push(forwardParseErr<ImageLayer>(gradientResult));
+        // Preserve partial gradient value for generator inspection
+        if (gradientResult.value) {
+          layerResults.push({
+            ok: false,
+            value: {
+              kind: "gradient",
+              gradient: gradientResult.value,
+            },
+            issues: gradientResult.issues,
+          });
+        } else {
+          layerResults.push(forwardParseErr<ImageLayer>(gradientResult));
+        }
       }
       continue;
     }
@@ -127,10 +163,13 @@ export function parseBackgroundImage(value: string): ParseResult<BackgroundImage
   // Aggregate all issues from layer results
   const allIssues = layerResults.flatMap((r) => r.issues);
   const successfulLayers = layerResults.filter((r) => r.ok).map((r) => r.value as ImageLayer);
+  // Also collect partial layers (failed but has value) to enable generator warnings
+  const partialLayers = layerResults.filter((r) => !r.ok && r.value).map((r) => r.value as ImageLayer);
+  const allLayers = [...successfulLayers, ...partialLayers];
 
   const finalValue: BackgroundImageIR = {
     kind: "layers",
-    layers: successfulLayers,
+    layers: allLayers,
   };
 
   // If there are any errors, return failure with all issues but still include successful layers

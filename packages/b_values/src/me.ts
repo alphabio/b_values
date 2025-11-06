@@ -1,112 +1,78 @@
 // b_path:: packages/b_values/src/me.ts
-// // b_path:: packages/b_values/src/me.ts
+// @ts-nocheck
 // // DO NOT DELETE THIS FILE. IT IS BY THE USER FOR ADHOC TESTING PURPOSES ONLY.
 
 import * as decl from "@b/declarations";
-// import * as gen from "@b/generators";
-// import * as utils from "@b/utils";
-// import { z } from "zod";
+import { validate } from "@b/utils";
 
-// // console.log(utils.validate("color: rgb(255, 'a0', 0)"));
+console.log("=".repeat(80));
+console.log("INVESTIGATION 1: Out-of-range oklab - Should have OUR warning");
+console.log("=".repeat(80));
+const css1 = "background-image: radial-gradient(circle at 50% 50%, oklab(-255 255 255), red)";
+console.log("CSS:", css1);
+console.log("\nparseDeclaration result:");
+const result1 = decl.parseDeclaration(css1);
+console.log(JSON.stringify(result1, null, 2));
+console.log("\nvalidate result:");
+const validate1 = validate(css1);
+console.log(JSON.stringify(validate1, null, 2));
 
-// // process.exit(0);
+console.log(`\n${"=".repeat(80)}`);
+console.log("INVESTIGATION 2: Generate CSS from parsed IR");
+console.log("=".repeat(80));
+if (result1.ok) {
+  const generated = decl.generateDeclaration(result1.value.ir);
+  console.log("Generated CSS:", generated.css);
+  console.log("Generate result:");
+  console.log(JSON.stringify(generated, null, 2));
+}
 
-// // const schema = z.object({
-// //   kind: z.literal("named"),
-// //   name: z.string({
-// //     message: 'The "name" property must be a string.',
-// //   }),
-// // });
+console.log(`\n${"=".repeat(80)}`);
+console.log("INVESTIGATION 3: Malformed CSS - radial-gradient(circle at )");
+console.log("=".repeat(80));
+const css3 = "background-image: radial-gradient(circle at )";
+console.log("CSS:", css3);
+console.log("\nparseDeclaration result:");
+const result3 = decl.parseDeclaration(css3);
+console.log(JSON.stringify(result3, null, 2));
+console.log("\nvalidate result:");
+const validate3 = validate(css3);
+console.log(JSON.stringify(validate3, null, 2));
+console.log("\n💡 Analysis: parseDeclaration ok=false is correct!");
+console.log("   We cannot populate model without color stops.");
+console.log("   validate ok=true just means css-tree parsed the structure.");
 
-// // console.log(schema.safeParse({ kind: "named" }).error);
-// // const lit = (value: number) => ({ kind: "literal" as const, value });
-// // console.log(gen.Color.Rgb.generate({ kind: "rgb", r: lit(255), g: lit(0), b: lit(0) }));
+console.log(`\n${"=".repeat(80)}`);
+console.log("INVESTIGATION 4: Multiple issues - named(invalid) + oklab(-255...)");
+console.log("=".repeat(80));
+const css5 = "background-image: linear-gradient(oklab(-255 255 255), named(invalid))";
+console.log("CSS:", css5);
+console.log("\nparseDeclaration result:");
+const result5 = decl.parseDeclaration(css5);
+console.log(JSON.stringify(result5, null, 2));
+console.log("\n💡 Question: Why don't we see BOTH issues?");
+console.log("   - oklab(-255 255 255) out of range");
+console.log("   - named(invalid) unsupported function");
 
-// // console.log(gen.Color.Named.generate({ kind: "named", names: "red" }));
-// // process.exit(0);
+console.log(`\n${"=".repeat(80)}`);
+console.log("INVESTIGATION 5: Just oklab out of range");
+console.log("=".repeat(80));
+const css6 = "background-image: linear-gradient(oklab(-255 255 255), red)";
+console.log("CSS:", css6);
+console.log("\nparseDeclaration result:");
+const result6 = decl.parseDeclaration(css6);
+console.log(JSON.stringify(result6, null, 2));
+if (result6.ok) {
+  console.log("\nGenerate result:");
+  const gen6 = decl.generateDeclaration(result6.value.ir);
+  console.log(JSON.stringify(gen6, null, 2));
+}
 
-// // console.log(decl.parseDeclaration("background-image: linear-gradient(redss, blue)"));
-
-// // import * as exp from "b_short";
-
-const result = decl.generateDeclaration({
-  property: "background-image",
-  ir: {
-    kind: "layers",
-    layers: [
-      {
-        kind: "gradient",
-        gradient: {
-          kind: "radial",
-          repeating: false,
-          shape: "circle",
-          size: { kind: "keyword", value: "closest-side" },
-          position: {
-            horizontal: { value: 0, unit: "%" },
-            vertical: { value: 0, unit: "%" },
-          },
-          colorStops: [
-            {
-              color: {
-                kind: "rgb",
-                r: { kind: "literal", value: -255 },
-                g: { kind: "literal", value: 255 },
-                b: { kind: "literal", value: 255 },
-              },
-            },
-            {
-              color: {
-                kind: "named",
-                // @ts-expect-error - Testing invalid named color
-                name: "reds",
-              },
-            },
-          ],
-        },
-      },
-    ],
-  },
-});
-
-console.log({
-  ok: result.ok,
-  value: result.value,
-  property: result.property,
-  issues: result.issues,
-});
-
-console.log("\nRGB warning path:", result.issues[0]?.path);
-console.log("Named color warning path:", result.issues[1]?.path);
-
-// // console.log(
-// //   decl.parseDeclaration(
-// //     "background-image: radial-gradient(rgb(255,255,255,0) 0, rgb(255,255,255,.15) 30%, rgb(255,255,255,.3) 32%, rgb(255,255,255,0) 33%) 0 0",
-// //   ),
-// // );
-
-// // console.log(JSON.stringify(decl.parseDeclaration("background-image: url()"), null, 2));
-
-// // import * as gen from "@b/generators";
-
-// // console.log(
-// //   gen.Color.generate({
-// //     kind: "hsl",
-// //     h: {
-// //       kind: "calc",
-// //       value: {
-// //         kind: "calc-operation",
-// //         operator: "+",
-// //         left: { kind: "variable", name: "--a" },
-// //         right: {
-// //           kind: "calc-operation",
-// //           operator: "-",
-// //           left: { kind: "literal", value: 10, unit: "deg" },
-// //           right: { kind: "literal", value: 0, unit: "deg" },
-// //         },
-// //       },
-// //     },
-// //     s: { kind: "url", url: "https://example.com/saturation" },
-// //     l: { kind: "literal", value: 50a, unit: "%" },
-// //     alpha: { kind: "literal", value: 0.5 },
-// //   }),
-// // );
+console.log(`\n${"=".repeat(80)}`);
+console.log("INVESTIGATION 6: Just named(invalid)");
+console.log("=".repeat(80));
+const css7 = "background-image: linear-gradient(named(invalid), red)";
+console.log("CSS:", css7);
+console.log("\nparseDeclaration result:");
+const result7 = decl.parseDeclaration(css7);
+console.log(JSON.stringify(result7, null, 2));

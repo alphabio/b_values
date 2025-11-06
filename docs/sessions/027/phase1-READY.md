@@ -1,7 +1,7 @@
 # ADR Phase 1: Source Context Threading - READY TO START 🚀
 
-**Status:** ✅ Planned & Ready for Implementation  
-**Created:** 2025-11-05  
+**Status:** ✅ Planned & Ready for Implementation
+**Created:** 2025-11-05
 **Session:** 027 (continuation)
 
 ---
@@ -10,15 +10,16 @@
 
 We have a **comprehensive, battle-tested plan** to implement ADR Phase 1 (Source Context Threading). All analysis is complete, approach validated, and tasks broken down.
 
-**Time Estimate:** 6-8 hours over 2 days  
-**Risk Level:** Low-Medium (well-contained)  
-**Breaking Changes:** Zero  
+**Time Estimate:** 6-8 hours over 2 days
+**Risk Level:** Low-Medium (well-contained)
+**Breaking Changes:** Zero
 
 ---
 
 ## What We're Building
 
 ### Before (Current)
+
 ```
 Error: RGB r value 300 is out of valid range 0-255
   at path: ["r"]
@@ -26,6 +27,7 @@ Error: RGB r value 300 is out of valid range 0-255
 ```
 
 ### After (Phase 1)
+
 ```
 ERROR: RGB r value 300 is out of valid range 0-255
   at background-image (line 1, column 23)
@@ -45,6 +47,7 @@ ERROR: RGB r value 300 is out of valid range 0-255
 ## Key Decisions Made
 
 ### ✅ Architectural Approach
+
 **Hybrid Strategy (Option D + Context Threading)**
 
 - Attach source context to errors **immediately** when they occur
@@ -53,28 +56,33 @@ ERROR: RGB r value 300 is out of valid range 0-255
 - Lazy formatting (format on display, not storage)
 
 **Why this works:**
+
 - Simple implementation
 - No IR changes needed
 - Performance-friendly (only on error path)
 - Backward compatible
 
 ### ✅ Offset Tracking
+
 **Cumulative offset with baseOffset + nodeOffset**
 
 Handles multiple coordinate systems:
+
 - Declaration level: full CSS string
 - Value level: substring being parsed
 - Node level: css-tree AST node position
 
 ### ✅ Information Flow
-**Parser errors:** Attach immediately from AST node  
-**Generator warnings:** Receive via context parameter  
+
+**Parser errors:** Attach immediately from AST node
+**Generator warnings:** Receive via context parameter
 
 ---
 
 ## Documentation Created
 
 ### 1. Exploration Document
+
 **File:** `docs/sessions/027/phase1-exploration.md`
 
 - Architecture analysis
@@ -84,6 +92,7 @@ Handles multiple coordinate systems:
 - Challenges & considerations
 
 ### 2. Code Trace
+
 **File:** `docs/sessions/027/phase1-code-trace.md`
 
 - Actual code flow traced
@@ -93,6 +102,7 @@ Handles multiple coordinate systems:
 - Recommended approach detailed
 
 ### 3. Action Plan
+
 **File:** `docs/sessions/027/phase1-action-plan.md`
 
 - **71 specific tasks** broken down
@@ -106,15 +116,18 @@ Handles multiple coordinate systems:
 ## Files to Modify
 
 ### Core Types (5 files)
+
 - ✅ `b_types/src/result/issue.ts` - SourceContext type, Issue update
 - ✅ `b_types/src/result/parse.ts` - ParseContext update
 - ✅ `b_types/src/result/generate.ts` - GenerateContext update
 
 ### Utilities (2 files, 1 new)
+
 - ✅ `b_utils/src/parse/ast.ts` - extractSourceContext()
 - ✅ `b_utils/src/format/source-context.ts` - NEW file for formatting
 
 ### Parser Chain (15+ files)
+
 - ✅ `b_declarations/src/parser.ts` - Entry point
 - ✅ `b_declarations/src/properties/background-image/parser.ts`
 - ✅ `b_parsers/src/color/*.ts` - 7 color parsers
@@ -122,6 +135,7 @@ Handles multiple coordinate systems:
 - ✅ Others as needed
 
 ### Tests (10+ new tests)
+
 - Unit tests for SourceContext
 - Unit tests for formatSourceContext
 - Integration tests for end-to-end flow
@@ -134,18 +148,21 @@ Handles multiple coordinate systems:
 ## Implementation Phases
 
 ### Phase 1.1: Foundation (30 min)
+
 - Add SourceContext type
 - Update Issue, ParseContext, GenerateContext
 - Add helper functions
 - **Risk:** Low - pure types
 
 ### Phase 1.2: Utilities (1 hour)
+
 - Create extractSourceContext
 - Create formatSourceContext
 - Add comprehensive tests
 - **Risk:** Low - standalone
 
 ### Phase 1.3: Parser Integration (2-3 hours)
+
 - Update parseDeclaration
 - Update property parsers
 - Update color parsers (7 files)
@@ -153,11 +170,13 @@ Handles multiple coordinate systems:
 - **Risk:** Medium - many files
 
 ### Phase 1.4: Generator Integration (1 hour)
+
 - Thread context through generators
 - Update semantic validation
 - **Risk:** Low - follows established pattern
 
 ### Phase 1.5: Testing & Polish (1-2 hours)
+
 - Integration tests
 - Performance tests
 - Documentation
@@ -168,18 +187,21 @@ Handles multiple coordinate systems:
 ## Success Criteria
 
 ### Functional
+
 - [ ] Source context in all parser errors
 - [ ] Formatted errors show exact location
 - [ ] All 994 existing tests pass
 - [ ] 10+ new tests added
 
 ### Non-Functional
+
 - [ ] Zero breaking changes
 - [ ] Performance overhead < 5%
 - [ ] TypeScript errors: 0
 - [ ] Lint warnings: 0
 
 ### Documentation
+
 - [ ] Examples in docs
 - [ ] JSDoc on new types
 - [ ] Migration guide if needed
@@ -193,6 +215,7 @@ Handles multiple coordinate systems:
 **Risk:** Touching many parser files, potential for bugs
 
 **Mitigation:**
+
 1. Start with one color parser (rgb.ts)
 2. Test thoroughly before copying pattern
 3. Use TypeScript to catch errors
@@ -203,6 +226,7 @@ Handles multiple coordinate systems:
 **Risk:** Copying source strings everywhere
 
 **Mitigation:**
+
 1. Only attach on errors (not success path)
 2. Lazy formatting (format when displaying)
 3. Performance test in Phase 1.5
@@ -211,6 +235,7 @@ Handles multiple coordinate systems:
 ### Zero Risk: Breaking Changes
 
 **All changes are backward compatible:**
+
 - Optional fields only
 - Existing code unaffected
 - Additive API changes
@@ -220,18 +245,20 @@ Handles multiple coordinate systems:
 ## Next Steps
 
 ### Immediate
+
 1. Review this comprehensive plan
 2. Get stakeholder approval
 3. Create feature branch: `feature/phase1-source-context`
 
 ### Day 1 (3-4 hours)
+
 ```bash
 # Start fresh session
 git checkout -b feature/phase1-source-context
 
 # Phase 1.1: Types (30 min)
 # - Modify b_types/src/result/issue.ts
-# - Modify b_types/src/result/parse.ts  
+# - Modify b_types/src/result/parse.ts
 # - Modify b_types/src/result/generate.ts
 # - Run tests: just test
 # - Commit: "feat(types): add SourceContext for error locations"
@@ -251,6 +278,7 @@ git checkout -b feature/phase1-source-context
 ```
 
 ### Day 2 (3-4 hours)
+
 ```bash
 # Continue Phase 1.3: Complete parsers (2 hours)
 # - Update remaining 6 color parsers
@@ -270,6 +298,7 @@ git checkout -b feature/phase1-source-context
 ```
 
 ### After Completion
+
 ```bash
 # Quality checks
 just check
@@ -300,24 +329,28 @@ These don't block implementation but are good to discuss:
 ## Why This Plan Works
 
 ### 1. Comprehensive Analysis
+
 - Traced actual code paths
 - Identified all boundary points
 - Evaluated 4 different approaches
 - Selected best option with clear rationale
 
 ### 2. Detailed Breakdown
+
 - 71 specific tasks listed
 - Code examples for each change
 - Tests specified upfront
 - Clear success criteria
 
 ### 3. Risk Management
+
 - Identified risks at each phase
 - Mitigation strategies defined
 - Incremental approach reduces blast radius
 - Backward compatible by design
 
 ### 4. Practical Timeline
+
 - Realistic time estimates (6-8 hours)
 - Split across 2 days
 - Each phase can be committed independently
@@ -328,12 +361,14 @@ These don't block implementation but are good to discuss:
 ## Resources
 
 **All planning documents:**
+
 - `phase1-exploration.md` - Architecture analysis
 - `phase1-code-trace.md` - Code flow validation
 - `phase1-action-plan.md` - Task breakdown (THIS IS THE MAIN GUIDE)
 - `phase1-READY.md` - This summary
 
 **Reference:**
+
 - css-tree docs: https://github.com/csstree/csstree/blob/master/docs/parsing.md#location
 - Existing ADR: (in architecture/decisions/)
 
@@ -344,6 +379,7 @@ These don't block implementation but are good to discuss:
 **We have everything we need to start.**
 
 The plan is:
+
 - ✅ Comprehensive
 - ✅ Detailed
 - ✅ Risk-assessed
@@ -351,7 +387,7 @@ The plan is:
 - ✅ Backward-compatible
 - ✅ Test-covered
 
-**This is production-quality planning.**  
+**This is production-quality planning.**
 **Ready to execute.** 🚀
 
 ---
@@ -359,6 +395,7 @@ The plan is:
 **Let's build this!**
 
 The next session can start with:
+
 ```bash
 git checkout -b feature/phase1-source-context
 # Follow phase1-action-plan.md step by step
