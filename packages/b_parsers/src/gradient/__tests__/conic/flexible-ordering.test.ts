@@ -1,12 +1,12 @@
 // b_path:: packages/b_parsers/src/gradient/__tests__/conic/flexible-ordering.test.ts
 /**
  * TDD Test Suite: Flexible Component Ordering for Conic Gradients
- * 
+ *
  * Implements CSS spec: [ [ from <angle> ]? [ at <position> ]? ] || <color-interpolation-method>
- * 
+ *
  * The || operator means components can appear in any order,
  * with each component optional and appearing at most once.
- * 
+ *
  * This test suite validates all valid permutations of:
  * - angle (from <angle>)
  * - position (at <position>)
@@ -25,9 +25,11 @@ describe("Conic Gradient: Flexible Component Ordering", () => {
       const result = parse("conic-gradient(from 45deg at center in oklch, red, blue)");
       expect(result.ok).toBe(true);
       if (!result.ok) return;
-      
-      expect(result.value.kind).toBe("conic-gradient");
-      expect(result.value.angle).toBeDefined();
+      if (result.value.kind !== "conic") throw new Error("Expected conic gradient");
+
+      expect(result.value.kind).toBe("conic");
+      expect(result.value.repeating).toBe(false);
+      expect(result.value.fromAngle).toBeDefined();
       expect(result.value.position).toBeDefined();
       expect(result.value.colorInterpolationMethod).toBeDefined();
     });
@@ -36,8 +38,9 @@ describe("Conic Gradient: Flexible Component Ordering", () => {
       const result = parse("conic-gradient(from 45deg at center, red, blue)");
       expect(result.ok).toBe(true);
       if (!result.ok) return;
-      
-      expect(result.value.angle).toBeDefined();
+      if (result.value.kind !== "conic") throw new Error("Expected conic gradient");
+
+      expect(result.value.fromAngle).toBeDefined();
       expect(result.value.position).toBeDefined();
     });
 
@@ -45,8 +48,9 @@ describe("Conic Gradient: Flexible Component Ordering", () => {
       const result = parse("conic-gradient(from 45deg in oklch, red, blue)");
       expect(result.ok).toBe(true);
       if (!result.ok) return;
-      
-      expect(result.value.angle).toBeDefined();
+      if (result.value.kind !== "conic") throw new Error("Expected conic gradient");
+
+      expect(result.value.fromAngle).toBeDefined();
       expect(result.value.colorInterpolationMethod).toBeDefined();
     });
   });
@@ -59,7 +63,8 @@ describe("Conic Gradient: Flexible Component Ordering", () => {
       const result = parse("conic-gradient(from 45deg at center, red, blue)");
       expect(result.ok).toBe(true);
       if (!result.ok) return;
-      expect(result.value.angle).toBeDefined();
+      if (result.value.kind !== "conic") throw new Error("Expected conic gradient");
+      expect(result.value.fromAngle).toBeDefined();
       expect(result.value.position).toBeDefined();
     });
 
@@ -67,8 +72,9 @@ describe("Conic Gradient: Flexible Component Ordering", () => {
       const result = parse("conic-gradient(at center from 45deg, red, blue)");
       expect(result.ok).toBe(true);
       if (!result.ok) return;
+      if (result.value.kind !== "conic") throw new Error("Expected conic gradient");
       expect(result.value.position).toBeDefined();
-      expect(result.value.angle).toBeDefined();
+      expect(result.value.fromAngle).toBeDefined();
     });
   });
 
@@ -77,7 +83,8 @@ describe("Conic Gradient: Flexible Component Ordering", () => {
       const result = parse("conic-gradient(from 45deg in oklch, red, blue)");
       expect(result.ok).toBe(true);
       if (!result.ok) return;
-      expect(result.value.angle).toBeDefined();
+      if (result.value.kind !== "conic") throw new Error("Expected conic gradient");
+      expect(result.value.fromAngle).toBeDefined();
       expect(result.value.colorInterpolationMethod).toBeDefined();
     });
 
@@ -85,8 +92,9 @@ describe("Conic Gradient: Flexible Component Ordering", () => {
       const result = parse("conic-gradient(in oklch from 45deg, red, blue)");
       expect(result.ok).toBe(true);
       if (!result.ok) return;
+      if (result.value.kind !== "conic") throw new Error("Expected conic gradient");
       expect(result.value.colorInterpolationMethod).toBeDefined();
-      expect(result.value.angle).toBeDefined();
+      expect(result.value.fromAngle).toBeDefined();
     });
   });
 
@@ -95,6 +103,7 @@ describe("Conic Gradient: Flexible Component Ordering", () => {
       const result = parse("conic-gradient(at center in oklch, red, blue)");
       expect(result.ok).toBe(true);
       if (!result.ok) return;
+      if (result.value.kind !== "conic") throw new Error("Expected conic gradient");
       expect(result.value.position).toBeDefined();
       expect(result.value.colorInterpolationMethod).toBeDefined();
     });
@@ -103,6 +112,7 @@ describe("Conic Gradient: Flexible Component Ordering", () => {
       const result = parse("conic-gradient(in oklch at center, red, blue)");
       expect(result.ok).toBe(true);
       if (!result.ok) return;
+      if (result.value.kind !== "conic") throw new Error("Expected conic gradient");
       expect(result.value.colorInterpolationMethod).toBeDefined();
       expect(result.value.position).toBeDefined();
     });
@@ -116,7 +126,8 @@ describe("Conic Gradient: Flexible Component Ordering", () => {
       const result = parse("conic-gradient(from 45deg at center in oklch, red, blue)");
       expect(result.ok).toBe(true);
       if (!result.ok) return;
-      expect(result.value.angle).toBeDefined();
+      if (result.value.kind !== "conic") throw new Error("Expected conic gradient");
+      expect(result.value.fromAngle).toBeDefined();
       expect(result.value.position).toBeDefined();
       expect(result.value.colorInterpolationMethod).toBeDefined();
     });
@@ -125,7 +136,8 @@ describe("Conic Gradient: Flexible Component Ordering", () => {
       const result = parse("conic-gradient(from 45deg in oklch at center, red, blue)");
       expect(result.ok).toBe(true);
       if (!result.ok) return;
-      expect(result.value.angle).toBeDefined();
+      if (result.value.kind !== "conic") throw new Error("Expected conic gradient");
+      expect(result.value.fromAngle).toBeDefined();
       expect(result.value.colorInterpolationMethod).toBeDefined();
       expect(result.value.position).toBeDefined();
     });
@@ -134,8 +146,9 @@ describe("Conic Gradient: Flexible Component Ordering", () => {
       const result = parse("conic-gradient(at center from 45deg in oklch, red, blue)");
       expect(result.ok).toBe(true);
       if (!result.ok) return;
+      if (result.value.kind !== "conic") throw new Error("Expected conic gradient");
       expect(result.value.position).toBeDefined();
-      expect(result.value.angle).toBeDefined();
+      expect(result.value.fromAngle).toBeDefined();
       expect(result.value.colorInterpolationMethod).toBeDefined();
     });
 
@@ -143,17 +156,19 @@ describe("Conic Gradient: Flexible Component Ordering", () => {
       const result = parse("conic-gradient(at center in oklch from 45deg, red, blue)");
       expect(result.ok).toBe(true);
       if (!result.ok) return;
+      if (result.value.kind !== "conic") throw new Error("Expected conic gradient");
       expect(result.value.position).toBeDefined();
       expect(result.value.colorInterpolationMethod).toBeDefined();
-      expect(result.value.angle).toBeDefined();
+      expect(result.value.fromAngle).toBeDefined();
     });
 
     it("accepts: interpolation, angle, position (5/6)", () => {
       const result = parse("conic-gradient(in oklch from 45deg at center, red, blue)");
       expect(result.ok).toBe(true);
       if (!result.ok) return;
+      if (result.value.kind !== "conic") throw new Error("Expected conic gradient");
       expect(result.value.colorInterpolationMethod).toBeDefined();
-      expect(result.value.angle).toBeDefined();
+      expect(result.value.fromAngle).toBeDefined();
       expect(result.value.position).toBeDefined();
     });
 
@@ -161,9 +176,10 @@ describe("Conic Gradient: Flexible Component Ordering", () => {
       const result = parse("conic-gradient(in oklch at center from 45deg, red, blue)");
       expect(result.ok).toBe(true);
       if (!result.ok) return;
+      if (result.value.kind !== "conic") throw new Error("Expected conic gradient");
       expect(result.value.colorInterpolationMethod).toBeDefined();
       expect(result.value.position).toBeDefined();
-      expect(result.value.angle).toBeDefined();
+      expect(result.value.fromAngle).toBeDefined();
     });
   });
 
@@ -230,6 +246,7 @@ describe("Conic Gradient: Flexible Component Ordering", () => {
       const result = parse("conic-gradient(red, blue)");
       expect(result.ok).toBe(true);
       if (!result.ok) return;
+      if (result.value.kind !== "conic") throw new Error("Expected conic gradient");
       expect(result.value.colorStops.length).toBeGreaterThanOrEqual(2);
     });
 
@@ -237,6 +254,7 @@ describe("Conic Gradient: Flexible Component Ordering", () => {
       const result = parse("conic-gradient(in oklch, red, blue)");
       expect(result.ok).toBe(true);
       if (!result.ok) return;
+      if (result.value.kind !== "conic") throw new Error("Expected conic gradient");
       expect(result.value.colorInterpolationMethod).toBeDefined();
     });
 
@@ -244,6 +262,7 @@ describe("Conic Gradient: Flexible Component Ordering", () => {
       const result = parse("conic-gradient(at top right, red, blue)");
       expect(result.ok).toBe(true);
       if (!result.ok) return;
+      if (result.value.kind !== "conic") throw new Error("Expected conic gradient");
       expect(result.value.position).toBeDefined();
     });
 
@@ -251,7 +270,8 @@ describe("Conic Gradient: Flexible Component Ordering", () => {
       const result = parse("conic-gradient(from 45deg, red, blue)");
       expect(result.ok).toBe(true);
       if (!result.ok) return;
-      expect(result.value.angle).toBeDefined();
+      if (result.value.kind !== "conic") throw new Error("Expected conic gradient");
+      expect(result.value.fromAngle).toBeDefined();
     });
   });
 
@@ -263,9 +283,7 @@ describe("Conic Gradient: Flexible Component Ordering", () => {
       const result = parse("conic-gradient(from 45deg from 90deg, red, blue)");
       expect(result.ok).toBe(false);
       if (!result.ok) {
-        expect(result.issues.some(i => 
-          i.code === "duplicate-component" || i.code === "invalid-syntax"
-        )).toBe(true);
+        expect(result.issues.some((i) => i.code === "invalid-syntax")).toBe(true);
       }
     });
 
@@ -273,9 +291,7 @@ describe("Conic Gradient: Flexible Component Ordering", () => {
       const result = parse("conic-gradient(at top at bottom, red, blue)");
       expect(result.ok).toBe(false);
       if (!result.ok) {
-        expect(result.issues.some(i => 
-          i.code === "duplicate-component" || i.code === "invalid-syntax"
-        )).toBe(true);
+        expect(result.issues.some((i) => i.code === "invalid-syntax")).toBe(true);
       }
     });
 
@@ -283,9 +299,7 @@ describe("Conic Gradient: Flexible Component Ordering", () => {
       const result = parse("conic-gradient(in oklch in srgb, red, blue)");
       expect(result.ok).toBe(false);
       if (!result.ok) {
-        expect(result.issues.some(i => 
-          i.code === "duplicate-component" || i.code === "invalid-syntax"
-        )).toBe(true);
+        expect(result.issues.some((i) => i.code === "invalid-syntax")).toBe(true);
       }
     });
   });
@@ -295,12 +309,15 @@ describe("Conic Gradient: Flexible Component Ordering", () => {
    */
   describe("complex real-world scenarios", () => {
     it("accepts: all components in non-standard order with many stops", () => {
-      const result = parse("conic-gradient(in oklch at 30% 70% from 45deg, red 0deg, yellow 90deg, blue 180deg, green 270deg)");
+      const result = parse(
+        "conic-gradient(in oklch at 30% 70% from 45deg, red 0deg, yellow 90deg, blue 180deg, green 270deg)",
+      );
       expect(result.ok).toBe(true);
       if (!result.ok) return;
+      if (result.value.kind !== "conic") throw new Error("Expected conic gradient");
       expect(result.value.colorInterpolationMethod).toBeDefined();
       expect(result.value.position).toBeDefined();
-      expect(result.value.angle).toBeDefined();
+      expect(result.value.fromAngle).toBeDefined();
       expect(result.value.colorStops.length).toBe(4);
     });
 
@@ -308,27 +325,30 @@ describe("Conic Gradient: Flexible Component Ordering", () => {
       const result = parse("conic-gradient(in oklch at left 20% top 30% from 90deg, red, blue)");
       expect(result.ok).toBe(true);
       if (!result.ok) return;
+      if (result.value.kind !== "conic") throw new Error("Expected conic gradient");
       expect(result.value.colorInterpolationMethod).toBeDefined();
       expect(result.value.position).toBeDefined();
-      expect(result.value.angle).toBeDefined();
+      expect(result.value.fromAngle).toBeDefined();
     });
 
     it("accepts: position with calc(), then other components", () => {
       const result = parse("conic-gradient(at calc(50% - 10px) center in oklch from 45deg, red, blue)");
       expect(result.ok).toBe(true);
       if (!result.ok) return;
+      if (result.value.kind !== "conic") throw new Error("Expected conic gradient");
       expect(result.value.position).toBeDefined();
       expect(result.value.colorInterpolationMethod).toBeDefined();
-      expect(result.value.angle).toBeDefined();
+      expect(result.value.fromAngle).toBeDefined();
     });
 
     it("accepts: angle with calc(), reverse order", () => {
       const result = parse("conic-gradient(in oklch at center from calc(45deg + 45deg), red, blue)");
       expect(result.ok).toBe(true);
       if (!result.ok) return;
+      if (result.value.kind !== "conic") throw new Error("Expected conic gradient");
       expect(result.value.colorInterpolationMethod).toBeDefined();
       expect(result.value.position).toBeDefined();
-      expect(result.value.angle).toBeDefined();
+      expect(result.value.fromAngle).toBeDefined();
     });
   });
 
@@ -340,8 +360,10 @@ describe("Conic Gradient: Flexible Component Ordering", () => {
       const result = parse("repeating-conic-gradient(from 0deg at center in oklch, red 0deg, blue 30deg)");
       expect(result.ok).toBe(true);
       if (!result.ok) return;
-      expect(result.value.kind).toBe("repeating-conic-gradient");
-      expect(result.value.angle).toBeDefined();
+      if (result.value.kind !== "conic") throw new Error("Expected conic gradient");
+      expect(result.value.kind).toBe("conic");
+      expect(result.value.repeating).toBe(true);
+      expect(result.value.fromAngle).toBeDefined();
       expect(result.value.position).toBeDefined();
       expect(result.value.colorInterpolationMethod).toBeDefined();
     });
@@ -350,17 +372,21 @@ describe("Conic Gradient: Flexible Component Ordering", () => {
       const result = parse("repeating-conic-gradient(in oklch at center from 0deg, red 0deg, blue 30deg)");
       expect(result.ok).toBe(true);
       if (!result.ok) return;
-      expect(result.value.kind).toBe("repeating-conic-gradient");
+      if (result.value.kind !== "conic") throw new Error("Expected conic gradient");
+      expect(result.value.kind).toBe("conic");
+      expect(result.value.repeating).toBe(true);
       expect(result.value.colorInterpolationMethod).toBeDefined();
       expect(result.value.position).toBeDefined();
-      expect(result.value.angle).toBeDefined();
+      expect(result.value.fromAngle).toBeDefined();
     });
 
     it("accepts: position, interpolation (no angle)", () => {
       const result = parse("repeating-conic-gradient(at top in oklch, red 0deg, blue 30deg)");
       expect(result.ok).toBe(true);
       if (!result.ok) return;
-      expect(result.value.kind).toBe("repeating-conic-gradient");
+      if (result.value.kind !== "conic") throw new Error("Expected conic gradient");
+      expect(result.value.kind).toBe("conic");
+      expect(result.value.repeating).toBe(true);
       expect(result.value.position).toBeDefined();
       expect(result.value.colorInterpolationMethod).toBeDefined();
     });
@@ -393,6 +419,7 @@ describe("Conic Gradient: Flexible Component Ordering", () => {
       const result = parse("conic-gradient(in oklch from 0deg, red 0deg, blue 90deg, green 180deg)");
       expect(result.ok).toBe(true);
       if (!result.ok) return;
+      if (result.value.kind !== "conic") throw new Error("Expected conic gradient");
       expect(result.value.colorStops.length).toBe(3);
     });
 
@@ -400,14 +427,16 @@ describe("Conic Gradient: Flexible Component Ordering", () => {
       const result = parse("conic-gradient(at center from 45deg, red 45deg, blue 135deg)");
       expect(result.ok).toBe(true);
       if (!result.ok) return;
+      if (result.value.kind !== "conic") throw new Error("Expected conic gradient");
       expect(result.value.position).toBeDefined();
-      expect(result.value.angle).toBeDefined();
+      expect(result.value.fromAngle).toBeDefined();
     });
 
     it("accepts: percentage stops with flexible ordering", () => {
       const result = parse("conic-gradient(in oklch at top from 0deg, red 0%, blue 50%, green 100%)");
       expect(result.ok).toBe(true);
       if (!result.ok) return;
+      if (result.value.kind !== "conic") throw new Error("Expected conic gradient");
       expect(result.value.colorStops.length).toBe(3);
     });
   });

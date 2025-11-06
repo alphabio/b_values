@@ -50,6 +50,7 @@ radial-gradient(at center in oklch circle, red, blue)     /* mixed order 2 */
 ### 1. Parser Combinator Approaches (Complex)
 
 Libraries like `parser-ts`, `Parsimmon` support permutation combinators but add significant complexity:
+
 - Requires learning new library
 - Complex combinator composition
 - Additional dependency
@@ -58,6 +59,7 @@ Libraries like `parser-ts`, `Parsimmon` support permutation combinators but add 
 ### 2. State Machine Approach (Recommended)
 
 Single-pass, token-iteration approach works because:
+
 - **Component types are distinguishable by first token**
 - No lookahead needed—just peek at current token
 - Track which components we've seen
@@ -71,14 +73,14 @@ Single-pass, token-iteration approach works because:
 
 Each gradient component has a **unique first token pattern**:
 
-| Component              | First Token Pattern            | Example               |
-| ---------------------- | ------------------------------ | --------------------- |
-| Shape                  | Identifier: "circle"/"ellipse" | `circle`              |
-| Size keyword           | Identifier: size keywords      | `closest-side`        |
-| Size explicit          | Dimension/Percentage           | `100px` or `50%`      |
-| Position               | Identifier: "at"               | `at center`           |
-| Color interpolation    | Identifier: "in"               | `in oklch`            |
-| Color stop             | Color value                    | `red` or `#ff0000`    |
+| Component           | First Token Pattern            | Example            |
+| ------------------- | ------------------------------ | ------------------ |
+| Shape               | Identifier: "circle"/"ellipse" | `circle`           |
+| Size keyword        | Identifier: size keywords      | `closest-side`     |
+| Size explicit       | Dimension/Percentage           | `100px` or `50%`   |
+| Position            | Identifier: "at"               | `at center`        |
+| Color interpolation | Identifier: "in"               | `in oklch`         |
+| Color stop          | Color value                    | `red` or `#ff0000` |
 
 **Key Property:** These are mutually exclusive—no ambiguity!
 
@@ -99,109 +101,109 @@ function parseRadialGradientComponents(nodes: CssNode[]): ParseResult {
     hasPosition: false,
     hasInterpolation: false,
   };
-  
+
   let shape: RadialShape | undefined;
   let size: RadialGradientSize | undefined;
   let position: Position2D | undefined;
   let interpolation: ColorInterpolationMethod | undefined;
-  
+
   let idx = 0;
-  
+
   // Iterate tokens until we hit a comma or color stop
   while (idx < nodes.length) {
     const node = nodes[idx];
-    
+
     // Hit comma? We're done with components, color stops follow
-    if (node.type === 'Operator' && node.value === ',') {
+    if (node.type === "Operator" && node.value === ",") {
       idx++; // Skip comma
       break;
     }
-    
+
     // Try to recognize component by first token
     const componentType = recognizeComponent(node);
-    
+
     switch (componentType) {
-      case 'shape':
-        if (flags.hasShape) return error('Duplicate shape');
+      case "shape":
+        if (flags.hasShape) return error("Duplicate shape");
         // Parse shape...
         flags.hasShape = true;
         break;
-        
-      case 'size':
-        if (flags.hasSize) return error('Duplicate size');
+
+      case "size":
+        if (flags.hasSize) return error("Duplicate size");
         // Parse size...
         flags.hasSize = true;
         break;
-        
-      case 'position':
-        if (flags.hasPosition) return error('Duplicate position');
+
+      case "position":
+        if (flags.hasPosition) return error("Duplicate position");
         // Parse position (consumes "at" + position tokens)
         flags.hasPosition = true;
         break;
-        
-      case 'interpolation':
-        if (flags.hasInterpolation) return error('Duplicate interpolation');
+
+      case "interpolation":
+        if (flags.hasInterpolation) return error("Duplicate interpolation");
         // Parse interpolation (consumes "in" + colorspace)
         flags.hasInterpolation = true;
         break;
-        
-      case 'color-stop':
+
+      case "color-stop":
         // This is where color stops begin
         break; // Exit loop
-        
+
       default:
-        return error('Unexpected token');
+        return error("Unexpected token");
     }
-    
+
     // If we recognized a color stop, we're done
-    if (componentType === 'color-stop') break;
+    if (componentType === "color-stop") break;
   }
-  
+
   // Now parse color stops from idx onwards...
   return parseColorStops(nodes, idx);
 }
 
 function recognizeComponent(node: CssNode): ComponentType {
-  if (node.type === 'Identifier') {
+  if (node.type === "Identifier") {
     const value = node.name.toLowerCase();
-    
+
     // Shape
-    if (value === 'circle' || value === 'ellipse') {
-      return 'shape';
+    if (value === "circle" || value === "ellipse") {
+      return "shape";
     }
-    
+
     // Size keyword
-    if (['closest-side', 'closest-corner', 'farthest-side', 'farthest-corner'].includes(value)) {
-      return 'size';
+    if (["closest-side", "closest-corner", "farthest-side", "farthest-corner"].includes(value)) {
+      return "size";
     }
-    
+
     // Position
-    if (value === 'at') {
-      return 'position';
+    if (value === "at") {
+      return "position";
     }
-    
+
     // Color interpolation
-    if (value === 'in') {
-      return 'interpolation';
+    if (value === "in") {
+      return "interpolation";
     }
-    
+
     // Could be a named color (color stop)
-    return 'color-stop';
+    return "color-stop";
   }
-  
+
   // Dimension or percentage → could be size or color stop
-  if (node.type === 'Dimension' || node.type === 'Percentage') {
+  if (node.type === "Dimension" || node.type === "Percentage") {
     // Need context: if we haven't seen size yet, it's likely size
     // Otherwise it's a color stop
-    return 'ambiguous'; // Need to check flags
+    return "ambiguous"; // Need to check flags
   }
-  
+
   // Hash, Function → color stop
-  if (node.type === 'Hash' || node.type === 'Function') {
-    return 'color-stop';
+  if (node.type === "Hash" || node.type === "Function") {
+    return "color-stop";
   }
-  
-  return 'unknown';
+
+  return "unknown";
 }
 ```
 
@@ -220,6 +222,7 @@ function recognizeComponent(node: CssNode): ComponentType {
 ### Phase 1: Radial Gradient (Simplest)
 
 **Why start here:**
+
 - Fewer components than linear+conic combined
 - Clear component boundaries
 - Good test case for the pattern
@@ -227,9 +230,10 @@ function recognizeComponent(node: CssNode): ComponentType {
 **Steps:**
 
 1. **Extract component recognizer** (30 min)
+
    ```typescript
    // packages/b_parsers/src/gradient/component-recognizer.ts
-   export function recognizeRadialComponent(node: CssNode, flags: ComponentFlags): ComponentType
+   export function recognizeRadialComponent(node: CssNode, flags: ComponentFlags): ComponentType;
    ```
 
 2. **Refactor radial parser** (1-2 hours)
@@ -248,6 +252,7 @@ function recognizeComponent(node: CssNode): ComponentType {
 ### Phase 2: Linear Gradient
 
 **Simpler than radial:**
+
 - Fewer components (direction, interpolation)
 - `to` keyword disambiguates direction
 - Less ambiguity overall
@@ -263,6 +268,7 @@ function recognizeComponent(node: CssNode): ComponentType {
 ### Phase 3: Conic Gradient
 
 **Similar to radial:**
+
 - Angle instead of shape
 - Position with "at"
 - Interpolation
@@ -280,27 +286,32 @@ function recognizeComponent(node: CssNode): ComponentType {
 ## Advantages of This Approach
 
 ### 1. **No Architectural Changes**
+
 - Still uses css-tree AST
 - Same token types
 - Same parse functions
 - Just different invocation order
 
 ### 2. **Maintainable**
+
 - Clear component recognition logic
 - Explicit error handling
 - Easy to debug
 
 ### 3. **Performant**
+
 - Single pass through tokens
 - No backtracking overhead
 - Simple flag checks
 
 ### 4. **Testable**
+
 - Each component recognizer can be unit tested
 - Permutation tests are straightforward
 - Duplicate detection is explicit
 
 ### 5. **Incremental**
+
 - Can implement one gradient at a time
 - Can feature-flag if needed
 - Can rollback easily
@@ -319,27 +330,28 @@ radial-gradient(100px, red, blue)  /* Is 100px a size or color stop? */
 
 ```typescript
 function recognizeComponent(node: CssNode, flags: ComponentFlags): ComponentType {
-  if (node.type === 'Dimension' || node.type === 'Percentage') {
+  if (node.type === "Dimension" || node.type === "Percentage") {
     // If we already have size, this must be a color stop position
     if (flags.hasSize) {
-      return 'color-stop';
+      return "color-stop";
     }
-    
+
     // If next token is another dimension/percentage, this is ellipse size
     // Otherwise, could be circle size or color stop
-    
+
     // Heuristic: If we haven't seen shape/size yet, treat as size
     if (!flags.hasShape && !flags.hasSize) {
-      return 'size';
+      return "size";
     }
-    
+
     // Otherwise, it's a color stop
-    return 'color-stop';
+    return "color-stop";
   }
 }
 ```
 
 **Alternative:** Use slight lookahead (just next token) for disambiguation
+
 - This is still single-pass
 - Just peek at next token, don't consume it
 - Standard practice in parsers
@@ -356,16 +368,16 @@ function recognizeComponent(node: CssNode, flags: ComponentFlags): ComponentType
 if (flags.hasShape) {
   return parseErr(
     createError(
-      'duplicate-component',
+      "duplicate-component",
       `Duplicate shape in radial-gradient. Found '${shape}' and '${newShape}'. Only one shape allowed.`
     )
   );
 }
 
-if (componentType === 'unknown') {
+if (componentType === "unknown") {
   return parseErr(
     createError(
-      'invalid-component',
+      "invalid-component",
       `Unexpected token '${node.value}' in gradient. Expected: shape, size, 'at', 'in', or color stop.`
     )
   );
@@ -380,10 +392,10 @@ if (componentType === 'unknown') {
 
 ```typescript
 // FIXED ORDER
-parseShapeAndSize()     // Must be first
-parsePosition()         // Must be second
-parseInterpolation()    // Must be third
-parseColorStops()       // Must be last
+parseShapeAndSize(); // Must be first
+parsePosition(); // Must be second
+parseInterpolation(); // Must be third
+parseColorStops(); // Must be last
 ```
 
 **Rejects:** `radial-gradient(at center circle, red, blue)`
@@ -415,48 +427,48 @@ parseColorStops()
 For radial gradient with 3 optional components (shape, position, interpolation):
 
 ```typescript
-describe('flexible ordering', () => {
+describe("flexible ordering", () => {
   const components = {
-    shape: 'circle',
-    position: 'at center',
-    interpolation: 'in oklch',
+    shape: "circle",
+    position: "at center",
+    interpolation: "in oklch",
   };
-  
+
   // Test all valid permutations
-  it('accepts: shape, position, interpolation', () => {
-    expect(parse('radial-gradient(circle at center in oklch, red, blue)')).toBeOk();
+  it("accepts: shape, position, interpolation", () => {
+    expect(parse("radial-gradient(circle at center in oklch, red, blue)")).toBeOk();
   });
-  
-  it('accepts: shape, interpolation, position', () => {
-    expect(parse('radial-gradient(circle in oklch at center, red, blue)')).toBeOk();
+
+  it("accepts: shape, interpolation, position", () => {
+    expect(parse("radial-gradient(circle in oklch at center, red, blue)")).toBeOk();
   });
-  
-  it('accepts: position, shape, interpolation', () => {
-    expect(parse('radial-gradient(at center circle in oklch, red, blue)')).toBeOk();
+
+  it("accepts: position, shape, interpolation", () => {
+    expect(parse("radial-gradient(at center circle in oklch, red, blue)")).toBeOk();
   });
-  
-  it('accepts: position, interpolation, shape', () => {
-    expect(parse('radial-gradient(at center in oklch circle, red, blue)')).toBeOk();
+
+  it("accepts: position, interpolation, shape", () => {
+    expect(parse("radial-gradient(at center in oklch circle, red, blue)")).toBeOk();
   });
-  
-  it('accepts: interpolation, shape, position', () => {
-    expect(parse('radial-gradient(in oklch circle at center, red, blue)')).toBeOk();
+
+  it("accepts: interpolation, shape, position", () => {
+    expect(parse("radial-gradient(in oklch circle at center, red, blue)")).toBeOk();
   });
-  
-  it('accepts: interpolation, position, shape', () => {
-    expect(parse('radial-gradient(in oklch at center circle, red, blue)')).toBeOk();
+
+  it("accepts: interpolation, position, shape", () => {
+    expect(parse("radial-gradient(in oklch at center circle, red, blue)")).toBeOk();
   });
 });
 
-describe('duplicate detection', () => {
-  it('rejects duplicate shape', () => {
-    const result = parse('radial-gradient(circle ellipse, red, blue)');
+describe("duplicate detection", () => {
+  it("rejects duplicate shape", () => {
+    const result = parse("radial-gradient(circle ellipse, red, blue)");
     expect(result.ok).toBe(false);
-    expect(result.issues[0]?.code).toBe('duplicate-component');
+    expect(result.issues[0]?.code).toBe("duplicate-component");
   });
-  
-  it('rejects duplicate position', () => {
-    const result = parse('radial-gradient(at top at bottom, red, blue)');
+
+  it("rejects duplicate position", () => {
+    const result = parse("radial-gradient(at top at bottom, red, blue)");
     expect(result.ok).toBe(false);
   });
 });
@@ -467,10 +479,12 @@ describe('duplicate detection', () => {
 ## Performance Analysis
 
 ### Current Implementation
+
 - **Time:** O(n) single pass
 - **Space:** O(1) for parsing state
 
 ### Proposed Implementation
+
 - **Time:** O(n) single pass (same!)
 - **Space:** O(1) for flags + parsing state (negligible increase)
 
@@ -537,6 +551,7 @@ describe('duplicate detection', () => {
 The belief that flexible component ordering requires lookahead or backtracking is **incorrect**. Because gradient components have **unique first-token signatures**, we can use a simple **switch-on-token-type** approach with component flags to parse in any order in a single pass.
 
 This is a **well-known pattern** in parser design, used in:
+
 - CSS parsers (for property order within rules)
 - JSON parsers (for object key order)
 - HTML parsers (for attribute order)

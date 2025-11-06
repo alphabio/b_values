@@ -115,12 +115,32 @@ function parseShapeAndSize(
             radiusY: secondResult.value,
           };
           idx++;
+
+          // Check for shape after explicit ellipse size
+          const shapeNode = nodes[idx];
+          if (shapeNode?.type === "Identifier") {
+            const shapeValue = shapeNode.name.toLowerCase();
+            if (shapeValue === "circle" || shapeValue === "ellipse") {
+              shape = shapeValue as RadialShape;
+              idx++;
+            }
+          }
         }
       } else {
         size = {
           kind: "circle-explicit",
           radius: firstResult.value,
         };
+
+        // Check for shape after explicit circle size
+        const shapeNode = nodes[idx];
+        if (shapeNode?.type === "Identifier") {
+          const shapeValue = shapeNode.name.toLowerCase();
+          if (shapeValue === "circle" || shapeValue === "ellipse") {
+            shape = shapeValue as RadialShape;
+            idx++;
+          }
+        }
       }
     }
   }
@@ -129,7 +149,8 @@ function parseShapeAndSize(
 }
 
 /**
- * Parse radial gradient from CSS function AST.
+ * Parse radial gradient from CSS function AST with flexible component ordering.
+ * Supports CSS spec: [ [ [ <radial-shape> || <radial-size> ]? [ at <position> ]? ] || <color-interpolation-method> ]?
  *
  * @see https://developer.mozilla.org/en-US/docs/Web/CSS/gradient/radial-gradient
  */
@@ -154,46 +175,157 @@ export function fromFunction(fn: csstree.FunctionNode): ParseResult<Type.RadialG
   let colorInterpolationMethod: Type.ColorInterpolationMethod | undefined;
 
   let idx = 0;
+  let hasShape = false;
+  let hasSize = false;
+  let hasPosition = false;
+  let hasInterpolation = false;
 
-  const shapeAndSizeResult = parseShapeAndSize(children, idx);
-  if (shapeAndSizeResult.ok) {
-    shape = shapeAndSizeResult.value.shape;
-    size = shapeAndSizeResult.value.size;
-    idx = shapeAndSizeResult.value.nextIdx;
-  }
+  // Flexible component parsing: accept components in any order
+  while (idx < children.length) {
+    const node = children[idx];
+    if (!node) break;
 
-  const atNode = children[idx];
-  if (atNode?.type === "Identifier" && atNode.name.toLowerCase() === "at") {
-    idx++;
-    const positionNodes: csstree.CssNode[] = [];
-
-    while (idx < children.length) {
-      const node = children[idx];
-      if (!node) break;
-      if (node.type === "Operator" && node.value === ",") break;
-      if (node.type === "Identifier" && node.name.toLowerCase() === "in") break;
-
-      positionNodes.push(node);
+    // Skip commas between components (backwards compatibility)
+    if (node.type === "Operator" && node.value === ",") {
       idx++;
+      continue;
     }
 
-    if (positionNodes.length > 0) {
-      const posResult = parsePosition2D(positionNodes, 0);
-      if (posResult.ok) {
-        position = posResult.value.position;
+    // Recognize component by first token
+    if (node.type === "Identifier") {
+      const value = node.name.toLowerCase();
+
+      // Position component: "at <position>"
+      if (value === "at") {
+        if (hasPosition) {
+          return parseErr(createError("invalid-syntax", "Duplicate position component"));
+        }
+        hasPosition = true;
+        idx++;
+
+        const positionNodes: csstree.CssNode[] = [];
+        while (idx < children.length) {
+          const posNode = children[idx];
+          if (!posNode) break;
+          if (posNode.type === "Operator" && posNode.value === ",") break;
+          if (posNode.type === "Identifier" && posNode.name.toLowerCase() === "at") break;
+          if (posNode.type === "Identifier" && posNode.name.toLowerCase() === "in") break;
+          if (posNode.type === "Identifier" && ["circle", "ellipse"].includes(posNode.name.toLowerCase())) break;
+          if (
+            posNode.type === "Identifier" &&
+            ["closest-side", "closest-corner", "farthest-side", "farthest-corner"].includes(posNode.name.toLowerCase())
+          )
+            break;
+
+          positionNodes.push(posNode);
+          idx++;
+        }
+
+        if (positionNodes.length > 0) {
+          const posResult = parsePosition2D(positionNodes, 0);
+          if (posResult.ok) {
+            position = posResult.value.position;
+          } else {
+            return forwardParseErr<Type.RadialGradient>(posResult);
+          }
+        }
+        continue;
       }
+
+      // Color interpolation: "in <colorspace>"
+      if (value === "in") {
+        if (hasInterpolation) {
+          return parseErr(createError("invalid-syntax", "Duplicate color interpolation method"));
+        }
+        hasInterpolation = true;
+
+        const interpolationResult = Utils.parseColorInterpolationMethod(children, idx);
+        if (interpolationResult) {
+          colorInterpolationMethod = interpolationResult.method;
+          idx = interpolationResult.nextIndex;
+        }
+        continue;
+      }
+
+      // Shape: "circle" or "ellipse" - parse shape and potentially adjacent size
+      if (value === "circle" || value === "ellipse") {
+        if (hasShape || hasSize) {
+          return parseErr(createError("invalid-syntax", "Duplicate shape/size component"));
+        }
+
+        // Use the old parseShapeAndSize function which handles shape+size together
+        const shapeAndSizeResult = parseShapeAndSize(children, idx);
+        if (shapeAndSizeResult.ok) {
+          shape = shapeAndSizeResult.value.shape;
+          size = shapeAndSizeResult.value.size;
+          // Mark both as parsed since they're a combined component
+          hasShape = true;
+          hasSize = true;
+          idx = shapeAndSizeResult.value.nextIdx;
+        } else {
+          return forwardParseErr<Type.RadialGradient>(shapeAndSizeResult);
+        }
+        continue;
+      }
+
+      // Size keyword: "closest-side" etc. - parse size and potentially adjacent shape
+      if (["closest-side", "closest-corner", "farthest-side", "farthest-corner"].includes(value)) {
+        if (hasSize || hasShape) {
+          return parseErr(createError("invalid-syntax", "Duplicate shape/size component"));
+        }
+
+        // Use parseShapeAndSize starting from this size keyword
+        const shapeAndSizeResult = parseShapeAndSize(children, idx);
+        if (shapeAndSizeResult.ok) {
+          shape = shapeAndSizeResult.value.shape;
+          size = shapeAndSizeResult.value.size;
+          // Mark both as parsed since they're a combined component
+          hasShape = true;
+          hasSize = true;
+          idx = shapeAndSizeResult.value.nextIdx;
+        } else {
+          return forwardParseErr<Type.RadialGradient>(shapeAndSizeResult);
+        }
+        continue;
+      }
+
+      // Could be a color stop (named color) - break to color stop parsing
+      break;
     }
+
+    // Dimension or Percentage → explicit size - parse size and potentially adjacent shape
+    if (node.type === "Dimension" || node.type === "Percentage") {
+      if (hasSize || hasShape) {
+        // Could be a color stop position - break to color stop parsing
+        break;
+      }
+
+      // Use parseShapeAndSize starting from this dimension
+      const shapeAndSizeResult = parseShapeAndSize(children, idx);
+      if (shapeAndSizeResult.ok) {
+        shape = shapeAndSizeResult.value.shape;
+        size = shapeAndSizeResult.value.size;
+        // Mark both as parsed since they're a combined component
+        hasShape = true;
+        hasSize = true;
+        idx = shapeAndSizeResult.value.nextIdx;
+      } else {
+        // Not a valid size, might be color stop
+        break;
+      }
+      continue;
+    }
+
+    // Function or Hash → color stop, break to color stop parsing
+    if (node.type === "Function" || node.type === "Hash") {
+      break;
+    }
+
+    // Unknown token
+    return parseErr(createError("invalid-value", `Unexpected token in gradient: ${node.type}`));
   }
 
-  idx = Utils.Ast.skipComma(children, idx);
-
-  const interpolationResult = Utils.parseColorInterpolationMethod(children, idx);
-  if (interpolationResult) {
-    colorInterpolationMethod = interpolationResult.method;
-    idx = interpolationResult.nextIndex;
-    idx = Utils.Ast.skipComma(children, idx);
-  }
-
+  // Parse color stops
   const stopGroups = Utils.Ast.splitNodesByComma(children, { startIndex: idx });
 
   const colorStops: Type.ColorStop[] = [];
@@ -209,7 +341,6 @@ export function fromFunction(fn: csstree.FunctionNode): ParseResult<Type.RadialG
   }
 
   if (issues.length > 0) {
-    // Return partial gradient to enable generator warnings on successfully parsed stops
     return {
       ok: false,
       value: {

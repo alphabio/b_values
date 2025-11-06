@@ -9,7 +9,8 @@ import * as SharedParsing from "./shared-parsing";
 import * as Utils from "../utils";
 
 /**
- * Parse conic gradient from CSS function AST.
+ * Parse conic gradient from CSS function AST with flexible component ordering.
+ * Supports CSS spec: [ [ [ from <angle> ]? [ at <position> ]? ] || <color-interpolation-method> ]?
  *
  * @see https://developer.mozilla.org/en-US/docs/Web/CSS/gradient/conic-gradient
  */
@@ -33,66 +34,120 @@ export function fromFunction(fn: csstree.FunctionNode): ParseResult<Type.ConicGr
   let colorInterpolationMethod: Type.ColorInterpolationMethod | undefined;
 
   let idx = 0;
+  let hasFromAngle = false;
+  let hasPosition = false;
+  let hasInterpolation = false;
 
-  const fromNode = children[idx];
-  if (fromNode?.type === "Identifier" && fromNode.name.toLowerCase() === "from") {
-    idx++;
-    const angleNode = children[idx];
-    if (
-      !angleNode ||
-      angleNode.type === "Operator" ||
-      (angleNode.type === "Identifier" && ["at", "in", "from"].includes(angleNode.name.toLowerCase()))
-    ) {
-      return parseErr(createError("invalid-syntax", "conic-gradient 'from' keyword requires an angle value"));
-    }
-    // Use parseCssValueNodeEnhanced to support var(), calc(), and literals
-    const angleResult = parseCssValueNodeEnhanced(angleNode);
-    if (!angleResult.ok) {
-      return forwardParseErr<Type.ConicGradient>(angleResult);
-    }
-    fromAngle = angleResult.value;
-    idx++;
-  }
+  // Flexible component parsing: accept components in any order
+  while (idx < children.length) {
+    const node = children[idx];
+    if (!node) break;
 
-  const atNode = children[idx];
-  if (atNode?.type === "Identifier" && atNode.name.toLowerCase() === "at") {
-    idx++;
-    const positionNodes: csstree.CssNode[] = [];
-
-    while (idx < children.length) {
-      const node = children[idx];
-      if (!node) break;
-      if (node.type === "Operator" && node.value === ",") break;
-      if (node.type === "Identifier" && node.name.toLowerCase() === "in") break;
-
-      positionNodes.push(node);
+    // Skip commas between components (backwards compatibility)
+    if (node.type === "Operator" && node.value === ",") {
       idx++;
+      continue;
     }
 
-    if (positionNodes.length === 0) {
-      return parseErr(createError("invalid-syntax", "conic-gradient 'at' keyword requires position values"));
+    // Recognize component by first token
+    if (node.type === "Identifier") {
+      const value = node.name.toLowerCase();
+
+      // From angle: "from <angle>"
+      if (value === "from") {
+        if (hasFromAngle) {
+          return parseErr(createError("invalid-syntax", "Duplicate 'from' angle component"));
+        }
+        hasFromAngle = true;
+        idx++;
+
+        const angleNode = children[idx];
+        if (
+          !angleNode ||
+          angleNode.type === "Operator" ||
+          (angleNode.type === "Identifier" && ["at", "in", "from"].includes(angleNode.name.toLowerCase()))
+        ) {
+          return parseErr(createError("invalid-syntax", "conic-gradient 'from' keyword requires an angle value"));
+        }
+
+        const angleResult = parseCssValueNodeEnhanced(angleNode);
+        if (!angleResult.ok) {
+          return forwardParseErr<Type.ConicGradient>(angleResult);
+        }
+        fromAngle = angleResult.value;
+        idx++;
+        continue;
+      }
+
+      // Position: "at <position>"
+      if (value === "at") {
+        if (hasPosition) {
+          return parseErr(createError("invalid-syntax", "Duplicate position component"));
+        }
+        hasPosition = true;
+        idx++;
+
+        const positionNodes: csstree.CssNode[] = [];
+        while (idx < children.length) {
+          const posNode = children[idx];
+          if (!posNode) break;
+          if (posNode.type === "Operator" && posNode.value === ",") break;
+          if (posNode.type === "Identifier" && posNode.name.toLowerCase() === "at") break;
+          if (posNode.type === "Identifier" && posNode.name.toLowerCase() === "in") break;
+          if (posNode.type === "Identifier" && posNode.name.toLowerCase() === "from") break;
+
+          positionNodes.push(posNode);
+          idx++;
+        }
+
+        if (positionNodes.length === 0) {
+          return parseErr(createError("invalid-syntax", "conic-gradient 'at' keyword requires position values"));
+        }
+        const posResult = parsePosition2D(positionNodes, 0);
+        if (!posResult.ok) {
+          return forwardParseErr<Type.ConicGradient>(posResult);
+        }
+        position = posResult.value.position;
+        continue;
+      }
+
+      // Color interpolation: "in <colorspace>"
+      if (value === "in") {
+        if (hasInterpolation) {
+          return parseErr(createError("invalid-syntax", "Duplicate color interpolation method"));
+        }
+        hasInterpolation = true;
+
+        const interpolationResult = Utils.parseColorInterpolationMethod(children, idx);
+        if (!interpolationResult) {
+          return parseErr(createError("invalid-syntax", "conic-gradient 'in' keyword requires a color space"));
+        }
+        colorInterpolationMethod = interpolationResult.method;
+        idx = interpolationResult.nextIndex;
+        continue;
+      }
+
+      // Could be a color stop (named color) - break to color stop parsing
+      break;
     }
-    const posResult = parsePosition2D(positionNodes, 0);
-    if (!posResult.ok) {
-      return forwardParseErr<Type.ConicGradient>(posResult);
+
+    // Function or Hash → color stop
+    if (node.type === "Function" || node.type === "Hash") {
+      break;
     }
-    position = posResult.value.position;
+
+    // Dimension, Number, Percentage → could be angle or color stop
+    // If we have fromAngle already, it's likely a color stop
+    if (node.type === "Dimension" || node.type === "Number" || node.type === "Percentage") {
+      // Without 'from' keyword, dimensions are likely color stops
+      break;
+    }
+
+    // Unknown token
+    return parseErr(createError("invalid-value", `Unexpected token in gradient: ${node.type}`));
   }
 
-  idx = Utils.Ast.skipComma(children, idx);
-
-  // Check for "in" keyword and validate it has a color space
-  const inNode = children[idx];
-  if (inNode?.type === "Identifier" && inNode.name.toLowerCase() === "in") {
-    const interpolationResult = Utils.parseColorInterpolationMethod(children, idx);
-    if (!interpolationResult) {
-      return parseErr(createError("invalid-syntax", "conic-gradient 'in' keyword requires a color space"));
-    }
-    colorInterpolationMethod = interpolationResult.method;
-    idx = interpolationResult.nextIndex;
-    idx = Utils.Ast.skipComma(children, idx);
-  }
-
+  // Parse color stops
   const stopGroups = Utils.Ast.splitNodesByComma(children, { startIndex: idx });
 
   const colorStops: Type.ColorStop[] = [];
@@ -108,7 +163,6 @@ export function fromFunction(fn: csstree.FunctionNode): ParseResult<Type.ConicGr
   }
 
   if (issues.length > 0) {
-    // Return partial gradient to enable generator warnings on successfully parsed stops
     return {
       ok: false,
       value: {

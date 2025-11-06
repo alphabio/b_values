@@ -1,11 +1,11 @@
 // b_path:: packages/b_parsers/src/gradient/__tests__/linear/flexible-ordering.test.ts
 /**
  * TDD Test Suite: Flexible Component Ordering for Linear Gradients
- * 
+ *
  * Implements CSS spec: [ <linear-gradient-syntax> ]? || <color-interpolation-method>
- * 
+ *
  * The || operator means direction and interpolation can appear in any order.
- * 
+ *
  * This test suite validates all valid permutations of:
  * - direction (angle or to <side-or-corner>)
  * - color interpolation (in <colorspace>)
@@ -23,8 +23,11 @@ describe("Linear Gradient: Flexible Component Ordering", () => {
       const result = parse("linear-gradient(45deg in oklch, red, blue)");
       expect(result.ok).toBe(true);
       if (!result.ok) return;
-      
-      expect(result.value.kind).toBe("linear-gradient");
+      if (result.value.kind !== "linear") throw new Error("Expected linear gradient");
+
+      expect(result.value.kind).toBe("linear");
+      if (result.value.kind !== "linear") throw new Error("Expected linear gradient");
+      expect(result.value.repeating).toBe(false);
       expect(result.value.direction?.kind).toBe("angle");
       expect(result.value.colorInterpolationMethod).toBeDefined();
     });
@@ -33,7 +36,8 @@ describe("Linear Gradient: Flexible Component Ordering", () => {
       const result = parse("linear-gradient(to right in oklch, red, blue)");
       expect(result.ok).toBe(true);
       if (!result.ok) return;
-      
+      if (result.value.kind !== "linear") throw new Error("Expected linear gradient");
+
       expect(result.value.direction?.kind).toBe("to-side");
       expect(result.value.colorInterpolationMethod).toBeDefined();
     });
@@ -42,7 +46,8 @@ describe("Linear Gradient: Flexible Component Ordering", () => {
       const result = parse("linear-gradient(to top right in oklch, red, blue)");
       expect(result.ok).toBe(true);
       if (!result.ok) return;
-      
+      if (result.value.kind !== "linear") throw new Error("Expected linear gradient");
+
       expect(result.value.direction?.kind).toBe("to-corner");
       expect(result.value.colorInterpolationMethod).toBeDefined();
     });
@@ -56,6 +61,7 @@ describe("Linear Gradient: Flexible Component Ordering", () => {
       const result = parse("linear-gradient(45deg in oklch, red, blue)");
       expect(result.ok).toBe(true);
       if (!result.ok) return;
+      if (result.value.kind !== "linear") throw new Error("Expected linear gradient");
       expect(result.value.direction?.kind).toBe("angle");
       expect(result.value.colorInterpolationMethod).toBeDefined();
     });
@@ -64,6 +70,7 @@ describe("Linear Gradient: Flexible Component Ordering", () => {
       const result = parse("linear-gradient(in oklch 45deg, red, blue)");
       expect(result.ok).toBe(true);
       if (!result.ok) return;
+      if (result.value.kind !== "linear") throw new Error("Expected linear gradient");
       expect(result.value.colorInterpolationMethod).toBeDefined();
       expect(result.value.direction?.kind).toBe("angle");
     });
@@ -74,6 +81,7 @@ describe("Linear Gradient: Flexible Component Ordering", () => {
       const result = parse("linear-gradient(to right in oklch, red, blue)");
       expect(result.ok).toBe(true);
       if (!result.ok) return;
+      if (result.value.kind !== "linear") throw new Error("Expected linear gradient");
       expect(result.value.direction?.kind).toBe("to-side");
       expect(result.value.colorInterpolationMethod).toBeDefined();
     });
@@ -82,6 +90,7 @@ describe("Linear Gradient: Flexible Component Ordering", () => {
       const result = parse("linear-gradient(in oklch to right, red, blue)");
       expect(result.ok).toBe(true);
       if (!result.ok) return;
+      if (result.value.kind !== "linear") throw new Error("Expected linear gradient");
       expect(result.value.colorInterpolationMethod).toBeDefined();
       expect(result.value.direction?.kind).toBe("to-side");
     });
@@ -92,6 +101,7 @@ describe("Linear Gradient: Flexible Component Ordering", () => {
       const result = parse("linear-gradient(to top right in oklch, red, blue)");
       expect(result.ok).toBe(true);
       if (!result.ok) return;
+      if (result.value.kind !== "linear") throw new Error("Expected linear gradient");
       expect(result.value.direction?.kind).toBe("to-corner");
       expect(result.value.colorInterpolationMethod).toBeDefined();
     });
@@ -100,6 +110,7 @@ describe("Linear Gradient: Flexible Component Ordering", () => {
       const result = parse("linear-gradient(in oklch to top right, red, blue)");
       expect(result.ok).toBe(true);
       if (!result.ok) return;
+      if (result.value.kind !== "linear") throw new Error("Expected linear gradient");
       expect(result.value.colorInterpolationMethod).toBeDefined();
       expect(result.value.direction?.kind).toBe("to-corner");
     });
@@ -186,6 +197,7 @@ describe("Linear Gradient: Flexible Component Ordering", () => {
       const result = parse("linear-gradient(red, blue)");
       expect(result.ok).toBe(true);
       if (!result.ok) return;
+      if (result.value.kind !== "linear") throw new Error("Expected linear gradient");
       expect(result.value.colorStops.length).toBeGreaterThanOrEqual(2);
     });
 
@@ -193,6 +205,7 @@ describe("Linear Gradient: Flexible Component Ordering", () => {
       const result = parse("linear-gradient(in oklch, red, blue)");
       expect(result.ok).toBe(true);
       if (!result.ok) return;
+      if (result.value.kind !== "linear") throw new Error("Expected linear gradient");
       expect(result.value.colorInterpolationMethod).toBeDefined();
     });
 
@@ -200,6 +213,7 @@ describe("Linear Gradient: Flexible Component Ordering", () => {
       const result = parse("linear-gradient(45deg, red, blue)");
       expect(result.ok).toBe(true);
       if (!result.ok) return;
+      if (result.value.kind !== "linear") throw new Error("Expected linear gradient");
       expect(result.value.direction?.kind).toBe("angle");
     });
 
@@ -207,6 +221,7 @@ describe("Linear Gradient: Flexible Component Ordering", () => {
       const result = parse("linear-gradient(to right, red, blue)");
       expect(result.ok).toBe(true);
       if (!result.ok) return;
+      if (result.value.kind !== "linear") throw new Error("Expected linear gradient");
       expect(result.value.direction?.kind).toBe("to-side");
     });
   });
@@ -219,9 +234,7 @@ describe("Linear Gradient: Flexible Component Ordering", () => {
       const result = parse("linear-gradient(45deg to right, red, blue)");
       expect(result.ok).toBe(false);
       if (!result.ok) {
-        expect(result.issues.some(i => 
-          i.code === "duplicate-component" || i.code === "invalid-syntax"
-        )).toBe(true);
+        expect(result.issues.some((i) => i.code === "invalid-syntax")).toBe(true);
       }
     });
 
@@ -229,9 +242,7 @@ describe("Linear Gradient: Flexible Component Ordering", () => {
       const result = parse("linear-gradient(in oklch in srgb, red, blue)");
       expect(result.ok).toBe(false);
       if (!result.ok) {
-        expect(result.issues.some(i => 
-          i.code === "duplicate-component" || i.code === "invalid-syntax"
-        )).toBe(true);
+        expect(result.issues.some((i) => i.code === "invalid-syntax")).toBe(true);
       }
     });
   });
@@ -244,6 +255,7 @@ describe("Linear Gradient: Flexible Component Ordering", () => {
       const result = parse("linear-gradient(in oklch 45deg, red 0%, yellow 50%, blue 100%)");
       expect(result.ok).toBe(true);
       if (!result.ok) return;
+      if (result.value.kind !== "linear") throw new Error("Expected linear gradient");
       expect(result.value.colorInterpolationMethod).toBeDefined();
       expect(result.value.direction?.kind).toBe("angle");
       expect(result.value.colorStops.length).toBe(3);
@@ -253,6 +265,7 @@ describe("Linear Gradient: Flexible Component Ordering", () => {
       const result = parse("linear-gradient(in oklch to bottom right, red, orange, yellow, green, blue)");
       expect(result.ok).toBe(true);
       if (!result.ok) return;
+      if (result.value.kind !== "linear") throw new Error("Expected linear gradient");
       expect(result.value.colorInterpolationMethod).toBeDefined();
       expect(result.value.direction?.kind).toBe("to-corner");
       expect(result.value.colorStops.length).toBe(5);
@@ -262,6 +275,7 @@ describe("Linear Gradient: Flexible Component Ordering", () => {
       const result = parse("linear-gradient(calc(45deg + 45deg) in oklch, red, blue)");
       expect(result.ok).toBe(true);
       if (!result.ok) return;
+      if (result.value.kind !== "linear") throw new Error("Expected linear gradient");
       expect(result.value.direction?.kind).toBe("angle");
       expect(result.value.colorInterpolationMethod).toBeDefined();
     });
@@ -270,6 +284,7 @@ describe("Linear Gradient: Flexible Component Ordering", () => {
       const result = parse("linear-gradient(in oklch calc(90deg - 45deg), red, blue)");
       expect(result.ok).toBe(true);
       if (!result.ok) return;
+      if (result.value.kind !== "linear") throw new Error("Expected linear gradient");
       expect(result.value.colorInterpolationMethod).toBeDefined();
       expect(result.value.direction?.kind).toBe("angle");
     });
@@ -283,7 +298,9 @@ describe("Linear Gradient: Flexible Component Ordering", () => {
       const result = parse("repeating-linear-gradient(45deg in oklch, red 0px, blue 10px)");
       expect(result.ok).toBe(true);
       if (!result.ok) return;
-      expect(result.value.kind).toBe("repeating-linear-gradient");
+      if (result.value.kind !== "linear") throw new Error("Expected linear gradient");
+      expect(result.value.kind).toBe("linear");
+      expect(result.value.repeating).toBe(true);
       expect(result.value.direction?.kind).toBe("angle");
       expect(result.value.colorInterpolationMethod).toBeDefined();
     });
@@ -292,7 +309,9 @@ describe("Linear Gradient: Flexible Component Ordering", () => {
       const result = parse("repeating-linear-gradient(in oklch 45deg, red 0px, blue 10px)");
       expect(result.ok).toBe(true);
       if (!result.ok) return;
-      expect(result.value.kind).toBe("repeating-linear-gradient");
+      if (result.value.kind !== "linear") throw new Error("Expected linear gradient");
+      expect(result.value.kind).toBe("linear");
+      expect(result.value.repeating).toBe(true);
       expect(result.value.colorInterpolationMethod).toBeDefined();
       expect(result.value.direction?.kind).toBe("angle");
     });
@@ -301,7 +320,9 @@ describe("Linear Gradient: Flexible Component Ordering", () => {
       const result = parse("repeating-linear-gradient(in oklch to right, red 0px, blue 10px)");
       expect(result.ok).toBe(true);
       if (!result.ok) return;
-      expect(result.value.kind).toBe("repeating-linear-gradient");
+      if (result.value.kind !== "linear") throw new Error("Expected linear gradient");
+      expect(result.value.kind).toBe("linear");
+      expect(result.value.repeating).toBe(true);
       expect(result.value.colorInterpolationMethod).toBeDefined();
       expect(result.value.direction?.kind).toBe("to-side");
     });

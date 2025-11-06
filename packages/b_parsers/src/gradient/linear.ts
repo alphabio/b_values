@@ -7,7 +7,6 @@ import * as ColorStop from "./color-stop";
 import * as SharedParsing from "./shared-parsing";
 import * as Utils from "../utils";
 import { isCssValueFunction } from "../utils/css-value-functions";
-import { disambiguateFirstArg } from "./disambiguation";
 
 /**
  * Parse gradient direction from nodes.
@@ -78,7 +77,9 @@ function parseDirection(
 }
 
 /**
- * Parse linear gradient from CSS function AST.
+ * Parse linear gradient from CSS function AST with flexible component ordering.
+ * Supports CSS spec: [ <linear-gradient-syntax> ]?
+ * Where direction (angle/to-side/to-corner) and interpolation can appear in any order
  *
  * @see https://developer.mozilla.org/en-US/docs/Web/CSS/gradient/linear-gradient
  */
@@ -101,37 +102,120 @@ export function fromFunction(fn: csstree.FunctionNode): ParseResult<Type.LinearG
   let colorInterpolationMethod: Type.ColorInterpolationMethod | undefined;
 
   let idx = 0;
+  let hasDirection = false;
+  let hasInterpolation = false;
 
-  // Use disambiguation to determine if first argument is direction or color stop
-  const shouldParseDirection = disambiguateFirstArg(children);
+  // Flexible component parsing: accept direction and interpolation in any order
+  while (idx < children.length) {
+    const node = children[idx];
+    if (!node) break;
 
-  if (shouldParseDirection === "direction") {
-    const firstNode = children[idx];
-    if (firstNode) {
-      if (
-        firstNode.type === "Dimension" ||
-        firstNode.type === "Number" ||
-        firstNode.type === "Function" ||
-        (firstNode.type === "Identifier" && firstNode.name.toLowerCase() === "to")
-      ) {
+    // Skip commas between components (backwards compatibility)
+    if (node.type === "Operator" && node.value === ",") {
+      idx++;
+      continue;
+    }
+
+    // Recognize component by first token
+    if (node.type === "Identifier") {
+      const value = node.name.toLowerCase();
+
+      // Color interpolation: "in <colorspace>"
+      if (value === "in") {
+        if (hasInterpolation) {
+          return parseErr(createError("invalid-syntax", "Duplicate color interpolation method"));
+        }
+        hasInterpolation = true;
+
+        const interpolationResult = Utils.parseColorInterpolationMethod(children, idx);
+        if (interpolationResult) {
+          colorInterpolationMethod = interpolationResult.method;
+          idx = interpolationResult.nextIndex;
+        }
+        continue;
+      }
+
+      // Direction: "to <side>" or "to <corner>"
+      if (value === "to") {
+        if (hasDirection) {
+          return parseErr(createError("invalid-syntax", "Duplicate direction component"));
+        }
+
         const dirResult = parseDirection(children, idx);
         if (dirResult.ok) {
+          hasDirection = true;
           direction = dirResult.value.direction;
           idx = dirResult.value.nextIdx;
+          continue;
+        }
+        // Invalid direction (e.g., "to diagonal") - treat as color stop
+        break;
+      }
+
+      // Could be a color stop (named color) - break to color stop parsing
+      break;
+    }
+
+    // Dimension, Number → angle direction
+    if (node.type === "Dimension" || node.type === "Number") {
+      if (hasDirection) {
+        // Could be a color stop position - break to color stop parsing
+        break;
+      }
+      hasDirection = true;
+
+      const dirResult = parseDirection(children, idx);
+      if (dirResult.ok) {
+        direction = dirResult.value.direction;
+        idx = dirResult.value.nextIdx;
+      } else {
+        // Not a valid direction, might be color stop
+        hasDirection = false;
+        break;
+      }
+      continue;
+    }
+
+    // Function (calc/var) → could be angle direction, but be conservative
+    if (isCssValueFunction(node)) {
+      if (!hasDirection) {
+        const funcName = node.type === "Function" ? node.name.toLowerCase() : "";
+
+        // Special case for var(): it's ambiguous
+        // Count total comma-separated groups to disambiguate:
+        // - 2 groups: var(), var() → both are color stops
+        // - 3+ groups: var(), color, color → first is direction
+        if (funcName === "var") {
+          const allGroups = Utils.Ast.splitNodesByComma(children, { startIndex: 0 });
+          if (allGroups.length === 2) {
+            // Only 2 items: must be 2 color stops
+            break;
+          }
+        }
+
+        // Try parsing as direction
+        const dirResult = parseDirection(children, idx);
+        if (dirResult.ok) {
+          hasDirection = true;
+          direction = dirResult.value.direction;
+          idx = dirResult.value.nextIdx;
+          continue;
         }
       }
+      // Not a direction, must be color stop
+      break;
     }
+
+    // Function (color) or Hash → color stop
+    if (node.type === "Function" || node.type === "Hash") {
+      break;
+    }
+
+    // Unknown token
+    return parseErr(createError("invalid-value", `Unexpected token in gradient: ${node.type}`));
   }
 
-  idx = Utils.Ast.skipComma(children, idx);
-
-  const interpolationResult = Utils.parseColorInterpolationMethod(children, idx);
-  if (interpolationResult) {
-    colorInterpolationMethod = interpolationResult.method;
-    idx = interpolationResult.nextIndex;
-    idx = Utils.Ast.skipComma(children, idx);
-  }
-
+  // Parse color stops
   const stopGroups = Utils.Ast.splitNodesByComma(children, { startIndex: idx });
 
   const colorStops: Type.ColorStop[] = [];
@@ -147,7 +231,6 @@ export function fromFunction(fn: csstree.FunctionNode): ParseResult<Type.LinearG
   }
 
   if (issues.length > 0) {
-    // Return partial gradient to enable generator warnings on successfully parsed stops
     return {
       ok: false,
       value: {
