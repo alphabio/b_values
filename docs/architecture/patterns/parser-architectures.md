@@ -16,37 +16,42 @@ The b_values library uses **two distinct parser architectures** to handle differ
 ### 1. SingleValueParser (AST-Native)
 
 **Signature:**
+
 ```typescript
 export type SingleValueParser<T> = (node: csstree.Value) => ParseResult<T>;
 ```
 
 **Use for:**
+
 - Properties with single atomic values
 - Examples: `color`, `opacity`, `width`, `border-radius`
 
 **How it works:**
+
 1. Top-level `parseDeclaration` parses CSS to AST once
 2. Passes AST `Value` node directly to property parser
 3. Parser traverses AST nodes (type-safe, precise errors)
 
 **Benefits:**
+
 - ✅ Single parse pass (fast)
 - ✅ Perfect error locations from AST
 - ✅ Type-safe node traversal
 - ✅ No string manipulation
 
 **Example (not yet implemented):**
+
 ```typescript
 // Future: color property parser
 export function parseColor(node: csstree.Value): ParseResult<ColorIR> {
   // Work directly with AST nodes
-  if (node.type === 'Hash') {
+  if (node.type === "Hash") {
     return parseHex(node);
   }
-  if (node.type === 'Function') {
+  if (node.type === "Function") {
     const funcName = node.name.toLowerCase();
-    if (funcName === 'rgb') return parseRGB(node);
-    if (funcName === 'hsl') return parseHSL(node);
+    if (funcName === "rgb") return parseRGB(node);
+    if (funcName === "hsl") return parseHSL(node);
   }
   // ...
 }
@@ -57,54 +62,58 @@ export function parseColor(node: csstree.Value): ParseResult<ColorIR> {
 ### 2. MultiValueParser (String-Split + AST)
 
 **Signature:**
+
 ```typescript
 export type MultiValueParser<T> = (value: string) => ParseResult<T>;
 ```
 
 **Use for:**
+
 - Properties with comma-separated lists
 - Examples: `background-image`, `font-family`, `box-shadow`
 
 **How it works:**
+
 1. Receives raw CSS value string
 2. Splits by top-level commas (respecting nested functions)
 3. Parses **each chunk** to AST individually
 4. Aggregates results (partial success resilience)
 
 **Benefits:**
+
 - ✅ Resilient: One bad item doesn't break others
 - ✅ Multi-error reporting: All issues collected
 - ✅ Each item gets precise AST parsing
 - ✅ Handles complex nesting correctly
 
 **Example (currently implemented):**
+
 ```typescript
 // background-image property parser
 export function parseBackgroundImage(value: string): ParseResult<BackgroundImageIR> {
   // Step 1: Split by commas (string utility)
   const layerStrings = splitByComma(value);
-  
+
   // Step 2: Parse EACH layer to AST individually
   const layerResults: ParseResult<ImageLayer>[] = [];
-  
+
   for (const layerStr of layerStrings) {
     try {
       // Parse this layer to AST
-      const layerAst = csstree.parse(layerStr, { 
-        context: 'value', 
-        positions: true 
+      const layerAst = csstree.parse(layerStr, {
+        context: "value",
+        positions: true,
       });
-      
+
       // Now work with AST for this layer
       const result = parseImageLayer(layerAst);
       layerResults.push(result);
-      
     } catch (e) {
       // This layer failed - record error, continue with others
-      layerResults.push(parseErr(createError('invalid-syntax', e.message)));
+      layerResults.push(parseErr(createError("invalid-syntax", e.message)));
     }
   }
-  
+
   // Step 3: Aggregate all results
   return aggregateLayerResults(layerResults);
 }
@@ -119,19 +128,22 @@ export function parseBackgroundImage(value: string): ParseResult<BackgroundImage
 **Original issue:** Multi-value properties failed catastrophically when one item had syntax error.
 
 **Example:**
+
 ```css
-background-image: 
-  url(a.png),          /* ✅ Valid */
-  invalid-syntax,      /* ❌ Parse error */
-  url(b.png);          /* ✅ Valid but lost! */
+background-image:
+  url(a.png),
+  /* ✅ Valid */ invalid-syntax,
+  /* ❌ Parse error */ url(b.png); /* ✅ Valid but lost! */
 ```
 
 **Old behavior:**
+
 - Top-level `csstree.parse()` failed on entire value
 - Property parser never ran
 - Lost 2 valid layers because 1 was bad
 
 **New behavior with MultiValueParser:**
+
 - Split string first: `["url(a.png)", "invalid-syntax", "url(b.png)"]`
 - Parse each individually
 - Result: 2 valid layers + 1 error
@@ -141,12 +153,12 @@ background-image:
 
 ## Decision Matrix
 
-| Property Type | Parser Type | Example | Rationale |
-|---------------|-------------|---------|-----------|
-| Single atomic value | `SingleValueParser` | `color`, `width` | Fast, single parse |
-| Comma-separated list | `MultiValueParser` | `background-image` | Resilient to partial failure |
-| Space-separated (single semantic unit) | `SingleValueParser` | `background-position` | Treated as one value |
-| Space-separated (multiple items) | `MultiValueParser` | `font-family` (fallbacks) | Each item is independent |
+| Property Type                          | Parser Type         | Example                   | Rationale                    |
+| -------------------------------------- | ------------------- | ------------------------- | ---------------------------- |
+| Single atomic value                    | `SingleValueParser` | `color`, `width`          | Fast, single parse           |
+| Comma-separated list                   | `MultiValueParser`  | `background-image`        | Resilient to partial failure |
+| Space-separated (single semantic unit) | `SingleValueParser` | `background-position`     | Treated as one value         |
+| Space-separated (multiple items)       | `MultiValueParser`  | `font-family` (fallbacks) | Each item is independent     |
 
 ---
 
@@ -157,9 +169,9 @@ background-image:
 ```typescript
 // Property definition
 export const color = defineProperty<ColorIR>({
-  name: 'color',
-  parser: parseColor,  // SingleValueParser
-  multiValue: false,   // ← Default
+  name: "color",
+  parser: parseColor, // SingleValueParser
+  multiValue: false, // ← Default
   // ...
 });
 
@@ -175,9 +187,9 @@ export function parseColor(node: csstree.Value): ParseResult<ColorIR> {
 ```typescript
 // Property definition
 export const backgroundImage = defineProperty<BackgroundImageIR>({
-  name: 'background-image',
-  parser: parseBackgroundImage,  // MultiValueParser
-  multiValue: true,               // ← Mark as multi-value!
+  name: "background-image",
+  parser: parseBackgroundImage, // MultiValueParser
+  multiValue: true, // ← Mark as multi-value!
   // ...
 });
 
@@ -197,28 +209,29 @@ export function parseBackgroundImage(value: string): ParseResult<BackgroundImage
 ### For MultiValueParser
 
 **String splitting:**
+
 ```typescript
-import { splitByComma } from '@b/declarations/utils';
+import { splitByComma } from "@b/declarations/utils";
 
 // Respects nested parentheses
-const layers = splitByComma('url(a.png), linear-gradient(red, blue)');
+const layers = splitByComma("url(a.png), linear-gradient(red, blue)");
 // ['url(a.png)', 'linear-gradient(red, blue)']
 ```
 
 **Per-item AST parsing:**
+
 ```typescript
-import * as csstree from '@eslint/css-tree';
+import * as csstree from "@eslint/css-tree";
 
 for (const itemStr of items) {
   try {
     const itemAst = csstree.parse(itemStr, {
-      context: 'value',
-      positions: true  // ← Critical for error locations
+      context: "value",
+      positions: true, // ← Critical for error locations
     });
-    
+
     // Parse this specific item's AST
     const result = parseItem(itemAst);
-    
   } catch (e) {
     // Handle syntax error for this item
   }
@@ -228,11 +241,12 @@ for (const itemStr of items) {
 ### For SingleValueParser
 
 **AST traversal:**
+
 ```typescript
-import * as Ast from '@b/utils';
+import * as Ast from "@b/utils";
 
 // Check node types
-if (Ast.isFunctionNode(node, 'rgb')) {
+if (Ast.isFunctionNode(node, "rgb")) {
   return parseRGB(node);
 }
 
@@ -244,10 +258,10 @@ const groups = Ast.splitNodesByComma(node.children.toArray());
 
 ## Performance Characteristics
 
-| Pattern | Parse Cost | Resilience | Error Quality |
-|---------|-----------|------------|---------------|
-| SingleValueParser | 1 parse | Fail-fast | Perfect (AST locations) |
-| MultiValueParser | N parses | Partial success | Perfect per-item |
+| Pattern           | Parse Cost | Resilience      | Error Quality           |
+| ----------------- | ---------- | --------------- | ----------------------- |
+| SingleValueParser | 1 parse    | Fail-fast       | Perfect (AST locations) |
+| MultiValueParser  | N parses   | Partial success | Perfect per-item        |
 
 **Trade-off:** MultiValueParser does N parses (one per item) but gains resilience.
 

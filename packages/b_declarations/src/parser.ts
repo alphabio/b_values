@@ -58,6 +58,11 @@ export function parseDeclaration(input: string | CSSDeclaration): ParseResult<De
   if (definition.multiValue) {
     // Multi-value property: Pass raw string to parser
     // Parser will split by comma and handle partial failures
+    //
+    // Type assertion: `as never` required because TypeScript cannot infer
+    // the relationship between the property name and its parser signature.
+    // The parser could be SingleValueParser<T> | MultiValueParser<T>,
+    // but we know it's MultiValueParser here due to runtime multiValue check.
     parseResult = definition.parser(value as never);
   } else {
     // Single-value property: Parse to AST first
@@ -74,6 +79,10 @@ export function parseDeclaration(input: string | CSSDeclaration): ParseResult<De
     }
 
     // Pass validated AST to parser
+    //
+    // Type assertion: `as never` required (same reason as above).
+    // We know it's SingleValueParser here, but TypeScript's type system
+    // cannot narrow the union based on runtime multiValue check.
     parseResult = definition.parser(valueAst as never);
   }
 
@@ -83,7 +92,10 @@ export function parseDeclaration(input: string | CSSDeclaration): ParseResult<De
   // Step 4: Try generation to get semantic warnings (even if parse failed but has partial IR)
   if (parseResult.value) {
     try {
-      // Type assertion needed for generic generateDeclaration signature
+      // Type assertions: `as never` required for the same reason as parser calls.
+      // generateDeclaration is generic over TProperty extends RegisteredProperty,
+      // but TypeScript cannot infer TProperty from the runtime property string value.
+      // This is a limitation of TypeScript's type system with string-indexed unions.
       const genResult = generateDeclaration({
         property: property as never,
         ir: parseResult.value as never,

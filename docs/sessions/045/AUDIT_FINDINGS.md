@@ -12,14 +12,16 @@
 **Location:** `packages/b_declarations/src/utils/split.ts`
 
 **Current usage:**
+
 - ✅ **Used in:** `packages/b_declarations/src/properties/background-image/parser.ts` (line 49)
 - ✅ **Reason:** Multi-value parser pattern - background-image receives raw string, not AST node
 
 **Code:**
+
 ```typescript
 // background-image/parser.ts
 export function parseBackgroundImage(value: string): ParseResult<BackgroundImageIR> {
-  const layerStrings = splitByComma(trimmed);  // ← ACTIVELY USED
+  const layerStrings = splitByComma(trimmed); // ← ACTIVELY USED
   // Parse each layer individually...
 }
 ```
@@ -27,6 +29,7 @@ export function parseBackgroundImage(value: string): ParseResult<BackgroundImage
 **Conclusion:** ❌ **CANNOT BE REMOVED** - This is NOT obsolete code!
 
 **Why it's needed:**
+
 - Multi-value properties use `MultiValueParser<T>` signature: `(value: string) => ParseResult<T>`
 - They receive raw string, not AST node
 - `splitByComma` is the CORRECT tool for multi-value properties
@@ -41,6 +44,7 @@ export function parseBackgroundImage(value: string): ParseResult<BackgroundImage
 **Location:** `packages/b_parsers/src/gradient/disambiguation.ts`
 
 **Usage scan:**
+
 ```bash
 # Search results:
 packages/b_parsers/src/gradient/__tests__/disambiguation.test.ts:import { disambiguateFirstArg } from "../disambiguation";
@@ -49,6 +53,7 @@ packages/b_parsers/src/gradient/__tests__/disambiguation.test.ts:import { disamb
 **Conclusion:** ✅ **CAN BE REMOVED** - Only used in its own tests!
 
 **Why it's obsolete:**
+
 - No gradient parser imports it
 - AST-native parsing makes type detection trivial
 - Tests exist but function is unused
@@ -80,6 +85,7 @@ export type MultiValueParser<T> = (value: string) => ParseResult<T>;
 ```
 
 **Reality check:**
+
 - Only `background-image` property exists
 - It's multi-value, uses `MultiValueParser` signature
 - It correctly receives string and splits by comma
@@ -91,26 +97,29 @@ export type MultiValueParser<T> = (value: string) => ParseResult<T>;
 
 ## 📊 Summary
 
-| Item | Status | Action |
-|------|--------|--------|
-| `splitByComma` | ✅ **KEEP** | Still needed for multi-value parsers |
-| `disambiguation.ts` | ❌ **REMOVE** | Unused, tests only |
-| `csstree.generate()` in parsers | ✅ **CLEAN** | None found |
-| AST-native migration | ⚠️ **PARTIAL** | Only multi-value properties exist |
+| Item                            | Status         | Action                               |
+| ------------------------------- | -------------- | ------------------------------------ |
+| `splitByComma`                  | ✅ **KEEP**    | Still needed for multi-value parsers |
+| `disambiguation.ts`             | ❌ **REMOVE**  | Unused, tests only                   |
+| `csstree.generate()` in parsers | ✅ **CLEAN**   | None found                           |
+| AST-native migration            | ⚠️ **PARTIAL** | Only multi-value properties exist    |
 
 ---
 
 ## 🎯 Revised Phase 3 Scope
 
 ### What CAN be removed:
+
 1. ✅ `packages/b_parsers/src/gradient/disambiguation.ts`
 2. ✅ `packages/b_parsers/src/gradient/__tests__/disambiguation.test.ts`
 
 ### What CANNOT be removed:
+
 1. ❌ `splitByComma` - Required for multi-value parser architecture
 2. ❌ String-based utilities - Intentional design for multi-value properties
 
 ### What doesn't exist yet:
+
 1. ⚠️ Single-value properties (color, opacity, width, etc.)
 2. ⚠️ SingleValueParser implementations
 3. ⚠️ AST-native parsers for single values
@@ -127,6 +136,7 @@ export type MultiValueParser<T> = (value: string) => ParseResult<T>;
 - The architecture document from Session 041 is now OUTDATED
 
 **Two parser types coexist:**
+
 1. **SingleValueParser** - AST-native, not implemented yet
 2. **MultiValueParser** - String-based splitting, then AST parsing per item
 
@@ -135,18 +145,21 @@ export type MultiValueParser<T> = (value: string) => ParseResult<T>;
 ## 📝 Revised Phase 3 Tasks
 
 ### Task 3.4: Remove Disambiguation Code (30 min)
+
 - [x] Confirmed unused
 - [ ] Remove disambiguation.ts
 - [ ] Remove disambiguation.test.ts
 - [ ] Verify gradient tests still pass
 
 ### Task 3.5: Update Documentation (1 hour)
+
 - [ ] Document two parser architectures (SingleValueParser vs MultiValueParser)
 - [ ] Update ADR or create new one explaining the split
 - [ ] Clarify when to use each pattern
 - [ ] Update Session 041 plan (it's outdated)
 
 ### Task 3.6: Verify No Other Obsolete Code (30 min)
+
 - [ ] Check for other unused utilities
 - [ ] Audit imports in b_utils/parse
 - [ ] Document what each file does
