@@ -1,3 +1,6 @@
+packages/b_values/src/agent.ts
+packages/b_values/src/me.ts
+
 # dependencies
 node_modules/
 .pnp/

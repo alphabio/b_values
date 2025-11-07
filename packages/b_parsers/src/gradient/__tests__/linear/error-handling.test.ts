@@ -24,12 +24,13 @@ describe("Linear Gradient Parser - Error Handling", () => {
     expect(result.ok).toBe(false);
   });
 
-  it("handles invalid direction as color stop", () => {
+  it("correctly identifies missing direction", () => {
     const css = "linear-gradient(to diagonal, red, blue)";
     const result = Linear.parse(css);
 
     // Parser treats invalid 'to diagonal' as color stop
-    expect(result.ok).toBe(true);
+    expect(result.ok).toBe(false);
+    expect(result.issues[0].message).toBe("Invalid direction keyword: diagonal");
   });
 
   it("handles invalid color space as color stop", () => {

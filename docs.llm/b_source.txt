@@ -3783,8 +3783,9 @@ export function fromFunction(fn: csstree.FunctionNode): ParseResult<Type.LinearG
           idx = dirResult.value.nextIdx;
           continue;
         }
-        // Invalid direction (e.g., "to diagonal") - treat as color stop
-        break;
+        // If 'to' is present but the direction is invalid, it's a syntax error.
+        // Do not fall back to parsing it as a color.
+        return forwardParseErr<Type.LinearGradient>(dirResult);
       }
 
       // Could be a color stop (named color) - break to color stop parsing
