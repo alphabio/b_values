@@ -31,23 +31,29 @@ describe("Issue system", () => {
 
     it("should include location when provided", () => {
       const issue = createError("invalid-value", "Invalid character", {
-        location: { offset: 5, length: 1 },
+        location: { start: { offset: 5, line: 1, column: 6 }, end: { offset: 6, line: 1, column: 7 } },
       });
-      expect(issue.location).toEqual({ offset: 5, length: 1 });
+      expect(issue.location).toEqual({
+        start: { offset: 5, line: 1, column: 6 },
+        end: { offset: 6, line: 1, column: 7 },
+      });
     });
 
     it("should include all options when provided", () => {
       const issue = createError("invalid-value", "Invalid hex color", {
         property: "color",
         suggestion: "Use #RRGGBB format",
-        location: { offset: 10, length: 4 },
+        location: { start: { offset: 10, line: 1, column: 11 }, end: { offset: 14, line: 1, column: 15 } },
       });
       expect(issue.code).toBe("invalid-value");
       expect(issue.severity).toBe("error");
       expect(issue.message).toBe("Invalid hex color");
       expect(issue.property).toBe("color");
       expect(issue.suggestion).toBe("Use #RRGGBB format");
-      expect(issue.location).toEqual({ offset: 10, length: 4 });
+      expect(issue.location).toEqual({
+        start: { offset: 10, line: 1, column: 11 },
+        end: { offset: 14, line: 1, column: 15 },
+      });
     });
   });
 
@@ -77,12 +83,15 @@ describe("Issue system", () => {
       const issue = createWarning("duplicate-property", "Property declared twice", {
         property: "color",
         suggestion: "Remove duplicate",
-        location: { offset: 20, length: 5 },
+        location: { start: { offset: 20, line: 2, column: 1 }, end: { offset: 25, line: 2, column: 6 } },
       });
       expect(issue.severity).toBe("warning");
       expect(issue.property).toBe("color");
       expect(issue.suggestion).toBe("Remove duplicate");
-      expect(issue.location).toEqual({ offset: 20, length: 5 });
+      expect(issue.location).toEqual({
+        start: { offset: 20, line: 2, column: 1 },
+        end: { offset: 25, line: 2, column: 6 },
+      });
     });
   });
 
@@ -129,20 +138,23 @@ describe("Issue system", () => {
   });
 
   describe("SourceLocation", () => {
-    it("should track character offsets", () => {
+    it("should track character positions with line and column", () => {
       const issue = createError("invalid-syntax", "Unexpected token", {
-        location: { offset: 0, length: 1 },
+        location: { start: { offset: 0, line: 1, column: 1 }, end: { offset: 1, line: 1, column: 2 } },
       });
-      expect(issue.location?.offset).toBe(0);
-      expect(issue.location?.length).toBe(1);
+      expect(issue.location?.start.offset).toBe(0);
+      expect(issue.location?.start.line).toBe(1);
+      expect(issue.location?.start.column).toBe(1);
+      expect(issue.location?.end.offset).toBe(1);
     });
 
     it("should support multi-character locations", () => {
       const issue = createError("invalid-value", "Invalid keyword", {
-        location: { offset: 10, length: 6 },
+        location: { start: { offset: 10, line: 1, column: 11 }, end: { offset: 16, line: 1, column: 17 } },
       });
-      expect(issue.location?.offset).toBe(10);
-      expect(issue.location?.length).toBe(6);
+      expect(issue.location?.start.offset).toBe(10);
+      expect(issue.location?.end.offset).toBe(16);
+      // Length can be calculated as: end.offset - start.offset = 6
     });
   });
 });

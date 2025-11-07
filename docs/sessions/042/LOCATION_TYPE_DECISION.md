@@ -1,6 +1,6 @@
 # Location Type Analysis & Decision
 
-**Date:** 2025-11-07  
+**Date:** 2025-11-07
 **Issue:** Type mismatch between css-tree locations and our SourceLocation
 
 ---
@@ -14,24 +14,24 @@
  * Represents a location within a CSS source.
  */
 export interface CssLocation {
-    /** The 0-indexed character offset from the beginning of the source. */
-    offset: number;
-    /** The 1-indexed line number. */
-    line: number;
-    /** The 1-indexed column number. */
-    column: number;
+  /** The 0-indexed character offset from the beginning of the source. */
+  offset: number;
+  /** The 1-indexed line number. */
+  line: number;
+  /** The 1-indexed column number. */
+  column: number;
 }
 
 /**
  * Represents a range of locations within a CSS source.
  */
 export interface CssLocationRange {
-    /** The source file name. If not provided, it will be set to `<unknown>`. */
-    source: string;
-    /** The starting location of the range. */
-    start: CssLocation;
-    /** The ending location of the range. */
-    end: CssLocation;
+  /** The source file name. If not provided, it will be set to `<unknown>`. */
+  source: string;
+  /** The starting location of the range. */
+  start: CssLocation;
+  /** The ending location of the range. */
+  end: CssLocation;
 }
 ```
 
@@ -51,25 +51,31 @@ export interface SourceLocation {
 ## 🤔 Why Don't We Use The Same?
 
 ### css-tree's Approach (Line/Column + Offset)
+
 **Pros:**
+
 - ✅ **Rich information**: offset, line, column all available
 - ✅ **Better error messages**: "Line 5, column 10" is human-readable
 - ✅ **Native to css-tree**: no conversion needed
 - ✅ **Industry standard**: most parsers use line/column
 
 **Cons:**
+
 - ❌ **Larger structure**: 3 fields per location × 2 (start/end) = 6 fields
 - ❌ **More complex**: need to track line/column during manual parsing
 - ❌ **Redundant**: offset alone is sufficient for programmatic use
 
 ### Our Approach (Offset + Length)
+
 **Pros:**
+
 - ✅ **Minimal**: only 2 fields total
 - ✅ **Simple**: easy to calculate and use
 - ✅ **Efficient**: smaller memory footprint
 - ✅ **Sufficient**: offset/length is all you need for highlighting
 
 **Cons:**
+
 - ❌ **Less readable**: offset 245 means nothing to humans
 - ❌ **Conversion required**: need to convert from css-tree format
 - ❌ **Manual calculation**: have to compute line/column when displaying
@@ -85,7 +91,8 @@ export interface SourceLocation {
    - No conversion overhead
    - Already have offset, line, column
 
-2. **Better error messages**: 
+2. **Better error messages**:
+
    ```
    ❌ Old: Error at offset 245
    ✅ New: Error at line 5, column 10
@@ -102,13 +109,14 @@ export interface SourceLocation {
 ### Migration Path
 
 1. **Update SourceLocation type**:
+
    ```typescript
    export interface SourceLocation {
      offset: number;
      line: number;
      column: number;
    }
-   
+
    export interface SourceLocationRange {
      source?: string;
      start: SourceLocation;
@@ -117,15 +125,16 @@ export interface SourceLocation {
    ```
 
 2. **Update createError() to accept both formats**:
+
    ```typescript
    function createError(
      code: string,
      message: string,
      options?: {
-       location?: CssLocationRange;  // Accept css-tree format directly
+       location?: CssLocationRange; // Accept css-tree format directly
        // ... other options
      }
-   )
+   );
    ```
 
 3. **Update error formatters** to display line/column
@@ -139,6 +148,7 @@ export interface SourceLocation {
 **Adopt css-tree's `CssLocation` and `CssLocationRange` types.**
 
 **Rationale:**
+
 - We're committed to AST-native architecture
 - Better error messages for users
 - No conversion overhead
@@ -146,6 +156,7 @@ export interface SourceLocation {
 - Future-proof for source maps
 
 **Action Items (Next Session):**
+
 1. Update `SourceLocation` type in `@b/types`
 2. Update `createError()` signature
 3. Update error formatters

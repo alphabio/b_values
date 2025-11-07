@@ -3,6 +3,16 @@ import { describe, expect, it, beforeEach } from "vitest";
 import { generateDeclaration } from "./generator";
 import { propertyRegistry, defineProperty } from "./core";
 import { generateOk, generateErr, createError, parseOk, type GenerateResult } from "@b/types";
+import type * as csstree from "@eslint/css-tree";
+
+// Helper mock parser that accepts AST node (for testing generators)
+function mockParser<T>(fn: (value: string) => T) {
+  return (node: csstree.Value) => {
+    // Simple mock: extract string from AST
+    const value = String(node);
+    return parseOk(fn(value));
+  };
+}
 
 describe("generateDeclaration", () => {
   beforeEach(() => {
@@ -16,7 +26,7 @@ describe("generateDeclaration", () => {
       defineProperty({
         name: "background-image",
         syntax: "<background-image>",
-        parser: (value: string) => parseOk({ kind: "gradient" as const, value }),
+        parser: mockParser((value: string) => ({ kind: "gradient" as const, value })),
         generator: (ir: ComplexIR): GenerateResult => generateOk(`${ir.kind}(${ir.value})`),
         inherited: false,
         initial: "transparent",
@@ -55,7 +65,7 @@ describe("generateDeclaration", () => {
       defineProperty({
         name: "color",
         syntax: "<color>",
-        parser: (value: string) => parseOk(value.trim()),
+        parser: mockParser((value: string) => value.trim()),
         // No generator provided
         inherited: true,
         initial: "black",
@@ -81,7 +91,7 @@ describe("generateDeclaration", () => {
       defineProperty({
         name: "test-prop",
         syntax: "<test>",
-        parser: (value: string) => parseOk(value),
+        parser: mockParser((value: string) => value),
         generator: (): GenerateResult =>
           generateErr(createError("invalid-ir", "Generator failed", { suggestion: "Fix the IR" }), "test-prop"),
         inherited: false,
@@ -107,7 +117,7 @@ describe("generateDeclaration", () => {
       defineProperty({
         name: "test-prop",
         syntax: "<test>",
-        parser: (value: string) => parseOk(value),
+        parser: mockParser((value: string) => value),
         generator: (): GenerateResult => generateErr(createError("invalid-ir", "Multiple issues"), "test-prop"),
         inherited: false,
         initial: "none",
@@ -133,7 +143,7 @@ describe("generateDeclaration", () => {
       defineProperty({
         name: "content",
         syntax: "<string>",
-        parser: (value: string) => parseOk(value),
+        parser: mockParser((value: string) => value),
         generator: (ir: string): GenerateResult => generateOk(`"${ir}"`),
         inherited: false,
         initial: "normal",
@@ -155,7 +165,7 @@ describe("generateDeclaration", () => {
       defineProperty({
         name: "content",
         syntax: "<string>",
-        parser: (value: string) => parseOk(value),
+        parser: mockParser((value: string) => value),
         generator: (ir: string): GenerateResult => generateOk(ir),
         inherited: false,
         initial: "normal",
