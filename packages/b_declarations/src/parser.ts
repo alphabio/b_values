@@ -1,5 +1,13 @@
 // b_path:: packages/b_declarations/src/parser.ts
-import { createError, parseErr, parseOk, forwardParseErr, type ParseResult, type Issue } from "@b/types";
+import {
+  createError,
+  parseErr,
+  parseOk,
+  forwardParseErr,
+  type ParseResult,
+  type Issue,
+  type GenerateResult,
+} from "@b/types";
 import { propertyRegistry } from "./core";
 import type { CSSDeclaration, DeclarationResult } from "./types";
 import { generateDeclaration } from "./generator";
@@ -57,13 +65,7 @@ export function parseDeclaration(input: string | CSSDeclaration): ParseResult<De
 
   if (definition.multiValue) {
     // Multi-value property: Pass raw string to parser
-    // Parser will split by comma and handle partial failures
-    //
-    // Type assertion: `as never` required because TypeScript cannot infer
-    // the relationship between the property name and its parser signature.
-    // The parser could be SingleValueParser<T> | MultiValueParser<T>,
-    // but we know it's MultiValueParser here due to runtime multiValue check.
-    parseResult = definition.parser(value as never);
+    parseResult = unsafeCallParser(definition.parser, value);
   } else {
     // Single-value property: Parse to AST first
     let valueAst: csstree.Value;
@@ -79,11 +81,7 @@ export function parseDeclaration(input: string | CSSDeclaration): ParseResult<De
     }
 
     // Pass validated AST to parser
-    //
-    // Type assertion: `as never` required (same reason as above).
-    // We know it's SingleValueParser here, but TypeScript's type system
-    // cannot narrow the union based on runtime multiValue check.
-    parseResult = definition.parser(valueAst as never);
+    parseResult = unsafeCallParser(definition.parser, valueAst);
   }
 
   // Step 3: Collect all issues
@@ -92,19 +90,12 @@ export function parseDeclaration(input: string | CSSDeclaration): ParseResult<De
   // Step 4: Try generation to get semantic warnings (even if parse failed but has partial IR)
   if (parseResult.value) {
     try {
-      // Type assertions: `as never` required for the same reason as parser calls.
-      // generateDeclaration is generic over TProperty extends RegisteredProperty,
-      // but TypeScript cannot infer TProperty from the runtime property string value.
-      // This is a limitation of TypeScript's type system with string-indexed unions.
-      const genResult = generateDeclaration({
-        property: property as never,
-        ir: parseResult.value as never,
-      });
+      const genResult = unsafeGenerateDeclaration(property, parseResult.value);
 
       if (genResult.issues.length > 0) {
         // Add generator warnings (deduplicate by message to avoid duplicates)
-        const existingMessages = new Set(allIssues.map((i) => i.message));
-        const newIssues = genResult.issues.filter((i) => !existingMessages.has(i.message));
+        const existingMessages = new Set(allIssues.map((issue) => issue.message));
+        const newIssues = genResult.issues.filter((issue) => !existingMessages.has(issue.message));
         allIssues.push(...newIssues);
       }
     } catch (_err) {
@@ -169,4 +160,48 @@ function parseDeclarationString(input: string): ParseResult<CSSDeclaration> {
   }
 
   return parseOk({ property, value });
+}
+
+/**
+ * Internal unsafe dispatch function for calling property parsers.
+ *
+ * This function isolates the `as never` type assertion required because TypeScript
+ * cannot connect a dynamic property string to the specific parser signature.
+ *
+ * **⚠️ TYPE SAFETY BOUNDARY:**
+ * The risk is that the parser and input might not match. This is mitigated by:
+ * - PropertyRegistry ensures parsers are registered with correct types
+ * - Runtime multiValue check ensures correct input type (string vs AST)
+ * - This function makes the type-safety boundary explicit and auditable
+ *
+ * @internal
+ */
+function unsafeCallParser(parser: unknown, input: unknown): ParseResult<unknown> {
+  // The `as never` cast is necessary here. The parser function signature is generic,
+  // but we're calling it with a dynamically determined input type.
+  // We cast both parser and input to bypass TypeScript's strict type checking.
+  return (parser as (input: never) => ParseResult<unknown>)(input as never);
+}
+
+/**
+ * Internal unsafe dispatch function for calling generateDeclaration.
+ *
+ * This function isolates the `as never` type assertion required because TypeScript
+ * cannot infer the generic TProperty type from a runtime string value.
+ *
+ * **⚠️ TYPE SAFETY BOUNDARY:**
+ * The risk is that property and IR might not match. This is mitigated by:
+ * - The IR was just parsed by the property's parser, so it should match
+ * - PropertyRegistry ensures type consistency at registration time
+ * - This function makes the type-safety boundary explicit and auditable
+ *
+ * @internal
+ */
+function unsafeGenerateDeclaration(property: string, ir: unknown): GenerateResult {
+  // The `as never` casts are necessary here. TypeScript cannot connect
+  // the runtime string `property` to the specific generic type TProperty.
+  return generateDeclaration({
+    property: property as never,
+    ir: ir as never,
+  });
 }
