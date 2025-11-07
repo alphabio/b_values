@@ -206,19 +206,11 @@ describe("parseDeclarationList", () => {
 
         // Check custom properties
         expect(result.value[0].property).toBe("--angle");
-        expect(result.value[0].original).toBe("10deg");
-
         expect(result.value[1].property).toBe("--color-1");
-        expect(result.value[1].original).toBe("red");
-
         expect(result.value[2].property).toBe("--color-4");
-        expect(result.value[2].original).toBe("blue");
 
         // Check background-image
         expect(result.value[3].property).toBe("background-image");
-        // Value should be trimmed
-        expect(result.value[3].original).not.toMatch(/^\s+/);
-        expect(result.value[3].original).not.toMatch(/\s+$/);
       }
     });
   });

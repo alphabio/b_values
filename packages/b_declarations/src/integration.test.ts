@@ -14,7 +14,6 @@ describe("Declaration Layer Integration", () => {
     if (!result.ok) return;
 
     expect(result.value.property).toBe("background-image");
-    expect(result.value.original).toBe("url(image.png)");
     const ir = result.value.ir as { kind: string; layers?: unknown[] };
     expect(ir.kind).toBe("layers");
     if (ir.kind !== "layers" || !ir.layers) return;

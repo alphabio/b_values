@@ -129,7 +129,6 @@ export function parseDeclaration(input: string | CSSDeclaration): ParseResult<De
     ...parseOk({
       property,
       ir: parseResult.value,
-      original: value,
     }),
     issues: enrichedIssues,
   };

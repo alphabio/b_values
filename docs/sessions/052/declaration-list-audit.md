@@ -15,7 +15,7 @@ parseDeclarationList(`
   --color-1: red;
   --color-4: blue;
   background-image: repeating-conic-gradient(...);
-`)
+`);
 
 // Result:
 // original: "10deg", "red", "blue", "repeating-conic-gradient(...)"
@@ -31,11 +31,13 @@ This led to a deeper audit revealing **multiple design gaps**.
 ### 1. `original` Field Problem
 
 **Current behavior:**
+
 - Single declaration: `original: "10deg"` (just value)
 - Declaration list: Same - just values for each declaration
 - Value is **regenerated** by `csstree.generate()`, not extracted from source
 
 **Problems:**
+
 - Loses original user input (whitespace, formatting)
 - Not useful for debugging ("what did user type?")
 - Unclear purpose: is it for clients or internal use?
@@ -45,12 +47,13 @@ This led to a deeper audit revealing **multiple design gaps**.
 ### 2. No Issue Context
 
 **Current:**
+
 ```ts
 parseDeclarationList(`
   --angle: 10deg;
   background-image: INVALID;
   --color: red;
-`)
+`);
 
 // Issues: [{ code: "invalid-value", property: "background-image" }]
 // ❌ Can't tell which line/position
@@ -58,6 +61,7 @@ parseDeclarationList(`
 ```
 
 **Problems:**
+
 - No source positions (line/column)
 - No declaration index
 - Can't map issues back to specific declarations
@@ -66,18 +70,20 @@ parseDeclarationList(`
 ### 3. No Duplicate Handling
 
 **Test case:**
+
 ```ts
 parseDeclarationList(`
   --color: red;
   --color: blue;
   --color: green;
-`)
+`);
 
 // Returns: 3 declarations (all of them)
 // Expected: CSS spec says "last wins" (only green)
 ```
 
 **Problems:**
+
 - Returns all duplicates, not just last
 - Client must implement cascade logic themselves
 - Unclear if this is intentional (CSSOM-like) or bug
@@ -85,17 +91,19 @@ parseDeclarationList(`
 ### 4. Unclear Partial Failure Semantics
 
 **Observed:**
+
 ```ts
 parseDeclarationList(`
   --angle: 10deg;
   background-image: INVALID;
   --color: red;
-`)
+`);
 
 // Returns: { ok: true, value: [...2 valid decls...], issues: [...1 error...] }
 ```
 
 **Questions:**
+
 - When is `ok: true` vs `ok: false`?
 - Currently: `ok: true` if **any** declaration parsed
 - Is this correct? Should it be "all valid" or "some valid"?
@@ -107,41 +115,46 @@ parseDeclarationList(`
 ### Purpose of `parseDeclarationList`
 
 **Option A: CSSOM-like (declaration array)**
+
 - Keep all declarations in order (including duplicates)
 - Client decides cascade/duplicate handling
 - Good for: tooling, validation, analysis
 - Current implementation is closest to this
 
 **Option B: Property map (last wins)**
+
 - Filter duplicates automatically (CSS cascade)
 - Return `Map<property, DeclarationResult>`
 - Good for: inline styles, computed values
 
 **Option C: Both APIs**
+
 - `parseDeclarationList()` → array (all declarations)
 - `parseDeclarationMap()` → map (deduplicated, last wins)
 
 ### Issue Propagation
 
 **Option A: Per-declaration issues**
+
 ```ts
 interface DeclarationResult {
   property: string;
   ir: T;
-  issues: Issue[];  // NEW: Per-declaration issues
+  issues: Issue[]; // NEW: Per-declaration issues
   // Remove: original field
 }
 ```
 
 **Option B: Enhanced top-level issues**
+
 ```ts
 // Keep current structure but enrich issues:
 interface Issue {
   code: string;
   message: string;
-  property?: string;       // Already have
-  declarationIndex?: number;  // NEW
-  position?: { line: number; column: number };  // NEW (from css-tree AST)
+  property?: string; // Already have
+  declarationIndex?: number; // NEW
+  position?: { line: number; column: number }; // NEW (from css-tree AST)
 }
 ```
 
@@ -150,16 +163,18 @@ interface Issue {
 Should we use `css-tree` positions to track exact source locations?
 
 ```ts
-csstree.parse(input, { positions: true })
+csstree.parse(input, { positions: true });
 // AST nodes have: node.loc = { start: { line, column }, end: { line, column } }
 ```
 
 Benefits:
+
 - Precise error reporting
 - Better developer experience
 - Can extract original substring from input
 
 Cost:
+
 - More complex implementation
 - Need to pass original input through the chain
 
@@ -190,21 +205,25 @@ Created temporary tests (cleaned up) showing:
 ### Implementation Plan (After Decisions)
 
 **Phase 1: Issue Context**
+
 - Add `declarationIndex` to issues
 - Extract source positions from css-tree AST
 - Add tests for issue context
 
 **Phase 2: Duplicate Handling**
+
 - Decide on semantics (all vs last wins)
 - Implement chosen approach
 - Document behavior clearly
 
 **Phase 3: `original` Field**
+
 - If keeping: Extract from source using AST positions
 - If removing: Update types and tests
 - Update documentation
 
 **Phase 4: API Clarity**
+
 - Add second function if needed (`parseDeclarationMap`)
 - Document use cases clearly
 - Add comprehensive examples
@@ -225,6 +244,7 @@ Created temporary tests (cleaned up) showing:
 **Session 052:** ✅ Audit complete - awaiting design decisions for session 053
 
 The implementation **works** but lacks clarity on:
+
 - Purpose (CSSOM vs property map)
 - Issue propagation (context lost)
 - Duplicate handling (undefined behavior)

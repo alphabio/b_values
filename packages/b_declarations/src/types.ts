@@ -57,7 +57,6 @@ export interface CSSDeclaration {
 export interface DeclarationResult<T = unknown> {
   property: string;
   ir: T;
-  original: string;
 }
 
 /**

@@ -13,8 +13,8 @@ import type { DeclarationResult } from "./types";
  * @example
  * ```ts
  * const result = generateDeclarationList([
- *   { property: "color", ir: colorIR, original: "red" },
- *   { property: "font-size", ir: fontSizeIR, original: "16px" }
+ *   { property: "color", ir: colorIR },
+ *   { property: "font-size", ir: fontSizeIR }
  * ]);
  * // Result: "color: red; font-size: 16px"
  * ```

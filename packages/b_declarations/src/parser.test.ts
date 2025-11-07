@@ -31,7 +31,6 @@ describe("parseDeclaration", () => {
 
       expect(result.value.property).toBe("color");
       expect(result.value.ir).toBe("red");
-      expect(result.value.original).toBe("red");
     });
 
     it("should parse declaration string without semicolon", () => {
@@ -129,7 +128,6 @@ background-image: url(image.png);
 
       expect(result.value.property).toBe("color");
       expect(result.value.ir).toBe("red");
-      expect(result.value.original).toBe("red");
     });
   });
 
