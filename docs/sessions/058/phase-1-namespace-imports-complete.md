@@ -30,6 +30,7 @@ export const BG_SIZE = getLiteralValues(...);
 ```
 
 **Files updated:**
+
 - `bg-size.ts`
 - `common.ts`
 - `gradient-direction.ts`
@@ -52,11 +53,12 @@ import { cssWideKeywordSchema, bgSizeKeywordSchema } from "@b/keywords";
 import * as Keywords from "@b/keywords";
 
 // Usage
-Keywords.cssWide
-Keywords.bgSize
+Keywords.cssWide;
+Keywords.bgSize;
 ```
 
 **Packages updated:**
+
 - `@b/types` (7 files)
 - `@b/declarations` (1 file)
 - `@b/parsers` (2 files)
@@ -66,6 +68,7 @@ Keywords.bgSize
 ### 3. Updated All Test Files
 
 Updated all keyword test files to use new names:
+
 - 8 test files in `@b/keywords/src/`
 - Changed describe blocks and import statements
 - Fixed constant name: `BG_SIZE_KEYWORDS` → `BG_SIZE`
@@ -94,21 +97,23 @@ Updated all keyword test files to use new names:
 ## 📝 Pattern Summary
 
 ### Keywords (`@b/keywords`)
+
 ```typescript
 // Schema name matches CSS spec
 export const bgSize = z.union([z.literal("auto"), z.literal("cover"), z.literal("contain")]);
-export const BG_SIZE = getLiteralValues(bgSize);  // Constant (uppercase)
-export type BgSize = z.infer<typeof bgSize>;      // Type (PascalCase)
+export const BG_SIZE = getLiteralValues(bgSize); // Constant (uppercase)
+export type BgSize = z.infer<typeof bgSize>; // Type (PascalCase)
 ```
 
 ### Usage
+
 ```typescript
 import * as Keywords from "@b/keywords";
 
 // Clean and contextual
-Keywords.bgSize      // schema
-Keywords.cssWide     // schema
-Keywords.BG_SIZE     // constant array
+Keywords.bgSize; // schema
+Keywords.cssWide; // schema
+Keywords.BG_SIZE; // constant array
 ```
 
 ---
