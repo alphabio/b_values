@@ -29,5 +29,7 @@
   },
   "publishConfig": {
     "access": "public"
-  }
+  },
+  "peerDependencies": {},
+  "optionalDependencies": {}
 }

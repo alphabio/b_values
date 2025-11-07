@@ -4,7 +4,7 @@ import { createError, parseErr, parseOk, forwardParseErr, type ParseResult } fro
 import type * as Type from "@b/types";
 import type { RadialShape, RadialSizeKeyword } from "@b/keywords";
 import { parsePosition2D } from "../position";
-import { parseNodeToCssValue } from "../css-value-parser";
+import { parseNodeToCssValue } from "../utils";
 import * as ColorStop from "./color-stop";
 import * as SharedParsing from "./shared-parsing";
 import * as Utils from "../utils";

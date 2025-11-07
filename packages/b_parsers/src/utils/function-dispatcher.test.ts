@@ -1,7 +1,7 @@
-// b_path:: packages/b_parsers/src/function-dispatcher.test.ts
+// b_path:: packages/b_parsers/src/utils/function-dispatcher.test.ts
 import { describe, expect, it } from "vitest";
 import { parseComplexFunction } from "./function-dispatcher";
-import { extractFunctionFromValue } from "../../b_utils/src/parse/test-utils";
+import { extractFunctionFromValue } from "@b/utils";
 
 function parseFunction(input: string) {
   return parseComplexFunction(extractFunctionFromValue(input));

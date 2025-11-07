@@ -2,7 +2,7 @@
 import type * as csstree from "@eslint/css-tree";
 import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
 import type * as Type from "@b/types";
-import { parseNodeToCssValue } from "../css-value-parser";
+import { parseNodeToCssValue } from "../utils";
 import * as Color from "../color";
 
 /**

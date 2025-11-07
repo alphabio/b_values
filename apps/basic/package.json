@@ -19,5 +19,7 @@
   },
   "devDependencies": {
     "@b/typescript-config": "workspace:*"
-  }
+  },
+  "peerDependencies": {},
+  "optionalDependencies": {}
 }

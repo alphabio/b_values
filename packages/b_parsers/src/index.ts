@@ -7,5 +7,3 @@ export * as Position from "./position";
 export * as Url from "./url";
 export * as Utils from "./utils";
 export * as Math from "./math";
-export * from "./function-dispatcher";
-export * from "./css-value-parser";

@@ -1,7 +1,7 @@
 // b_path:: packages/b_parsers/src/math/calc.ts
 import type * as csstree from "@eslint/css-tree";
 import { createError, parseErr, parseOk, type ParseResult, type CssValue, type Issue } from "@b/types";
-import { parseNodeToCssValue } from "../css-value-parser";
+import { parseNodeToCssValue } from "../utils";
 
 type Operator = "+" | "-" | "*" | "/";
 type InfixToken = CssValue | Operator;

@@ -1,8 +1,8 @@
-// b_path:: packages/b_parsers/src/function-dispatcher.ts
+// b_path:: packages/b_parsers/src/utils/function-dispatcher.ts
 import type * as csstree from "@eslint/css-tree";
 import type { ParseResult, CssValue } from "@b/types";
-import * as Color from "./color";
-import * as MathFunctions from "./math";
+import * as Color from "../color";
+import * as MathFunctions from "../math";
 
 /**
  * Central function dispatcher for complex CSS functions.
