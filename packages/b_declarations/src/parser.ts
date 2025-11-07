@@ -40,7 +40,10 @@ export function parseDeclaration(input: string | CSSDeclaration): ParseResult<De
   let property: string;
   let value: string;
 
-  // Parse string input
+  // Parse string input into property and value components
+  // Accepts two formats:
+  // 1. String: "property: value" or "property: value;"
+  // 2. Object: { property: "property", value: "value" }
   if (typeof input === "string") {
     const parsed = parseDeclarationString(input);
     if (!parsed.ok) {
