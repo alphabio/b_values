@@ -349,3 +349,216 @@ Property (background-image)
 ---
 
 **This is the foundation for understanding how to add any CSS property.** 🚀
+
+---
+
+## 🔧 CSS Value Infrastructure
+
+**Critical utilities for working with CSS values - these power everything.**
+
+### `@b/types/values/css-value.ts` - Foundation Types
+
+**The CssValue union type - represents ANY CSS value:**
+
+```typescript
+type CssValue = 
+  // Structural
+  | { kind: "list"; separator: " " | ","; values: CssValue[] }
+  
+  // Primitives
+  | { kind: "literal"; value: number; unit?: string }
+  | { kind: "keyword"; value: string }
+  | { kind: "string"; value: string }
+  | { kind: "hex-color"; value: string }
+  | { kind: "variable"; name: string; fallback?: CssValue }
+  
+  // Math Functions
+  | { kind: "calc"; value: CssValue }
+  | { kind: "calc-operation"; operator: "+" | "-" | "*" | "/"; left: CssValue; right: CssValue }
+  | { kind: "min" | "max"; values: CssValue[] }
+  | { kind: "clamp"; min: CssValue; preferred: CssValue; max: CssValue }
+  
+  // Other Functions
+  | { kind: "url"; url: string }
+  | { kind: "attr"; name: string; typeOrUnit?: string; fallback?: CssValue }
+  | { kind: "function"; name: string; args: CssValue[] }  // Generic fallback
+```
+
+**Key insight:** All CSS values normalize to this discriminated union. It's recursive!
+
+### `@b/parsers/utils/css-value-parser.ts` - Main Parser
+
+**Entry point for parsing any CSS value node:**
+
+```typescript
+import { parseNodeToCssValue } from "@b/parsers/utils/css-value-parser";
+
+// Parse any CSS AST node to CssValue IR
+const result = parseNodeToCssValue(node);
+// Handles: literals, keywords, functions, calc, colors, everything
+```
+
+**How it works:**
+1. Check if node is a Function
+2. If yes, dispatch to `parseComplexFunction()`
+3. If not recognized, fall back to `parseCssValueNode()` from `@b/utils`
+
+### `@b/parsers/utils/function-dispatcher.ts` - Function Router
+
+**Central dispatcher for complex CSS functions:**
+
+```typescript
+const PARSER_MAP: Record<string, FunctionParser> = {
+  // Math functions
+  calc: MathFunctions.parseCalcFunction,
+  min: MathFunctions.parseMinmaxFunction,
+  max: MathFunctions.parseMinmaxFunction,
+  clamp: MathFunctions.parseClampFunction,
+
+  // Color functions
+  rgb: Color.parseRgbFunction,
+  rgba: Color.parseRgbFunction,
+  hsl: Color.parseHslFunction,
+  hsla: Color.parseHslFunction,
+  hwb: Color.parseHwbFunction,
+  lab: Color.parseLabFunction,
+  lch: Color.parseLchFunction,
+  oklab: Color.parseOklabFunction,
+  oklch: Color.parseOklchFunction,
+};
+
+export function parseComplexFunction(node: csstree.FunctionNode): ParseResult<CssValue> | null {
+  const funcName = node.name.toLowerCase();
+  const parser = PARSER_MAP[funcName];
+  
+  if (parser) return parser(node);
+  return null;  // Not recognized, caller handles as generic
+}
+```
+
+**Key insight:** Single source of truth for function routing.
+
+### `@b/parsers/utils/css-value-functions.ts` - Type Checking
+
+**Check if a function is a CSS value function (vs color function):**
+
+```typescript
+import { isCssValueFunction } from "@b/parsers/utils/css-value-functions";
+
+// Distinguish value functions from color functions
+isCssValueFunction(varNode)   // true - var(--value)
+isCssValueFunction(calcNode)  // true - calc(50% + 10px)
+isCssValueFunction(minNode)   // true - min(10px, 20px)
+
+isCssValueFunction(rgbNode)   // false - rgb(255, 0, 0)
+isCssValueFunction(hslNode)   // false - hsl(0, 100%, 50%)
+```
+
+**Why this matters:** In gradients, `rgb()` is a color stop, but `calc()` is a position value.
+
+---
+
+## 🎯 How to Use These
+
+### Pattern 1: Parse a Simple Value
+```typescript
+import { parseNodeToCssValue } from "@b/parsers/utils/css-value-parser";
+
+// Parse any value node
+const result = parseNodeToCssValue(node);
+
+if (result.ok) {
+  // result.value is a CssValue
+  switch (result.value.kind) {
+    case "literal":
+      console.log(result.value.value, result.value.unit);
+      break;
+    case "calc":
+      // Complex calc expression
+      break;
+    // ... handle other kinds
+  }
+}
+```
+
+### Pattern 2: Check Function Type Before Parsing
+```typescript
+import { isCssValueFunction } from "@b/parsers/utils/css-value-functions";
+
+if (Ast.isFunctionNode(node)) {
+  if (isCssValueFunction(node)) {
+    // It's a value function (calc, min, max, var)
+    const result = parseNodeToCssValue(node);
+  } else {
+    // Might be a color function, handle differently
+    const colorResult = Parsers.Color.parseFromNode(node);
+  }
+}
+```
+
+### Pattern 3: When Building Property Parsers
+```typescript
+import { parseNodeToCssValue } from "@b/parsers/utils/css-value-parser";
+
+function parseMyProperty(valueNode: csstree.Value): ParseResult<MyPropertyIR> {
+  const children = Ast.nodeListToArray(valueNode.children);
+  
+  // Parse each component as a CssValue
+  const firstValue = parseNodeToCssValue(children[0]);
+  const secondValue = parseNodeToCssValue(children[1]);
+  
+  if (!firstValue.ok) return forwardParseErr(firstValue);
+  if (!secondValue.ok) return forwardParseErr(secondValue);
+  
+  return parseOk({
+    kind: "my-property",
+    first: firstValue.value,
+    second: secondValue.value
+  });
+}
+```
+
+---
+
+## 💡 Why This Architecture
+
+**Composition over duplication:**
+- Each parser focuses on its domain
+- Complex functions delegate to specialists
+- Generic fallback for unknown functions
+- Type system ensures correctness
+
+**Single source of truth:**
+- `function-dispatcher.ts` - Routes all functions
+- `css-value.ts` - Defines all value types
+- No scattered logic, easy to extend
+
+**Recursive by design:**
+- `CssValue` can contain `CssValue` (lists, calc operations)
+- Handles arbitrarily nested expressions
+- Type-safe at every level
+
+**This is how we handle CSS's infinite complexity with finite code.** 🚀
+
+---
+
+## 🔗 Quick Reference
+
+```typescript
+// Parse any CSS value
+import { parseNodeToCssValue } from "@b/parsers/utils/css-value-parser";
+
+// Check function types
+import { isCssValueFunction } from "@b/parsers/utils/css-value-functions";
+
+// Types
+import type { CssValue } from "@b/types";
+
+// When you need it:
+// - Property parsers that accept any value
+// - Handling calc(), min(), max(), clamp()
+// - Distinguishing value functions from color functions
+// - Building complex properties with nested values
+```
+
+**Always prefer `parseNodeToCssValue()` over manual parsing - it handles everything correctly.**
