@@ -1,110 +1,80 @@
-# Session 046: Phase 5 - Source Context & Enrichment
+# Session 046: Phase 5 - Source Context Investigation COMPLETE
 
 **Date:** 2025-11-07
-**Focus:** Implement source context formatting and fix enrichment logic bug
+**Focus:** Investigated source context - DECIDED TO REMOVE
 
 ---
 
 ## ✅ Accomplished
 
 - ✅ Session 046 initialized
-- ✅ Previous session (045) archived successfully
-- ✅ **Phase 5.1 COMPLETE**: Added `sourceContext` field to Issue type
-- ✅ **Phase 5.2 COMPLETE**: Implemented enrichment in parseDeclaration
-- ✅ **Phase 5.3 COMPLETE**: Created comprehensive TDD tests (10 new tests)
-- ✅ **Phase 5.4 COMPLETE**: All quality checks passing
-- ✅ **Phase 5.5 COMPLETE**: Architecture decision documented
-- ✅ All tests passing (1969 tests total)
-- ✅ All typechecks passing
-- ✅ All builds passing
+- ✅ Built source context enrichment infrastructure
+- ✅ Comprehensive investigation and testing
+- ✅ **DISCOVERY:** Feature never triggers (no location data)
+- ✅ **DECISION:** Remove in favor of `path` (better, always works)
+- ✅ **SCOPE DEFINED:** See `CLEANUP_SCOPE.md`
+- ✅ Committed investigation work
 
 ---
 
 ## 📊 Current State
 
 **Working:**
-- ✅ All tests passing (1969/1969) - added 10 new enrichment tests
+- ✅ All tests passing (1969/1969)
 - ✅ All typechecks passing
-- ✅ All builds passing
-- ✅ Issue enrichment fully implemented
-- ✅ Property context ALWAYS added
-- ✅ Source context added when location available
+- ✅ Property enrichment working
+- ✅ Path navigation excellent
 
-**Not working:**
-- Nothing blocking! 🎉
-
----
-
-## 🎯 What We Built
-
-### Issue Enrichment System
-
-**All issues now enriched with:**
-- `property` field: ALWAYS added (property name context)
-- `sourceContext` field: Added when `location` exists (formatted visual pointer)
-
-**Implementation:**
-- Modified `Issue` type in `@b/types` to include `sourceContext?: string`
-- Added `enrichIssues()` helper in parseDeclaration
-- Enrichment happens on ALL code paths (success, failure, partial success)
-- 10 comprehensive tests covering all scenarios
+**Next Session Cleanup:**
+- Remove `sourceContext` field (~350 lines)
+- Remove `location` field (~80 lines)
+- Remove `SourceLocation` types
+- Remove `formatSourceContext` utility
+- Simplify enrichment logic
+- Remove related tests
+- **Est. 30 minutes**
 
 ---
 
-## 🏗️ Architecture Decisions
+## 🎯 Session 047 Plan
 
-### Decision: Keep Opportunistic sourceContext Enrichment
+**File:** `docs/sessions/046/CLEANUP_SCOPE.md`
 
-**Rationale:**
-- css-tree sometimes provides location data (syntax errors)
-- Our parsers/generators usually don't (by design)
-- When available → add beautiful formatted context ✅
-- When absent → still have property + path ✅
-- Complementary information, not competing
+**Remove from:**
+1. `packages/b_types/src/result/issue.ts` - location/sourceContext
+2. `packages/b_declarations/src/parser.ts` - enrichment logic
+3. `packages/b_utils/src/parse/ast.ts` - formatSourceContext
+4. `packages/b_declarations/src/parser.test.ts` - related tests
 
-**What Gets Enriched:**
+**Keep:**
+- ✅ Property enrichment (valuable!)
+- ✅ Path field (excellent!)
+- ✅ Simple, clean API
 
-| Field | Always? | When Available |
-|-------|---------|----------------|
-| `property` | ✅ YES | Always (from parseDeclaration) |
-| `sourceContext` | ⚠️ Sometimes | When issue has `location` |
-| `path` | ⚠️ Sometimes | Generator issues (IR navigation) |
-
-**Result:** Best of both worlds!
-- Generator issues: Have `path` for IR navigation
-- Parser issues: Sometimes have `sourceContext` for visual pointer
-- All issues: Always have `property` for context
+**Result:** -350 lines of dead code
 
 ---
 
-## 💡 Key Learnings
+## 💡 Key Learning
 
-1. Multi-value parsers DO use AST (with positions enabled)
-2. Location data lost in generator phase (operates on IR)
-3. `path` provides excellent IR navigation (complementary to sourceContext)
-4. Opportunistic enrichment valuable when available
-5. Property context always valuable (even without sourceContext)
+**"Sometimes available" is worse than "never available"**
 
----
-
-## 🚀 Next Steps (Deferred)
-
-1. **Performance benchmarking** (High Priority)
-2. **Implement single-value properties** (High Priority)
-3. **Audit other multi-value properties** (Medium Priority)
-4. **Test optimization (Phase 2.3)** (Low Priority)
+- location/sourceContext: Never populated
+- path: Always populated, better
+- Decision: Remove unreliable feature
+- Result: Simpler, better DX
 
 ---
 
 ## 📚 Session Artifacts
 
-- `docs/sessions/046/PHASE_5_PROPOSAL.md` - Original proposal
-- `docs/sessions/046/ARCHITECTURE_DECISION.md` - Final decision rationale
-- `docs/sessions/046/SOURCE_CONTEXT_EXPLANATION.md` - User-facing explanation
-- `docs/sessions/046/test-source-context.ts` - Interactive demonstration
+- `CLEANUP_SCOPE.md` - Detailed removal plan
+- `ARCHITECTURE_DECISION.md` - Why we tried
+- `WHY_NO_REAL_EXAMPLE.md` - Why it failed
+- Historical record preserved
 
 ---
 
-**🚀 Session 046: Phase 5 COMPLETE!**
+**🚀 Session 046 COMPLETE - Ready for cleanup!**
 
-All 1969 tests passing. Issue enrichment fully implemented. Ready for next session!
+Next session: 30-min cleanup, simpler codebase, better UX
