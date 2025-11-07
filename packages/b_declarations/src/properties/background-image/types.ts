@@ -1,21 +1,23 @@
 // b_path:: packages/b_declarations/src/properties/background-image/types.ts
-import type { Gradient } from "@b/types";
+import type { Image } from "@b/types";
 
 /**
  * Background image value IR.
- * Can be a list of image layers.
+ *
+ * Property-level wrapper for the <background-image> property.
+ * Supports CSS-wide keywords or a list of image layers.
+ *
+ * @see https://www.w3.org/TR/css-backgrounds-3/#background-image
  */
 export type BackgroundImageIR = { kind: "keyword"; value: string } | { kind: "layers"; layers: ImageLayer[] };
 
 /**
- * Single image layer - can be various <image> types.
+ * Single image layer for background-image property.
  *
- * <image> =
- *   <url> |
- *   <gradient> |
- *   <image()> |
- *   <image-set()> |
- *   <cross-fade()> |
- *   <element()>
+ * Can be:
+ * - <image> (url or gradient) from @b/types
+ * - "none" keyword (property-specific)
+ *
+ * Note: "none" is property-specific and not part of the CSS <image> production.
  */
-export type ImageLayer = { kind: "url"; url: string } | { kind: "gradient"; gradient: Gradient } | { kind: "none" };
+export type ImageLayer = Image | { kind: "none" };
