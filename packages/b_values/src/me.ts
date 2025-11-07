@@ -4,42 +4,42 @@
 
 import * as decl from "@b/declarations";
 
-console.log(
-  JSON.stringify(
-    decl.generateDeclaration({
-      property: "background-image",
-      ir: [
-        {
-          type: "Gradient",
-          kind: "linear",
-          direction: { type: "Angle", value: 45, unit: "deg" },
-          stops: [
-            { color: { type: "Color", format: "named", value: "red" } },
-            { color: { type: "Color", format: "named", value: "blue" } },
-          ],
-        },
-        {
-          type: "Gradient",
-          kind: "radial",
-          shape: "ellipse",
-          size: "farthest-corner",
-          position: {
-            x: { type: "Percentage", value: 20 },
-            y: { type: "Length", value: 20, unit: "px" },
-          },
-          stops: [
-            { color: { type: "Color", format: "rgb", r: 0, g: 0, b: 0, a: 0.5 } },
-            { color: { type: "Color", format: "named", value: "transparent" } },
-          ],
-        },
-      ],
-      original:
-        "linear-gradient(to 45deg, red, blue), radial-gradient(ellipse farthest-corner at top 20px left 20px, rgba(0, 0, 0, 0.5), transparent)",
-    }),
-    null,
-    2,
-  ),
-);
+// console.log(
+//   JSON.stringify(
+//     decl.generateDeclaration({
+//       property: "background-image",
+//       ir: [
+//         {
+//           type: "Gradient",
+//           kind: "linear",
+//           direction: { type: "Angle", value: 45, unit: "deg" },
+//           stops: [
+//             { color: { type: "Color", format: "named", value: "red" } },
+//             { color: { type: "Color", format: "named", value: "blue" } },
+//           ],
+//         },
+//         {
+//           type: "Gradient",
+//           kind: "radial",
+//           shape: "ellipse",
+//           size: "farthest-corner",
+//           position: {
+//             x: { type: "Percentage", value: 20 },
+//             y: { type: "Length", value: 20, unit: "px" },
+//           },
+//           stops: [
+//             { color: { type: "Color", format: "rgb", r: 0, g: 0, b: 0, a: 0.5 } },
+//             { color: { type: "Color", format: "named", value: "transparent" } },
+//           ],
+//         },
+//       ],
+//       original:
+//         "linear-gradient(to 45deg, red, blue), radial-gradient(ellipse farthest-corner at top 20px left 20px, rgba(0, 0, 0, 0.5), transparent)",
+//     }),
+//     null,
+//     2,
+//   ),
+// );
 
 // console.log(
 //   JSON.stringify(
