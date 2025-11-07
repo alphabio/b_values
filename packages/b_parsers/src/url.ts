@@ -20,12 +20,15 @@ export function parseUrl(input: string): ParseResult<Url> {
 
   // Must start with url(
   if (!trimmed.startsWith("url(")) {
-    return parseErr(createError("invalid-syntax", `Expected url() function, got: ${input}`));
+    return parseErr("url", createError("invalid-syntax", `Expected url() function, got: ${input}`));
   }
 
   // Must end with )
   if (!trimmed.endsWith(")")) {
-    return parseErr(createError("invalid-syntax", `Invalid url() function: missing closing parenthesis in "${input}"`));
+    return parseErr(
+      "url",
+      createError("invalid-syntax", `Invalid url() function: missing closing parenthesis in "${input}"`),
+    );
   }
 
   // Extract content between url( and )
@@ -48,7 +51,7 @@ export function parseUrl(input: string): ParseResult<Url> {
     });
   }
 
-  return parseErr(createError("invalid-syntax", `Empty url() function in "${input}"`));
+  return parseErr("url", createError("invalid-syntax", `Empty url() function in "${input}"`));
 }
 
 /**
@@ -60,18 +63,18 @@ export function parseUrl(input: string): ParseResult<Url> {
  */
 export function parseUrlFromNode(node: csstree.FunctionNode): ParseResult<Url> {
   if (node.name.toLowerCase() !== "url") {
-    return parseErr(createError("invalid-syntax", `Expected url() function, got: ${node.name}()`));
+    return parseErr("url", createError("invalid-syntax", `Expected url() function, got: ${node.name}()`));
   }
 
   const children = node.children.toArray();
 
   // url() should have exactly one child (the URL string or identifier)
   if (children.length === 0) {
-    return parseErr(createError("invalid-syntax", "Empty url() function"));
+    return parseErr("url", createError("invalid-syntax", "Empty url() function"));
   }
 
   if (children.length > 1) {
-    return parseErr(createError("invalid-syntax", "url() function should have exactly one argument"));
+    return parseErr("url", createError("invalid-syntax", "url() function should have exactly one argument"));
   }
 
   const child = children[0];
@@ -101,5 +104,5 @@ export function parseUrlFromNode(node: csstree.FunctionNode): ParseResult<Url> {
   }
 
   // Unexpected child type
-  return parseErr(createError("invalid-syntax", `Unexpected content in url() function: ${child.type}`));
+  return parseErr("url", createError("invalid-syntax", `Unexpected content in url() function: ${child.type}`));
 }

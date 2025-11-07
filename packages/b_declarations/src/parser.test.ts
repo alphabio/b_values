@@ -145,7 +145,7 @@ background-image: url(image.png);
       defineProperty({
         name: "test-prop",
         syntax: "<test>",
-        parser: (): ParseResult<never> => parseErr(createError("invalid-value", "Parser error")),
+        parser: (): ParseResult<never> => parseErr("InvalidValue", createError("invalid-value", "Parser error")),
         inherited: false,
         initial: "none",
       });
@@ -164,7 +164,7 @@ background-image: url(image.png);
       defineProperty({
         name: "test-prop",
         syntax: "<test>",
-        parser: (): ParseResult<never> => parseErr(createError("invalid-value", "Test error")),
+        parser: (): ParseResult<never> => parseErr("InvalidValue", createError("invalid-value", "Test error")),
         inherited: false,
         initial: "none",
       });
@@ -181,7 +181,7 @@ background-image: url(image.png);
       defineProperty({
         name: "color",
         syntax: "<color>",
-        parser: (): ParseResult<never> => parseErr(createError("invalid-value", "Bad color")),
+        parser: (): ParseResult<never> => parseErr("InvalidValue", createError("invalid-value", "Bad color")),
         inherited: true,
         initial: "black",
       });
@@ -202,7 +202,7 @@ background-image: url(image.png);
       defineProperty({
         name: "background-image",
         syntax: "<image>",
-        parser: (): ParseResult<never> => parseErr(createError("invalid-value", "Bad image")),
+        parser: (): ParseResult<never> => parseErr("InvalidValue", createError("invalid-value", "Bad image")),
         inherited: false,
         initial: "none",
       });
@@ -281,7 +281,7 @@ background-image: url(image.png);
           const valid = segments.filter((s) => s !== "invalid");
 
           if (valid.length === 0) {
-            return parseErr(createError("invalid-value", "All segments invalid"));
+            return parseErr("InvalidValue", createError("invalid-value", "All segments invalid"));
           }
 
           // Partial success: ok: false, but has value

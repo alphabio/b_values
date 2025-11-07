@@ -13,14 +13,17 @@ export function parseClampFunction(
   node: csstree.FunctionNode,
 ): ParseResult<{ kind: "clamp"; min: CssValue; preferred: CssValue; max: CssValue }> {
   if (node.name.toLowerCase() !== "clamp") {
-    return parseErr(createError("invalid-syntax", "Expected clamp() function"));
+    return parseErr("clamp", createError("invalid-syntax", "Expected clamp() function"));
   }
 
   const children = node.children.toArray();
   const groups = splitNodesByComma(children, { trimWhitespace: true });
 
   if (groups.length !== 3) {
-    return parseErr(createError("invalid-syntax", "clamp() requires exactly three arguments: min, preferred, max"));
+    return parseErr(
+      "clamp",
+      createError("invalid-syntax", "clamp() requires exactly three arguments: min, preferred, max"),
+    );
   }
 
   const args: CssValue[] = [];
@@ -50,7 +53,7 @@ export function parseClampFunction(
   }
 
   if (args.length !== 3) {
-    return parseErr(createError("invalid-value", "Failed to parse all three arguments for clamp()"));
+    return parseErr("clamp", createError("invalid-value", "Failed to parse all three arguments for clamp()"));
   }
 
   const [min, preferred, max] = args;

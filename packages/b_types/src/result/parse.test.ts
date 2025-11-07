@@ -52,18 +52,18 @@ describe("ParseResult", () => {
   describe("parseErr()", () => {
     it("should create failed parse result", () => {
       const issue = createError("invalid-value", "Invalid color");
-      const result = parseErr(issue);
+      const result = parseErr("color", issue);
 
       expect(result.ok).toBe(false);
       expect(result.value).toBeUndefined();
       expect(result.issues).toHaveLength(1);
       expect(result.issues[0]).toBe(issue);
-      expect(result.property).toBeUndefined();
+      expect(result.property).toBe("color");
     });
 
     it("should include property when provided", () => {
       const issue = createError("invalid-value", "Invalid color");
-      const result = parseErr(issue, "color");
+      const result = parseErr("color", issue);
 
       expect(result.property).toBe("color");
     });
@@ -72,11 +72,11 @@ describe("ParseResult", () => {
       const error = createError("invalid-syntax", "Syntax error");
       const warning = createWarning("deprecated-syntax", "Old syntax");
 
-      const errorResult = parseErr(error);
+      const errorResult = parseErr("color", error);
       expect(errorResult.ok).toBe(false);
       expect(errorResult.issues[0].severity).toBe("error");
 
-      const warningResult = parseErr(warning);
+      const warningResult = parseErr("color", warning);
       expect(warningResult.ok).toBe(false);
       expect(warningResult.issues[0].severity).toBe("warning");
     });
@@ -98,7 +98,7 @@ describe("ParseResult", () => {
 
     it("should add issue to failed result", () => {
       const error = createError("invalid-value", "Invalid");
-      const result = parseErr(error);
+      const result = parseErr("color", error);
       const warning = createWarning("deprecated-syntax", "Also deprecated");
       const withIssue = addIssue(result, warning);
 
@@ -146,7 +146,7 @@ describe("ParseResult", () => {
 
     it("should fail if any result fails", () => {
       const result1 = parseOk({ value: 1 });
-      const result2 = parseErr(createError("invalid-value", "Error"));
+      const result2 = parseErr("color", createError("invalid-value", "Error"));
       const result3 = parseOk({ value: 3 });
 
       const combined = combineResults([result1, result2, result3]);
@@ -163,7 +163,7 @@ describe("ParseResult", () => {
 
       const result1 = addIssue(parseOk({ value: 1 }), warning1);
       const result2 = addIssue(parseOk({ value: 2 }), warning2);
-      const result3 = parseErr(error);
+      const result3 = parseErr("color", error);
 
       const combined = combineResults([result1, result2, result3]);
 

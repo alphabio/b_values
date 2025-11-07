@@ -15,8 +15,8 @@ describe("Declaration Layer Integration", () => {
 
     expect(result.value.property).toBe("background-image");
     const ir = result.value.ir as { kind: string; layers?: unknown[] };
-    expect(ir.kind).toBe("layers");
-    if (ir.kind !== "layers" || !ir.layers) return;
+    expect(ir.kind).toBe("list");
+    if (ir.kind !== "list" || !ir.layers) return;
     expect(ir.layers).toHaveLength(1);
   });
 
@@ -30,7 +30,7 @@ describe("Declaration Layer Integration", () => {
 
     expect(result.value.property).toBe("background-image");
     const ir = result.value.ir as { kind: string; layers?: unknown[] };
-    expect(ir.kind).toBe("layers");
+    expect(ir.kind).toBe("list");
   });
 
   it("should parse object input", () => {
@@ -44,7 +44,7 @@ describe("Declaration Layer Integration", () => {
 
     expect(result.value.property).toBe("background-image");
     const ir = result.value.ir as { kind: string; layers?: unknown[] };
-    expect(ir.kind).toBe("layers");
+    expect(ir.kind).toBe("list");
   });
 
   it("should handle CSS-wide keywords", () => {

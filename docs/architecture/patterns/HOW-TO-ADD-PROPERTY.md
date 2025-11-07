@@ -11,6 +11,35 @@
 
 ---
 
+## 💡 Keyword Imports: The Namespace Pattern
+
+**Always** import from `@b/keywords` using a namespace import. This is a critical convention for maintaining clean, scalable, and readable code.
+
+```typescript
+// ✅ DO THIS
+import type * as Keywords from "@b/keywords";
+
+// Usage
+const schema = z.object({
+  value: Keywords.bgSize, // Clean, contextual
+  clip: Keywords.backgroundClip,
+});
+```
+
+```typescript
+// ❌ DON'T DO THIS
+import { bgSize, backgroundClip } from "@b/keywords";
+```
+
+**Why?**
+
+1. **Context:** The `Keywords.` prefix makes it immediately clear that `bgSize` is a keyword schema, not a local variable or a type.
+2. **No Name Clashes:** It prevents naming collisions. Many properties share keyword names (e.g., `auto`, `none`). A local `bgSize` could clash with a `borderImageSize` if both were imported directly.
+3. **Better DX:** Autocomplete is more helpful. Typing `Keywords.` shows a clean, organized list of all available keyword schemas.
+4. **Scalability:** As we add more properties, this pattern prevents the import statements from becoming enormous and unmanageable.
+
+---
+
 ## 🚦 What Type of Property?
 
 ### Type 1: Simple Keywords
@@ -50,10 +79,10 @@ Example: `background-size: [ <length-percentage> | auto ]{1,2} | cover | contain
 import { z } from "zod";
 import { getLiteralValues } from "./utils";
 
-export const bgSizeKeywordSchema = z.union([z.literal("auto"), z.literal("cover"), z.literal("contain")]);
+export const bgSize = z.union([z.literal("auto"), z.literal("cover"), z.literal("contain")]);
 
-export const BG_SIZE_KEYWORDS = getLiteralValues(bgSizeKeywordSchema);
-export type BgSizeKeyword = z.infer<typeof bgSizeKeywordSchema>;
+export const BG_SIZE = getLiteralValues(bgSize);
+export type BgSize = z.infer<typeof bgSize>;
 ```
 
 Export from `index.ts`.
@@ -66,13 +95,13 @@ Export from `index.ts`.
 // packages/b_types/src/bg-size.ts
 import { z } from "zod";
 import { cssValueSchema } from "./values/css-value";
-import { cssWideKeywordSchema, bgSizeKeywordSchema } from "@b/keywords";
+import type * as Keywords from "@b/keywords";
 
 // Value-level schema
 export const bgSizeSchema = z.discriminatedUnion("kind", [
   z.object({
     kind: z.literal("keyword"),
-    value: bgSizeKeywordSchema,
+    value: Keywords.bgSize,
   }),
   z.object({
     kind: z.literal("explicit"),
@@ -87,7 +116,7 @@ export type BgSize = z.infer<typeof bgSizeSchema>;
 export const bgSizeListSchema = z.discriminatedUnion("kind", [
   z.object({
     kind: z.literal("keyword"),
-    value: cssWideKeywordSchema, // For IR type completeness
+    value: Keywords.cssWide, // For IR type completeness
   }),
   z.object({
     kind: z.literal("list"),
@@ -109,7 +138,7 @@ Export from `index.ts`.
 ```typescript
 // packages/b_parsers/src/background/size.ts
 import type * as csstree from "@eslint/css-tree";
-import { bgSizeKeywordSchema } from "@b/keywords";
+import { bgSize as bgSizeSchema } from "@b/keywords";
 import { createError, parseErr, parseOk, forwardParseErr, type ParseResult, type BgSize } from "@b/types";
 import * as Ast from "@b/utils";
 import { parseNodeToCssValue } from "../utils/css-value-parser";
@@ -120,7 +149,7 @@ export function parseBackgroundSizeValue(valueNode: csstree.Value): ParseResult<
   // Single keyword?
   if (children.length === 1 && children[0].type === "Identifier") {
     const keyword = children[0].name;
-    const result = bgSizeKeywordSchema.safeParse(keyword);
+    const result = bgSizeSchema.safeParse(keyword);
     if (result.success) {
       return parseOk({ kind: "keyword", value: result.data });
     }

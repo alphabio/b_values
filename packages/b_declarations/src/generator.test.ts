@@ -34,7 +34,7 @@ describe("generateDeclaration", () => {
 
       const result = generateDeclaration({
         property: "background-image",
-        ir: { kind: "layers", layers: [] },
+        ir: { kind: "list", values: [] },
       });
 
       expect(result.ok).toBe(true);
@@ -73,7 +73,7 @@ describe("generateDeclaration", () => {
 
       const result = generateDeclaration({
         // @ts-expect-error Testing unknown property
-        property: "color",
+        property: "coslor",
         // @ts-expect-error Testing unknown property
         ir: "red",
       });
@@ -81,10 +81,10 @@ describe("generateDeclaration", () => {
       expect(result.ok).toBe(false);
       if (result.ok) return;
 
-      expect(result.issues[0]?.code).toBe("missing-required-field");
-      expect(result.issues[0]?.message).toContain("does not have a generator");
-      expect(result.issues[0]?.suggestion).toContain("Add a generator function");
-      expect(result.property).toBe("color");
+      expect(result.issues[0]?.code).toBe("invalid-ir");
+      expect(result.issues[0]?.message).toContain("Unknown CSS property: coslor");
+      expect(result.issues[0]?.suggestion).toContain("Check property name spelling or ensure property is registered");
+      expect(result.property).toBe("coslor");
     });
 
     it("should propagate generator errors", () => {

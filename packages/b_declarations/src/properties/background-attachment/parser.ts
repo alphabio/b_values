@@ -11,6 +11,6 @@ export const parseBackgroundAttachment = createMultiValueParser<AttachmentValue,
   },
 
   aggregator(layers: AttachmentValue[]): BackgroundAttachmentIR {
-    return { kind: "layers", layers };
+    return { kind: "list", values: layers };
   },
 });

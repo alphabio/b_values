@@ -11,13 +11,13 @@ import { getChildren, getValues } from "@b/utils";
  */
 export function parseHwbFunction(node: csstree.FunctionNode): ParseResult<HWBColor> {
   if (node.name !== "hwb") {
-    return parseErr(createError("invalid-syntax", "Expected hwb() function"));
+    return parseErr("hwb", createError("invalid-syntax", "Expected hwb() function"));
   }
 
   const values = getValues(getChildren(node));
 
   if (values.length < 3 || values.length > 4) {
-    return parseErr(createError("invalid-syntax", `HWB function must have 3 or 4 values, got ${values.length}`));
+    return parseErr("hwb", createError("invalid-syntax", `HWB function must have 3 or 4 values, got ${values.length}`));
   }
 
   const hResult = parseNodeToCssValue(values[0]);

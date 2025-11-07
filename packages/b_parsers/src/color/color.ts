@@ -23,7 +23,7 @@ export function parseNode(node: csstree.CssNode): ParseResult<Type.Color> {
     // Validate hex color format (3, 4, 6, or 8 hex digits)
     const hexPattern = /^[0-9a-f]{3}$|^[0-9a-f]{4}$|^[0-9a-f]{6}$|^[0-9a-f]{8}$/;
     if (!hexPattern.test(value)) {
-      return parseErr(createError("invalid-value", `Invalid hex color: #${value}`));
+      return parseErr("color", createError("invalid-value", `Invalid hex color: #${value}`));
     }
     return parseOk({ kind: "hex", value: `#${value}` } as Type.Color);
   }
@@ -60,7 +60,7 @@ export function parseNode(node: csstree.CssNode): ParseResult<Type.Color> {
       case "color":
         return parseColorFunction(node);
       default:
-        return parseErr(createError("unsupported-kind", `Unsupported color function: ${funcName}`));
+        return parseErr("color", createError("unsupported-kind", `Unsupported color function: ${funcName}`));
     }
   }
 
@@ -74,7 +74,7 @@ export function parseNode(node: csstree.CssNode): ParseResult<Type.Color> {
     return parseOk({ kind: "named", name: keyword } as Type.Color);
   }
 
-  return parseErr(createError("invalid-syntax", `Invalid color node type: ${node.type}`));
+  return parseErr("color", createError("invalid-syntax", `Invalid color node type: ${node.type}`));
 }
 
 /**
@@ -96,12 +96,13 @@ export function parse(value: string): ParseResult<Type.Color> {
     });
 
     if (!firstNode) {
-      return parseErr(createError("invalid-syntax", "Empty value"));
+      return parseErr("color", createError("invalid-syntax", "Empty value"));
     }
 
     return parseNode(firstNode);
   } catch (e) {
     return parseErr(
+      "color",
       createError("invalid-syntax", `Failed to parse color: ${e instanceof Error ? e.message : String(e)}`),
     );
   }

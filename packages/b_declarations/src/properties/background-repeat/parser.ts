@@ -11,6 +11,6 @@ export const parseBackgroundRepeat = createMultiValueParser<RepeatStyle, Backgro
   },
 
   aggregator(layers: RepeatStyle[]): BackgroundRepeatIR {
-    return { kind: "layers", layers };
+    return { kind: "list", values: layers };
   },
 });

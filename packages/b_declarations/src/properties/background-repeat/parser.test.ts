@@ -10,12 +10,12 @@ describe("parseBackgroundRepeat", () => {
 
       expect(result.ok).toBe(true);
       if (!result.ok) return;
-      expect(result.value.kind).toBe("layers");
-      if (result.value.kind !== "layers") return;
-      expect(result.value.layers).toHaveLength(1);
-      expect(result.value.layers[0].kind).toBe("shorthand");
-      if (result.value.layers[0].kind !== "shorthand") return;
-      expect(result.value.layers[0].value).toBe("repeat-x");
+      expect(result.value.kind).toBe("list");
+      if (result.value.kind !== "list") return;
+      expect(result.value.values).toHaveLength(1);
+      expect(result.value.values[0].kind).toBe("shorthand");
+      if (result.value.values[0].kind !== "shorthand") return;
+      expect(result.value.values[0].value).toBe("repeat-x");
     });
 
     it("should parse 'repeat-y'", () => {
@@ -23,12 +23,12 @@ describe("parseBackgroundRepeat", () => {
 
       expect(result.ok).toBe(true);
       if (!result.ok) return;
-      expect(result.value.kind).toBe("layers");
-      if (result.value.kind !== "layers") return;
-      expect(result.value.layers).toHaveLength(1);
-      expect(result.value.layers[0].kind).toBe("shorthand");
-      if (result.value.layers[0].kind !== "shorthand") return;
-      expect(result.value.layers[0].value).toBe("repeat-y");
+      expect(result.value.kind).toBe("list");
+      if (result.value.kind !== "list") return;
+      expect(result.value.values).toHaveLength(1);
+      expect(result.value.values[0].kind).toBe("shorthand");
+      if (result.value.values[0].kind !== "shorthand") return;
+      expect(result.value.values[0].value).toBe("repeat-y");
     });
   });
 
@@ -38,13 +38,13 @@ describe("parseBackgroundRepeat", () => {
 
       expect(result.ok).toBe(true);
       if (!result.ok) return;
-      expect(result.value.kind).toBe("layers");
-      if (result.value.kind !== "layers") return;
-      expect(result.value.layers).toHaveLength(1);
-      expect(result.value.layers[0].kind).toBe("explicit");
-      if (result.value.layers[0].kind !== "explicit") return;
-      expect(result.value.layers[0].horizontal).toBe("repeat");
-      expect(result.value.layers[0].vertical).toBe("repeat");
+      expect(result.value.kind).toBe("list");
+      if (result.value.kind !== "list") return;
+      expect(result.value.values).toHaveLength(1);
+      expect(result.value.values[0].kind).toBe("explicit");
+      if (result.value.values[0].kind !== "explicit") return;
+      expect(result.value.values[0].horizontal).toBe("repeat");
+      expect(result.value.values[0].vertical).toBe("repeat");
     });
 
     it("should parse 'space'", () => {
@@ -52,12 +52,12 @@ describe("parseBackgroundRepeat", () => {
 
       expect(result.ok).toBe(true);
       if (!result.ok) return;
-      expect(result.value.kind).toBe("layers");
-      if (result.value.kind !== "layers") return;
-      expect(result.value.layers[0].kind).toBe("explicit");
-      if (result.value.layers[0].kind !== "explicit") return;
-      expect(result.value.layers[0].horizontal).toBe("space");
-      expect(result.value.layers[0].vertical).toBe("space");
+      expect(result.value.kind).toBe("list");
+      if (result.value.kind !== "list") return;
+      expect(result.value.values[0].kind).toBe("explicit");
+      if (result.value.values[0].kind !== "explicit") return;
+      expect(result.value.values[0].horizontal).toBe("space");
+      expect(result.value.values[0].vertical).toBe("space");
     });
 
     it("should parse 'round'", () => {
@@ -65,12 +65,12 @@ describe("parseBackgroundRepeat", () => {
 
       expect(result.ok).toBe(true);
       if (!result.ok) return;
-      expect(result.value.kind).toBe("layers");
-      if (result.value.kind !== "layers") return;
-      expect(result.value.layers[0].kind).toBe("explicit");
-      if (result.value.layers[0].kind !== "explicit") return;
-      expect(result.value.layers[0].horizontal).toBe("round");
-      expect(result.value.layers[0].vertical).toBe("round");
+      expect(result.value.kind).toBe("list");
+      if (result.value.kind !== "list") return;
+      expect(result.value.values[0].kind).toBe("explicit");
+      if (result.value.values[0].kind !== "explicit") return;
+      expect(result.value.values[0].horizontal).toBe("round");
+      expect(result.value.values[0].vertical).toBe("round");
     });
 
     it("should parse 'no-repeat'", () => {
@@ -78,12 +78,12 @@ describe("parseBackgroundRepeat", () => {
 
       expect(result.ok).toBe(true);
       if (!result.ok) return;
-      expect(result.value.kind).toBe("layers");
-      if (result.value.kind !== "layers") return;
-      expect(result.value.layers[0].kind).toBe("explicit");
-      if (result.value.layers[0].kind !== "explicit") return;
-      expect(result.value.layers[0].horizontal).toBe("no-repeat");
-      expect(result.value.layers[0].vertical).toBe("no-repeat");
+      expect(result.value.kind).toBe("list");
+      if (result.value.kind !== "list") return;
+      expect(result.value.values[0].kind).toBe("explicit");
+      if (result.value.values[0].kind !== "explicit") return;
+      expect(result.value.values[0].horizontal).toBe("no-repeat");
+      expect(result.value.values[0].vertical).toBe("no-repeat");
     });
   });
 
@@ -97,12 +97,12 @@ describe("parseBackgroundRepeat", () => {
 
       expect(result.ok).toBe(true);
       if (!result.ok) return;
-      expect(result.value.kind).toBe("layers");
-      if (result.value.kind !== "layers") return;
-      expect(result.value.layers[0].kind).toBe("explicit");
-      if (result.value.layers[0].kind !== "explicit") return;
-      expect(result.value.layers[0].horizontal).toBe("repeat");
-      expect(result.value.layers[0].vertical).toBe("space");
+      expect(result.value.kind).toBe("list");
+      if (result.value.kind !== "list") return;
+      expect(result.value.values[0].kind).toBe("explicit");
+      if (result.value.values[0].kind !== "explicit") return;
+      expect(result.value.values[0].horizontal).toBe("repeat");
+      expect(result.value.values[0].vertical).toBe("space");
     });
 
     it("should parse 'repeat no-repeat'", () => {
@@ -110,12 +110,12 @@ describe("parseBackgroundRepeat", () => {
 
       expect(result.ok).toBe(true);
       if (!result.ok) return;
-      expect(result.value.kind).toBe("layers");
-      if (result.value.kind !== "layers") return;
-      expect(result.value.layers[0].kind).toBe("explicit");
-      if (result.value.layers[0].kind !== "explicit") return;
-      expect(result.value.layers[0].horizontal).toBe("repeat");
-      expect(result.value.layers[0].vertical).toBe("no-repeat");
+      expect(result.value.kind).toBe("list");
+      if (result.value.kind !== "list") return;
+      expect(result.value.values[0].kind).toBe("explicit");
+      if (result.value.values[0].kind !== "explicit") return;
+      expect(result.value.values[0].horizontal).toBe("repeat");
+      expect(result.value.values[0].vertical).toBe("no-repeat");
     });
 
     it("should parse 'space round'", () => {
@@ -123,12 +123,12 @@ describe("parseBackgroundRepeat", () => {
 
       expect(result.ok).toBe(true);
       if (!result.ok) return;
-      expect(result.value.kind).toBe("layers");
-      if (result.value.kind !== "layers") return;
-      expect(result.value.layers[0].kind).toBe("explicit");
-      if (result.value.layers[0].kind !== "explicit") return;
-      expect(result.value.layers[0].horizontal).toBe("space");
-      expect(result.value.layers[0].vertical).toBe("round");
+      expect(result.value.kind).toBe("list");
+      if (result.value.kind !== "list") return;
+      expect(result.value.values[0].kind).toBe("explicit");
+      if (result.value.values[0].kind !== "explicit") return;
+      expect(result.value.values[0].horizontal).toBe("space");
+      expect(result.value.values[0].vertical).toBe("round");
     });
 
     it("should parse 'no-repeat repeat'", () => {
@@ -136,12 +136,12 @@ describe("parseBackgroundRepeat", () => {
 
       expect(result.ok).toBe(true);
       if (!result.ok) return;
-      expect(result.value.kind).toBe("layers");
-      if (result.value.kind !== "layers") return;
-      expect(result.value.layers[0].kind).toBe("explicit");
-      if (result.value.layers[0].kind !== "explicit") return;
-      expect(result.value.layers[0].horizontal).toBe("no-repeat");
-      expect(result.value.layers[0].vertical).toBe("repeat");
+      expect(result.value.kind).toBe("list");
+      if (result.value.kind !== "list") return;
+      expect(result.value.values[0].kind).toBe("explicit");
+      if (result.value.values[0].kind !== "explicit") return;
+      expect(result.value.values[0].horizontal).toBe("no-repeat");
+      expect(result.value.values[0].vertical).toBe("repeat");
     });
 
     it("should parse 'repeat repeat' (identical values)", () => {
@@ -149,12 +149,12 @@ describe("parseBackgroundRepeat", () => {
 
       expect(result.ok).toBe(true);
       if (!result.ok) return;
-      expect(result.value.kind).toBe("layers");
-      if (result.value.kind !== "layers") return;
-      expect(result.value.layers[0].kind).toBe("explicit");
-      if (result.value.layers[0].kind !== "explicit") return;
-      expect(result.value.layers[0].horizontal).toBe("repeat");
-      expect(result.value.layers[0].vertical).toBe("repeat");
+      expect(result.value.kind).toBe("list");
+      if (result.value.kind !== "list") return;
+      expect(result.value.values[0].kind).toBe("explicit");
+      if (result.value.values[0].kind !== "explicit") return;
+      expect(result.value.values[0].horizontal).toBe("repeat");
+      expect(result.value.values[0].vertical).toBe("repeat");
     });
   });
 
@@ -164,23 +164,23 @@ describe("parseBackgroundRepeat", () => {
 
       expect(result.ok).toBe(true);
       if (!result.ok) return;
-      expect(result.value.kind).toBe("layers");
-      if (result.value.kind !== "layers") return;
-      expect(result.value.layers).toHaveLength(3);
+      expect(result.value.kind).toBe("list");
+      if (result.value.kind !== "list") return;
+      expect(result.value.values).toHaveLength(3);
 
-      expect(result.value.layers[0].kind).toBe("shorthand");
-      if (result.value.layers[0].kind !== "shorthand") return;
-      expect(result.value.layers[0].value).toBe("repeat-x");
+      expect(result.value.values[0].kind).toBe("shorthand");
+      if (result.value.values[0].kind !== "shorthand") return;
+      expect(result.value.values[0].value).toBe("repeat-x");
 
-      expect(result.value.layers[1].kind).toBe("explicit");
-      if (result.value.layers[1].kind !== "explicit") return;
-      expect(result.value.layers[1].horizontal).toBe("space");
-      expect(result.value.layers[1].vertical).toBe("space");
+      expect(result.value.values[1].kind).toBe("explicit");
+      if (result.value.values[1].kind !== "explicit") return;
+      expect(result.value.values[1].horizontal).toBe("space");
+      expect(result.value.values[1].vertical).toBe("space");
 
-      expect(result.value.layers[2].kind).toBe("explicit");
-      if (result.value.layers[2].kind !== "explicit") return;
-      expect(result.value.layers[2].horizontal).toBe("repeat");
-      expect(result.value.layers[2].vertical).toBe("no-repeat");
+      expect(result.value.values[2].kind).toBe("explicit");
+      if (result.value.values[2].kind !== "explicit") return;
+      expect(result.value.values[2].horizontal).toBe("repeat");
+      expect(result.value.values[2].vertical).toBe("no-repeat");
     });
 
     it("should parse all shorthand layers", () => {
@@ -188,11 +188,11 @@ describe("parseBackgroundRepeat", () => {
 
       expect(result.ok).toBe(true);
       if (!result.ok) return;
-      expect(result.value.kind).toBe("layers");
-      if (result.value.kind !== "layers") return;
-      expect(result.value.layers).toHaveLength(2);
-      expect(result.value.layers[0].kind).toBe("shorthand");
-      expect(result.value.layers[1].kind).toBe("shorthand");
+      expect(result.value.kind).toBe("list");
+      if (result.value.kind !== "list") return;
+      expect(result.value.values).toHaveLength(2);
+      expect(result.value.values[0].kind).toBe("shorthand");
+      expect(result.value.values[1].kind).toBe("shorthand");
     });
   });
 

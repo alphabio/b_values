@@ -51,10 +51,13 @@ describe("parseBackgroundSize", () => {
         expect(layer.kind).toBe("explicit");
         if (layer.kind === "explicit") {
           expect(layer.width.kind).toBe("literal");
-          expect(layer.height.kind).toBe("literal");
+          expect(layer.height.kind).toBe("keyword");
           if (layer.width.kind === "literal") {
             expect(layer.width.value).toBe(50);
             expect(layer.width.unit).toBe("%");
+          }
+          if (layer.height.kind === "keyword") {
+            expect(layer.height.value).toBe("auto");
           }
         }
       }
@@ -68,10 +71,13 @@ describe("parseBackgroundSize", () => {
         expect(layer.kind).toBe("explicit");
         if (layer.kind === "explicit") {
           expect(layer.width.kind).toBe("literal");
-          expect(layer.height.kind).toBe("literal");
+          expect(layer.height.kind).toBe("keyword");
           if (layer.width.kind === "literal") {
             expect(layer.width.value).toBe(100);
             expect(layer.width.unit).toBe("px");
+          }
+          if (layer.height.kind === "keyword") {
+            expect(layer.height.value).toBe("auto");
           }
         }
       }

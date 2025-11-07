@@ -20,7 +20,12 @@ export function generateBackgroundSizeValue(size: BgSize): GenerateResult {
   const widthCss = cssValueToCss(size.width);
   const heightCss = cssValueToCss(size.height);
 
-  // If both values are the same, output only one
+  // If height is 'auto' and width is not, we can use the one-value syntax.
+  if (heightCss === "auto" && widthCss !== "auto") {
+    return generateOk(widthCss);
+  }
+
+  // If both values happen to be the same (e.g. 'auto auto' or 'cover cover')
   if (widthCss === heightCss) {
     return generateOk(widthCss);
   }

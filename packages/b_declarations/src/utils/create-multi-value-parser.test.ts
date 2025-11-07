@@ -149,7 +149,7 @@ describe("createMultiValueParser", () => {
         itemParser: (node) => {
           const value = csstree.generate(node);
           if (value === "bad") {
-            return parseErr(createError("invalid-value", "Bad value"));
+            return parseErr("InvalidValue", createError("invalid-value", "Bad value"));
           }
           return parseOk({ value });
         },
@@ -186,10 +186,10 @@ describe("createMultiValueParser", () => {
         itemParser: (node) => {
           const value = csstree.generate(node);
           if (value === "bad1") {
-            return parseErr(createError("invalid-value", "Error 1"));
+            return parseErr("InvalidValue", createError("invalid-value", "Error 1"));
           }
           if (value === "bad2") {
-            return parseErr(createError("invalid-value", "Error 2"));
+            return parseErr("InvalidValue", createError("invalid-value", "Error 2"));
           }
           return parseOk({ value });
         },
@@ -247,7 +247,7 @@ describe("createMultiValueParser", () => {
 
     it("should return ok: false when all items fail", () => {
       const parser = createMultiValueParser<TestItem, TestResult>({
-        itemParser: () => parseErr(createError("invalid-value", "All fail")),
+        itemParser: () => parseErr("InvalidValue", createError("invalid-value", "All fail")),
         aggregator: (items) => ({ items }),
       });
 

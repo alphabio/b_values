@@ -1,10 +1,12 @@
 // b_path:: packages/b_declarations/src/properties/background-size/definition.ts
+// packages/b_declarations/src/properties/background-size/definition.ts
 
-import { defineProperty } from "../../core/registry";
+import { defineProperty } from "../../core";
 import { parseBackgroundSize } from "./parser";
 import { generateBackgroundSize } from "./generator";
+import type { BackgroundSizeIR } from "./types";
 
-defineProperty({
+export const backgroundSize = defineProperty<BackgroundSizeIR>({
   name: "background-size",
   syntax: "<bg-size>#",
   parser: parseBackgroundSize,

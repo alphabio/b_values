@@ -11,13 +11,16 @@ import { getChildren, getValues } from "@b/utils";
  */
 export function parseOklchFunction(node: csstree.FunctionNode): ParseResult<OKLCHColor> {
   if (node.name !== "oklch") {
-    return parseErr(createError("invalid-syntax", "Expected oklch() function"));
+    return parseErr("oklch", createError("invalid-syntax", "Expected oklch() function"));
   }
 
   const values = getValues(getChildren(node));
 
   if (values.length < 3 || values.length > 4) {
-    return parseErr(createError("invalid-syntax", `OKLCH function must have 3 or 4 values, got ${values.length}`));
+    return parseErr(
+      "oklch",
+      createError("invalid-syntax", `OKLCH function must have 3 or 4 values, got ${values.length}`),
+    );
   }
 
   const lResult = parseNodeToCssValue(values[0]);

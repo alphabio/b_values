@@ -70,8 +70,8 @@ describe("generateBackgroundSize", () => {
     });
   });
 
-  describe("explicit sizes - two values (different axes)", () => {
-    it("should generate 50% auto", () => {
+  describe("explicit sizes - two values one auto (different axes)", () => {
+    it("should generate 50%", () => {
       const ir = {
         kind: "list" as const,
         values: [
@@ -84,7 +84,7 @@ describe("generateBackgroundSize", () => {
       };
       const result = generateBackgroundSize(ir);
       expect(result.ok).toBe(true);
-      if (result.ok) expect(result.value).toBe("50% auto");
+      if (result.ok) expect(result.value).toBe("50%");
     });
 
     it("should generate 100px 50px", () => {
@@ -136,7 +136,7 @@ describe("generateBackgroundSize", () => {
       };
       const result = generateBackgroundSize(ir);
       expect(result.ok).toBe(true);
-      if (result.ok) expect(result.value).toBe("cover, contain, 50% auto");
+      if (result.ok) expect(result.value).toBe("cover, contain, 50%");
     });
   });
 

@@ -11,18 +11,21 @@ import * as Unit from "@b/units";
  */
 export function parseLengthNode(node: csstree.CssNode): ParseResult<Type.Length> {
   if (node.type !== "Dimension") {
-    return parseErr(createError("invalid-syntax", `Expected length dimension, but got node type ${node.type}`));
+    return parseErr(
+      "length",
+      createError("invalid-syntax", `Expected length dimension, but got node type ${node.type}`),
+    );
   }
 
   const value = Number.parseFloat(node.value);
   if (Number.isNaN(value)) {
-    return parseErr(createError("invalid-value", "Invalid length value: not a number"));
+    return parseErr("length", createError("invalid-value", "Invalid length value: not a number"));
   }
 
   const allLengthUnits = [...Unit.ABSOLUTE_LENGTH_UNITS, ...Unit.FONT_LENGTH_UNITS, ...Unit.VIEWPORT_LENGTH_UNITS];
 
   if (!allLengthUnits.includes(node.unit as (typeof allLengthUnits)[number])) {
-    return parseErr(createError("invalid-value", `Invalid length unit: '${node.unit}'`));
+    return parseErr("length", createError("invalid-value", `Invalid length unit: '${node.unit}'`));
   }
 
   return parseOk({
@@ -40,7 +43,7 @@ export function parseLengthPercentageNode(node: csstree.CssNode): ParseResult<Ty
   if (node.type === "Number") {
     const val = Number.parseFloat(node.value);
     if (val !== 0) {
-      return parseErr(createError("invalid-value", "Unitless values must be zero"));
+      return parseErr("length", createError("invalid-value", "Unitless values must be zero"));
     }
     return parseOk({ value: 0, unit: "px" });
   }
@@ -48,13 +51,13 @@ export function parseLengthPercentageNode(node: csstree.CssNode): ParseResult<Ty
   if (node.type === "Dimension") {
     const value = Number.parseFloat(node.value);
     if (Number.isNaN(value)) {
-      return parseErr(createError("invalid-value", "Invalid length value: not a number"));
+      return parseErr("length", createError("invalid-value", "Invalid length value: not a number"));
     }
 
     const allLengthUnits = [...Unit.ABSOLUTE_LENGTH_UNITS, ...Unit.FONT_LENGTH_UNITS, ...Unit.VIEWPORT_LENGTH_UNITS];
 
     if (!allLengthUnits.includes(node.unit as (typeof allLengthUnits)[number])) {
-      return parseErr(createError("invalid-value", `Invalid length unit: '${node.unit}'`));
+      return parseErr("length", createError("invalid-value", `Invalid length unit: '${node.unit}'`));
     }
 
     return parseOk({
@@ -66,12 +69,15 @@ export function parseLengthPercentageNode(node: csstree.CssNode): ParseResult<Ty
   if (node.type === "Percentage") {
     const value = Number.parseFloat(node.value);
     if (Number.isNaN(value)) {
-      return parseErr(createError("invalid-value", "Invalid percentage value: not a number"));
+      return parseErr("length", createError("invalid-value", "Invalid percentage value: not a number"));
     }
     return parseOk({ value, unit: Unit.PERCENTAGE_UNIT });
   }
 
-  return parseErr(createError("invalid-syntax", `Expected length or percentage, but got node type ${node.type}`));
+  return parseErr(
+    "length",
+    createError("invalid-syntax", `Expected length or percentage, but got node type ${node.type}`),
+  );
 }
 
 /**
@@ -81,12 +87,12 @@ export function parseLengthPercentageNode(node: csstree.CssNode): ParseResult<Ty
  */
 export function parseNumberNode(node: csstree.CssNode): ParseResult<number> {
   if (node.type !== "Number") {
-    return parseErr(createError("invalid-syntax", `Expected number, but got node type ${node.type}`));
+    return parseErr("number", createError("invalid-syntax", `Expected number, but got node type ${node.type}`));
   }
 
   const value = Number.parseFloat(node.value);
   if (Number.isNaN(value)) {
-    return parseErr(createError("invalid-value", "Invalid number value: not a number"));
+    return parseErr("number", createError("invalid-value", "Invalid number value: not a number"));
   }
 
   return parseOk(value);

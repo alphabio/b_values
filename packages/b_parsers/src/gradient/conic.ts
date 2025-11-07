@@ -5,7 +5,7 @@ import type * as Type from "@b/types";
 import { parseNodeToCssValue } from "../utils";
 import { parsePosition2D } from "../position";
 import * as ColorStop from "./color-stop";
-import * as SharedParsing from "./shared-parsing";
+import * as SharedParsing from "../utils/shared-parsing";
 import * as Utils from "../utils";
 
 /**
@@ -20,13 +20,14 @@ export function fromFunction(fn: csstree.FunctionNode): ParseResult<Type.ConicGr
 
   if (!isRepeating && functionName !== "conic-gradient") {
     return parseErr(
+      "conic-gradient",
       createError("invalid-value", `Expected conic-gradient or repeating-conic-gradient, got: ${functionName}`),
     );
   }
 
   const children = fn.children.toArray();
   if (children.length === 0) {
-    return parseErr(createError("missing-value", "conic-gradient requires at least 2 color stops"));
+    return parseErr("conic-gradient", createError("missing-value", "conic-gradient requires at least 2 color stops"));
   }
 
   let fromAngle: Type.CssValue | undefined;
@@ -56,7 +57,7 @@ export function fromFunction(fn: csstree.FunctionNode): ParseResult<Type.ConicGr
       // From angle: "from <angle>"
       if (value === "from") {
         if (hasFromAngle) {
-          return parseErr(createError("invalid-syntax", "Duplicate 'from' angle component"));
+          return parseErr("conic-gradient", createError("invalid-syntax", "Duplicate 'from' angle component"));
         }
         hasFromAngle = true;
         idx++;
@@ -67,7 +68,10 @@ export function fromFunction(fn: csstree.FunctionNode): ParseResult<Type.ConicGr
           angleNode.type === "Operator" ||
           (angleNode.type === "Identifier" && ["at", "in", "from"].includes(angleNode.name.toLowerCase()))
         ) {
-          return parseErr(createError("invalid-syntax", "conic-gradient 'from' keyword requires an angle value"));
+          return parseErr(
+            "conic-gradient",
+            createError("invalid-syntax", "conic-gradient 'from' keyword requires an angle value"),
+          );
         }
 
         const angleResult = parseNodeToCssValue(angleNode);
@@ -82,7 +86,7 @@ export function fromFunction(fn: csstree.FunctionNode): ParseResult<Type.ConicGr
       // Position: "at <position>"
       if (value === "at") {
         if (hasPosition) {
-          return parseErr(createError("invalid-syntax", "Duplicate position component"));
+          return parseErr("conic-gradient", createError("invalid-syntax", "Duplicate position component"));
         }
         hasPosition = true;
         idx++;
@@ -101,7 +105,10 @@ export function fromFunction(fn: csstree.FunctionNode): ParseResult<Type.ConicGr
         }
 
         if (positionNodes.length === 0) {
-          return parseErr(createError("invalid-syntax", "conic-gradient 'at' keyword requires position values"));
+          return parseErr(
+            "conic-gradient",
+            createError("invalid-syntax", "conic-gradient 'at' keyword requires position values"),
+          );
         }
         const posResult = parsePosition2D(positionNodes, 0);
         if (!posResult.ok) {
@@ -114,13 +121,16 @@ export function fromFunction(fn: csstree.FunctionNode): ParseResult<Type.ConicGr
       // Color interpolation: "in <colorspace>"
       if (value === "in") {
         if (hasInterpolation) {
-          return parseErr(createError("invalid-syntax", "Duplicate color interpolation method"));
+          return parseErr("conic-gradient", createError("invalid-syntax", "Duplicate color interpolation method"));
         }
         hasInterpolation = true;
 
         const interpolationResult = Utils.parseColorInterpolationMethod(children, idx);
         if (!interpolationResult) {
-          return parseErr(createError("invalid-syntax", "conic-gradient 'in' keyword requires a color space"));
+          return parseErr(
+            "conic-gradient",
+            createError("invalid-syntax", "conic-gradient 'in' keyword requires a color space"),
+          );
         }
         colorInterpolationMethod = interpolationResult.method;
         idx = interpolationResult.nextIndex;
@@ -144,7 +154,7 @@ export function fromFunction(fn: csstree.FunctionNode): ParseResult<Type.ConicGr
     }
 
     // Unknown token
-    return parseErr(createError("invalid-value", `Unexpected token in gradient: ${node.type}`));
+    return parseErr("conic-gradient", createError("invalid-value", `Unexpected token in gradient: ${node.type}`));
   }
 
   // Parse color stops
@@ -178,7 +188,7 @@ export function fromFunction(fn: csstree.FunctionNode): ParseResult<Type.ConicGr
   }
 
   if (colorStops.length < 2) {
-    return parseErr(createError("invalid-value", "conic-gradient requires at least 2 color stops"));
+    return parseErr("conic-gradient", createError("invalid-value", "conic-gradient requires at least 2 color stops"));
   }
 
   return parseOk({

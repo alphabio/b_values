@@ -25,7 +25,7 @@ export interface GenerateDeclarationInput<TProperty extends RegisteredProperty> 
  * // Type-safe usage
  * const result = generateDeclaration({
  *   property: "background-image" as const,
- *   ir: { kind: "layers", layers: [...] }
+ *   ir: { kind: "list", layers: [...] }
  * });
  *
  * if (result.ok) {

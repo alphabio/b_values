@@ -39,7 +39,10 @@ export function parseDeclarationList(css: string): ParseResult<DeclarationResult
     }) as csstree.DeclarationList;
   } catch (e: unknown) {
     const error = e as Error;
-    return parseErr(createError("invalid-syntax", `Failed to parse declaration list: ${error.message}`));
+    return parseErr(
+      "InvalidSyntax",
+      createError("invalid-syntax", `Failed to parse declaration list: ${error.message}`),
+    );
   }
 
   // Collect results and issues
@@ -89,9 +92,11 @@ export function parseDeclarationList(css: string): ParseResult<DeclarationResult
     allIssues.push(...result.issues);
   });
 
-  // Return results with all issues
-  // Success if we parsed at least one declaration, or if input was valid but empty
-  if (declarations.length > 0 || allIssues.length === 0) {
+  const hasErrors = allIssues.some((issue) => issue.severity === "error");
+
+  // If we have declarations AND no errors, it's a success.
+  // If we have no declarations but also no issues, it's an empty-but-valid success.
+  if ((declarations.length > 0 && !hasErrors) || (declarations.length === 0 && allIssues.length === 0)) {
     return {
       ok: true,
       value: declarations,
@@ -99,10 +104,10 @@ export function parseDeclarationList(css: string): ParseResult<DeclarationResult
     };
   }
 
-  // Failed if no declarations parsed and we have errors
+  // Otherwise, it's a failure (either partial or total).
   return {
     ok: false,
-    value: declarations,
+    value: declarations, // Still return partial value
     issues: allIssues,
   };
 }

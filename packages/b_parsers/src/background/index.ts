@@ -2,6 +2,7 @@
 
 export * from "./attachment";
 export * from "./clip";
+export * from "./image";
 export * from "./origin";
 export * from "./repeat";
 export * from "./size";

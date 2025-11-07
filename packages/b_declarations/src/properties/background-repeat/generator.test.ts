@@ -7,8 +7,8 @@ describe("generateBackgroundRepeat", () => {
   describe("shorthand", () => {
     it("should generate 'repeat-x'", () => {
       const ir: BackgroundRepeatIR = {
-        kind: "layers",
-        layers: [{ kind: "shorthand", value: "repeat-x" }],
+        kind: "list",
+        values: [{ kind: "shorthand", value: "repeat-x" }],
       };
 
       const result = generateBackgroundRepeat(ir);
@@ -20,8 +20,8 @@ describe("generateBackgroundRepeat", () => {
 
     it("should generate 'repeat-y'", () => {
       const ir: BackgroundRepeatIR = {
-        kind: "layers",
-        layers: [{ kind: "shorthand", value: "repeat-y" }],
+        kind: "list",
+        values: [{ kind: "shorthand", value: "repeat-y" }],
       };
 
       const result = generateBackgroundRepeat(ir);
@@ -35,8 +35,8 @@ describe("generateBackgroundRepeat", () => {
   describe("explicit - single value (both axes)", () => {
     it("should generate 'repeat' (not 'repeat repeat')", () => {
       const ir: BackgroundRepeatIR = {
-        kind: "layers",
-        layers: [
+        kind: "list",
+        values: [
           {
             kind: "explicit",
             horizontal: "repeat",
@@ -54,8 +54,8 @@ describe("generateBackgroundRepeat", () => {
 
     it("should generate 'space' (not 'space space')", () => {
       const ir: BackgroundRepeatIR = {
-        kind: "layers",
-        layers: [
+        kind: "list",
+        values: [
           {
             kind: "explicit",
             horizontal: "space",
@@ -73,8 +73,8 @@ describe("generateBackgroundRepeat", () => {
 
     it("should generate 'round' (not 'round round')", () => {
       const ir: BackgroundRepeatIR = {
-        kind: "layers",
-        layers: [
+        kind: "list",
+        values: [
           {
             kind: "explicit",
             horizontal: "round",
@@ -92,8 +92,8 @@ describe("generateBackgroundRepeat", () => {
 
     it("should generate 'no-repeat' (not 'no-repeat no-repeat')", () => {
       const ir: BackgroundRepeatIR = {
-        kind: "layers",
-        layers: [
+        kind: "list",
+        values: [
           {
             kind: "explicit",
             horizontal: "no-repeat",
@@ -113,8 +113,8 @@ describe("generateBackgroundRepeat", () => {
   describe("explicit - two values (different axes)", () => {
     it("should generate 'repeat space'", () => {
       const ir: BackgroundRepeatIR = {
-        kind: "layers",
-        layers: [
+        kind: "list",
+        values: [
           {
             kind: "explicit",
             horizontal: "repeat",
@@ -132,8 +132,8 @@ describe("generateBackgroundRepeat", () => {
 
     it("should generate 'repeat no-repeat'", () => {
       const ir: BackgroundRepeatIR = {
-        kind: "layers",
-        layers: [
+        kind: "list",
+        values: [
           {
             kind: "explicit",
             horizontal: "repeat",
@@ -151,8 +151,8 @@ describe("generateBackgroundRepeat", () => {
 
     it("should generate 'space round'", () => {
       const ir: BackgroundRepeatIR = {
-        kind: "layers",
-        layers: [
+        kind: "list",
+        values: [
           {
             kind: "explicit",
             horizontal: "space",
@@ -170,8 +170,8 @@ describe("generateBackgroundRepeat", () => {
 
     it("should generate 'no-repeat repeat'", () => {
       const ir: BackgroundRepeatIR = {
-        kind: "layers",
-        layers: [
+        kind: "list",
+        values: [
           {
             kind: "explicit",
             horizontal: "no-repeat",
@@ -191,8 +191,8 @@ describe("generateBackgroundRepeat", () => {
   describe("multiple layers", () => {
     it("should generate mixed layers", () => {
       const ir: BackgroundRepeatIR = {
-        kind: "layers",
-        layers: [
+        kind: "list",
+        values: [
           { kind: "shorthand", value: "repeat-x" },
           { kind: "explicit", horizontal: "space", vertical: "space" },
           { kind: "explicit", horizontal: "repeat", vertical: "no-repeat" },
@@ -208,8 +208,8 @@ describe("generateBackgroundRepeat", () => {
 
     it("should generate all shorthand layers", () => {
       const ir: BackgroundRepeatIR = {
-        kind: "layers",
-        layers: [
+        kind: "list",
+        values: [
           { kind: "shorthand", value: "repeat-x" },
           { kind: "shorthand", value: "repeat-y" },
         ],

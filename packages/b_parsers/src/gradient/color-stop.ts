@@ -16,12 +16,12 @@ import * as Color from "../color";
  */
 export function fromNodes(nodes: csstree.CssNode[]): ParseResult<Type.ColorStopOrHint> {
   if (nodes.length === 0) {
-    return parseErr(createError("missing-value", "Color stop requires at least a color value"));
+    return parseErr("color-stops", createError("missing-value", "Color stop requires at least a color value"));
   }
 
   const firstNode = nodes[0];
   if (!firstNode) {
-    return parseErr(createError("missing-value", "Color stop requires at least a color value"));
+    return parseErr("color-stops", createError("missing-value", "Color stop requires at least a color value"));
   }
 
   // Try parsing as color first
@@ -55,12 +55,18 @@ export function fromNodes(nodes: csstree.CssNode[]): ParseResult<Type.ColorStopO
       }
     }
     // Not a color or valid hint
-    return parseErr(createError("invalid-value", `Invalid color value: ${colorResult.issues[0]?.message}`));
+    return parseErr(
+      "color-stops",
+      createError("invalid-value", `Invalid color value: ${colorResult.issues[0]?.message}`),
+    );
   }
 
   // Must be a color stop
   if (!colorResult.ok) {
-    return parseErr(createError("invalid-value", `Invalid color value: ${colorResult.issues[0]?.message}`));
+    return parseErr(
+      "color-stops",
+      createError("invalid-value", `Invalid color value: ${colorResult.issues[0]?.message}`),
+    );
   }
 
   if (nodes.length === 1) {
@@ -78,7 +84,10 @@ export function fromNodes(nodes: csstree.CssNode[]): ParseResult<Type.ColorStopO
     if (posResult.ok) {
       positions.push(posResult.value);
     } else {
-      return parseErr(createError("invalid-value", `Invalid color stop position: ${posResult.issues[0]?.message}`));
+      return parseErr(
+        "color-stops",
+        createError("invalid-value", `Invalid color stop position: ${posResult.issues[0]?.message}`),
+      );
     }
   }
 
@@ -100,5 +109,5 @@ export function fromNodes(nodes: csstree.CssNode[]): ParseResult<Type.ColorStopO
     });
   }
 
-  return parseErr(createError("invalid-value", "Color stop can have at most 2 positions"));
+  return parseErr("color-stops", createError("invalid-value", "Color stop can have at most 2 positions"));
 }

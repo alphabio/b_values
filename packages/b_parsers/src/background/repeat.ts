@@ -1,4 +1,4 @@
-// b_path:: packages/b_parsers/src/background-repeat/parser.ts
+// b_path:: packages/b_parsers/src/background/repeat.ts
 
 import type * as csstree from "@eslint/css-tree";
 import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
@@ -24,16 +24,16 @@ export function parseBackgroundRepeatValue(valueNode: csstree.Value): ParseResul
   const nodes = allNodes.filter((node) => node.type !== "WhiteSpace");
 
   if (nodes.length === 0) {
-    return parseErr(createError("invalid-syntax", "Expected repeat value"));
+    return parseErr("background-repeat", createError("invalid-syntax", "Expected repeat value"));
   }
 
   if (nodes.length > 2) {
-    return parseErr(createError("invalid-syntax", "Too many values for repeat style (max 2)"));
+    return parseErr("background-repeat", createError("invalid-syntax", "Too many values for repeat style (max 2)"));
   }
 
   const firstNode = nodes[0];
   if (!firstNode || !Ast.isIdentifier(firstNode)) {
-    return parseErr(createError("invalid-syntax", "Expected repeat value"));
+    return parseErr("background-repeat", createError("invalid-syntax", "Expected repeat value"));
   }
 
   const firstValue = firstNode.name.toLowerCase();
@@ -49,6 +49,7 @@ export function parseBackgroundRepeatValue(valueNode: csstree.Value): ParseResul
   // Parse explicit form
   if (!REPETITION_VALUES.includes(firstValue as RepetitionValue)) {
     return parseErr(
+      "background-repeat",
       createError(
         "invalid-value",
         `Invalid repeat value: '${firstValue}'. Expected: repeat, space, round, no-repeat, repeat-x, or repeat-y`,
@@ -71,12 +72,16 @@ export function parseBackgroundRepeatValue(valueNode: csstree.Value): ParseResul
   // Two values
   const secondNode = nodes[1];
   if (!secondNode || !Ast.isIdentifier(secondNode)) {
-    return parseErr(createError("invalid-syntax", `Expected second repeat value, got ${secondNode?.type}`));
+    return parseErr(
+      "background-repeat",
+      createError("invalid-syntax", `Expected second repeat value, got ${secondNode?.type}`),
+    );
   }
 
   const secondValue = secondNode.name.toLowerCase();
   if (!REPETITION_VALUES.includes(secondValue as RepetitionValue)) {
     return parseErr(
+      "background-repeat",
       createError(
         "invalid-value",
         `Invalid repeat value: '${secondValue}'. Expected: repeat, space, round, or no-repeat`,

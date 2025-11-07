@@ -1,8 +1,8 @@
-// b_path:: packages/b_parsers/src/gradient/shared-parsing.ts
+// b_path:: packages/b_parsers/src/utils/shared-parsing.ts
 import type * as csstree from "@eslint/css-tree";
 import { createWarning, parseOk, type ParseResult, forwardParseErr } from "@b/types";
 import type * as Type from "@b/types";
-import * as Utils from "../utils";
+import * as Utils from ".";
 
 /**
  * Parse color interpolation method from "in" keyword.
@@ -11,24 +11,24 @@ import * as Utils from "../utils";
  *
  * @returns Result with method and next index, or forwards parse error
  */
-export function parseColorInterpolationMethod(
-  children: csstree.CssNode[],
-  idx: number,
-): ParseResult<{ method: Type.ColorInterpolationMethod | undefined; nextIdx: number }> {
-  const inNode = children[idx];
-  if (inNode?.type === "Identifier" && inNode.name.toLowerCase() === "in") {
-    const interpolationResult = Utils.parseColorInterpolationMethod(children, idx);
-    if (!interpolationResult) {
-      return parseOk({ method: undefined, nextIdx: idx });
-    }
-    return parseOk({
-      method: interpolationResult.method,
-      nextIdx: interpolationResult.nextIndex,
-    });
-  }
+// export function parseColorInterpolationMethod(
+//   children: csstree.CssNode[],
+//   idx: number,
+// ): ParseResult<{ method: Type.ColorInterpolationMethod | undefined; nextIdx: number }> {
+//   const inNode = children[idx];
+//   if (inNode?.type === "Identifier" && inNode.name.toLowerCase() === "in") {
+//     const interpolationResult = Utils.parseColorInterpolationMethod(children, idx);
+//     if (!interpolationResult) {
+//       return parseOk({ method: undefined, nextIdx: idx });
+//     }
+//     return parseOk({
+//       method: interpolationResult.method,
+//       nextIdx: interpolationResult.nextIndex,
+//     });
+//   }
 
-  return parseOk({ method: undefined, nextIdx: idx });
-}
+//   return parseOk({ method: undefined, nextIdx: idx });
+// }
 
 /**
  * Parse CSS string to gradient function node.

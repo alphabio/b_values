@@ -64,28 +64,17 @@ export function isCustomProperty(name: string): boolean {
   return name.startsWith("--") && name.length > 2;
 }
 
-// Lazy loaded custom property definition to avoid circular dependency
-let _customPropertyCache: PropertyDefinition | undefined;
-function getCustomPropertyDefinition(): PropertyDefinition {
-  if (!_customPropertyCache) {
-    // This will be registered when the module loads
-    _customPropertyCache = propertyRegistry.get("--*");
-    if (!_customPropertyCache) {
-      throw new Error("Custom property definition not found. Ensure it's imported.");
-    }
-  }
-  return _customPropertyCache;
-}
-
 /**
  * Get property definition with custom property fallback
  */
 export function getPropertyDefinition(name: string): PropertyDefinition | undefined {
+  // First, try a direct lookup.
   const definition = propertyRegistry.get(name);
   if (definition) return definition;
 
+  // If not found and it's a custom property, get the generic '--*' definition.
   if (isCustomProperty(name)) {
-    return getCustomPropertyDefinition();
+    return propertyRegistry.get("--*");
   }
 
   return undefined;

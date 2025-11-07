@@ -69,5 +69,5 @@ export function parseFromNode(node: csstree.FunctionNode): ParseResult<Type.Grad
     return Conic.fromFunction(node);
   }
 
-  return parseErr(createError("unsupported-kind", `Not a gradient function: ${funcName}`));
+  return parseErr("gradient", createError("unsupported-kind", `Not a gradient function: ${funcName}`));
 }

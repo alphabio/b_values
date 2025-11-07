@@ -11,13 +11,13 @@ import { getChildren, getValues } from "@b/utils";
  */
 export function parseHslFunction(node: csstree.FunctionNode): ParseResult<HSLColor> {
   if (node.name !== "hsl" && node.name !== "hsla") {
-    return parseErr(createError("invalid-syntax", "Expected hsl() or hsla() function"));
+    return parseErr("hsl", createError("invalid-syntax", "Expected hsl() or hsla() function"));
   }
 
   const values = getValues(getChildren(node));
 
   if (values.length < 3 || values.length > 4) {
-    return parseErr(createError("invalid-syntax", `HSL function must have 3 or 4 values, got ${values.length}`));
+    return parseErr("hsl", createError("invalid-syntax", `HSL function must have 3 or 4 values, got ${values.length}`));
   }
 
   const hResult = parseNodeToCssValue(values[0]);

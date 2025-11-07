@@ -4,7 +4,7 @@ import { createError, parseErr, parseOk, forwardParseErr, type ParseResult } fro
 import type * as Type from "@b/types";
 import { parseNodeToCssValue } from "../utils";
 import * as ColorStop from "./color-stop";
-import * as SharedParsing from "./shared-parsing";
+import * as SharedParsing from "../utils/shared-parsing";
 import * as Utils from "../utils";
 import { isCssValueFunction } from "../utils/css-value-functions";
 
@@ -19,7 +19,7 @@ function parseDirection(
   const node = nodes[idx];
 
   if (!node) {
-    return parseErr(createError("missing-value", "Expected direction value"));
+    return parseErr("linear-gradient", createError("missing-value", "Expected direction value"));
   }
 
   if (node.type === "Dimension" || node.type === "Number" || isCssValueFunction(node)) {
@@ -39,7 +39,7 @@ function parseDirection(
     idx++;
     const firstKeyword = nodes[idx];
     if (!firstKeyword || firstKeyword.type !== "Identifier") {
-      return parseErr(createError("invalid-syntax", "Expected side or corner keyword after 'to'"));
+      return parseErr("linear-gradient", createError("invalid-syntax", "Expected side or corner keyword after 'to'"));
     }
 
     const first = firstKeyword.name.toLowerCase();
@@ -70,10 +70,10 @@ function parseDirection(
       });
     }
 
-    return parseErr(createError("invalid-value", `Invalid direction keyword: ${first}`));
+    return parseErr("linear-gradient", createError("invalid-value", `Invalid direction keyword: ${first}`));
   }
 
-  return parseErr(createError("invalid-syntax", "Invalid direction syntax"));
+  return parseErr("linear-gradient", createError("invalid-syntax", "Invalid direction syntax"));
 }
 
 /**
@@ -89,13 +89,14 @@ export function fromFunction(fn: csstree.FunctionNode): ParseResult<Type.LinearG
 
   if (!isRepeating && functionName !== "linear-gradient") {
     return parseErr(
+      "linear-gradient",
       createError("invalid-value", `Expected linear-gradient or repeating-linear-gradient, got: ${functionName}`),
     );
   }
 
   const children = fn.children.toArray();
   if (children.length === 0) {
-    return parseErr(createError("missing-value", "linear-gradient requires at least 2 color stops"));
+    return parseErr("linear-gradient", createError("missing-value", "linear-gradient requires at least 2 color stops"));
   }
 
   let direction: Type.GradientDirection | undefined;
@@ -123,7 +124,7 @@ export function fromFunction(fn: csstree.FunctionNode): ParseResult<Type.LinearG
       // Color interpolation: "in <colorspace>"
       if (value === "in") {
         if (hasInterpolation) {
-          return parseErr(createError("invalid-syntax", "Duplicate color interpolation method"));
+          return parseErr("linear-gradient", createError("invalid-syntax", "Duplicate color interpolation method"));
         }
         hasInterpolation = true;
 
@@ -138,7 +139,7 @@ export function fromFunction(fn: csstree.FunctionNode): ParseResult<Type.LinearG
       // Direction: "to <side>" or "to <corner>"
       if (value === "to") {
         if (hasDirection) {
-          return parseErr(createError("invalid-syntax", "Duplicate direction component"));
+          return parseErr("linear-gradient", createError("invalid-syntax", "Duplicate direction component"));
         }
 
         const dirResult = parseDirection(children, idx);
@@ -213,7 +214,7 @@ export function fromFunction(fn: csstree.FunctionNode): ParseResult<Type.LinearG
     }
 
     // Unknown token
-    return parseErr(createError("invalid-value", `Unexpected token in gradient: ${node.type}`));
+    return parseErr("linear-gradient", createError("invalid-value", `Unexpected token in gradient: ${node.type}`));
   }
 
   // Parse color stops
@@ -246,7 +247,7 @@ export function fromFunction(fn: csstree.FunctionNode): ParseResult<Type.LinearG
   }
 
   if (colorStops.length < 2) {
-    return parseErr(createError("invalid-value", "linear-gradient requires at least 2 color stops"));
+    return parseErr("linear-gradient", createError("invalid-value", "linear-gradient requires at least 2 color stops"));
   }
 
   return parseOk({

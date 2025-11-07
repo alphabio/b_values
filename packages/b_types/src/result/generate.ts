@@ -13,7 +13,7 @@ import type { Issue } from "./issue";
  * @example
  * ```typescript
  * const context: GenerateContext = {
- *   parentPath: ["layers", 0, "gradient", "colorStops", 0],
+ *   parentPath: ["list", 0, "gradient", "colorStops", 0],
  *   property: "background-image"
  * };
  * ```

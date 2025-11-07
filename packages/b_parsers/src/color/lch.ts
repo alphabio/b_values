@@ -11,13 +11,13 @@ import { getChildren, getValues } from "@b/utils";
  */
 export function parseLchFunction(node: csstree.FunctionNode): ParseResult<LCHColor> {
   if (node.name !== "lch") {
-    return parseErr(createError("invalid-syntax", "Expected lch() function"));
+    return parseErr("lch", createError("invalid-syntax", "Expected lch() function"));
   }
 
   const values = getValues(getChildren(node));
 
   if (values.length < 3 || values.length > 4) {
-    return parseErr(createError("invalid-syntax", `LCH function must have 3 or 4 values, got ${values.length}`));
+    return parseErr("lch", createError("invalid-syntax", `LCH function must have 3 or 4 values, got ${values.length}`));
   }
 
   const lResult = parseNodeToCssValue(values[0]);

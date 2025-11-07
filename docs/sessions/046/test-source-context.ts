@@ -66,7 +66,7 @@ Your test: linear-gradient(red, notacolor, blue)
 2. Generator phase:
    - Validates IR: checks if "notacolor" is valid CSS color
    - Generator finds it's invalid ❌
-   - Creates issue with path: ["layers", 1, "gradient", "colorStops", 0, "color", "name"]
+   - Creates issue with path: ["list", 1, "gradient", "colorStops", 0, "color", "name"]
    - But NO location (no reference back to original source position)
 
 Result: You get property ✅ but NO sourceContext ❌

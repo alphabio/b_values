@@ -1,8 +1,7 @@
-// b_path:: packages/b_generators/src/background-attachment/generator.ts
+// b_path:: packages/b_generators/src/background/attachment.ts
 
 import { generateOk, type GenerateResult } from "@b/types";
-
-type AttachmentValue = "scroll" | "fixed" | "local";
+import type { BackgroundAttachment } from "@b/keywords";
 
 /**
  * Generate CSS string for a single background-attachment value.
@@ -12,6 +11,6 @@ type AttachmentValue = "scroll" | "fixed" | "local";
  * @param value - The attachment value
  * @returns GenerateResult with CSS string
  */
-export function generateBackgroundAttachmentValue(value: AttachmentValue): GenerateResult {
+export function generateBackgroundAttachmentValue(value: BackgroundAttachment): GenerateResult {
   return generateOk(value);
 }

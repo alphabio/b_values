@@ -7,8 +7,8 @@ describe("generateBackgroundAttachment", () => {
   describe("single value", () => {
     it("should generate 'scroll'", () => {
       const ir: BackgroundAttachmentIR = {
-        kind: "layers",
-        layers: ["scroll"],
+        kind: "list",
+        values: ["scroll"],
       };
 
       const result = generateBackgroundAttachment(ir);
@@ -20,8 +20,8 @@ describe("generateBackgroundAttachment", () => {
 
     it("should generate 'fixed'", () => {
       const ir: BackgroundAttachmentIR = {
-        kind: "layers",
-        layers: ["fixed"],
+        kind: "list",
+        values: ["fixed"],
       };
 
       const result = generateBackgroundAttachment(ir);
@@ -33,8 +33,8 @@ describe("generateBackgroundAttachment", () => {
 
     it("should generate 'local'", () => {
       const ir: BackgroundAttachmentIR = {
-        kind: "layers",
-        layers: ["local"],
+        kind: "list",
+        values: ["local"],
       };
 
       const result = generateBackgroundAttachment(ir);
@@ -48,8 +48,8 @@ describe("generateBackgroundAttachment", () => {
   describe("multiple values", () => {
     it("should generate two values", () => {
       const ir: BackgroundAttachmentIR = {
-        kind: "layers",
-        layers: ["scroll", "fixed"],
+        kind: "list",
+        values: ["scroll", "fixed"],
       };
 
       const result = generateBackgroundAttachment(ir);
@@ -61,8 +61,8 @@ describe("generateBackgroundAttachment", () => {
 
     it("should generate three values", () => {
       const ir: BackgroundAttachmentIR = {
-        kind: "layers",
-        layers: ["fixed", "local", "scroll"],
+        kind: "list",
+        values: ["fixed", "local", "scroll"],
       };
 
       const result = generateBackgroundAttachment(ir);
@@ -74,8 +74,8 @@ describe("generateBackgroundAttachment", () => {
 
     it("should generate all valid values", () => {
       const ir: BackgroundAttachmentIR = {
-        kind: "layers",
-        layers: ["scroll", "fixed", "local"],
+        kind: "list",
+        values: ["scroll", "fixed", "local"],
       };
 
       const result = generateBackgroundAttachment(ir);

@@ -16,14 +16,14 @@ export function parseMinmaxFunction(
   const funcName = node.name.toLowerCase();
 
   if (funcName !== "min" && funcName !== "max") {
-    return parseErr(createError("invalid-syntax", "Expected min() or max() function"));
+    return parseErr("minmax", createError("invalid-syntax", "Expected min() or max() function"));
   }
 
   const children = node.children.toArray();
   const groups = splitNodesByComma(children, { trimWhitespace: true });
 
   if (groups.length < 2) {
-    return parseErr(createError("invalid-syntax", `${funcName}() requires at least two arguments`));
+    return parseErr("minmax", createError("invalid-syntax", `${funcName}() requires at least two arguments`));
   }
 
   const values: CssValue[] = [];

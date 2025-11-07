@@ -2,9 +2,9 @@
 
 import { generateOk, type GenerateResult } from "@b/types";
 import * as Generators from "@b/generators";
-import type { BackgroundSize } from "./types";
+import type { BackgroundSizeIR } from "./types";
 
-export function generateBackgroundSize(ir: BackgroundSize): GenerateResult {
+export function generateBackgroundSize(ir: BackgroundSizeIR): GenerateResult {
   if (ir.kind === "keyword") {
     return generateOk(ir.value, "background-size");
   }

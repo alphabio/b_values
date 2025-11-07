@@ -29,30 +29,31 @@ describe("background-image property", () => {
       const result = parseBackgroundImageFromString("url(image.png)");
       expect(result.ok).toBe(true);
       if (!result.ok) return;
-      expect(result.value.kind).toBe("layers");
-      if (result.value.kind !== "layers") return;
-      expect(result.value.layers).toHaveLength(1);
-      expect(result.value.layers[0].kind).toBe("url");
-      if (result.value.layers[0].kind !== "url") return;
-      expect(result.value.layers[0].url).toBe("image.png");
+      expect(result.value.kind).toBe("list");
+      if (result.value.kind !== "list") return;
+      expect(result.value.values).toHaveLength(1);
+      const layer = result.value.values[0];
+      expect(layer.kind).toBe("url");
+      if (layer.kind !== "url") return;
+      expect(layer.url).toBe("image.png");
     });
 
     it("should parse url with double quotes", () => {
       const result = parseBackgroundImageFromString('url("image.png")');
       expect(result.ok).toBe(true);
       if (!result.ok) return;
-      expect(result.value.kind).toBe("layers");
-      if (result.value.kind !== "layers") return;
-      expect(result.value.layers[0].kind).toBe("url");
+      expect(result.value.kind).toBe("list");
+      if (result.value.kind !== "list") return;
+      expect(result.value.values[0].kind).toBe("url");
     });
 
     it("should parse url with single quotes", () => {
       const result = parseBackgroundImageFromString("url('image.png')");
       expect(result.ok).toBe(true);
       if (!result.ok) return;
-      expect(result.value.kind).toBe("layers");
-      if (result.value.kind !== "layers") return;
-      expect(result.value.layers[0].kind).toBe("url");
+      expect(result.value.kind).toBe("list");
+      if (result.value.kind !== "list") return;
+      expect(result.value.values[0].kind).toBe("url");
     });
   });
 
@@ -62,14 +63,14 @@ describe("background-image property", () => {
       const result = parseBackgroundImageFromString(input);
       expect(result.ok).toBe(true);
       if (!result.ok) return;
-      expect(result.value.kind).toBe("layers");
-      if (result.value.kind !== "layers") return;
-      expect(result.value.layers).toHaveLength(1);
-      expect(result.value.layers[0].kind).toBe("gradient");
-      if (result.value.layers[0].kind !== "gradient") return;
+      expect(result.value.kind).toBe("list");
+      if (result.value.kind !== "list") return;
+      expect(result.value.values).toHaveLength(1);
+      expect(result.value.values[0].kind).toBe("gradient");
+      if (result.value.values[0].kind !== "gradient") return;
 
       // Round-trip validation
-      const gradient = result.value.layers[0].gradient;
+      const gradient = result.value.values[0].gradient;
       const generateResult = Generators.Gradient.generate(gradient);
       expect(generateResult.ok).toBe(true);
       if (!generateResult.ok) return;
@@ -82,13 +83,13 @@ describe("background-image property", () => {
       const result = parseBackgroundImageFromString(input);
       expect(result.ok).toBe(true);
       if (!result.ok) return;
-      expect(result.value.kind).toBe("layers");
-      if (result.value.kind !== "layers") return;
-      expect(result.value.layers[0].kind).toBe("gradient");
-      if (result.value.layers[0].kind !== "gradient") return;
+      expect(result.value.kind).toBe("list");
+      if (result.value.kind !== "list") return;
+      expect(result.value.values[0].kind).toBe("gradient");
+      if (result.value.values[0].kind !== "gradient") return;
 
       // Round-trip validation
-      const gradient = result.value.layers[0].gradient;
+      const gradient = result.value.values[0].gradient;
       const generateResult = Generators.Gradient.generate(gradient);
       expect(generateResult.ok).toBe(true);
       if (!generateResult.ok) return;
@@ -101,13 +102,13 @@ describe("background-image property", () => {
       const result = parseBackgroundImageFromString(input);
       expect(result.ok).toBe(true);
       if (!result.ok) return;
-      expect(result.value.kind).toBe("layers");
-      if (result.value.kind !== "layers") return;
-      expect(result.value.layers[0].kind).toBe("gradient");
-      if (result.value.layers[0].kind !== "gradient") return;
+      expect(result.value.kind).toBe("list");
+      if (result.value.kind !== "list") return;
+      expect(result.value.values[0].kind).toBe("gradient");
+      if (result.value.values[0].kind !== "gradient") return;
 
       // Round-trip validation
-      const gradient = result.value.layers[0].gradient;
+      const gradient = result.value.values[0].gradient;
       const generateResult = Generators.Gradient.generate(gradient);
       expect(generateResult.ok).toBe(true);
       if (!generateResult.ok) return;
@@ -120,13 +121,13 @@ describe("background-image property", () => {
       const result = parseBackgroundImageFromString(input);
       expect(result.ok).toBe(true);
       if (!result.ok) return;
-      expect(result.value.kind).toBe("layers");
-      if (result.value.kind !== "layers") return;
-      expect(result.value.layers[0].kind).toBe("gradient");
-      if (result.value.layers[0].kind !== "gradient") return;
+      expect(result.value.kind).toBe("list");
+      if (result.value.kind !== "list") return;
+      expect(result.value.values[0].kind).toBe("gradient");
+      if (result.value.values[0].kind !== "gradient") return;
 
       // Round-trip validation
-      const gradient = result.value.layers[0].gradient;
+      const gradient = result.value.values[0].gradient;
       const generateResult = Generators.Gradient.generate(gradient);
       expect(generateResult.ok).toBe(true);
       if (!generateResult.ok) return;
@@ -139,13 +140,13 @@ describe("background-image property", () => {
       const result = parseBackgroundImageFromString(input);
       expect(result.ok).toBe(true);
       if (!result.ok) return;
-      expect(result.value.kind).toBe("layers");
-      if (result.value.kind !== "layers") return;
-      expect(result.value.layers[0].kind).toBe("gradient");
-      if (result.value.layers[0].kind !== "gradient") return;
+      expect(result.value.kind).toBe("list");
+      if (result.value.kind !== "list") return;
+      expect(result.value.values[0].kind).toBe("gradient");
+      if (result.value.values[0].kind !== "gradient") return;
 
       // Round-trip validation
-      const gradient = result.value.layers[0].gradient;
+      const gradient = result.value.values[0].gradient;
       const generateResult = Generators.Gradient.generate(gradient);
       expect(generateResult.ok).toBe(true);
       if (!generateResult.ok) return;
@@ -158,13 +159,13 @@ describe("background-image property", () => {
       const result = parseBackgroundImageFromString(input);
       expect(result.ok).toBe(true);
       if (!result.ok) return;
-      expect(result.value.kind).toBe("layers");
-      if (result.value.kind !== "layers") return;
-      expect(result.value.layers[0].kind).toBe("gradient");
-      if (result.value.layers[0].kind !== "gradient") return;
+      expect(result.value.kind).toBe("list");
+      if (result.value.kind !== "list") return;
+      expect(result.value.values[0].kind).toBe("gradient");
+      if (result.value.values[0].kind !== "gradient") return;
 
       // Round-trip validation
-      const gradient = result.value.layers[0].gradient;
+      const gradient = result.value.values[0].gradient;
       const generateResult = Generators.Gradient.generate(gradient);
       expect(generateResult.ok).toBe(true);
       if (!generateResult.ok) return;
@@ -177,11 +178,11 @@ describe("background-image property", () => {
       const result = parseBackgroundImageFromString(input);
       expect(result.ok).toBe(true);
       if (!result.ok) return;
-      expect(result.value.kind).toBe("layers");
-      if (result.value.kind !== "layers") return;
-      expect(result.value.layers[0].kind).toBe("gradient");
-      if (result.value.layers[0].kind !== "gradient") return;
-      expect(result.value.layers[0].gradient.repeating).toBe(true);
+      expect(result.value.kind).toBe("list");
+      if (result.value.kind !== "list") return;
+      expect(result.value.values[0].kind).toBe("gradient");
+      if (result.value.values[0].kind !== "gradient") return;
+      expect(result.value.values[0].gradient.repeating).toBe(true);
     });
 
     it("should parse repeating-radial-gradient", () => {
@@ -189,11 +190,11 @@ describe("background-image property", () => {
       const result = parseBackgroundImageFromString(input);
       expect(result.ok).toBe(true);
       if (!result.ok) return;
-      expect(result.value.kind).toBe("layers");
-      if (result.value.kind !== "layers") return;
-      expect(result.value.layers[0].kind).toBe("gradient");
-      if (result.value.layers[0].kind !== "gradient") return;
-      expect(result.value.layers[0].gradient.repeating).toBe(true);
+      expect(result.value.kind).toBe("list");
+      if (result.value.kind !== "list") return;
+      expect(result.value.values[0].kind).toBe("gradient");
+      if (result.value.values[0].kind !== "gradient") return;
+      expect(result.value.values[0].gradient.repeating).toBe(true);
     });
 
     it("should parse repeating-conic-gradient", () => {
@@ -201,11 +202,11 @@ describe("background-image property", () => {
       const result = parseBackgroundImageFromString(input);
       expect(result.ok).toBe(true);
       if (!result.ok) return;
-      expect(result.value.kind).toBe("layers");
-      if (result.value.kind !== "layers") return;
-      expect(result.value.layers[0].kind).toBe("gradient");
-      if (result.value.layers[0].kind !== "gradient") return;
-      expect(result.value.layers[0].gradient.repeating).toBe(true);
+      expect(result.value.kind).toBe("list");
+      if (result.value.kind !== "list") return;
+      expect(result.value.values[0].kind).toBe("gradient");
+      if (result.value.values[0].kind !== "gradient") return;
+      expect(result.value.values[0].gradient.repeating).toBe(true);
     });
 
     it("should fail for invalid gradient", () => {
@@ -222,22 +223,22 @@ describe("background-image property", () => {
       const result = parseBackgroundImageFromString("url(a.png), url(b.png)");
       expect(result.ok).toBe(true);
       if (!result.ok) return;
-      expect(result.value.kind).toBe("layers");
-      if (result.value.kind !== "layers") return;
-      expect(result.value.layers).toHaveLength(2);
-      expect(result.value.layers[0].kind).toBe("url");
-      expect(result.value.layers[1].kind).toBe("url");
+      expect(result.value.kind).toBe("list");
+      if (result.value.kind !== "list") return;
+      expect(result.value.values).toHaveLength(2);
+      expect(result.value.values[0].kind).toBe("url");
+      expect(result.value.values[1].kind).toBe("url");
     });
 
     it("should parse mixed url and gradient layers", () => {
       const result = parseBackgroundImageFromString("url(image.png), linear-gradient(red, blue)");
       expect(result.ok).toBe(true);
       if (!result.ok) return;
-      expect(result.value.kind).toBe("layers");
-      if (result.value.kind !== "layers") return;
-      expect(result.value.layers).toHaveLength(2);
-      expect(result.value.layers[0].kind).toBe("url");
-      expect(result.value.layers[1].kind).toBe("gradient");
+      expect(result.value.kind).toBe("list");
+      if (result.value.kind !== "list") return;
+      expect(result.value.values).toHaveLength(2);
+      expect(result.value.values[0].kind).toBe("url");
+      expect(result.value.values[1].kind).toBe("gradient");
     });
 
     it("should parse multiple gradients", () => {
@@ -246,22 +247,12 @@ describe("background-image property", () => {
       );
       expect(result.ok).toBe(true);
       if (!result.ok) return;
-      expect(result.value.kind).toBe("layers");
-      if (result.value.kind !== "layers") return;
-      expect(result.value.layers).toHaveLength(3);
-      expect(result.value.layers[0].kind).toBe("gradient");
-      expect(result.value.layers[1].kind).toBe("gradient");
-      expect(result.value.layers[2].kind).toBe("gradient");
-    });
-
-    it("should handle none in layer list", () => {
-      const result = parseBackgroundImageFromString("url(image.png), none");
-      expect(result.ok).toBe(true);
-      if (!result.ok) return;
-      expect(result.value.kind).toBe("layers");
-      if (result.value.kind !== "layers") return;
-      expect(result.value.layers).toHaveLength(2);
-      expect(result.value.layers[1].kind).toBe("none");
+      expect(result.value.kind).toBe("list");
+      if (result.value.kind !== "list") return;
+      expect(result.value.values).toHaveLength(3);
+      expect(result.value.values[0].kind).toBe("gradient");
+      expect(result.value.values[1].kind).toBe("gradient");
+      expect(result.value.values[2].kind).toBe("gradient");
     });
   });
 
@@ -291,11 +282,11 @@ describe("background-image property", () => {
       // But should still include the 2 successful url layers
       expect(result.value).toBeDefined();
       if (!result.value) return;
-      expect(result.value.kind).toBe("layers");
-      if (result.value.kind !== "layers") return;
-      expect(result.value.layers).toHaveLength(2);
-      expect(result.value.layers[0].kind).toBe("url");
-      expect(result.value.layers[1].kind).toBe("url");
+      expect(result.value.kind).toBe("list");
+      if (result.value.kind !== "list") return;
+      expect(result.value.values).toHaveLength(2);
+      expect(result.value.values[0].kind).toBe("url");
+      expect(result.value.values[1].kind).toBe("url");
     });
   });
 });
@@ -311,8 +302,8 @@ describe("rgb colors in gradients", () => {
 
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    expect(result.value.kind).toBe("layers");
-    if (result.value.kind !== "layers") return;
-    expect(result.value.layers[0].kind).toBe("gradient");
+    expect(result.value.kind).toBe("list");
+    if (result.value.kind !== "list") return;
+    expect(result.value.values[0].kind).toBe("gradient");
   });
 });

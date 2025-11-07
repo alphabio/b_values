@@ -12,13 +12,13 @@ import { getChildren, getValues } from "@b/utils";
  */
 export function parseRgbFunction(node: csstree.FunctionNode): ParseResult<RGBColor> {
   if (node.name !== "rgb" && node.name !== "rgba") {
-    return parseErr(createError("invalid-syntax", "Expected rgb() or rgba() function"));
+    return parseErr("rgb", createError("invalid-syntax", "Expected rgb() or rgba() function"));
   }
 
   const values = getValues(getChildren(node));
 
   if (values.length < 3 || values.length > 4) {
-    return parseErr(createError("invalid-syntax", `RGB function must have 3 or 4 values, got ${values.length}`));
+    return parseErr("rgb", createError("invalid-syntax", `RGB function must have 3 or 4 values, got ${values.length}`));
   }
 
   const rResult = parseNodeToCssValue(values[0]);

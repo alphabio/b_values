@@ -26,5 +26,5 @@ export function parseCSSWideKeyword(value: string): ParseResult<CSSWideKeyword> 
     return parseOk(normalized);
   }
 
-  return parseErr(createError("invalid-value", `Not a CSS-wide keyword: ${value}`));
+  return parseErr("keyword", createError("invalid-value", `Not a CSS-wide keyword: ${value}`));
 }

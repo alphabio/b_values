@@ -50,7 +50,7 @@ function parseCalcExpression(nodes: csstree.CssNode[]): ParseResult<CssValue> {
       } else {
         issues.push(...operandResult.issues);
         // If an operand fails to parse, we can't continue building the tree.
-        return parseErr(createError("invalid-value", "Invalid operand in calculation"), "calc");
+        return parseErr("calc", createError("invalid-value", "Invalid operand in calculation"));
       }
     }
   }
@@ -88,8 +88,8 @@ function parseCalcExpression(nodes: csstree.CssNode[]): ParseResult<CssValue> {
       // Token is an Operator
       if (buildStack.length < 2) {
         return parseErr(
-          createError("invalid-syntax", `Malformed calc expression: missing operands for operator '${token}'`),
           "calc",
+          createError("invalid-syntax", `Malformed calc expression: missing operands for operator '${token}'`),
         );
       }
       const right = buildStack.pop()!;
@@ -104,7 +104,7 @@ function parseCalcExpression(nodes: csstree.CssNode[]): ParseResult<CssValue> {
   }
 
   if (buildStack.length !== 1) {
-    return parseErr(createError("invalid-syntax", "Malformed calc expression: too many values."), "calc");
+    return parseErr("calc", createError("invalid-syntax", "Malformed calc expression: too many values."));
   }
 
   const resultTree = buildStack[0];
@@ -126,13 +126,13 @@ export function parseCalcFunction(node: csstree.FunctionNode): ParseResult<{ kin
   const funcName = node.name.toLowerCase();
 
   if (funcName !== "calc") {
-    return parseErr(createError("invalid-syntax", "Expected calc() function"));
+    return parseErr("calc", createError("invalid-syntax", "Expected calc() function"));
   }
 
   const expressionNodes = node.children.toArray();
 
   if (expressionNodes.length === 0) {
-    return parseErr(createError("invalid-syntax", "calc() expression must not be empty"));
+    return parseErr("calc", createError("invalid-syntax", "calc() expression must not be empty"));
   }
 
   const expressionResult = parseCalcExpression(expressionNodes);

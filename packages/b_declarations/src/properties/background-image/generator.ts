@@ -1,7 +1,7 @@
 // b_path:: packages/b_declarations/src/properties/background-image/generator.ts
-import { generateOk, generateErr, createError, type GenerateResult } from "@b/types";
+import type { Issue, GenerateResult } from "@b/types";
 import * as Generators from "@b/generators";
-import type { BackgroundImageIR, ImageLayer } from "./types";
+import type { BackgroundImageIR } from "./types";
 
 /**
  * Generate a background-image CSS value from its IR representation.
@@ -11,16 +11,28 @@ import type { BackgroundImageIR, ImageLayer } from "./types";
  */
 export function generateBackgroundImage(ir: BackgroundImageIR): GenerateResult {
   if (ir.kind === "keyword") {
-    return generateOk(ir.value, "background-image");
+    return {
+      ok: true,
+      value: ir.value,
+      property: "background-image",
+      issues: [],
+    };
   }
 
   // Generate each layer
   const layerStrings: string[] = [];
-  const allIssues: import("@b/types").Issue[] = [];
+  const allIssues: Issue[] = [];
 
-  for (let i = 0; i < ir.layers.length; i++) {
-    const layer = ir.layers[i];
-    const layerResult = generateImageLayer(layer, ["layers", i]);
+  for (let i = 0; i < ir.values.length; i++) {
+    const layer = ir.values[i];
+
+    // Handle string keywords directly
+    if (typeof layer === "string") {
+      layerStrings.push(layer);
+      continue;
+    }
+
+    const layerResult = Generators.Background.generateImageValue(layer, ["list", i]);
     if (!layerResult.ok) {
       return layerResult;
     }
@@ -35,33 +47,4 @@ export function generateBackgroundImage(ir: BackgroundImageIR): GenerateResult {
     property: "background-image",
     issues: allIssues,
   };
-}
-
-/**
- * Generate a single image layer.
- */
-function generateImageLayer(layer: ImageLayer, parentPath: (string | number)[]): GenerateResult {
-  switch (layer.kind) {
-    case "none":
-      return generateOk("none", "background-image");
-
-    case "url":
-      // Generate url() function
-      return generateOk(`url(${layer.url})`, "background-image");
-
-    case "gradient": {
-      return Generators.Gradient.generate(layer.gradient, {
-        parentPath: [...parentPath, "gradient"],
-        property: "background-image",
-      });
-    }
-
-    default:
-      return generateErr(
-        createError("invalid-ir", "Unsupported image layer kind", {
-          property: "background-image",
-        }),
-        "background-image",
-      );
-  }
 }

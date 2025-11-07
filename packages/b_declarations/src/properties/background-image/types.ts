@@ -1,23 +1,33 @@
 // b_path:: packages/b_declarations/src/properties/background-image/types.ts
-import type { Image } from "@b/types";
+import { imageSchema } from "@b/types";
+import { z } from "zod";
+import * as Keywords from "@b/keywords";
 
 /**
- * Background image value IR.
- *
- * Property-level wrapper for the <background-image> property.
- * Supports CSS-wide keywords or a list of image layers.
- *
  * @see https://www.w3.org/TR/css-backgrounds-3/#background-image
  */
-export type BackgroundImageIR = { kind: "keyword"; value: string } | { kind: "layers"; layers: ImageLayer[] };
+// export type BackgroundImageIR = BackgroundImageList;
 
 /**
  * Single image layer for background-image property.
- *
- * Can be:
- * - <image> (url or gradient) from @b/types
- * - "none" keyword (property-specific)
- *
- * Note: "none" is property-specific and not part of the CSS <image> production.
  */
-export type ImageLayer = Image | { kind: "none" };
+// export type ImageLayer = Image;
+
+/**
+ * The final IR for the entire `background-image` property.
+ * Supports CSS-wide keywords or a list of <image> values.
+ */
+export const backgroundImageIR = z.discriminatedUnion("kind", [
+  // For global keywords like 'inherit', 'unset', etc.
+  z.object({
+    kind: z.literal("keyword"),
+    value: z.union([Keywords.cssWide, Keywords.none]),
+  }),
+  // For one or more <image> values
+  z.object({
+    kind: z.literal("list"),
+    values: z.array(imageSchema).min(1),
+  }),
+]);
+
+export type BackgroundImageIR = z.infer<typeof backgroundImageIR>;

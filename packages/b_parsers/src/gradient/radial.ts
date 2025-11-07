@@ -6,7 +6,7 @@ import type { RadialShape, RadialSizeKeyword } from "@b/keywords";
 import { parsePosition2D } from "../position";
 import { parseNodeToCssValue } from "../utils";
 import * as ColorStop from "./color-stop";
-import * as SharedParsing from "./shared-parsing";
+import * as SharedParsing from "../utils/shared-parsing";
 import * as Utils from "../utils";
 import { isCssValueFunction } from "../utils/css-value-functions";
 
@@ -160,13 +160,14 @@ export function fromFunction(fn: csstree.FunctionNode): ParseResult<Type.RadialG
 
   if (!isRepeating && functionName !== "radial-gradient") {
     return parseErr(
+      "radial-gradient",
       createError("invalid-value", `Expected radial-gradient or repeating-radial-gradient, got: ${functionName}`),
     );
   }
 
   const children = fn.children.toArray();
   if (children.length === 0) {
-    return parseErr(createError("missing-value", "radial-gradient requires at least 2 color stops"));
+    return parseErr("radial-gradient", createError("missing-value", "radial-gradient requires at least 2 color stops"));
   }
 
   let shape: RadialShape | undefined;
@@ -198,7 +199,7 @@ export function fromFunction(fn: csstree.FunctionNode): ParseResult<Type.RadialG
       // Position component: "at <position>"
       if (value === "at") {
         if (hasPosition) {
-          return parseErr(createError("invalid-syntax", "Duplicate position component"));
+          return parseErr("radial-gradient", createError("invalid-syntax", "Duplicate position component"));
         }
         hasPosition = true;
         idx++;
@@ -235,7 +236,7 @@ export function fromFunction(fn: csstree.FunctionNode): ParseResult<Type.RadialG
       // Color interpolation: "in <colorspace>"
       if (value === "in") {
         if (hasInterpolation) {
-          return parseErr(createError("invalid-syntax", "Duplicate color interpolation method"));
+          return parseErr("radial-gradient", createError("invalid-syntax", "Duplicate color interpolation method"));
         }
         hasInterpolation = true;
 
@@ -250,7 +251,7 @@ export function fromFunction(fn: csstree.FunctionNode): ParseResult<Type.RadialG
       // Shape: "circle" or "ellipse" - parse shape and potentially adjacent size
       if (value === "circle" || value === "ellipse") {
         if (hasShape || hasSize) {
-          return parseErr(createError("invalid-syntax", "Duplicate shape/size component"));
+          return parseErr("radial-gradient", createError("invalid-syntax", "Duplicate shape/size component"));
         }
 
         // Use the old parseShapeAndSize function which handles shape+size together
@@ -271,7 +272,7 @@ export function fromFunction(fn: csstree.FunctionNode): ParseResult<Type.RadialG
       // Size keyword: "closest-side" etc. - parse size and potentially adjacent shape
       if (["closest-side", "closest-corner", "farthest-side", "farthest-corner"].includes(value)) {
         if (hasSize || hasShape) {
-          return parseErr(createError("invalid-syntax", "Duplicate shape/size component"));
+          return parseErr("radial-gradient", createError("invalid-syntax", "Duplicate shape/size component"));
         }
 
         // Use parseShapeAndSize starting from this size keyword
@@ -322,7 +323,7 @@ export function fromFunction(fn: csstree.FunctionNode): ParseResult<Type.RadialG
     }
 
     // Unknown token
-    return parseErr(createError("invalid-value", `Unexpected token in gradient: ${node.type}`));
+    return parseErr("radial-gradient", createError("invalid-value", `Unexpected token in gradient: ${node.type}`));
   }
 
   // Parse color stops
@@ -357,7 +358,7 @@ export function fromFunction(fn: csstree.FunctionNode): ParseResult<Type.RadialG
   }
 
   if (colorStops.length < 2) {
-    return parseErr(createError("invalid-value", "radial-gradient requires at least 2 color stops"));
+    return parseErr("radial-gradient", createError("invalid-value", "radial-gradient requires at least 2 color stops"));
   }
 
   return parseOk({

@@ -1,4 +1,4 @@
-// b_path:: packages/b_generators/src/background-repeat/generator.ts
+// b_path:: packages/b_generators/src/background/repeat.ts
 
 import { generateOk, type GenerateResult } from "@b/types";
 

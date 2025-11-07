@@ -9,7 +9,7 @@ describe("parseCustomProperty", () => {
 
       expect(result.ok).toBe(true);
       if (result.ok) {
-        expect(result.value.kind).toBe("value");
+        expect(result.value.kind).toBe("raw");
         expect(result.value.value).toBe("3px 6px rgb(20 32 54)");
       }
     });

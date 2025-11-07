@@ -67,7 +67,7 @@ export interface MultiValueParserConfig<TItem, TFinal> {
  *     return null;
  *   },
  *   itemParser: (ast) => parseImageLayer(ast),
- *   aggregator: (layers) => ({ kind: "layers", layers }),
+ *   aggregator: (layers) => ({ kind: "list", layers }),
  * });
  * ```
  */
@@ -113,7 +113,7 @@ export function createMultiValueParser<TItem, TFinal>(
             "invalid-syntax",
             `Unexpected content after a valid value, likely a missing comma. Unparsed: "${preview}"`,
           );
-          itemResults.push(parseErr(issue));
+          itemResults.push(parseErr("InvalidSyntax", issue));
           continue;
         }
       } catch (e) {
@@ -121,7 +121,7 @@ export function createMultiValueParser<TItem, TFinal>(
           "invalid-syntax",
           `Invalid syntax in list item: ${e instanceof Error ? e.message : String(e)}`,
         );
-        itemResults.push(parseErr(issue));
+        itemResults.push(parseErr("InvalidSyntax", issue));
         continue;
       }
 

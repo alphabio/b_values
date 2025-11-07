@@ -86,14 +86,15 @@ export function parseOk<T>(value: T, property?: string): ParseResult<T> {
  *
  * @public
  */
-export function parseErr<T = never>(issue: Issue, property?: string): ParseResult<T> {
+export function parseErr<T = never>(property: string, issue: Issue): ParseResult<T> {
   const result: ParseResult<T> = {
     ok: false,
+    property,
     issues: [issue],
   };
-  if (property !== undefined) {
-    result.property = property;
-  }
+  // if (property !== undefined) {
+  //   result.property = property;
+  // }
   return result;
 }
 

@@ -1,7 +1,7 @@
 // b_path:: packages/b_types/src/bg-size.test.ts
 
 import { describe, it, expect } from "vitest";
-import { bgSizeListSchema, bgSizeSchema } from "./bg-size";
+import { bgSizeSchema } from "./bg-size";
 
 describe("bgSizeSchema", () => {
   it("should validate cover keyword", () => {
@@ -85,70 +85,6 @@ describe("bgSizeSchema", () => {
     const result = bgSizeSchema.safeParse({
       kind: "explicit",
       height: { kind: "keyword", value: "auto" },
-    });
-    expect(result.success).toBe(false);
-  });
-});
-
-describe("bgSizeListSchema", () => {
-  it("should validate CSS-wide keyword", () => {
-    const result = bgSizeListSchema.safeParse({
-      kind: "keyword",
-      value: "inherit",
-    });
-    expect(result.success).toBe(true);
-  });
-
-  it("should validate single value with keyword", () => {
-    const result = bgSizeListSchema.safeParse({
-      kind: "list",
-      values: [{ kind: "keyword", value: "cover" }],
-    });
-    expect(result.success).toBe(true);
-  });
-
-  it("should validate single value with explicit size", () => {
-    const result = bgSizeListSchema.safeParse({
-      kind: "list",
-      values: [
-        {
-          kind: "explicit",
-          width: { kind: "literal", value: 100, unit: "%" },
-          height: { kind: "keyword", value: "auto" },
-        },
-      ],
-    });
-    expect(result.success).toBe(true);
-  });
-
-  it("should validate multiple values", () => {
-    const result = bgSizeListSchema.safeParse({
-      kind: "list",
-      values: [
-        { kind: "keyword", value: "cover" },
-        { kind: "keyword", value: "contain" },
-        {
-          kind: "explicit",
-          width: { kind: "literal", value: 50, unit: "px" },
-          height: { kind: "literal", value: 50, unit: "px" },
-        },
-      ],
-    });
-    expect(result.success).toBe(true);
-  });
-
-  it("should reject empty values array", () => {
-    const result = bgSizeListSchema.safeParse({
-      kind: "list",
-      values: [],
-    });
-    expect(result.success).toBe(false);
-  });
-
-  it("should reject invalid CSS-wide keyword", () => {
-    const result = bgSizeListSchema.safeParse({
-      kind: "keyword",
-      value: "invalid",
     });
     expect(result.success).toBe(false);
   });

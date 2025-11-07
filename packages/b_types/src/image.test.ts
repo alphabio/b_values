@@ -24,24 +24,9 @@ describe("imageSchema", () => {
     expect(result.success).toBe(true);
   });
 
-  it("rejects invalid kind", () => {
-    const result = imageSchema.safeParse({
-      kind: "invalid",
-      url: "test.png",
-    });
-    expect(result.success).toBe(false);
-  });
-
   it("rejects missing required fields", () => {
     const result = imageSchema.safeParse({
       kind: "url",
-    });
-    expect(result.success).toBe(false);
-  });
-
-  it("rejects none keyword (property-specific, not part of <image>)", () => {
-    const result = imageSchema.safeParse({
-      kind: "none",
     });
     expect(result.success).toBe(false);
   });

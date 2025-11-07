@@ -131,23 +131,25 @@ describe("parseDeclarationList", () => {
   describe("partial failures", () => {
     it("should continue on invalid property", () => {
       const result = parseDeclarationList("unknown-prop: value; --valid: blue");
+      console.log(JSON.stringify(result, null, 2));
 
-      expect(result.ok).toBe(true);
-      if (result.ok) {
-        expect(result.value).toHaveLength(1);
+      expect(result.ok).toBe(false);
+      expect(result.value).toHaveLength(1);
+      if (result.value) {
         expect(result.value[0].property).toBe("--valid");
       }
-      expect(result.issues.length).toBeGreaterThan(0);
+      expect(result.issues).toHaveLength(1);
+      expect(result.issues[0].message).toBe("Unknown CSS property: unknown-prop");
     });
 
     it("should collect all errors", () => {
       const result = parseDeclarationList("unknown1: val; unknown2: val; --valid: blue");
 
-      expect(result.ok).toBe(true);
-      if (result.ok) {
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
         expect(result.value).toHaveLength(1);
       }
-      expect(result.issues.length).toBeGreaterThan(1);
+      expect(result.issues).toHaveLength(2);
     });
 
     it("should fail if all declarations invalid", () => {
@@ -310,7 +312,7 @@ describe("parseDeclarationList", () => {
         --color: blue;
       `);
 
-      expect(result.ok).toBe(true); // Has warnings but parsed successfully (2 valid declarations)
+      expect(result.ok).toBe(false);
       expect(result.value).toHaveLength(2); // Only valid ones
 
       // Should have 1 duplicate warning for --color

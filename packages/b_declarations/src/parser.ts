@@ -78,7 +78,7 @@ export function parseDeclaration(input: string | CSSDeclaration): ParseResult<De
   const definition = getPropertyDefinition(property);
 
   if (!definition) {
-    return parseErr(createError("invalid-value", `Unknown CSS property: ${property}`));
+    return parseErr("InvalidValue", createError("invalid-value", `Unknown CSS property: ${property}`));
   }
 
   // Step 2: Parse based on property type
@@ -101,7 +101,7 @@ export function parseDeclaration(input: string | CSSDeclaration): ParseResult<De
     } catch (e: unknown) {
       // Fatal syntax error for single-value property
       const error = e as Error;
-      return parseErr(createError("invalid-syntax", error.message));
+      return parseErr("InvalidSyntax", createError("invalid-syntax", error.message));
     }
 
     // Pass validated AST to parser
@@ -168,18 +168,24 @@ function parseDeclarationString(input: string): ParseResult<CSSDeclaration> {
   const colonIndex = cleaned.indexOf(":");
 
   if (colonIndex === -1) {
-    return parseErr(createError("invalid-syntax", `Invalid CSS declaration: missing colon in "${input}"`));
+    return parseErr(
+      "InvalidSyntax",
+      createError("invalid-syntax", `Invalid CSS declaration: missing colon in "${input}"`),
+    );
   }
 
   const property = cleaned.slice(0, colonIndex).trim();
   const value = cleaned.slice(colonIndex + 1).trim();
 
   if (!property) {
-    return parseErr(createError("missing-value", `Invalid CSS declaration: empty property in "${input}"`));
+    return parseErr(
+      "MissingValue",
+      createError("missing-value", `Invalid CSS declaration: empty property in "${input}"`),
+    );
   }
 
   if (!value) {
-    return parseErr(createError("missing-value", `Invalid CSS declaration: empty value in "${input}"`));
+    return parseErr("MissingValue", createError("missing-value", `Invalid CSS declaration: empty value in "${input}"`));
   }
 
   return parseOk({ property, value });

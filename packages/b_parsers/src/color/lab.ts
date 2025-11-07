@@ -11,13 +11,13 @@ import { getChildren, getValues } from "@b/utils";
  */
 export function parseLabFunction(node: csstree.FunctionNode): ParseResult<LABColor> {
   if (node.name !== "lab") {
-    return parseErr(createError("invalid-syntax", "Expected lab() function"));
+    return parseErr("lab", createError("invalid-syntax", "Expected lab() function"));
   }
 
   const values = getValues(getChildren(node));
 
   if (values.length < 3 || values.length > 4) {
-    return parseErr(createError("invalid-syntax", `LAB function must have 3 or 4 values, got ${values.length}`));
+    return parseErr("lab", createError("invalid-syntax", `LAB function must have 3 or 4 values, got ${values.length}`));
   }
 
   const lResult = parseNodeToCssValue(values[0]);

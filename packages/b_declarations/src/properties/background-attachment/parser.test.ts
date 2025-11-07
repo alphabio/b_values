@@ -10,10 +10,10 @@ describe("parseBackgroundAttachment", () => {
 
       expect(result.ok).toBe(true);
       if (!result.ok) return;
-      expect(result.value.kind).toBe("layers");
-      if (result.value.kind !== "layers") return;
-      expect(result.value.layers).toHaveLength(1);
-      expect(result.value.layers[0]).toBe("scroll");
+      expect(result.value.kind).toBe("list");
+      if (result.value.kind !== "list") return;
+      expect(result.value.values).toHaveLength(1);
+      expect(result.value.values[0]).toBe("scroll");
     });
 
     it("should parse 'fixed'", () => {
@@ -21,10 +21,10 @@ describe("parseBackgroundAttachment", () => {
 
       expect(result.ok).toBe(true);
       if (!result.ok) return;
-      expect(result.value.kind).toBe("layers");
-      if (result.value.kind !== "layers") return;
-      expect(result.value.layers).toHaveLength(1);
-      expect(result.value.layers[0]).toBe("fixed");
+      expect(result.value.kind).toBe("list");
+      if (result.value.kind !== "list") return;
+      expect(result.value.values).toHaveLength(1);
+      expect(result.value.values[0]).toBe("fixed");
     });
 
     it("should parse 'local'", () => {
@@ -32,10 +32,10 @@ describe("parseBackgroundAttachment", () => {
 
       expect(result.ok).toBe(true);
       if (!result.ok) return;
-      expect(result.value.kind).toBe("layers");
-      if (result.value.kind !== "layers") return;
-      expect(result.value.layers).toHaveLength(1);
-      expect(result.value.layers[0]).toBe("local");
+      expect(result.value.kind).toBe("list");
+      if (result.value.kind !== "list") return;
+      expect(result.value.values).toHaveLength(1);
+      expect(result.value.values[0]).toBe("local");
     });
   });
 
@@ -45,11 +45,11 @@ describe("parseBackgroundAttachment", () => {
 
       expect(result.ok).toBe(true);
       if (!result.ok) return;
-      expect(result.value.kind).toBe("layers");
-      if (result.value.kind !== "layers") return;
-      expect(result.value.layers).toHaveLength(2);
-      expect(result.value.layers[0]).toBe("scroll");
-      expect(result.value.layers[1]).toBe("fixed");
+      expect(result.value.kind).toBe("list");
+      if (result.value.kind !== "list") return;
+      expect(result.value.values).toHaveLength(2);
+      expect(result.value.values[0]).toBe("scroll");
+      expect(result.value.values[1]).toBe("fixed");
     });
 
     it("should parse three values", () => {
@@ -57,12 +57,12 @@ describe("parseBackgroundAttachment", () => {
 
       expect(result.ok).toBe(true);
       if (!result.ok) return;
-      expect(result.value.kind).toBe("layers");
-      if (result.value.kind !== "layers") return;
-      expect(result.value.layers).toHaveLength(3);
-      expect(result.value.layers[0]).toBe("fixed");
-      expect(result.value.layers[1]).toBe("local");
-      expect(result.value.layers[2]).toBe("scroll");
+      expect(result.value.kind).toBe("list");
+      if (result.value.kind !== "list") return;
+      expect(result.value.values).toHaveLength(3);
+      expect(result.value.values[0]).toBe("fixed");
+      expect(result.value.values[1]).toBe("local");
+      expect(result.value.values[2]).toBe("scroll");
     });
   });
 

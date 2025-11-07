@@ -18,7 +18,7 @@ export function parseCssValueNode(node: csstree.CssNode): ParseResult<CssValue> 
     case "Number": {
       const value = Number.parseFloat(node.value);
       if (Number.isNaN(value)) {
-        return parseErr(createError("invalid-value", "Invalid number value"));
+        return parseErr("Number", createError("invalid-value", "Invalid number value"));
       }
       return parseOk({ kind: "literal", value });
     }
@@ -26,7 +26,7 @@ export function parseCssValueNode(node: csstree.CssNode): ParseResult<CssValue> 
     case "Percentage": {
       const value = Number.parseFloat(node.value);
       if (Number.isNaN(value)) {
-        return parseErr(createError("invalid-value", "Invalid percentage value"));
+        return parseErr("Percentage", createError("invalid-value", "Invalid percentage value"));
       }
       return parseOk({ kind: "literal", value, unit: "%" });
     }
@@ -34,7 +34,7 @@ export function parseCssValueNode(node: csstree.CssNode): ParseResult<CssValue> 
     case "Dimension": {
       const value = Number.parseFloat(node.value);
       if (Number.isNaN(value)) {
-        return parseErr(createError("invalid-value", "Invalid dimension value"));
+        return parseErr("dimension", createError("invalid-value", "Invalid dimension value"));
       }
       return parseOk({ kind: "literal", value, unit: node.unit });
     }
@@ -59,11 +59,15 @@ export function parseCssValueNode(node: csstree.CssNode): ParseResult<CssValue> 
         const varNameNode = children.find((n) => n.type !== "WhiteSpace");
 
         if (!varNameNode) {
-          return parseErr(createError("invalid-syntax", "Invalid var() function: missing custom property name"));
+          return parseErr(
+            "Function",
+            createError("invalid-syntax", "Invalid var() function: missing custom property name"),
+          );
         }
 
         if (varNameNode.type !== "Identifier" || !varNameNode.name.startsWith("--")) {
           return parseErr(
+            "Function",
             createError(
               "invalid-syntax",
               `Invalid var() function: expected a custom property name (--*), got ${varNameNode.type}`,
@@ -81,6 +85,7 @@ export function parseCssValueNode(node: csstree.CssNode): ParseResult<CssValue> 
 
           if (fallbackNodes.length === 0) {
             return parseErr(
+              "Function",
               createError("invalid-syntax", "Invalid var() function: missing fallback value after comma"),
             );
           }
@@ -102,7 +107,10 @@ export function parseCssValueNode(node: csstree.CssNode): ParseResult<CssValue> 
               }
             } catch {
               // If parsing fails, treat as invalid
-              return parseErr(createError("invalid-syntax", `Invalid var() fallback value: ${firstNode.value}`));
+              return parseErr(
+                "Function",
+                createError("invalid-syntax", `Invalid var() fallback value: ${firstNode.value}`),
+              );
             }
           } else {
             // RECURSION: Parse the content of the fallback argument
@@ -149,7 +157,7 @@ export function parseCssValueNode(node: csstree.CssNode): ParseResult<CssValue> 
     }
 
     default: {
-      return parseErr(createError("unsupported-kind", `Unsupported node type: ${node.type}`));
+      return parseErr("Unsupported", createError("unsupported-kind", `Unsupported node type: ${node.type}`));
     }
   }
 }

@@ -4,14 +4,14 @@ import type { ParseResult, BgSize } from "@b/types";
 import * as Parsers from "@b/parsers";
 import { createMultiValueParser } from "../../utils";
 import type * as csstree from "@eslint/css-tree";
-import type { BackgroundSize } from "./types";
+import type { BackgroundSizeIR } from "./types";
 
-export const parseBackgroundSize = createMultiValueParser<BgSize, BackgroundSize>({
+export const parseBackgroundSize = createMultiValueParser<BgSize, BackgroundSizeIR>({
   itemParser(valueNode: csstree.Value): ParseResult<BgSize> {
     return Parsers.Background.parseBackgroundSizeValue(valueNode);
   },
 
-  aggregator(values: BgSize[]): BackgroundSize {
+  aggregator(values: BgSize[]): BackgroundSizeIR {
     return { kind: "list", values };
   },
 });

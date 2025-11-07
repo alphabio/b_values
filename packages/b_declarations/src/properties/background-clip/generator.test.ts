@@ -7,8 +7,8 @@ describe("generateBackgroundClip", () => {
   describe("single value", () => {
     it("should generate 'border-box'", () => {
       const ir: BackgroundClipIR = {
-        kind: "layers",
-        layers: ["border-box"],
+        kind: "list",
+        values: ["border-box"],
       };
 
       const result = generateBackgroundClip(ir);
@@ -20,8 +20,8 @@ describe("generateBackgroundClip", () => {
 
     it("should generate 'padding-box'", () => {
       const ir: BackgroundClipIR = {
-        kind: "layers",
-        layers: ["padding-box"],
+        kind: "list",
+        values: ["padding-box"],
       };
 
       const result = generateBackgroundClip(ir);
@@ -33,8 +33,8 @@ describe("generateBackgroundClip", () => {
 
     it("should generate 'content-box'", () => {
       const ir: BackgroundClipIR = {
-        kind: "layers",
-        layers: ["content-box"],
+        kind: "list",
+        values: ["content-box"],
       };
 
       const result = generateBackgroundClip(ir);
@@ -46,8 +46,8 @@ describe("generateBackgroundClip", () => {
 
     it("should generate 'text'", () => {
       const ir: BackgroundClipIR = {
-        kind: "layers",
-        layers: ["text"],
+        kind: "list",
+        values: ["text"],
       };
 
       const result = generateBackgroundClip(ir);
@@ -61,8 +61,8 @@ describe("generateBackgroundClip", () => {
   describe("multiple values", () => {
     it("should generate two values", () => {
       const ir: BackgroundClipIR = {
-        kind: "layers",
-        layers: ["border-box", "padding-box"],
+        kind: "list",
+        values: ["border-box", "padding-box"],
       };
 
       const result = generateBackgroundClip(ir);
@@ -74,8 +74,8 @@ describe("generateBackgroundClip", () => {
 
     it("should generate all valid values", () => {
       const ir: BackgroundClipIR = {
-        kind: "layers",
-        layers: ["border-box", "padding-box", "content-box", "text"],
+        kind: "list",
+        values: ["border-box", "padding-box", "content-box", "text"],
       };
 
       const result = generateBackgroundClip(ir);

@@ -1,4 +1,4 @@
-// b_path:: packages/b_parsers/src/gradient/shared-parsing.test.ts
+// b_path:: packages/b_parsers/src/utils/shared-parsing.test.ts
 import { describe, expect, it } from "vitest";
 import * as SharedParsing from "./shared-parsing";
 

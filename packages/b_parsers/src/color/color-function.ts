@@ -13,13 +13,14 @@ import * as Keywords from "@b/keywords";
  */
 export function parseColorFunction(node: csstree.FunctionNode): ParseResult<ColorFunction> {
   if (node.name !== "color") {
-    return parseErr(createError("invalid-syntax", "Expected color() function"));
+    return parseErr("color", createError("invalid-syntax", "Expected color() function"));
   }
 
   const values = getValues(getChildren(node));
 
   if (values.length < 4) {
     return parseErr(
+      "color",
       createError(
         "invalid-syntax",
         `color() function must have at least 4 values (space + 3 channels), got ${values.length}`,
@@ -30,12 +31,15 @@ export function parseColorFunction(node: csstree.FunctionNode): ParseResult<Colo
   // First value must be the color space identifier
   const colorSpaceNode = values[0];
   if (!colorSpaceNode || colorSpaceNode.type !== "Identifier") {
-    return parseErr(createError("invalid-syntax", "color() function must start with a color space identifier"));
+    return parseErr(
+      "color",
+      createError("invalid-syntax", "color() function must start with a color space identifier"),
+    );
   }
 
   const colorSpaceResult = Keywords.colorFunctionSpace.safeParse(colorSpaceNode.name);
   if (!colorSpaceResult.success) {
-    return parseErr(createError("invalid-syntax", `Invalid color space: ${colorSpaceNode.name}`));
+    return parseErr("color", createError("invalid-syntax", `Invalid color space: ${colorSpaceNode.name}`));
   }
 
   // Parse the three channel values

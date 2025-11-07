@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# b_path:: scripts/generate-session-data.sh
 set -euo pipefail
 
 # Generate JSON data from session handovers and git history

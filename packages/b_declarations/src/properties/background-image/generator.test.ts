@@ -5,23 +5,10 @@ import type { BackgroundImageIR } from "./types";
 
 describe("generateBackgroundImage", () => {
   describe("single layer", () => {
-    it("should generate none layer", () => {
-      const ir: BackgroundImageIR = {
-        kind: "layers",
-        layers: [{ kind: "none" }],
-      };
-
-      const result = generateBackgroundImage(ir);
-
-      expect(result.ok).toBe(true);
-      if (!result.ok) return;
-      expect(result.value).toBe("none");
-    });
-
     it("should generate url layer", () => {
       const ir: BackgroundImageIR = {
-        kind: "layers",
-        layers: [
+        kind: "list",
+        values: [
           {
             kind: "url",
             url: "https://example.com/image.png",
@@ -38,8 +25,8 @@ describe("generateBackgroundImage", () => {
 
     it("should generate url with relative path", () => {
       const ir: BackgroundImageIR = {
-        kind: "layers",
-        layers: [
+        kind: "list",
+        values: [
           {
             kind: "url",
             url: "./images/bg.jpg",
@@ -56,8 +43,8 @@ describe("generateBackgroundImage", () => {
 
     it("should generate linear gradient", () => {
       const ir: BackgroundImageIR = {
-        kind: "layers",
-        layers: [
+        kind: "list",
+        values: [
           {
             kind: "gradient",
             gradient: {
@@ -80,8 +67,8 @@ describe("generateBackgroundImage", () => {
 
     it("should generate radial gradient", () => {
       const ir: BackgroundImageIR = {
-        kind: "layers",
-        layers: [
+        kind: "list",
+        values: [
           {
             kind: "gradient",
             gradient: {
@@ -108,8 +95,8 @@ describe("generateBackgroundImage", () => {
 
     it("should generate conic gradient", () => {
       const ir: BackgroundImageIR = {
-        kind: "layers",
-        layers: [
+        kind: "list",
+        values: [
           {
             kind: "gradient",
             gradient: {
@@ -136,8 +123,8 @@ describe("generateBackgroundImage", () => {
 
     it("should generate repeating linear gradient", () => {
       const ir: BackgroundImageIR = {
-        kind: "layers",
-        layers: [
+        kind: "list",
+        values: [
           {
             kind: "gradient",
             gradient: {
@@ -163,8 +150,8 @@ describe("generateBackgroundImage", () => {
   describe("multiple layers", () => {
     it("should generate multiple url layers", () => {
       const ir: BackgroundImageIR = {
-        kind: "layers",
-        layers: [
+        kind: "list",
+        values: [
           { kind: "url", url: "layer1.png" },
           { kind: "url", url: "layer2.png" },
           { kind: "url", url: "layer3.png" },
@@ -180,8 +167,8 @@ describe("generateBackgroundImage", () => {
 
     it("should generate mixed layers (url + gradient)", () => {
       const ir: BackgroundImageIR = {
-        kind: "layers",
-        layers: [
+        kind: "list",
+        values: [
           { kind: "url", url: "texture.png" },
           {
             kind: "gradient",
@@ -203,11 +190,10 @@ describe("generateBackgroundImage", () => {
       expect(result.value).toContain(",");
     });
 
-    it("should generate mixed layers (none + url + gradient)", () => {
+    it("should generate mixed layers (url + gradient)", () => {
       const ir: BackgroundImageIR = {
-        kind: "layers",
-        layers: [
-          { kind: "none" },
+        kind: "list",
+        values: [
           { kind: "url", url: "bg.jpg" },
           {
             kind: "gradient",
@@ -227,7 +213,6 @@ describe("generateBackgroundImage", () => {
 
       expect(result.ok).toBe(true);
       if (!result.ok) return;
-      expect(result.value).toContain("none");
       expect(result.value).toContain("url(bg.jpg)");
       expect(result.value).toContain("linear-gradient");
     });
@@ -236,8 +221,8 @@ describe("generateBackgroundImage", () => {
   describe("complex gradients", () => {
     it("should generate gradient with direction", () => {
       const ir: BackgroundImageIR = {
-        kind: "layers",
-        layers: [
+        kind: "list",
+        values: [
           {
             kind: "gradient",
             gradient: {
@@ -262,8 +247,8 @@ describe("generateBackgroundImage", () => {
 
     it("should generate gradient with color positions", () => {
       const ir: BackgroundImageIR = {
-        kind: "layers",
-        layers: [
+        kind: "list",
+        values: [
           {
             kind: "gradient",
             gradient: {
@@ -290,8 +275,8 @@ describe("generateBackgroundImage", () => {
 
     it("should generate gradient with color interpolation", () => {
       const ir: BackgroundImageIR = {
-        kind: "layers",
-        layers: [
+        kind: "list",
+        values: [
           {
             kind: "gradient",
             gradient: {
@@ -317,8 +302,8 @@ describe("generateBackgroundImage", () => {
   describe("error handling", () => {
     it("should handle unsupported layer kind", () => {
       const ir: BackgroundImageIR = {
-        kind: "layers",
-        layers: [
+        kind: "list",
+        values: [
           {
             // @ts-expect-error Testing invalid kind
             kind: "unsupported",
@@ -337,8 +322,8 @@ describe("generateBackgroundImage", () => {
 
     it("should propagate gradient generation errors", () => {
       const ir: BackgroundImageIR = {
-        kind: "layers",
-        layers: [
+        kind: "list",
+        values: [
           {
             kind: "gradient",
             gradient: {
@@ -364,8 +349,8 @@ describe("generateBackgroundImage", () => {
   describe("warning propagation", () => {
     it("should propagate semantic warnings from nested color generators", () => {
       const ir: BackgroundImageIR = {
-        kind: "layers",
-        layers: [
+        kind: "list",
+        values: [
           {
             kind: "gradient",
             gradient: {
@@ -408,14 +393,14 @@ describe("generateBackgroundImage", () => {
         code: "invalid-value",
         severity: "warning",
         message: expect.stringContaining("r value -255 is out of valid range 0-255"),
-        path: ["layers", 0, "gradient", "colorStops", 0, "color", "r"],
+        path: ["list", 0, "gradient", "colorStops", 0, "color", "r"],
       });
     });
 
     it("should propagate multiple warnings from multiple color stops", () => {
       const ir: BackgroundImageIR = {
-        kind: "layers",
-        layers: [
+        kind: "list",
+        values: [
           {
             kind: "gradient",
             gradient: {
@@ -458,8 +443,8 @@ describe("generateBackgroundImage", () => {
   describe("edge cases", () => {
     it("should handle empty layers array gracefully", () => {
       const ir: BackgroundImageIR = {
-        kind: "layers",
-        layers: [],
+        kind: "list",
+        values: [],
       };
 
       const result = generateBackgroundImage(ir);
@@ -471,8 +456,8 @@ describe("generateBackgroundImage", () => {
 
     it("should handle url with special characters", () => {
       const ir: BackgroundImageIR = {
-        kind: "layers",
-        layers: [
+        kind: "list",
+        values: [
           {
             kind: "url",
             url: "data:image/png;base64,iVBORw0KGgoAAAANS...",
@@ -489,8 +474,8 @@ describe("generateBackgroundImage", () => {
 
     it("should handle url with spaces (needs quotes in real CSS but we just pass through)", () => {
       const ir: BackgroundImageIR = {
-        kind: "layers",
-        layers: [
+        kind: "list",
+        values: [
           {
             kind: "url",
             url: "my image.png",

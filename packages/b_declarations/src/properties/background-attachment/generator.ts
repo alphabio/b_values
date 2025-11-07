@@ -12,7 +12,7 @@ export function generateBackgroundAttachment(ir: BackgroundAttachmentIR): Genera
   }
 
   const layerStrings: string[] = [];
-  for (const layer of ir.layers) {
+  for (const layer of ir.values) {
     const result = Generators.Background.generateBackgroundAttachmentValue(layer);
     if (!result.ok) return result;
     layerStrings.push(result.value);

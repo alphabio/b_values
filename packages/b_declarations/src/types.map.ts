@@ -1,0 +1,27 @@
+// b_path:: packages/b_declarations/src/types.map.ts
+// This file contains the PropertyIRMap that maps property names to their IR types.
+// TODO: It should be auto-generated in the future.
+
+import type {
+  BackgroundAttachmentIR,
+  BackgroundClipIR,
+  BackgroundImageIR,
+  BackgroundOriginIR,
+  BackgroundRepeatIR,
+  BackgroundSizeIR,
+  CustomPropertyIR,
+} from "./properties";
+
+/**
+ * Map of CSS property names to their IR types.
+ * Used for type-safe parsing and generation.
+ */
+export interface PropertyIRMap {
+  "background-attachment": BackgroundAttachmentIR;
+  "background-clip": BackgroundClipIR;
+  "background-image": BackgroundImageIR;
+  "background-origin": BackgroundOriginIR;
+  "background-repeat": BackgroundRepeatIR;
+  "background-size": BackgroundSizeIR;
+  [key: `--${string}`]: CustomPropertyIR;
+}

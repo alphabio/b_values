@@ -17,7 +17,7 @@ export function parsePosition2D(
   let idx = startIdx;
 
   if (idx >= nodes.length) {
-    return parseErr(createError("invalid-syntax", "Expected position value"));
+    return parseErr("position", createError("invalid-syntax", "Expected position value"));
   }
 
   // Collect all position values
@@ -34,13 +34,13 @@ export function parsePosition2D(
   }
 
   if (positionValues.length === 0) {
-    return parseErr(createError("invalid-syntax", "Expected position value"));
+    return parseErr("position", createError("invalid-syntax", "Expected position value"));
   }
 
   // Parse based on number of values
   const result = parsePositionValues(positionValues);
   if (!result.ok) {
-    return parseErr(result.issues[0] ?? createError("invalid-syntax", "Failed to parse position"));
+    return parseErr("position", result.issues[0] ?? createError("invalid-syntax", "Failed to parse position"));
   }
 
   return parseOk({ position: result.value, nextIdx: idx });
@@ -60,7 +60,7 @@ function parsePositionValues(values: Type.CssValue[]): ParseResult<Type.Position
     case 4:
       return parse4Value(values);
     default:
-      return parseErr(createError("invalid-syntax", `Invalid position syntax: ${values.length} values`));
+      return parseErr("position", createError("invalid-syntax", `Invalid position syntax: ${values.length} values`));
   }
 }
 
@@ -69,7 +69,7 @@ function parsePositionValues(values: Type.CssValue[]): ParseResult<Type.Position
  */
 function parse1Value(values: Type.CssValue[]): ParseResult<Type.Position2D> {
   const val = values[0];
-  if (!val) return parseErr(createError("invalid-syntax", "Missing position value"));
+  if (!val) return parseErr("position", createError("invalid-syntax", "Missing position value"));
 
   // Handle axis-specific keywords
   if (val.kind === "keyword") {
@@ -105,7 +105,7 @@ function parse1Value(values: Type.CssValue[]): ParseResult<Type.Position2D> {
 function parse2Value(values: Type.CssValue[]): ParseResult<Type.Position2D> {
   const h = values[0];
   const v = values[1];
-  if (!h || !v) return parseErr(createError("invalid-syntax", "Missing position values"));
+  if (!h || !v) return parseErr("position", createError("invalid-syntax", "Missing position values"));
 
   return parseOk({ horizontal: h, vertical: v });
 }
@@ -117,7 +117,7 @@ function parse3Value(values: Type.CssValue[]): ParseResult<Type.Position2D> {
   const v0 = values[0];
   const v1 = values[1];
   const v2 = values[2];
-  if (!v0 || !v1 || !v2) return parseErr(createError("invalid-syntax", "Missing position values"));
+  if (!v0 || !v1 || !v2) return parseErr("position", createError("invalid-syntax", "Missing position values"));
 
   // Pattern 1: [edge] [offset] [keyword/edge]
   const edge1 = getEdgeKeyword(v0);
@@ -130,7 +130,7 @@ function parse3Value(values: Type.CssValue[]): ParseResult<Type.Position2D> {
     if (edge2) {
       const isHorizontal2 = edge2 === "left" || edge2 === "right";
       if (isHorizontal1 === isHorizontal2) {
-        return parseErr(createError("invalid-syntax", "Both edges on same axis"));
+        return parseErr("position", createError("invalid-syntax", "Both edges on same axis"));
       }
     }
 
@@ -163,7 +163,7 @@ function parse3Value(values: Type.CssValue[]): ParseResult<Type.Position2D> {
     });
   }
 
-  return parseErr(createError("invalid-syntax", "Invalid 3-value position syntax"));
+  return parseErr("position", createError("invalid-syntax", "Invalid 3-value position syntax"));
 }
 
 /**
@@ -175,7 +175,7 @@ function parse4Value(values: Type.CssValue[]): ParseResult<Type.Position2D> {
   const v2 = values[2];
   const v3 = values[3];
   if (!v0 || !v1 || !v2 || !v3) {
-    return parseErr(createError("invalid-syntax", "Missing position values"));
+    return parseErr("position", createError("invalid-syntax", "Missing position values"));
   }
 
   // Pattern: [edge] [offset] [edge] [offset]
@@ -183,7 +183,7 @@ function parse4Value(values: Type.CssValue[]): ParseResult<Type.Position2D> {
   const edge2 = getEdgeKeyword(v2);
 
   if (!edge1 || !edge2) {
-    return parseErr(createError("invalid-syntax", "Expected edge keywords at positions 1 and 3"));
+    return parseErr("position", createError("invalid-syntax", "Expected edge keywords at positions 1 and 3"));
   }
 
   // Determine which pair is horizontal vs vertical
@@ -191,7 +191,7 @@ function parse4Value(values: Type.CssValue[]): ParseResult<Type.Position2D> {
   const isHorizontal2 = edge2 === "left" || edge2 === "right";
 
   if (isHorizontal1 === isHorizontal2) {
-    return parseErr(createError("invalid-syntax", "Both pairs on same axis"));
+    return parseErr("position", createError("invalid-syntax", "Both pairs on same axis"));
   }
 
   if (isHorizontal1) {

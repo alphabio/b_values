@@ -11,13 +11,16 @@ import { getChildren, getValues } from "@b/utils";
  */
 export function parseOklabFunction(node: csstree.FunctionNode): ParseResult<OKLabColor> {
   if (node.name !== "oklab") {
-    return parseErr(createError("invalid-syntax", "Expected oklab() function"));
+    return parseErr("oklab", createError("invalid-syntax", "Expected oklab() function"));
   }
 
   const values = getValues(getChildren(node));
 
   if (values.length < 3 || values.length > 4) {
-    return parseErr(createError("invalid-syntax", `OKLab function must have 3 or 4 values, got ${values.length}`));
+    return parseErr(
+      "oklab",
+      createError("invalid-syntax", `OKLab function must have 3 or 4 values, got ${values.length}`),
+    );
   }
 
   const lResult = parseNodeToCssValue(values[0]);

@@ -1,8 +1,7 @@
-// b_path:: packages/b_generators/src/background-origin/generator.ts
+// b_path:: packages/b_generators/src/background/origin.ts
 
 import { generateOk, type GenerateResult } from "@b/types";
-
-type OriginBoxValue = "border-box" | "padding-box" | "content-box";
+import type { BackgroundOrigin } from "@b/keywords";
 
 /**
  * Generate CSS string for a single background-origin value.
@@ -12,6 +11,6 @@ type OriginBoxValue = "border-box" | "padding-box" | "content-box";
  * @param value - The box value
  * @returns GenerateResult with CSS string
  */
-export function generateBackgroundOriginValue(value: OriginBoxValue): GenerateResult {
+export function generateBackgroundOriginValue(value: BackgroundOrigin): GenerateResult {
   return generateOk(value);
 }

@@ -10,6 +10,7 @@ import {
   type ParseResult,
   type BgSize,
   type CssValue,
+  type KeywordValue,
 } from "@b/types";
 import * as Ast from "@b/utils";
 import { parseNodeToCssValue } from "../utils/css-value-parser";
@@ -34,6 +35,7 @@ export function parseBackgroundSizeValue(valueNode: csstree.Value): ParseResult<
     }
     // If it's not a bg-size keyword, it's invalid
     return parseErr(
+      "background-size",
       createError(
         "invalid-syntax",
         `Invalid background-size keyword '${keyword}'. Expected 'auto', 'cover', 'contain', or a length/percentage.`,
@@ -45,13 +47,13 @@ export function parseBackgroundSizeValue(valueNode: csstree.Value): ParseResult<
   if (children.length === 1 || children.length === 2) {
     const widthResult = parseSizeComponent(children[0]);
     if (!widthResult.ok) return forwardParseErr<BgSize>(widthResult);
-
+    const autoKeywordIR: KeywordValue = { kind: "keyword", value: "auto" };
     // If only one value, apply to both width and height
     if (children.length === 1) {
       return parseOk({
         kind: "explicit",
         width: widthResult.value,
-        height: widthResult.value,
+        height: autoKeywordIR,
       });
     }
 
@@ -66,7 +68,7 @@ export function parseBackgroundSizeValue(valueNode: csstree.Value): ParseResult<
     });
   }
 
-  return parseErr(createError("invalid-syntax", `Expected 1-2 size values, got ${children.length}`));
+  return parseErr("background-size", createError("invalid-syntax", `Expected 1-2 size values, got ${children.length}`));
 }
 
 /**

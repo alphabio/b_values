@@ -6,7 +6,7 @@ import type { CustomPropertyIR } from "./types";
 describe("generateCustomProperty", () => {
   describe("simple values", () => {
     it("should generate color keyword", () => {
-      const ir: CustomPropertyIR = { kind: "value", value: "blue" };
+      const ir: CustomPropertyIR = { kind: "raw", value: "blue" };
       const result = generateCustomProperty(ir);
 
       expect(result.ok).toBe(true);
@@ -16,7 +16,7 @@ describe("generateCustomProperty", () => {
     });
 
     it("should generate hex color", () => {
-      const ir: CustomPropertyIR = { kind: "value", value: "#123456" };
+      const ir: CustomPropertyIR = { kind: "raw", value: "#123456" };
       const result = generateCustomProperty(ir);
 
       expect(result.ok).toBe(true);
@@ -26,7 +26,7 @@ describe("generateCustomProperty", () => {
     });
 
     it("should generate length", () => {
-      const ir: CustomPropertyIR = { kind: "value", value: "10px" };
+      const ir: CustomPropertyIR = { kind: "raw", value: "10px" };
       const result = generateCustomProperty(ir);
 
       expect(result.ok).toBe(true);
@@ -38,7 +38,7 @@ describe("generateCustomProperty", () => {
 
   describe("complex values", () => {
     it("should generate box-shadow", () => {
-      const ir: CustomPropertyIR = { kind: "value", value: "3px 6px rgb(20 32 54)" };
+      const ir: CustomPropertyIR = { kind: "raw", value: "3px 6px rgb(20 32 54)" };
       const result = generateCustomProperty(ir);
 
       expect(result.ok).toBe(true);
@@ -48,7 +48,7 @@ describe("generateCustomProperty", () => {
     });
 
     it("should generate gradient", () => {
-      const ir: CustomPropertyIR = { kind: "value", value: "linear-gradient(red, blue)" };
+      const ir: CustomPropertyIR = { kind: "raw", value: "linear-gradient(red, blue)" };
       const result = generateCustomProperty(ir);
 
       expect(result.ok).toBe(true);
@@ -58,7 +58,7 @@ describe("generateCustomProperty", () => {
     });
 
     it("should generate calc", () => {
-      const ir: CustomPropertyIR = { kind: "value", value: "calc(100% - 20px)" };
+      const ir: CustomPropertyIR = { kind: "raw", value: "calc(100% - 20px)" };
       const result = generateCustomProperty(ir);
 
       expect(result.ok).toBe(true);
@@ -70,7 +70,7 @@ describe("generateCustomProperty", () => {
 
   describe("preservation", () => {
     it("should preserve case", () => {
-      const ir: CustomPropertyIR = { kind: "value", value: "MyCustomValue" };
+      const ir: CustomPropertyIR = { kind: "raw", value: "MyCustomValue" };
       const result = generateCustomProperty(ir);
 
       expect(result.ok).toBe(true);
@@ -80,7 +80,7 @@ describe("generateCustomProperty", () => {
     });
 
     it("should preserve whitespace", () => {
-      const ir: CustomPropertyIR = { kind: "value", value: "10px  20px   30px" };
+      const ir: CustomPropertyIR = { kind: "raw", value: "10px  20px   30px" };
       const result = generateCustomProperty(ir);
 
       expect(result.ok).toBe(true);
