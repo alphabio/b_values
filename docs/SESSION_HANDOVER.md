@@ -16,6 +16,11 @@
   - Updated all imports to `import * as Keywords from "@b/keywords"`
   - Updated all test files (2322 tests passing)
   - Build and typecheck verified
+- ✅ **Phase 2 COMPLETE:** Created reusable molecule types
+  - Created `@b/types/src/image.ts` (imageSchema, Image)
+  - Created `@b/types/src/repeat-style.ts` (repeatStyleSchema, RepeatStyle, Repetition)
+  - Added comprehensive tests (18 new tests)
+  - All 2340 tests passing
 
 ---
 
@@ -114,17 +119,17 @@ export type ImageLayer = Image | { kind: "none" };
 
 ## 🎯 Next Steps
 
-### Phase 1: Keywords Refactor
+### ~~Phase 1: Keywords Refactor~~ ✅ COMPLETE
 
-1. Remove "Keyword" suffix from all `@b/keywords` exports
-2. Update all imports across codebase to namespace pattern
-3. Run tests to verify
+~~1. Remove "Keyword" suffix from all `@b/keywords` exports~~
+~~2. Update all imports across codebase to namespace pattern~~
+~~3. Run tests to verify~~
 
-### Phase 2: Create Reusable Molecules
+### ~~Phase 2: Create Reusable Molecules~~ ✅ COMPLETE
 
-1. Create `@b/types/src/image.ts` with `imageSchema`, `Image` type
-2. Create `@b/types/src/repeat-style.ts` with `repeatStyleSchema`, `RepeatStyle` type
-3. Export from `@b/types/index.ts`
+~~1. Create `@b/types/src/image.ts` with `imageSchema`, `Image` type~~
+~~2. Create `@b/types/src/repeat-style.ts` with `repeatStyleSchema`, `RepeatStyle` type~~
+~~3. Export from `@b/types/index.ts`~~
 
 ### Phase 3: Refactor Background Properties
 
@@ -166,6 +171,6 @@ export type ImageLayer = Image | { kind: "none" };
 
 ---
 
-**Status:** 🟢 **Phase 1 Complete - Ready for Phase 2**  
-**Commits:** 1 (namespace import pattern refactor)
-**Next:** Create reusable molecules (`image.ts`, `repeat-style.ts`)
+**Status:** 🟢 **Phase 2 Complete - Ready for Phase 3**  
+**Commits:** 2 (namespace imports, reusable molecules)
+**Next:** Refactor background properties to use reusable molecules
