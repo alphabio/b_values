@@ -1,7 +1,7 @@
-// b_path:: packages/b_declarations/src/properties/background-image/__tests__/generator.test.ts
+// b_path:: packages/b_declarations/src/properties/background-image/generator.test.ts
 import { describe, expect, it } from "vitest";
-import { generateBackgroundImage } from "../generator";
-import type { BackgroundImageIR } from "../types";
+import { generateBackgroundImage } from "./generator";
+import type { BackgroundImageIR } from "./types";
 
 describe("generateBackgroundImage", () => {
   describe("CSS-wide keywords", () => {

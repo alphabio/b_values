@@ -11,6 +11,7 @@
 ### Rule: Co-locate by default, decompose when needed
 
 **Default: Co-located**
+
 ```
 packages/{package}/src/
 ├── {feature}/
@@ -19,6 +20,7 @@ packages/{package}/src/
 ```
 
 **Exception: Decomposed into multiple files**
+
 ```
 packages/{package}/src/
 ├── {feature}/
@@ -37,6 +39,7 @@ packages/{package}/src/
 **ONLY when you need to split tests into multiple files.**
 
 Examples:
+
 - ✅ Gradients: 7-8 aspects (direction, stops, interpolation, etc)
 - ✅ Complex properties with distinct test categories
 - ❌ Single test file (even if 300+ lines) → use co-location

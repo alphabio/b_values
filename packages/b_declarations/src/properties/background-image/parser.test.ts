@@ -1,9 +1,9 @@
-// b_path:: packages/b_declarations/src/properties/background-image/__tests__/background-image.test.ts
+// b_path:: packages/b_declarations/src/properties/background-image/parser.test.ts
 import { describe, expect, it } from "vitest";
-import { parseBackgroundImage } from "../parser";
+import { parseBackgroundImage } from "./parser";
 import * as Generators from "@b/generators";
 import type { ParseResult } from "@b/types";
-import type { BackgroundImageIR } from "../types";
+import type { BackgroundImageIR } from "./types";
 
 /**
  * Test helper: parse string directly (now that parser accepts string)
