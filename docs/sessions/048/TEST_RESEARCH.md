@@ -7,17 +7,17 @@
 Actual `kind` values used in the codebase:
 
 ```typescript
-"color"   // color() function
-"hex"     // #rrggbb
-"hsl"     // hsl() / hsla()
-"hwb"     // hwb()
-"lab"     // lab()
-"lch"     // lch()
-"named"   // named colors
-"oklab"   // oklab()
-"oklch"   // oklch()
-"rgb"     // rgb() / rgba()
-"special" // currentColor, transparent
+"color"; // color() function
+"hex"; // #rrggbb
+"hsl"; // hsl() / hsla()
+"hwb"; // hwb()
+"lab"; // lab()
+"lch"; // lch()
+"named"; // named colors
+"oklab"; // oklab()
+"oklch"; // oklch()
+"rgb"; // rgb() / rgba()
+"special"; // currentColor, transparent
 ```
 
 **NOT** `"rgb-color"`, `"hsl-color"`, etc. Those were wrong assumptions.
@@ -25,10 +25,12 @@ Actual `kind` values used in the codebase:
 ### 2. Function Dispatcher Behavior
 
 **Functions IN the dispatcher (return ParseResult):**
+
 - Math: `calc()`, `min()`, `max()`, `clamp()`
 - Colors: `rgb()`, `rgba()`, `hsl()`, `hsla()`, `hwb()`, `lab()`, `lch()`, `oklab()`, `oklch()`
 
 **Functions NOT in dispatcher (return null):**
+
 - `var()` - handled by parseCssValueNode
 - `url()` - handled by parseUrlFromNode
 - `linear-gradient()`, `radial-gradient()`, etc - handled by gradient parsers
@@ -37,6 +39,7 @@ Actual `kind` values used in the codebase:
 ### 3. Test Patterns from Existing Tests
 
 From `rgb.test.ts`:
+
 ```typescript
 // Helper function pattern
 function parseRgb(input: string) {
@@ -46,7 +49,7 @@ function parseRgb(input: string) {
 
 // Assertion pattern
 expect(result.ok).toBe(true);
-expect(result.value?.kind).toBe("rgb");  // Note: actual kind string
+expect(result.value?.kind).toBe("rgb"); // Note: actual kind string
 expect(result.value?.r).toEqual({ kind: "literal", value: 255 });
 ```
 
@@ -64,21 +67,16 @@ expect(result.value?.r).toEqual({ kind: "literal", value: 255 });
 ### 5. Files Still Need Tests
 
 **Priority 1 - Critical Infrastructure:**
+
 1. ✅ function-dispatcher.ts - NEEDS FIXING (wrong kind expectations)
-2. ✅ css-value-parser.ts - NEEDS FIXING (wrong kind expectations)  
+2. ✅ css-value-parser.ts - NEEDS FIXING (wrong kind expectations)
 3. ✅ color-function.ts - NEEDS FIXING (wrong kind expectations)
 
-**Priority 2 - Gradient:**
-4. ❌ gradient/gradient.ts
-5. ❌ utils/color-interpolation.ts
+**Priority 2 - Gradient:** 4. ❌ gradient/gradient.ts 5. ❌ utils/color-interpolation.ts
 
-**Priority 3 - Utilities:**
-6. ❌ utils/css-value-functions.ts
-7. ❌ keywords/color-space.ts
-8. ❌ keywords/utils/zod.ts
+**Priority 3 - Utilities:** 6. ❌ utils/css-value-functions.ts 7. ❌ keywords/color-space.ts 8. ❌ keywords/utils/zod.ts
 
-**Priority 4 - Integration:**
-9. ❌ declarations/properties/background-image/*
+**Priority 4 - Integration:** 9. ❌ declarations/properties/background-image/\*
 
 ## Action Plan
 
@@ -93,4 +91,3 @@ expect(result.value?.r).toEqual({ kind: "literal", value: 255 });
 - **DON'T assume type names match kind strings**
 - **DO check existing test patterns for the codebase**
 - **DON'T play whack-a-mole with test failures**
-
