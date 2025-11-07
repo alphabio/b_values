@@ -1,5 +1,5 @@
 // b_path:: packages/b_parsers/src/utils/ast/split-by-comma.ts
-import type * as csstree from "css-tree";
+import type * as csstree from "@eslint/css-tree";
 
 export interface SplitByCommaOptions {
   /** Start index in nodes array (default: 0) */

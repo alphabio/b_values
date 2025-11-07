@@ -1,6 +1,5 @@
 // b_path:: packages/b_parsers/src/color/color.ts
-import type * as csstree from "css-tree";
-import * as cssTree from "css-tree";
+import * as csstree from "@eslint/css-tree";
 import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
 import type * as Type from "@b/types";
 import { parseCssValueNodeWrapper } from "../css-value-parser";
@@ -85,10 +84,10 @@ export function parseNode(node: csstree.CssNode): ParseResult<Type.Color> {
  */
 export function parse(value: string): ParseResult<Type.Color> {
   try {
-    const ast = cssTree.parse(value, { context: "value" });
+    const ast = csstree.parse(value, { context: "value" });
 
     let firstNode: csstree.CssNode | null = null;
-    cssTree.walk(ast, {
+    csstree.walk(ast, {
       enter(node: csstree.CssNode) {
         if (!firstNode && node.type !== "Value") {
           firstNode = node;

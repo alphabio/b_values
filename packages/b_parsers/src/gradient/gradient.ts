@@ -1,9 +1,11 @@
 // b_path:: packages/b_parsers/src/gradient/gradient.ts
 import type { ParseResult } from "@b/types";
 import type * as Type from "@b/types";
+import type * as csstree from "@eslint/css-tree";
 import * as Radial from "./radial";
 import * as Linear from "./linear";
 import * as Conic from "./conic";
+import { createError, parseErr } from "@b/types";
 
 /**
  * Unified gradient parser that detects gradient type and dispatches to appropriate parser.
@@ -41,4 +43,31 @@ export function parse(css: string): ParseResult<Type.Gradient> {
       },
     ],
   };
+}
+
+/**
+ * AST-native gradient parser from FunctionNode.
+ *
+ * Dispatches to appropriate gradient parser based on function name.
+ * Part of AST-native architecture refactoring.
+ *
+ * @param node - css-tree FunctionNode representing gradient
+ * @returns Parsed gradient IR
+ */
+export function parseFromNode(node: csstree.FunctionNode): ParseResult<Type.Gradient> {
+  const funcName = node.name.toLowerCase();
+
+  if (funcName.includes("radial")) {
+    return Radial.fromFunction(node);
+  }
+
+  if (funcName.includes("linear")) {
+    return Linear.fromFunction(node);
+  }
+
+  if (funcName.includes("conic")) {
+    return Conic.fromFunction(node);
+  }
+
+  return parseErr(createError("unsupported-kind", `Not a gradient function: ${funcName}`, { location: node.loc }));
 }

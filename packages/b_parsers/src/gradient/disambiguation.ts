@@ -1,5 +1,5 @@
 // b_path:: packages/b_parsers/src/gradient/disambiguation.ts
-import type * as csstree from "css-tree";
+import type * as csstree from "@eslint/css-tree";
 import * as Utils from "../utils";
 
 /**

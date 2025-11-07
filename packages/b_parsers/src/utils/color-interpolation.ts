@@ -1,5 +1,5 @@
 // b_path:: packages/b_parsers/src/utils/color-interpolation.ts
-import type * as csstree from "css-tree";
+import type * as csstree from "@eslint/css-tree";
 import type { ColorInterpolationMethod } from "@b/types";
 import type { HueInterpolationMethod } from "@b/keywords";
 

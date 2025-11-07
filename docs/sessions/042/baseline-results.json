@@ -1,0 +1,72 @@
+{
+  "timestamp": "2025-11-07T02:58:09.463Z",
+  "architecture": "current-multi-pass",
+  "iterations": 10000,
+  "results": [
+    {
+      "testCase": "simpleGradient",
+      "iterations": 10000,
+      "totalTime": 204.92215300000214,
+      "avgTime": 0.020492215300000213,
+      "minTime": 0.015457999999966887,
+      "maxTime": 1.514665999999977,
+      "opsPerSec": 48799.01881569581,
+      "success": true
+    },
+    {
+      "testCase": "complexGradient",
+      "iterations": 10000,
+      "totalTime": 436.8192009999949,
+      "avgTime": 0.043681920099999494,
+      "minTime": 0.03687499999989541,
+      "maxTime": 1.3195419999999558,
+      "opsPerSec": 22892.766565909533,
+      "success": true
+    },
+    {
+      "testCase": "radialGradient",
+      "iterations": 10000,
+      "totalTime": 429.3535910000054,
+      "avgTime": 0.04293535910000054,
+      "minTime": 0.038250000000061846,
+      "maxTime": 0.8485410000000684,
+      "opsPerSec": 23290.826511335443,
+      "success": true
+    },
+    {
+      "testCase": "multipleGradients",
+      "iterations": 10000,
+      "totalTime": 488.4803709999819,
+      "avgTime": 0.048848037099998194,
+      "minTime": 0.041999999999916326,
+      "maxTime": 1.5962079999999332,
+      "opsPerSec": 20471.651664382578,
+      "success": true
+    },
+    {
+      "testCase": "complexMultiLayer",
+      "iterations": 10000,
+      "totalTime": 1485.904811999992,
+      "avgTime": 0.1485904811999992,
+      "minTime": 0.1336670000000595,
+      "maxTime": 1.7113329999997404,
+      "opsPerSec": 6729.906195364049,
+      "success": false
+    },
+    {
+      "testCase": "withCalc",
+      "iterations": 10000,
+      "totalTime": 286.026825999998,
+      "avgTime": 0.028602682599999797,
+      "minTime": 0.02374999999983629,
+      "maxTime": 2.1496250000000146,
+      "opsPerSec": 34961.75565015035,
+      "success": true
+    }
+  ],
+  "summary": {
+    "avgParseTime": 0.05552511589999958,
+    "avgThroughput": 26190.987567139626,
+    "successRate": 0.8333333333333334
+  }
+}

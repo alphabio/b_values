@@ -1,5 +1,5 @@
 // b_path:: packages/b_parsers/src/gradient/radial.ts
-import type * as csstree from "css-tree";
+import type * as csstree from "@eslint/css-tree";
 import { createError, parseErr, parseOk, forwardParseErr, type ParseResult } from "@b/types";
 import type * as Type from "@b/types";
 import type { RadialShape, RadialSizeKeyword } from "@b/keywords";

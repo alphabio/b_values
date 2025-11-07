@@ -27,8 +27,7 @@
     "@b/parsers": "workspace:*",
     "@b/types": "workspace:*",
     "@b/utils": "workspace:*",
-    "@types/css-tree": "catalog:",
-    "css-tree": "catalog:",
+    "@eslint/css-tree": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {

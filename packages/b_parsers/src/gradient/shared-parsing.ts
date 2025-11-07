@@ -1,5 +1,5 @@
 // b_path:: packages/b_parsers/src/gradient/shared-parsing.ts
-import type * as csstree from "css-tree";
+import type * as csstree from "@eslint/css-tree";
 import { createWarning, parseOk, type ParseResult, forwardParseErr } from "@b/types";
 import type * as Type from "@b/types";
 import * as Utils from "../utils";

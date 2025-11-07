@@ -4,15 +4,15 @@ import { validate } from "@b/utils";
 import { propertyRegistry } from "./core";
 import type { CSSDeclaration, DeclarationResult } from "./types";
 import { generateDeclaration } from "./generator";
+import * as csstree from "@eslint/css-tree";
 
 /**
  * Parse a CSS declaration string or object into its IR representation.
  *
- * Enhanced with css-tree validation and generator warnings:
- * 1. Validates syntax with css-tree (fail fast on syntax errors)
- * 2. Parses with our system (semantic validation)
- * 3. Adds css-tree warnings for visual context
- * 4. Runs generator to collect semantic warnings (if parse succeeded)
+ * AST-native architecture: Single-pass parsing with direct AST traversal.
+ * 1. Parses CSS to AST with css-tree (positions enabled)
+ * 2. Passes AST node directly to property parser
+ * 3. Errors naturally include location data from AST
  *
  * @param input - CSS declaration string (e.g., "color: red;" or "color: red") or object
  * @returns Result with the parsed IR or an error
@@ -53,13 +53,26 @@ export function parseDeclaration(input: string | CSSDeclaration): ParseResult<De
     return parseErr(createError("invalid-value", `Unknown CSS property: ${property}`));
   }
 
-  // Step 2: Validate with css-tree and collect any formatted warnings
+  // Step 2: Parse value to AST with positions enabled
+  let valueAst: csstree.Value;
+  try {
+    valueAst = csstree.parse(value, {
+      context: "value",
+      positions: true,
+    }) as csstree.Value;
+  } catch (e: unknown) {
+    // Fatal parse error from css-tree
+    const error = e as Error;
+    return parseErr(createError("invalid-syntax", error.message));
+  }
+
+  // Step 3: Validate with css-tree for additional warnings
   const validation = validate(`${property}: ${value}`);
 
-  // Step 3: Parse the value using the property's parser
-  const parseResult = definition.parser(value);
+  // Step 4: Parse using property's AST-native parser
+  const parseResult = definition.parser(valueAst);
 
-  // Step 4: Collect all issues
+  // Step 5: Collect all issues
   const allIssues: Issue[] = [...parseResult.issues];
 
   // Add css-tree warnings for visual context

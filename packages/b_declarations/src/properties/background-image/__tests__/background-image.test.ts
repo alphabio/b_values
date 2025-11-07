@@ -2,11 +2,25 @@
 import { describe, expect, it } from "vitest";
 import { parseBackgroundImage } from "../parser";
 import * as Generators from "@b/generators";
+import * as csstree from "@eslint/css-tree";
+import type { ParseResult } from "@b/types";
+import type { BackgroundImageIR } from "../types";
+
+/**
+ * Test helper: parse string to AST and call parser
+ */
+function parseBackgroundImageFromString(css: string): ParseResult<BackgroundImageIR> {
+  const ast = csstree.parse(css, {
+    context: "value",
+    positions: true,
+  }) as csstree.Value;
+  return parseBackgroundImage(ast);
+}
 
 describe("background-image property", () => {
   describe("keywords", () => {
     it("should parse 'none'", () => {
-      const result = parseBackgroundImage("none");
+      const result = parseBackgroundImageFromString("none");
       expect(result.ok).toBe(true);
       if (!result.ok) return;
       expect(result.value.kind).toBe("keyword");
@@ -15,7 +29,7 @@ describe("background-image property", () => {
     });
 
     it("should parse CSS-wide keywords", () => {
-      const result = parseBackgroundImage("inherit");
+      const result = parseBackgroundImageFromString("inherit");
       expect(result.ok).toBe(true);
       if (!result.ok) return;
       expect(result.value.kind).toBe("keyword");
@@ -24,7 +38,7 @@ describe("background-image property", () => {
 
   describe("single layer", () => {
     it("should parse url without quotes", () => {
-      const result = parseBackgroundImage("url(image.png)");
+      const result = parseBackgroundImageFromString("url(image.png)");
       expect(result.ok).toBe(true);
       if (!result.ok) return;
       expect(result.value.kind).toBe("layers");
@@ -36,7 +50,7 @@ describe("background-image property", () => {
     });
 
     it("should parse url with double quotes", () => {
-      const result = parseBackgroundImage('url("image.png")');
+      const result = parseBackgroundImageFromString('url("image.png")');
       expect(result.ok).toBe(true);
       if (!result.ok) return;
       expect(result.value.kind).toBe("layers");
@@ -45,7 +59,7 @@ describe("background-image property", () => {
     });
 
     it("should parse url with single quotes", () => {
-      const result = parseBackgroundImage("url('image.png')");
+      const result = parseBackgroundImageFromString("url('image.png')");
       expect(result.ok).toBe(true);
       if (!result.ok) return;
       expect(result.value.kind).toBe("layers");
@@ -57,7 +71,7 @@ describe("background-image property", () => {
   describe("gradients", () => {
     it("should parse and round-trip linear-gradient", () => {
       const input = "linear-gradient(red, blue)";
-      const result = parseBackgroundImage(input);
+      const result = parseBackgroundImageFromString(input);
       expect(result.ok).toBe(true);
       if (!result.ok) return;
       expect(result.value.kind).toBe("layers");
@@ -71,13 +85,13 @@ describe("background-image property", () => {
       const generateResult = Generators.Gradient.generate(gradient);
       expect(generateResult.ok).toBe(true);
       if (!generateResult.ok) return;
-      const reparsed = parseBackgroundImage(generateResult.value);
+      const reparsed = parseBackgroundImageFromString(generateResult.value);
       expect(reparsed.ok).toBe(true);
     });
 
     it("should parse and round-trip linear-gradient with direction", () => {
       const input = "linear-gradient(to right, red, blue)";
-      const result = parseBackgroundImage(input);
+      const result = parseBackgroundImageFromString(input);
       expect(result.ok).toBe(true);
       if (!result.ok) return;
       expect(result.value.kind).toBe("layers");
@@ -90,13 +104,13 @@ describe("background-image property", () => {
       const generateResult = Generators.Gradient.generate(gradient);
       expect(generateResult.ok).toBe(true);
       if (!generateResult.ok) return;
-      const reparsed = parseBackgroundImage(generateResult.value);
+      const reparsed = parseBackgroundImageFromString(generateResult.value);
       expect(reparsed.ok).toBe(true);
     });
 
     it("should parse and round-trip radial-gradient", () => {
       const input = "radial-gradient(circle, red, blue)";
-      const result = parseBackgroundImage(input);
+      const result = parseBackgroundImageFromString(input);
       expect(result.ok).toBe(true);
       if (!result.ok) return;
       expect(result.value.kind).toBe("layers");
@@ -109,13 +123,13 @@ describe("background-image property", () => {
       const generateResult = Generators.Gradient.generate(gradient);
       expect(generateResult.ok).toBe(true);
       if (!generateResult.ok) return;
-      const reparsed = parseBackgroundImage(generateResult.value);
+      const reparsed = parseBackgroundImageFromString(generateResult.value);
       expect(reparsed.ok).toBe(true);
     });
 
     it("should parse and round-trip radial-gradient with size and position", () => {
       const input = "radial-gradient(circle closest-side at center, red, blue)";
-      const result = parseBackgroundImage(input);
+      const result = parseBackgroundImageFromString(input);
       expect(result.ok).toBe(true);
       if (!result.ok) return;
       expect(result.value.kind).toBe("layers");
@@ -128,13 +142,13 @@ describe("background-image property", () => {
       const generateResult = Generators.Gradient.generate(gradient);
       expect(generateResult.ok).toBe(true);
       if (!generateResult.ok) return;
-      const reparsed = parseBackgroundImage(generateResult.value);
+      const reparsed = parseBackgroundImageFromString(generateResult.value);
       expect(reparsed.ok).toBe(true);
     });
 
     it("should parse and round-trip conic-gradient", () => {
       const input = "conic-gradient(red, blue)";
-      const result = parseBackgroundImage(input);
+      const result = parseBackgroundImageFromString(input);
       expect(result.ok).toBe(true);
       if (!result.ok) return;
       expect(result.value.kind).toBe("layers");
@@ -147,13 +161,13 @@ describe("background-image property", () => {
       const generateResult = Generators.Gradient.generate(gradient);
       expect(generateResult.ok).toBe(true);
       if (!generateResult.ok) return;
-      const reparsed = parseBackgroundImage(generateResult.value);
+      const reparsed = parseBackgroundImageFromString(generateResult.value);
       expect(reparsed.ok).toBe(true);
     });
 
     it("should parse and round-trip conic-gradient with angle and position", () => {
       const input = "conic-gradient(from 45deg at center, red, blue)";
-      const result = parseBackgroundImage(input);
+      const result = parseBackgroundImageFromString(input);
       expect(result.ok).toBe(true);
       if (!result.ok) return;
       expect(result.value.kind).toBe("layers");
@@ -166,13 +180,13 @@ describe("background-image property", () => {
       const generateResult = Generators.Gradient.generate(gradient);
       expect(generateResult.ok).toBe(true);
       if (!generateResult.ok) return;
-      const reparsed = parseBackgroundImage(generateResult.value);
+      const reparsed = parseBackgroundImageFromString(generateResult.value);
       expect(reparsed.ok).toBe(true);
     });
 
     it("should parse repeating-linear-gradient", () => {
       const input = "repeating-linear-gradient(red 0%, blue 10%)";
-      const result = parseBackgroundImage(input);
+      const result = parseBackgroundImageFromString(input);
       expect(result.ok).toBe(true);
       if (!result.ok) return;
       expect(result.value.kind).toBe("layers");
@@ -184,7 +198,7 @@ describe("background-image property", () => {
 
     it("should parse repeating-radial-gradient", () => {
       const input = "repeating-radial-gradient(red 0%, blue 10%)";
-      const result = parseBackgroundImage(input);
+      const result = parseBackgroundImageFromString(input);
       expect(result.ok).toBe(true);
       if (!result.ok) return;
       expect(result.value.kind).toBe("layers");
@@ -196,7 +210,7 @@ describe("background-image property", () => {
 
     it("should parse repeating-conic-gradient", () => {
       const input = "repeating-conic-gradient(red 0deg, blue 45deg)";
-      const result = parseBackgroundImage(input);
+      const result = parseBackgroundImageFromString(input);
       expect(result.ok).toBe(true);
       if (!result.ok) return;
       expect(result.value.kind).toBe("layers");
@@ -208,7 +222,7 @@ describe("background-image property", () => {
 
     it("should fail for invalid gradient", () => {
       const input = "linear-gradient(invalid)";
-      const result = parseBackgroundImage(input);
+      const result = parseBackgroundImageFromString(input);
       expect(result.ok).toBe(false);
       if (result.ok) return;
       expect(result.issues[0]?.message).toContain("linear-gradient requires at least 2 color stops");
@@ -217,7 +231,7 @@ describe("background-image property", () => {
 
   describe("multiple layers", () => {
     it("should parse comma-separated layers", () => {
-      const result = parseBackgroundImage("url(a.png), url(b.png)");
+      const result = parseBackgroundImageFromString("url(a.png), url(b.png)");
       expect(result.ok).toBe(true);
       if (!result.ok) return;
       expect(result.value.kind).toBe("layers");
@@ -228,7 +242,7 @@ describe("background-image property", () => {
     });
 
     it("should parse mixed url and gradient layers", () => {
-      const result = parseBackgroundImage("url(image.png), linear-gradient(red, blue)");
+      const result = parseBackgroundImageFromString("url(image.png), linear-gradient(red, blue)");
       expect(result.ok).toBe(true);
       if (!result.ok) return;
       expect(result.value.kind).toBe("layers");
@@ -239,7 +253,7 @@ describe("background-image property", () => {
     });
 
     it("should parse multiple gradients", () => {
-      const result = parseBackgroundImage(
+      const result = parseBackgroundImageFromString(
         "linear-gradient(red, blue), radial-gradient(circle, green, yellow), conic-gradient(red, blue)",
       );
       expect(result.ok).toBe(true);
@@ -253,7 +267,7 @@ describe("background-image property", () => {
     });
 
     it("should handle none in layer list", () => {
-      const result = parseBackgroundImage("url(image.png), none");
+      const result = parseBackgroundImageFromString("url(image.png), none");
       expect(result.ok).toBe(true);
       if (!result.ok) return;
       expect(result.value.kind).toBe("layers");
@@ -265,14 +279,14 @@ describe("background-image property", () => {
 
   describe("invalid values", () => {
     it("should fail for unsupported values", () => {
-      const result = parseBackgroundImage("invalid-value");
+      const result = parseBackgroundImageFromString("invalid-value");
       expect(result.ok).toBe(false);
       if (result.ok) return;
       expect(result.issues[0]?.message).toContain("Unsupported image type");
     });
 
     it("should collect multiple errors from multiple invalid layers", () => {
-      const result = parseBackgroundImage("invalid-first, linear-gradient(bad), unknown-func()");
+      const result = parseBackgroundImageFromString("invalid-first, linear-gradient(bad), unknown-func()");
       expect(result.ok).toBe(false);
       if (result.ok) return;
       // Should have collected errors from all 3 invalid layers
@@ -284,7 +298,7 @@ describe("background-image property", () => {
     });
 
     it("should collect errors but include successful layers", () => {
-      const result = parseBackgroundImage("url(valid.png), invalid-layer, url(also-valid.png)");
+      const result = parseBackgroundImageFromString("url(valid.png), invalid-layer, url(also-valid.png)");
       expect(result.ok).toBe(false);
       if (result.ok) return;
       // Should have error from the invalid layer
@@ -304,7 +318,7 @@ describe("background-image property", () => {
 describe("rgb colors in gradients", () => {
   it("should parse radial gradient with rgb colors", () => {
     const input = "radial-gradient(rgb(255, 255, 255, 0) 0, rgb(255, 255, 255, 0.15) 30%)";
-    const result = parseBackgroundImage(input);
+    const result = parseBackgroundImageFromString(input);
 
     if (!result.ok) {
       console.log("Error parsing:", result.issues[0]?.message);

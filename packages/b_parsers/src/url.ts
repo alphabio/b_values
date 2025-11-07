@@ -1,6 +1,7 @@
 // b_path:: packages/b_parsers/src/url.ts
 import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
 import type { Url } from "@b/types";
+import type * as csstree from "@eslint/css-tree";
 
 /**
  * Parse a CSS url() function.
@@ -48,4 +49,63 @@ export function parseUrl(input: string): ParseResult<Url> {
   }
 
   return parseErr(createError("invalid-syntax", `Empty url() function in "${input}"`));
+}
+
+/**
+ * Parse a CSS url() function from AST node.
+ * AST-native version for improved performance and error locations.
+ *
+ * @param node - FunctionNode representing url()
+ * @returns Parsed URL IR
+ */
+export function parseUrlFromNode(node: csstree.FunctionNode): ParseResult<Url> {
+  if (node.name.toLowerCase() !== "url") {
+    return parseErr(
+      createError("invalid-syntax", `Expected url() function, got: ${node.name}()`, { location: node.loc }),
+    );
+  }
+
+  const children = node.children.toArray();
+
+  // url() should have exactly one child (the URL string or identifier)
+  if (children.length === 0) {
+    return parseErr(createError("invalid-syntax", "Empty url() function", { location: node.loc }));
+  }
+
+  if (children.length > 1) {
+    return parseErr(
+      createError("invalid-syntax", "url() function should have exactly one argument", { location: node.loc }),
+    );
+  }
+
+  const child = children[0];
+
+  // Handle string literals (quoted)
+  if (child.type === "String") {
+    return parseOk({
+      kind: "url",
+      value: child.value,
+    });
+  }
+
+  // Handle raw URL (identifier or url token)
+  if (child.type === "Url") {
+    return parseOk({
+      kind: "url",
+      value: child.value,
+    });
+  }
+
+  // Handle identifier (unquoted URL)
+  if (child.type === "Identifier") {
+    return parseOk({
+      kind: "url",
+      value: child.name,
+    });
+  }
+
+  // Unexpected child type
+  return parseErr(
+    createError("invalid-syntax", `Unexpected content in url() function: ${child.type}`, { location: child.loc }),
+  );
 }

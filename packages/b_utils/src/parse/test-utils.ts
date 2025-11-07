@@ -1,5 +1,5 @@
 // b_path:: packages/b_utils/src/parse/test-utils.ts
-import * as csstree from "css-tree";
+import * as csstree from "@eslint/css-tree";
 
 /**
  * Extract a function node from a CSS function string for testing

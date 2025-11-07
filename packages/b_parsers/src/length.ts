@@ -1,5 +1,5 @@
 // b_path:: packages/b_parsers/src/length.ts
-import type * as csstree from "css-tree";
+import type * as csstree from "@eslint/css-tree";
 import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
 import type * as Type from "@b/types";
 import * as Unit from "@b/units";

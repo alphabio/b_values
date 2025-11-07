@@ -27,13 +27,12 @@
     "@b/types": "workspace:*",
     "@b/units": "workspace:*",
     "@b/utils": "workspace:*",
-    "css-tree": "catalog:",
+    "@eslint/css-tree": "catalog:",
     "b_short": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@b/typescript-config": "workspace:*",
-    "@types/css-tree": "catalog:"
+    "@b/typescript-config": "workspace:*"
   },
   "publishConfig": {
     "access": "public"

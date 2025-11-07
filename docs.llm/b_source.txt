@@ -2565,7 +2565,7 @@ export function parseColorFunction(node: csstree.FunctionNode): ParseResult<Colo
 === File: packages/b_parsers/src/color/color.ts ===
 // b_path:: packages/b_parsers/src/color/color.ts
 import type * as csstree from "css-tree";
-import * as cssTree from "css-tree";
+import * as csstree from '@eslint/css-tree';;
 import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
 import type * as Type from "@b/types";
 import { parseCssValueNodeEnhanced } from "../css-value-parser-enhanced";
@@ -5108,7 +5108,7 @@ export function parseUrl(input: string): ParseResult<Url> {
 
 === File: packages/b_parsers/src/utils/ast/functions.ts ===
 // b_path:: packages/b_parsers/src/utils/ast/functions.ts
-import * as csstree from "css-tree";
+import * as csstree from '@eslint/css-tree';;
 import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
 
 /**
@@ -7826,7 +7826,7 @@ export * from "./validation";
 
 === File: packages/b_utils/src/parse/css-value-parser.ts ===
 // b_path:: packages/b_utils/src/parse/css-value-parser.ts
-import * as csstree from "css-tree";
+import * as csstree from '@eslint/css-tree';;
 import { createError, forwardParseErr, parseErr, parseOk, type ParseResult } from "@b/types";
 import type { CssValue } from "@b/types";
 
@@ -8059,7 +8059,7 @@ export interface StylesheetValidation {
 
 === File: packages/b_utils/src/parse/test-utils.ts ===
 // b_path:: packages/b_utils/src/parse/test-utils.ts
-import * as csstree from "css-tree";
+import * as csstree from '@eslint/css-tree';;
 
 /**
  * Extract a function node from a CSS function string for testing
@@ -8112,7 +8112,7 @@ export function extractFunctionFromValue(input: string): csstree.FunctionNode {
  * @since 1.0.0
  */
 
-import * as csstree from "css-tree";
+import * as csstree from '@eslint/css-tree';;
 import type { BStyleWarning, StylesheetValidation } from "./schema";
 
 // Constants

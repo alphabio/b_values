@@ -1,6 +1,6 @@
 // b_path:: packages/b_utils/src/parse/css-value-parser.test.ts
 import { describe, expect, it } from "vitest";
-import * as csstree from "css-tree";
+import * as csstree from "@eslint/css-tree";
 import { parseCssValueNode, getChildren, getValues } from "./css-value-parser";
 
 describe("parseCssValueNode", () => {

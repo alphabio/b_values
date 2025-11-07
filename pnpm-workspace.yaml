@@ -4,6 +4,7 @@ packages:
 catalog:
   "@auth/core": 0.37.0
   "@convex-dev/auth": ^0.0.90
+  "@eslint/css-tree": ^3.6.6
   "@oslojs/crypto": 1.0.1
   "@radix-ui/react-label": ^2.1.7
   "@tailwindcss/vite": ^4.1.16
@@ -17,7 +18,6 @@ catalog:
   class-variance-authority: ^0.7.1
   clsx: ^2.1.1
   convex: ^1.28.2
-  css-tree: ^3.1.0
   framer-motion: ^12.23.24
   howler: ^2.2.4
   input-otp: ^1.4.2

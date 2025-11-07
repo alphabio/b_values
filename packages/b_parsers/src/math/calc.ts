@@ -1,5 +1,5 @@
 // b_path:: packages/b_parsers/src/math/calc.ts
-import type * as csstree from "css-tree";
+import type * as csstree from "@eslint/css-tree";
 import { createError, parseErr, parseOk, type ParseResult, type CssValue } from "@b/types";
 import { parseCssValueNodeWrapper } from "../css-value-parser";
 

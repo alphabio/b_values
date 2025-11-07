@@ -52,7 +52,7 @@ export interface DeclarationResult<T = unknown> {
 export interface PropertyDefinition<T = unknown> {
   name: string;
   syntax: string;
-  parser: (value: string) => ParseResult<T>;
+  parser: (node: import("@eslint/css-tree").Value) => ParseResult<T>;
   generator?: (ir: T) => GenerateResult;
   inherited: boolean;
   initial: string;
@@ -62,7 +62,7 @@ export interface PropertyDefinition<T = unknown> {
 /**
  * Property parser function type.
  */
-export type PropertyParser<T = unknown> = (value: string) => ParseResult<T>;
+export type PropertyParser<T = unknown> = (node: import("@eslint/css-tree").Value) => ParseResult<T>;
 
 /**
  * Property generator function type (from core/types).

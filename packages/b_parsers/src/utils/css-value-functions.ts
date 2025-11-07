@@ -1,5 +1,5 @@
 // b_path:: packages/b_parsers/src/utils/css-value-functions.ts
-import type * as csstree from "css-tree";
+import type * as csstree from "@eslint/css-tree";
 
 /**
  * Check if a Function node is a CSS value function (var, calc, clamp, min, max)

@@ -1,7 +1,7 @@
 // b_path:: packages/b_parsers/src/color/color.test.ts
 import { describe, expect, it } from "vitest";
 import { parse, parseNode } from "./color";
-import * as cssTree from "css-tree";
+import * as csstree from "@eslint/css-tree";
 
 describe("parse (color dispatcher)", () => {
   it("parses hex colors", () => {
@@ -129,9 +129,9 @@ describe("parse (color dispatcher)", () => {
 
 describe("parseNode (color node dispatcher)", () => {
   it("parses Hash node as hex color", () => {
-    const ast = cssTree.parse("#ff0000", { context: "value" });
-    let hashNode: cssTree.CssNode | null = null;
-    cssTree.walk(ast, (node) => {
+    const ast = csstree.parse("#ff0000", { context: "value" });
+    let hashNode: csstree.CssNode | null = null;
+    csstree.walk(ast, (node) => {
       if (node.type === "Hash") hashNode = node;
     });
 
@@ -145,9 +145,9 @@ describe("parseNode (color node dispatcher)", () => {
   });
 
   it("fails on invalid hex color", () => {
-    const ast = cssTree.parse("#gg0000", { context: "value" });
-    let hashNode: cssTree.CssNode | null = null;
-    cssTree.walk(ast, (node) => {
+    const ast = csstree.parse("#gg0000", { context: "value" });
+    let hashNode: csstree.CssNode | null = null;
+    csstree.walk(ast, (node) => {
       if (node.type === "Hash") hashNode = node;
     });
 
@@ -159,9 +159,9 @@ describe("parseNode (color node dispatcher)", () => {
   });
 
   it("parses Identifier node as named color", () => {
-    const ast = cssTree.parse("red", { context: "value" });
-    let identNode: cssTree.CssNode | null = null;
-    cssTree.walk(ast, (node) => {
+    const ast = csstree.parse("red", { context: "value" });
+    let identNode: csstree.CssNode | null = null;
+    csstree.walk(ast, (node) => {
       if (node.type === "Identifier") identNode = node;
     });
 
@@ -175,9 +175,9 @@ describe("parseNode (color node dispatcher)", () => {
   });
 
   it("fails on unsupported node type", () => {
-    const ast = cssTree.parse("10px", { context: "value" });
-    let dimensionNode: cssTree.CssNode | null = null;
-    cssTree.walk(ast, (node) => {
+    const ast = csstree.parse("10px", { context: "value" });
+    let dimensionNode: csstree.CssNode | null = null;
+    csstree.walk(ast, (node) => {
       if (node.type === "Dimension") dimensionNode = node;
     });
 
@@ -189,9 +189,9 @@ describe("parseNode (color node dispatcher)", () => {
   });
 
   it("handles var() function node", () => {
-    const ast = cssTree.parse("var(--col)", { context: "value" });
-    let funcNode: cssTree.CssNode | null = null;
-    cssTree.walk(ast, (node) => {
+    const ast = csstree.parse("var(--col)", { context: "value" });
+    let funcNode: csstree.CssNode | null = null;
+    csstree.walk(ast, (node) => {
       if (node.type === "Function" && node.name === "var") funcNode = node;
     });
 

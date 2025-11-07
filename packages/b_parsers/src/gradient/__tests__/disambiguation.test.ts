@@ -1,6 +1,6 @@
 // b_path:: packages/b_parsers/src/gradient/__tests__/disambiguation.test.ts
 import { describe, it, expect } from "vitest";
-import * as csstree from "css-tree";
+import * as csstree from "@eslint/css-tree";
 import { disambiguateFirstArg } from "../disambiguation";
 
 /**

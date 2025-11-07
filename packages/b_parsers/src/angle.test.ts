@@ -1,7 +1,7 @@
 // b_path:: packages/b_parsers/src/angle.test.ts
 import { describe, expect, it } from "vitest";
 import { parseAngleNode } from "./angle";
-import type * as csstree from "css-tree";
+import type * as csstree from "@eslint/css-tree";
 
 describe("parseAngleNode", () => {
   it("should parse deg angle", () => {

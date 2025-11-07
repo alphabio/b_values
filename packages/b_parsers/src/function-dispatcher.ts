@@ -1,5 +1,5 @@
 // b_path:: packages/b_parsers/src/function-dispatcher.ts
-import type * as csstree from "css-tree";
+import type * as csstree from "@eslint/css-tree";
 import type { ParseResult, CssValue } from "@b/types";
 import * as Color from "./color";
 import * as MathFunctions from "./math";

@@ -3,6 +3,7 @@ import { describe, expect, it, beforeEach } from "vitest";
 import { parseDeclaration } from "./parser";
 import { propertyRegistry, defineProperty } from "./core";
 import { parseOk, parseErr, createError, type ParseResult } from "@b/types";
+import * as csstree from "@eslint/css-tree";
 
 describe("parseDeclaration", () => {
   beforeEach(() => {
@@ -14,7 +15,11 @@ describe("parseDeclaration", () => {
       defineProperty({
         name: "color",
         syntax: "<color>",
-        parser: (value: string): ParseResult<string> => parseOk(value.trim()),
+        parser: (node: csstree.Value): ParseResult<string> => {
+          // Simple test parser: just convert back to string
+          const value = csstree.generate(node).trim();
+          return parseOk(value);
+        },
         inherited: true,
         initial: "black",
       });
@@ -33,7 +38,10 @@ describe("parseDeclaration", () => {
       defineProperty({
         name: "color",
         syntax: "<color>",
-        parser: (value: string): ParseResult<string> => parseOk(value.trim()),
+        parser: (node: csstree.Value): ParseResult<string> => {
+          const value = csstree.generate(node).trim();
+          return parseOk(value);
+        },
         inherited: true,
         initial: "black",
       });
@@ -51,7 +59,10 @@ describe("parseDeclaration", () => {
       defineProperty({
         name: "background-image",
         syntax: "<image>",
-        parser: (value: string): ParseResult<string> => parseOk(value.trim()),
+        parser: (node: csstree.Value): ParseResult<string> => {
+          const value = csstree.generate(node).trim();
+          return parseOk(value);
+        },
         inherited: false,
         initial: "none",
       });
@@ -100,7 +111,10 @@ background-image: url(image.png);
       defineProperty({
         name: "color",
         syntax: "<color>",
-        parser: (value: string): ParseResult<string> => parseOk(value.trim()),
+        parser: (node: csstree.Value): ParseResult<string> => {
+          const value = csstree.generate(node).trim();
+          return parseOk(value);
+        },
         inherited: true,
         initial: "black",
       });

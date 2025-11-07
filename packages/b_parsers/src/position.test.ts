@@ -1,7 +1,7 @@
 // b_path:: packages/b_parsers/src/position.test.ts
 import { describe, expect, it } from "vitest";
 import { parsePosition2D } from "./position";
-import type * as csstree from "css-tree";
+import type * as csstree from "@eslint/css-tree";
 
 describe("parsePosition2D", () => {
   it("should parse single horizontal keyword", () => {

@@ -1,5 +1,5 @@
 // b_path:: packages/b_parsers/src/color/hwb.ts
-import type * as csstree from "css-tree";
+import type * as csstree from "@eslint/css-tree";
 import { createError, parseErr, parseOk, forwardParseErr, type ParseResult } from "@b/types";
 import type { HWBColor } from "@b/types";
 import { parseCssValueNodeWrapper } from "../css-value-parser";

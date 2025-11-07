@@ -1,5 +1,5 @@
 // b_path:: packages/b_parsers/src/utils/ast/functions.ts
-import * as csstree from "css-tree";
+import * as csstree from "@eslint/css-tree";
 import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
 
 /**
@@ -31,8 +31,8 @@ export function findFunctionNode(
   try {
     csstree.walk(ast, {
       visit: "Function",
-      enter(node: csstree.FunctionNode) {
-        if (lowerNames.includes(node.name.toLowerCase())) {
+      enter(node: csstree.CssNode) {
+        if (node.type === "Function" && lowerNames.includes(node.name.toLowerCase())) {
           foundNode = node;
         }
       },

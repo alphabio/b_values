@@ -25,7 +25,7 @@
  * @since 1.0.0
  */
 
-import * as csstree from "css-tree";
+import * as csstree from "@eslint/css-tree";
 import type { BStyleWarning, StylesheetValidation } from "./schema";
 
 // Constants
