@@ -26,13 +26,13 @@ Every CSS property value flows through these layers:
 
 **Ask yourself: Does this value type need its own parser/generator?**
 
-| Value Type | Reusable? | Needs Parser/Generator? | Example |
-|------------|-----------|-------------------------|---------|
-| `<length>` | ✅ Universal | Yes (already exists) | `10px`, `2rem` |
-| `<color>` | ✅ Universal | Yes (already exists) | `#ff0000`, `rgb(...)` |
-| `<gradient>` | ✅ Many props | Yes (already exists) | `linear-gradient(...)` |
-| `<bg-size>` | ⚠️ 2-3 props | Yes (create new) | `cover`, `100px 50px` |
-| Simple keyword | ❌ Single prop | No (inline) | `border-collapse: collapse` |
+| Value Type     | Reusable?      | Needs Parser/Generator? | Example                     |
+| -------------- | -------------- | ----------------------- | --------------------------- |
+| `<length>`     | ✅ Universal   | Yes (already exists)    | `10px`, `2rem`              |
+| `<color>`      | ✅ Universal   | Yes (already exists)    | `#ff0000`, `rgb(...)`       |
+| `<gradient>`   | ✅ Many props  | Yes (already exists)    | `linear-gradient(...)`      |
+| `<bg-size>`    | ⚠️ 2-3 props   | Yes (create new)        | `cover`, `100px 50px`       |
+| Simple keyword | ❌ Single prop | No (inline)             | `border-collapse: collapse` |
 
 **Rule:** If the value is used by multiple properties OR has complex syntax → create value-level parser/generator.
 
@@ -175,7 +175,7 @@ defineProperty({
 
 ## 🎨 Step-by-Step: Complex Property (Reusable Values)
 
-### Example: `background-size: <bg-size>#` 
+### Example: `background-size: <bg-size>#`
 
 Where `<bg-size> = [ <length-percentage> | auto ]{1,2} | cover | contain`
 
@@ -185,13 +185,21 @@ Where `<bg-size> = [ <length-percentage> | auto ]{1,2} | cover | contain`
 
 ```typescript
 import type * as csstree from "@eslint/css-tree";
-import { createError, parseErr, parseOk, forwardParseErr, type ParseResult, type SizeLayer, type SizeValue } from "@b/types";
+import {
+  createError,
+  parseErr,
+  parseOk,
+  forwardParseErr,
+  type ParseResult,
+  type SizeLayer,
+  type SizeValue,
+} from "@b/types";
 import * as Ast from "@b/utils";
 import * as Length from "../length";
 
 /**
  * Parse a single <bg-size> value from a CSS AST node.
- * 
+ *
  * Syntax: [ <length-percentage [0,∞]> | auto ]{1,2} | cover | contain
  */
 export function parseBackgroundSizeValue(valueNode: csstree.Value): ParseResult<SizeLayer> {
@@ -570,6 +578,7 @@ return generateErr(error, "property-name");
 ## ✅ Checklist
 
 ### For Simple Properties:
+
 - [ ] Create property directory in `b_declarations/src/properties/`
 - [ ] Define IR types in `types.ts` (with `kind` discriminator)
 - [ ] Write generator tests
@@ -584,6 +593,7 @@ return generateErr(error, "property-name");
 - [ ] Run `just build`
 
 ### For Complex Properties:
+
 - [ ] **Phase 1: Value-Level**
   - [ ] Create parser in `b_parsers/src/{category}/{value}.ts`
   - [ ] Create generator in `b_generators/src/{category}/{value}.ts`
@@ -620,14 +630,17 @@ return generateErr(error, "property-name");
 ## 📚 Examples
 
 **Simple properties:**
+
 - `packages/b_declarations/src/properties/custom-property/`
 
 **Complex properties (thin orchestrators):**
+
 - `packages/b_declarations/src/properties/background-size/`
 - `packages/b_declarations/src/properties/background-repeat/`
 - `packages/b_declarations/src/properties/background-image/`
 
 **Value-level parsers/generators:**
+
 - `packages/b_parsers/src/background/`
 - `packages/b_generators/src/background/`
 - `packages/b_parsers/src/gradient/`
