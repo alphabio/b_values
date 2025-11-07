@@ -148,30 +148,30 @@ export function getNodeLocation(node: csstree.CssNode): csstree.CssLocationRange
 
 /**
  * Convert css-tree location to our SourceLocation format
- * 
+ *
  * css-tree provides line/column ranges, we need offset/length.
  * This is a best-effort conversion - if source is available we calculate offset,
  * otherwise we return undefined (location tracking disabled).
- * 
+ *
  * @param loc - css-tree location range
  * @param source - original source string (needed to calculate offsets)
  * @returns SourceLocation with offset/length, or undefined if not calculable
  */
 export function convertLocation(
   loc: csstree.CssLocationRange | undefined,
-  source?: string
+  source?: string,
 ): { offset: number; length: number } | undefined {
   if (!loc || !source) return undefined;
 
   // Calculate offset from line/column
   const lines = source.split("\n");
   let offset = 0;
-  
+
   // Add all complete lines before start line
   for (let i = 0; i < loc.start.line - 1; i++) {
     offset += lines[i].length + 1; // +1 for newline
   }
-  
+
   // Add column offset on start line
   offset += loc.start.column - 1;
 
