@@ -2,9 +2,9 @@
 /**
  * Multi-value background-image parser
  *
- * Architecture: Multi-value parser (receives raw string)
- * - Splits value by top-level commas
- * - Parses EACH layer to AST individually
+ * Architecture: Uses createMultiValueParser factory for resilient list parsing
+ * - Handles comma-separated layers
+ * - Detects missing commas (incomplete consumption bug fix)
  * - One bad layer doesn't break others (resilient)
  *
  * Property syntax: background-image = <bg-image>#
@@ -14,22 +14,24 @@
 
 import { createError, parseErr, parseOk, forwardParseErr, type ParseResult } from "@b/types";
 import * as Parsers from "@b/parsers";
-import { isCSSWideKeyword, parseCSSWideKeyword, splitByComma } from "../../utils";
+import { isCSSWideKeyword, parseCSSWideKeyword, createMultiValueParser } from "../../utils";
 import * as Ast from "@b/utils";
 import type { BackgroundImageIR, ImageLayer } from "./types";
-import * as csstree from "@eslint/css-tree";
+import type * as csstree from "@eslint/css-tree";
 
 /**
- * Parse background-image from raw string value.
- *
- * Multi-value parser: Handles comma-separated layers with partial failure resilience.
+ * Pre-parse handler for top-level keywords.
  */
-export function parseBackgroundImage(value: string): ParseResult<BackgroundImageIR> {
-  const trimmed = value.trim();
+function preParse(value: string): ParseResult<BackgroundImageIR> | null {
+  if (value.toLowerCase() === "none") {
+    return parseOk({
+      kind: "keyword",
+      value: "none",
+    });
+  }
 
-  // Handle single keywords: 'none', 'inherit', 'initial', etc.
-  if (isCSSWideKeyword(trimmed)) {
-    const result = parseCSSWideKeyword(trimmed);
+  if (isCSSWideKeyword(value)) {
+    const result = parseCSSWideKeyword(value);
     if (result.ok) {
       return parseOk({
         kind: "keyword",
@@ -38,47 +40,14 @@ export function parseBackgroundImage(value: string): ParseResult<BackgroundImage
     }
   }
 
-  if (trimmed.toLowerCase() === "none") {
-    return parseOk({
-      kind: "keyword",
-      value: "none",
-    });
-  }
-
-  // Split by top-level commas
-  const layerStrings = splitByComma(trimmed);
-  const layerResults: ParseResult<ImageLayer>[] = [];
-
-  for (const layerStr of layerStrings) {
-    // ✨ Parse EACH layer to AST individually
-    let layerAst: csstree.Value;
-    try {
-      layerAst = csstree.parse(layerStr.trim(), {
-        context: "value",
-        positions: true,
-      }) as csstree.Value;
-    } catch (e) {
-      // This layer has syntax error - record and continue to next
-      const errorMessage = e instanceof Error ? e.message : String(e);
-      const issue = createError("invalid-syntax", `Invalid syntax in background layer: ${errorMessage}`);
-      layerResults.push(parseErr(issue));
-      continue;
-    }
-
-    // Parse the validated AST for this layer
-    const layerResult = parseImageLayerFromAST(layerAst);
-    layerResults.push(layerResult);
-  }
-
-  // Aggregate results - collect valid layers and all issues
-  return aggregateLayerResults(layerResults);
+  return null; // Not a keyword, proceed to list parsing
 }
 
 /**
  * Parse a single background layer from its AST.
- * Helper function for layer-by-layer parsing.
+ * Item parser for the multi-value parser factory.
  */
-function parseImageLayerFromAST(valueNode: csstree.Value): ParseResult<ImageLayer> {
+function parseImageLayer(valueNode: csstree.Value): ParseResult<ImageLayer> {
   if (!valueNode || !valueNode.children) {
     return parseErr(createError("invalid-value", "Invalid AST node: missing children"));
   }
@@ -142,39 +111,25 @@ function parseImageLayerFromAST(valueNode: csstree.Value): ParseResult<ImageLaye
 }
 
 /**
- * Aggregate layer results into final BackgroundImageIR.
- * Collects all valid layers and all issues from all layers.
+ * Aggregator for combining valid layers into final IR.
  */
-function aggregateLayerResults(layerResults: ParseResult<ImageLayer>[]): ParseResult<BackgroundImageIR> {
-  const validLayers: ImageLayer[] = [];
-  const allIssues: Array<NonNullable<ParseResult<ImageLayer>["issues"][number]>> = [];
-
-  for (const result of layerResults) {
-    // Collect all issues
-    allIssues.push(...result.issues);
-
-    // Collect valid values
-    if (result.value) {
-      validLayers.push(result.value);
-    }
-  }
-
-  // If we have at least one valid layer, return success with partial results
-  if (validLayers.length > 0) {
-    return {
-      ok: allIssues.length === 0,
-      value: {
-        kind: "layers",
-        layers: validLayers,
-      },
-      issues: allIssues,
-    };
-  }
-
-  // No valid layers - return error
+function aggregator(layers: ImageLayer[]): BackgroundImageIR {
   return {
-    ok: false,
-    value: undefined,
-    issues: allIssues.length > 0 ? allIssues : [createError("invalid-value", "No valid background layers found")],
+    kind: "layers",
+    layers,
   };
 }
+
+/**
+ * Parse background-image from raw string value.
+ *
+ * Multi-value parser: Handles comma-separated layers with:
+ * - Partial failure resilience
+ * - Missing comma detection
+ * - Complete consumption validation
+ */
+export const parseBackgroundImage = createMultiValueParser<ImageLayer, BackgroundImageIR>({
+  preParse,
+  itemParser: parseImageLayer,
+  aggregator,
+});

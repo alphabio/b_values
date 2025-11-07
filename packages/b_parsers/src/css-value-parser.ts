@@ -16,7 +16,7 @@ import { parseComplexFunction } from "./function-dispatcher";
  * @param node - CSS AST node to parse
  * @returns ParseResult with CssValue (may include complex function IRs)
  */
-export function parseCssValueNodeWrapper(node: csstree.CssNode): ParseResult<CssValue> {
+export function parseNodeToCssValue(node: csstree.CssNode): ParseResult<CssValue> {
   // For function nodes, try the complex function dispatcher first
   if (node.type === "Function") {
     const complexResult = parseComplexFunction(node);

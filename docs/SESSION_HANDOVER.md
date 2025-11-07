@@ -24,6 +24,7 @@
 ## 📊 Current State
 
 **Working:**
+
 - ✅ All tests passing (1926/1926, -43 tests removed)
 - ✅ All typechecks passing
 - ✅ All builds passing
@@ -32,6 +33,7 @@
 - ✅ Path navigation excellent
 
 **Removed:**
+
 - ❌ location/sourceContext fields (never populated)
 - ❌ formatSourceContext utility (unused)
 - ❌ validate.ts module (unused, 755 lines)
@@ -41,10 +43,12 @@
 ## 📈 Impact
 
 **Code Removed:** ~1,195 lines total
+
 - Planned cleanup: ~440 lines
 - Bonus cleanup: ~755 lines (validate.ts)
 
 **Benefits:**
+
 - Simpler Issue API
 - Clearer user expectations
 - Faster builds

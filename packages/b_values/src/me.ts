@@ -99,6 +99,24 @@ import * as decl from "@b/declarations";
 //   ),
 // );
 
+console.log("=== Testing just the radial gradient ===");
+console.log(
+  JSON.stringify(
+    decl.parseDeclaration(`
+  background-image:
+    radial-gradient(
+      10em 20%,
+      at center,
+      notacolor,
+      transparent calc(50% / 20px)
+    );
+  `),
+    null,
+    2,
+  ),
+);
+
+console.log("\n=== Testing all four gradients ===");
 console.log(
   JSON.stringify(
     decl.parseDeclaration(`
@@ -111,7 +129,7 @@ console.log(
       green
     ),
 
-    linear-gradient(to 45deg, red, blue)
+    linear-gradient(to 45deg, red, blue),
 
 
     radial-gradient(
@@ -127,6 +145,50 @@ console.log(
       hsl(100 100% 50% / 0.9) 12.5%,
       hsl(150 100% 50%) 100%
     );
+  `),
+    null,
+    2,
+  ),
+);
+
+//     radial-gradient(
+//       10em 20%,
+//       at center,
+//       notacolor,
+//       transparent calc(50% & 20px)
+//     ),
+
+//     radial-gradient(
+//       10em 20%,
+//       at center,
+//       notacolor,
+//       transparent calc(50% / 20px)
+//     ),
+
+//     conic-gradient(
+//       from -100grad,
+//       hsl(50 100% 50% / 0.5) 0%,
+//       hsl(100 100% 50% / 0.9) 12.5%,
+//       hsl(150 100% 50%) 100%
+//     );
+//   `),
+//     null,
+//     2,
+//   ),
+// );
+
+console.log(
+  JSON.stringify(
+    decl.parseDeclaration(`
+  background-image:
+   linear-gradient(to 45deg, red, blue)
+   linear-gradient(
+      blue,
+      25%,
+      yellow 50%,
+      75%,
+      green
+    )
   `),
     null,
     2,

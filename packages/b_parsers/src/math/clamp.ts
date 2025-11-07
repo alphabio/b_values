@@ -1,7 +1,7 @@
 // b_path:: packages/b_parsers/src/math/clamp.ts
 import type * as csstree from "@eslint/css-tree";
 import { createError, parseErr, parseOk, type ParseResult, type CssValue } from "@b/types";
-import { parseCssValueNodeWrapper } from "../css-value-parser";
+import { parseNodeToCssValue } from "../css-value-parser";
 import { splitNodesByComma } from "../utils/ast";
 
 /**
@@ -37,7 +37,7 @@ export function parseClampFunction(
       continue;
     }
 
-    const result = parseCssValueNodeWrapper(group[0]);
+    const result = parseNodeToCssValue(group[0]);
 
     if (result.ok) {
       args.push(result.value);

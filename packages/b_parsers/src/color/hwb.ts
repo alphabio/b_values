@@ -2,7 +2,7 @@
 import type * as csstree from "@eslint/css-tree";
 import { createError, parseErr, parseOk, forwardParseErr, type ParseResult } from "@b/types";
 import type { HWBColor } from "@b/types";
-import { parseCssValueNodeWrapper } from "../css-value-parser";
+import { parseNodeToCssValue } from "../css-value-parser";
 import { getChildren, getValues } from "@b/utils";
 
 /**
@@ -20,13 +20,13 @@ export function parseHwbFunction(node: csstree.FunctionNode): ParseResult<HWBCol
     return parseErr(createError("invalid-syntax", `HWB function must have 3 or 4 values, got ${values.length}`));
   }
 
-  const hResult = parseCssValueNodeWrapper(values[0]);
+  const hResult = parseNodeToCssValue(values[0]);
   if (!hResult.ok) return forwardParseErr<HWBColor>(hResult);
 
-  const wResult = parseCssValueNodeWrapper(values[1]);
+  const wResult = parseNodeToCssValue(values[1]);
   if (!wResult.ok) return forwardParseErr<HWBColor>(wResult);
 
-  const bResult = parseCssValueNodeWrapper(values[2]);
+  const bResult = parseNodeToCssValue(values[2]);
   if (!bResult.ok) return forwardParseErr<HWBColor>(bResult);
 
   const hwb: HWBColor = {
@@ -37,7 +37,7 @@ export function parseHwbFunction(node: csstree.FunctionNode): ParseResult<HWBCol
   };
 
   if (values.length === 4) {
-    const alphaResult = parseCssValueNodeWrapper(values[3]);
+    const alphaResult = parseNodeToCssValue(values[3]);
     if (!alphaResult.ok) return forwardParseErr<HWBColor>(alphaResult);
     hwb.alpha = alphaResult.value;
   }

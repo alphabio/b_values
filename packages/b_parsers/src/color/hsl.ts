@@ -2,7 +2,7 @@
 import type * as csstree from "@eslint/css-tree";
 import { createError, parseErr, parseOk, forwardParseErr, type ParseResult } from "@b/types";
 import type { HSLColor } from "@b/types";
-import { parseCssValueNodeWrapper } from "../css-value-parser";
+import { parseNodeToCssValue } from "../css-value-parser";
 import { getChildren, getValues } from "@b/utils";
 
 /**
@@ -20,13 +20,13 @@ export function parseHslFunction(node: csstree.FunctionNode): ParseResult<HSLCol
     return parseErr(createError("invalid-syntax", `HSL function must have 3 or 4 values, got ${values.length}`));
   }
 
-  const hResult = parseCssValueNodeWrapper(values[0]);
+  const hResult = parseNodeToCssValue(values[0]);
   if (!hResult.ok) return forwardParseErr<HSLColor>(hResult);
 
-  const sResult = parseCssValueNodeWrapper(values[1]);
+  const sResult = parseNodeToCssValue(values[1]);
   if (!sResult.ok) return forwardParseErr<HSLColor>(sResult);
 
-  const lResult = parseCssValueNodeWrapper(values[2]);
+  const lResult = parseNodeToCssValue(values[2]);
   if (!lResult.ok) return forwardParseErr<HSLColor>(lResult);
 
   const hsl: HSLColor = {
@@ -37,7 +37,7 @@ export function parseHslFunction(node: csstree.FunctionNode): ParseResult<HSLCol
   };
 
   if (values.length === 4) {
-    const alphaResult = parseCssValueNodeWrapper(values[3]);
+    const alphaResult = parseNodeToCssValue(values[3]);
     if (!alphaResult.ok) return forwardParseErr<HSLColor>(alphaResult);
     hsl.alpha = alphaResult.value;
   }

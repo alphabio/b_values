@@ -2,7 +2,7 @@
 import type * as csstree from "@eslint/css-tree";
 import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
 import type * as Type from "@b/types";
-import { parseCssValueNodeWrapper } from "./css-value-parser";
+import { parseNodeToCssValue } from "./css-value-parser";
 
 /**
  * Parse 2D position from array of AST nodes.
@@ -26,7 +26,7 @@ export function parsePosition2D(
     const node = nodes[idx];
     if (!node) break;
 
-    const value = parseCssValueNodeWrapper(node);
+    const value = parseNodeToCssValue(node);
     if (!value.ok) break;
 
     positionValues.push(value.value);

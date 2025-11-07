@@ -2,7 +2,7 @@
 import type * as csstree from "@eslint/css-tree";
 import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
 import type * as Type from "@b/types";
-import { parseCssValueNodeWrapper } from "../css-value-parser";
+import { parseNodeToCssValue } from "../css-value-parser";
 import * as Color from "../color";
 
 /**
@@ -30,7 +30,7 @@ export function fromNodes(nodes: csstree.CssNode[]): ParseResult<Type.ColorStopO
   // If it's not a color and we only have one node, it might be a color hint
   if (!colorResult.ok && nodes.length === 1) {
     // Try parsing as a length/percentage (color hint)
-    const hintResult = parseCssValueNodeWrapper(firstNode);
+    const hintResult = parseNodeToCssValue(firstNode);
     if (hintResult.ok) {
       const hint = hintResult.value;
       // Validate that it's actually a length-percentage (not just any CSS value)
@@ -74,7 +74,7 @@ export function fromNodes(nodes: csstree.CssNode[]): ParseResult<Type.ColorStopO
     const posNode = nodes[i];
     if (!posNode) continue;
 
-    const posResult = parseCssValueNodeWrapper(posNode);
+    const posResult = parseNodeToCssValue(posNode);
     if (posResult.ok) {
       positions.push(posResult.value);
     } else {

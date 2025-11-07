@@ -2,7 +2,7 @@
 import type * as csstree from "@eslint/css-tree";
 import { createError, parseErr, parseOk, forwardParseErr, type ParseResult } from "@b/types";
 import type { OKLCHColor } from "@b/types";
-import { parseCssValueNodeWrapper } from "../css-value-parser";
+import { parseNodeToCssValue } from "../css-value-parser";
 import { getChildren, getValues } from "@b/utils";
 
 /**
@@ -20,13 +20,13 @@ export function parseOklchFunction(node: csstree.FunctionNode): ParseResult<OKLC
     return parseErr(createError("invalid-syntax", `OKLCH function must have 3 or 4 values, got ${values.length}`));
   }
 
-  const lResult = parseCssValueNodeWrapper(values[0]);
+  const lResult = parseNodeToCssValue(values[0]);
   if (!lResult.ok) return forwardParseErr<OKLCHColor>(lResult);
 
-  const cResult = parseCssValueNodeWrapper(values[1]);
+  const cResult = parseNodeToCssValue(values[1]);
   if (!cResult.ok) return forwardParseErr<OKLCHColor>(cResult);
 
-  const hResult = parseCssValueNodeWrapper(values[2]);
+  const hResult = parseNodeToCssValue(values[2]);
   if (!hResult.ok) return forwardParseErr<OKLCHColor>(hResult);
 
   const oklch: OKLCHColor = {
@@ -37,7 +37,7 @@ export function parseOklchFunction(node: csstree.FunctionNode): ParseResult<OKLC
   };
 
   if (values.length === 4) {
-    const alphaResult = parseCssValueNodeWrapper(values[3]);
+    const alphaResult = parseNodeToCssValue(values[3]);
     if (!alphaResult.ok) return forwardParseErr<OKLCHColor>(alphaResult);
     oklch.alpha = alphaResult.value;
   }

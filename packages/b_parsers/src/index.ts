@@ -8,4 +8,4 @@ export * as Url from "./url";
 export * as Utils from "./utils";
 export * as Math from "./math";
 export * from "./function-dispatcher";
-export { parseCssValueNodeWrapper as parseCssValueNodeEnhanced } from "./css-value-parser";
+export * from "./css-value-parser";

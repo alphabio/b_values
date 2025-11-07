@@ -2,7 +2,7 @@
 import * as csstree from "@eslint/css-tree";
 import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
 import type * as Type from "@b/types";
-import { parseCssValueNodeWrapper } from "../css-value-parser";
+import { parseNodeToCssValue } from "../css-value-parser";
 import { parseRgbFunction } from "./rgb";
 import { parseHslFunction } from "./hsl";
 import { parseHwbFunction } from "./hwb";
@@ -33,7 +33,7 @@ export function parseNode(node: csstree.CssNode): ParseResult<Type.Color> {
 
     // Handle var() which can represent any color
     if (funcName === "var") {
-      const result = parseCssValueNodeWrapper(node);
+      const result = parseNodeToCssValue(node);
       if (result.ok && result.value.kind === "variable") {
         return parseOk(result.value as Type.Color);
       }

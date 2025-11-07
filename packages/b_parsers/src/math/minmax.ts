@@ -1,7 +1,7 @@
 // b_path:: packages/b_parsers/src/math/minmax.ts
 import type * as csstree from "@eslint/css-tree";
 import { createError, parseErr, parseOk, type ParseResult, type CssValue } from "@b/types";
-import { parseCssValueNodeWrapper } from "../css-value-parser";
+import { parseNodeToCssValue } from "../css-value-parser";
 import { splitNodesByComma } from "../utils/ast";
 
 /**
@@ -35,7 +35,7 @@ export function parseMinmaxFunction(
 
     // Handle single-node arguments
     if (group.length === 1) {
-      const result = parseCssValueNodeWrapper(group[0]);
+      const result = parseNodeToCssValue(group[0]);
 
       if (result.ok) {
         values.push(result.value);
@@ -52,7 +52,7 @@ export function parseMinmaxFunction(
       issues.push(createError("invalid-syntax", `Unexpected multiple nodes in ${funcName}() argument`));
 
       // Try parsing first node anyway
-      const result = parseCssValueNodeWrapper(group[0]);
+      const result = parseNodeToCssValue(group[0]);
       if (result.value) {
         values.push(result.value);
       }

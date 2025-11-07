@@ -2,7 +2,7 @@
 import type * as csstree from "@eslint/css-tree";
 import { createError, parseErr, parseOk, forwardParseErr, type ParseResult } from "@b/types";
 import type { ColorFunction } from "@b/types";
-import { parseCssValueNodeWrapper } from "../css-value-parser";
+import { parseNodeToCssValue } from "../css-value-parser";
 import { getChildren, getValues } from "@b/utils";
 import { colorFunctionSpaceSchema } from "@b/keywords";
 
@@ -39,13 +39,13 @@ export function parseColorFunction(node: csstree.FunctionNode): ParseResult<Colo
   }
 
   // Parse the three channel values
-  const c1Result = parseCssValueNodeWrapper(values[1]);
+  const c1Result = parseNodeToCssValue(values[1]);
   if (!c1Result.ok) return forwardParseErr<ColorFunction>(c1Result);
 
-  const c2Result = parseCssValueNodeWrapper(values[2]);
+  const c2Result = parseNodeToCssValue(values[2]);
   if (!c2Result.ok) return forwardParseErr<ColorFunction>(c2Result);
 
-  const c3Result = parseCssValueNodeWrapper(values[3]);
+  const c3Result = parseNodeToCssValue(values[3]);
   if (!c3Result.ok) return forwardParseErr<ColorFunction>(c3Result);
 
   const colorFunc: ColorFunction = {
@@ -56,7 +56,7 @@ export function parseColorFunction(node: csstree.FunctionNode): ParseResult<Colo
 
   // Optional alpha channel (5th value after the 4 required)
   if (values.length === 5) {
-    const alphaResult = parseCssValueNodeWrapper(values[4]);
+    const alphaResult = parseNodeToCssValue(values[4]);
     if (!alphaResult.ok) return forwardParseErr<ColorFunction>(alphaResult);
     colorFunc.alpha = alphaResult.value;
   }
