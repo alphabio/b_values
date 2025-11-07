@@ -39,7 +39,37 @@
 
 ## 🎯 Next Steps
 
-**Phase 3 complete!** Ready for next priority.
+**Phase 5: Source Context & Enrichment Logic (HIGH PRIORITY)**
+
+### Issue 1: formatSourceContext Not Used
+- Built utility `Ast.formatSourceContext()` but never wired it up
+- Users get raw `location` objects instead of formatted context with visual pointers
+- Need to add `sourceContext?: string` to Issue type
+- Need to enrich issues in parseDeclaration
+
+### Issue 2: Enrichment Only on Success Path
+**Bug in parser.ts:**
+```typescript
+if (!parseResult.ok) {
+  return {
+    ok: false,
+    issues: allIssues,  // ← NOT enriched! Missing sourceContext
+  };
+}
+// Only success path enriches (WRONG)
+```
+
+**Should be:**
+- Enrich issues regardless of `ok` value
+- Both success and failure need formatted context
+- Move enrichment before the ok check
+
+**Current semantics (documented in parse.ts):**
+- `ok: true` + `value` = Successfully represented ALL as IR
+- `ok: false` + `value` = Partially represented (some failed, some succeeded)
+- `ok: false` + `undefined` = Cannot represent at all
+
+**Time estimate:** 1-2 hours
 
 ---
 
@@ -76,6 +106,7 @@
 - **Cleaned:** Active console.log statement in adhoc test file
 - **Documented:** Type assertions with detailed comments explaining limitations
 - **Result:** Codebase in excellent health with minimal technical debt
+- **Phase 5 discovered (user catch):** Missing source context formatting and enrichment bug in failure path
 
 ---
 
@@ -85,11 +116,14 @@
 - `docs/sessions/045/AUDIT_FINDINGS.md` - Phase 3 discoveries
 - `docs/sessions/045/PHASE_4_AUDIT.md` - Comprehensive codebase audit
 - `docs/sessions/045/SESSION_COMPLETE.md` - Phase 3 completion summary
+- `docs/sessions/045/FINAL_SUMMARY.md` - Phases 3 & 4 complete summary
+- `docs/sessions/045/PHASE_5_MISSING_FEATURE.md` - Source context formatting issue
+- `docs/sessions/045/PHASE_5_SEMANTIC_ISSUE.md` - ParseResult semantics (resolved - already documented correctly)
 - `docs/architecture/patterns/parser-architectures.md` - Dual-parser pattern documentation
 - `docs/architecture/decisions/004-draft-test-suite-optimization.md` - ADR for Phase 2.3
 
 ---
 
-**🚀 Session 045: Phases 3 & 4 complete! Codebase cleaned, audited, and documented.**
+**🚀 Session 045: Phases 3 & 4 complete! Phase 5 discovered and documented.**
 
-**Next recommended focus:** Performance benchmarking or implement single-value properties (color).
+**Next session focus:** Implement Phase 5 - Source context formatting and fix enrichment logic bug.
