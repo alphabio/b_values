@@ -1,0 +1,209 @@
+// b_path:: packages/b_declarations/src/declaration-list-parser.test.ts
+import { describe, it, expect } from "vitest";
+import { parseDeclarationList } from "./declaration-list-parser";
+import "./properties/custom-property"; // Ensure custom property is registered
+import "./properties/background-image"; // Ensure background-image is registered
+
+describe("parseDeclarationList", () => {
+  describe("basic parsing", () => {
+    it("should parse single declaration", () => {
+      const result = parseDeclarationList("--my-color: red");
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.value).toHaveLength(1);
+        expect(result.value[0].property).toBe("--my-color");
+      }
+    });
+
+    it("should parse multiple declarations", () => {
+      const result = parseDeclarationList("--color: red; --size: 10px; --name: value");
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.value).toHaveLength(3);
+        expect(result.value[0].property).toBe("--color");
+        expect(result.value[1].property).toBe("--size");
+        expect(result.value[2].property).toBe("--name");
+      }
+    });
+
+    it("should parse with trailing semicolon", () => {
+      const result = parseDeclarationList("--color: red; --size: 10px;");
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.value).toHaveLength(2);
+      }
+    });
+
+    it("should parse without trailing semicolon", () => {
+      const result = parseDeclarationList("--color: red; --size: 10px");
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.value).toHaveLength(2);
+      }
+    });
+  });
+
+  describe("whitespace handling", () => {
+    it("should handle extra whitespace", () => {
+      const result = parseDeclarationList("  --color:   red  ;  --size:  10px  ");
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.value).toHaveLength(2);
+      }
+    });
+
+    it("should handle newlines", () => {
+      const result = parseDeclarationList("--color: red;\n--size: 10px");
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.value).toHaveLength(2);
+      }
+    });
+
+    it("should handle mixed whitespace", () => {
+      const result = parseDeclarationList("--color: red;\n  --size: 10px;\n\t--name: value");
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.value).toHaveLength(3);
+      }
+    });
+  });
+
+  describe("edge cases", () => {
+    it("should parse empty string", () => {
+      const result = parseDeclarationList("");
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.value).toHaveLength(0);
+      }
+    });
+
+    it("should handle only semicolons", () => {
+      const result = parseDeclarationList(";;;");
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.value).toHaveLength(0);
+      }
+    });
+
+    it("should handle whitespace only", () => {
+      const result = parseDeclarationList("   \n\t  ");
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.value).toHaveLength(0);
+      }
+    });
+  });
+
+  describe("mixed properties", () => {
+    it("should parse standard and custom properties", () => {
+      const result = parseDeclarationList("background-image: url(test.png); --custom: value");
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.value).toHaveLength(2);
+        expect(result.value[0].property).toBe("background-image");
+        expect(result.value[1].property).toBe("--custom");
+      }
+    });
+
+    it("should parse multi-value properties", () => {
+      const result = parseDeclarationList("background-image: url(a.png), linear-gradient(red, blue); --color: red");
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.value).toHaveLength(2);
+        expect(result.value[0].property).toBe("background-image");
+      }
+    });
+  });
+
+  describe("partial failures", () => {
+    it("should continue on invalid property", () => {
+      const result = parseDeclarationList("unknown-prop: value; --valid: blue");
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.value).toHaveLength(1);
+        expect(result.value[0].property).toBe("--valid");
+      }
+      expect(result.issues.length).toBeGreaterThan(0);
+    });
+
+    it("should collect all errors", () => {
+      const result = parseDeclarationList("unknown1: val; unknown2: val; --valid: blue");
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.value).toHaveLength(1);
+      }
+      expect(result.issues.length).toBeGreaterThan(1);
+    });
+
+    it("should fail if all declarations invalid", () => {
+      const result = parseDeclarationList("unknown1: val; unknown2: val");
+
+      expect(result.ok).toBe(false);
+      expect(result.issues.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe("real-world examples", () => {
+    it("should parse inline style", () => {
+      const result = parseDeclarationList("--primary: blue; --size: 16px; --spacing: 10px");
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.value).toHaveLength(3);
+      }
+    });
+
+    it("should parse complex declarations", () => {
+      const result = parseDeclarationList(
+        "background-image: linear-gradient(to right, red, blue); --shadow: 0 2px 4px rgba(0,0,0,0.1)",
+      );
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.value).toHaveLength(2);
+      }
+    });
+
+    it("should handle HTML style attribute format", () => {
+      const result = parseDeclarationList("--color: red; --size: 14px; --weight: bold");
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.value).toHaveLength(3);
+        expect(result.value[0].property).toBe("--color");
+        expect(result.value[1].property).toBe("--size");
+        expect(result.value[2].property).toBe("--weight");
+      }
+    });
+  });
+
+  describe("syntax errors", () => {
+    it("should reject invalid syntax", () => {
+      const result = parseDeclarationList("not valid css at all!");
+
+      expect(result.ok).toBe(false);
+      expect(result.issues.length).toBeGreaterThan(0);
+    });
+
+    it("should handle missing colons", () => {
+      const result = parseDeclarationList("--color red");
+
+      expect(result.ok).toBe(false);
+    });
+  });
+});

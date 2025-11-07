@@ -7,3 +7,5 @@ export * from "./utils";
 export * from "./parser";
 export * from "./generator";
 export * from "./properties";
+export * from "./declaration-list-parser";
+export * from "./declaration-list-generator";
