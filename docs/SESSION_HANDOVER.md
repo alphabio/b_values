@@ -1,267 +1,258 @@
-# Session 048: Code Quality Improvements + Critical Bug Fixes
+# Session 049: Add Test Coverage (Ready to Execute)
 
 **Date:** 2025-11-07
-**Focus:** Addressed executive summary feedback - calc precedence, type safety, consistency
+**Focus:** Add comprehensive test coverage for untested infrastructure files
 
 ---
 
-## ✅ Accomplished
+## ✅ Session 048 Accomplished
 
-### Session Management
+- ✅ Fixed calc() operator precedence bug (Shunting-yard algorithm)
+- ✅ Isolated type assertions to internal dispatch functions
+- ✅ Removed duplicate type definitions
+- ✅ Standardized generator error handling patterns
+- ✅ All executive summary feedback addressed
+- ✅ 1957 tests passing, 0 errors, 0 warnings
 
-- ✅ Session 048 initialized and Session 047 archived
-- ✅ Documentation reviewed and understood
+---
 
-### Critical Bug Fix
+## 🎯 Session 049 Objective
 
-- ✅ **CRITICAL:** Fixed calc() operator precedence bug with Shunting-yard algorithm
-- ✅ Added 14 comprehensive tests for operator precedence
-- ✅ All operator precedence scenarios tested and working
+Add test coverage for critical infrastructure files that are currently untested.
 
-### Type Safety Improvements
-
-- ✅ Isolated `as never` casts to internal dispatch functions
-- ✅ Created `unsafeCallParser()` and `unsafeGenerateDeclaration()`
-- ✅ Type-safety boundaries now explicit and documented
-
-### Code Quality Refactoring
-
-- ✅ Removed duplicate type definitions (PropertyParser, CorePropertyGenerator)
-- ✅ Standardized generator error handling with Zod safeParse pattern
-- ✅ Updated hex and special color generators to match hsl/rgb pattern
-
-### Testing & Quality
-
-- ✅ All tests passing (1957/1957)
-- ✅ All quality checks passing
-- ✅ Zero lint warnings
-- ✅ Zero type errors
+**Target:** ~220 new tests across 13 files
 
 ---
 
 ## 📊 Current State
 
-**Working:**
-
-- ✅ All tests passing (1957/1957)
-- ✅ All typechecks passing
-- ✅ All builds passing
-- ✅ No lint warnings
-- ✅ **NEW:** calc() parser spec-compliant with operator precedence
-- ✅ **NEW:** Type assertions isolated and documented
-- ✅ **NEW:** Consistent generator error handling patterns
-- ✅ Property enrichment working perfectly
-- ✅ Missing comma detection via createMultiValueParser factory
-- ✅ Clean, consistent codebase
-
-**Fixed:**
-
-- ✅ calc() operator precedence bug (left-to-right → spec-compliant)
-- ✅ Type assertion risk contained to internal functions
-- ✅ Duplicate type definitions removed
-- ✅ Generator error handling now consistent across all generators
-- ✅ Unused imports cleaned up
-
----
-
-## 📈 Session Impact
-
-**Commits Made:** 4
-
-1. `fix(parsers): implement Shunting-yard algorithm for calc() operator precedence`
-   - Critical bug fix for calc() expressions
-   - Added 14 comprehensive tests
-   - Now CSS spec-compliant
-
-2. `refactor(declarations): isolate type assertions to internal dispatch functions`
-   - Mitigates risk of `as never` casts
-   - Explicit type-safety boundaries
-   - Cleaner main logic
-
-3. `refactor(declarations): remove duplicate type definitions`
-   - Removed PropertyParser (unused)
-   - Removed CorePropertyGenerator (duplicate)
-   - Single source of truth
-
-4. `refactor(generators): standardize error handling with Zod safeParse`
-   - hex.ts and special.ts now use Zod validation
-   - Consistent with hsl.ts, rgb.ts patterns
-   - Better error messages
-
-**Code Changes:**
-
-- Modified: 8 files
-- Net improvement: More robust, consistent, maintainable
-
----
-
-## 🚨 Critical Bug Fixed: calc() Operator Precedence
-
-**Problem:** calc() parser built expressions left-to-right, violating CSS spec.
-
-**Example:**
-
-```css
-/* calc(10px + 2px * 5) */
-Before: (10px + 2px) * 5 = 60px  ❌ WRONG
-After:  10px + (2px * 5) = 20px  ✅ CORRECT
-```
-
-**Solution:** Shunting-yard algorithm
-
-1. Tokenize: AST nodes → infix tokens
-2. Convert: Infix → Postfix (RPN) respecting precedence
-3. Build: Expression tree from RPN
-
-**Test Coverage:** 24 tests total (10 original + 14 new)
-
-- Basic operations
-- Operator precedence (multiplication before addition)
-- Complex mixed expressions
-- Edge cases
-
----
-
-## 🛡️ Type Safety Improvements
-
-**Problem:** `as never` casts scattered throughout parseDeclaration()
-
-**Solution:** Isolated to internal dispatch functions
-
-```typescript
-// Before: casts inline in main logic
-const genResult = generateDeclaration({
-  property: property as never, // ⚠️ scattered
-  ir: parseResult.value as never,
-});
-
-// After: isolated in dedicated function
-const genResult = unsafeGenerateDeclaration(property, parseResult.value);
-```
-
-**Benefits:**
-
-- Type-safety boundary is explicit and auditable
-- Risk contained to single functions
-- Main logic cleaner and more readable
-- Clear documentation of why casts are necessary
-
-**Functions:**
-
-- `unsafeCallParser()` - isolates parser dispatch casts
-- `unsafeGenerateDeclaration()` - isolates generator dispatch casts
-
----
-
-## 🎨 Code Quality Improvements
-
-### 1. Removed Duplicate Types
-
-**Before:**
-
-```typescript
-export type PropertyGenerator<T> = (ir: T) => GenerateResult;
-export type PropertyParser<T> = (node: Value) => ParseResult<T>; // unused
-export type CorePropertyGenerator<T> = (ir: T) => GenerateResult; // duplicate
-```
-
-**After:**
-
-```typescript
-export type PropertyGenerator<T> = (ir: T) => GenerateResult;
-// Removed unused/duplicate types
-```
-
-### 2. Standardized Generator Patterns
-
-**Before (hex.ts, special.ts):**
-
-```typescript
-if (color === null || color === undefined) { ... }
-if (typeof color !== "object") { ... }
-if (!("value" in color)) { ... }
-```
-
-**After:**
-
-```typescript
-const validation = hexColorSchema.safeParse(color);
-if (!validation.success) {
-  return generateErr(zodErrorToIssues(validation.error));
-}
-```
-
-**Benefits:**
-
-- Consistent across all generators
-- Better error messages
-- More declarative
-- Leverages Zod for validation
-
----
-
-## 💡 Key Learnings
-
-### Learning 1: Left-to-right is insufficient for math expressions
-
-Mathematical expressions require precedence-aware parsing. Shunting-yard is the standard, battle-tested algorithm.
-
-### Learning 2: Contain, don't eliminate, necessary type escapes
-
-When type assertions are unavoidable (TypeScript limitations), isolate them to clearly marked internal functions.
-
-### Learning 3: Consistency compounds
-
-Small inconsistencies (different error handling patterns) create cognitive overhead. Standardizing patterns makes code easier to understand and maintain.
-
-### Learning 4: Executive summaries are valuable
-
-External code review identified real issues that were easy to miss in day-to-day development.
-
----
-
-## 📝 Executive Summary Response
-
-**✅ Fully Addressed:**
-
-- [x] **Critical Issue #1:** calc() operator precedence bug - FIXED with Shunting-yard
-- [x] **High-Impact #1:** Mitigate `as never` casts - DONE with internal dispatch functions
-- [x] **General #1:** Consolidate duplicate types - DONE (removed 2 duplicate types)
-- [x] **General #2:** Standardize generator error handling - DONE (hex, special now use Zod)
-
-**📋 Noted for Future Sessions:**
-
-- [ ] **Auto-generate PropertyIRMap** - Build script to scan properties and generate interface
-- [ ] Consider applying createMultiValueParser to other properties
-- [ ] Add parentheses support to calc() if needed
-- [ ] Document Shunting-yard algorithm for contributors
-
----
-
-## 🎯 Next Steps
-
-**Immediate:**
-
-- Ready for next feature work or property expansion
-
-**Future Improvements:**
-
-1. Auto-generate PropertyIRMap interface (reduces manual sync errors)
-2. Apply createMultiValueParser to font-family, transition, animation
-3. Add integration tests for calc() precedence edge cases
-4. Document architectural patterns for new contributors
-
-**Project is production-ready for calc() expressions!**
-
----
-
-**Session 048 COMPLETE ✅**
+**Test Coverage Audit Complete:**
+- Files audited: 13
+- Missing tests: 13 (100%)
+- Research complete: ✅
+- Ready to write tests: ✅
 
 **All Quality Checks Passing:**
-
 - Tests: 1957/1957 ✅
 - Typecheck: 0 errors ✅
 - Lint: 0 warnings ✅
 - Build: Successful ✅
 
-**Commits:** 4 commits addressing all executive summary feedback
+---
+
+## 📋 Files Needing Tests (Prioritized)
+
+### Priority 1: Critical Infrastructure (Must Do First)
+
+1. **`packages/b_parsers/src/function-dispatcher.ts`** (~30 tests)
+   - Routes all CSS function parsing (calc, rgb, hsl, etc)
+   - CRITICAL: Used by all function parsers
+   - Research complete: know exact return types
+
+2. **`packages/b_parsers/src/css-value-parser.ts`** (~40 tests)
+   - Main entry point for CSS value parsing
+   - CRITICAL: Used by all property parsers
+   - Research complete: know dispatch behavior
+
+3. **`packages/b_parsers/src/color/color-function.ts`** (~50 tests)
+   - Parses color() function with multiple color spaces
+   - HIGH: Core color parsing logic
+   - Research complete: kind = "color"
+
+### Priority 2: Gradient Support
+
+4. **`packages/b_parsers/src/gradient/gradient.ts`** (~30 tests)
+   - Main gradient dispatcher
+   - Used by background-image parser
+
+5. **`packages/b_parsers/src/utils/color-interpolation.ts`** (~20 tests)
+   - CSS color interpolation parsing
+
+### Priority 3: Utilities (Lower Priority)
+
+6. **`packages/b_parsers/src/utils/css-value-functions.ts`** (~15 tests)
+7. **`packages/b_keywords/src/color-space.ts`** (~10 tests)
+8. **`packages/b_keywords/src/utils/zod.ts`** (~5 tests)
+
+### Priority 4: Integration Tests (Optional)
+
+9. **`packages/b_declarations/src/properties/background-image/*`** (~20 tests)
+   - Integration tests for end-to-end flows
+   - Component parts already tested individually
+
+---
+
+## 📚 Research Complete - Key Findings
+
+### Color Function Kinds (IMPORTANT!)
+
+Actual `kind` values (from b_types schemas):
+
+```typescript
+"color"   // color() function
+"rgb"     // rgb() / rgba()  ❌ NOT "rgb-color"
+"hsl"     // hsl() / hsla()  ❌ NOT "hsl-color"
+"hwb"     // hwb()
+"lab"     // lab()
+"lch"     // lch()
+"oklab"   // oklab()
+"oklch"   // oklch()
+"hex"     // #rrggbb
+"named"   // named colors
+"special" // currentColor, transparent
+```
+
+### Function Dispatcher Behavior
+
+**Functions IN dispatcher (return ParseResult):**
+- Math: `calc()`, `min()`, `max()`, `clamp()`
+- Colors: `rgb()`, `rgba()`, `hsl()`, `hsla()`, `hwb()`, `lab()`, `lch()`, `oklab()`, `oklch()`
+
+**Functions NOT in dispatcher (return null):**
+- `var()` - handled by parseCssValueNode
+- `url()` - handled by parseUrlFromNode
+- Gradients - handled by gradient parsers
+- Unknown functions - fallback to generic
+
+### Test Pattern (from existing tests)
+
+```typescript
+// Helper function
+function parseRgb(input: string) {
+  const func = extractFunctionFromValue(input);
+  return parseRgbFunction(func);
+}
+
+// Assertions
+expect(result.ok).toBe(true);
+expect(result.value?.kind).toBe("rgb");  // Exact kind string
+expect(result.value?.r).toEqual({ kind: "literal", value: 255 });
+```
+
+---
+
+## 🚀 Execution Plan for Next Session
+
+### Step 1: Priority 1 Tests (Critical Infrastructure)
+
+Write tests for:
+1. function-dispatcher.ts
+2. css-value-parser.ts
+3. color-function.ts
+
+**Estimated:** ~120 tests, ~45 minutes
+
+### Step 2: Verify & Commit
+
+```bash
+just test    # Should pass all ~2077 tests (1957 + 120)
+just check   # Should pass all quality checks
+git commit
+```
+
+### Step 3: Priority 2 Tests (if time permits)
+
+4. gradient.ts
+5. color-interpolation.ts
+
+**Estimated:** ~50 tests, ~20 minutes
+
+### Step 4: Final Commit
+
+```bash
+just test    # Should pass all ~2127 tests
+git commit -m "test: add comprehensive coverage for parser infrastructure"
+```
+
+---
+
+## 📖 Documentation Created
+
+**Session 048:**
+- `docs/sessions/048/TEST_RESEARCH.md` - Complete research findings
+- `docs/sessions/048/EXECUTIVE_SUMMARY_RESPONSE.md` - Feedback tracking
+- `docs/sessions/048/git-ref.txt` - Commit reference
+
+**Research Includes:**
+- ✅ Actual kind values for all color types
+- ✅ Function dispatcher behavior mapped
+- ✅ Test patterns from existing tests
+- ✅ Common mistakes to avoid
+- ✅ File sizes and complexity analysis
+
+---
+
+## ⚠️ Critical Lessons Learned
+
+### Do Research FIRST
+❌ **Don't:** Write tests before understanding actual behavior
+✅ **Do:** Research types, check existing patterns, verify behavior
+
+### From Session 048:
+- Jumped into writing tests without checking actual return types
+- Had to delete and rewrite (wasted time)
+- **Now:** Complete research document ready for next session
+
+---
+
+## 🎯 Success Criteria
+
+**Session will be successful when:**
+- ✅ At least Priority 1 tests written (~120 tests)
+- ✅ All tests passing
+- ✅ No quality check failures
+- ✅ Tests follow existing patterns
+- ✅ Proper co-location (*.test.ts next to *.ts)
+
+**Stretch Goals:**
+- ✅ Priority 2 tests completed (~50 more tests)
+- ✅ Documentation updated
+- ✅ Total test count: 2000+ tests
+
+---
+
+## 📁 Quick Reference
+
+**Research Document:**
+```bash
+cat docs/sessions/048/TEST_RESEARCH.md
+```
+
+**Test an Individual File:**
+```bash
+just test function-dispatcher.test
+```
+
+**Run All Tests:**
+```bash
+just test
+```
+
+**Quality Checks:**
+```bash
+just check
+```
+
+---
+
+## 💡 Next Session Checklist
+
+For the next agent:
+
+1. ☐ Read this handover completely
+2. ☐ Read `docs/sessions/048/TEST_RESEARCH.md`
+3. ☐ Verify current test count: `just test | grep "Tests"`
+4. ☐ Start with Priority 1: function-dispatcher.ts
+5. ☐ Follow research findings for correct kind values
+6. ☐ Use existing test patterns (see rgb.test.ts)
+7. ☐ Write tests, run `just test`, commit when passing
+8. ☐ Move to next priority file
+9. ☐ Update this handover with progress
+
+---
+
+**Session 049 READY ✅**
+
+**Start here:** Priority 1, File 1: `packages/b_parsers/src/function-dispatcher.ts`
+
+All research complete. Just execute the plan.

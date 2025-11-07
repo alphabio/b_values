@@ -22,26 +22,30 @@ The calc() parser was building expressions left-to-right, which violated CSS ope
 
 **Solution:**
 Implemented the Shunting-yard algorithm with three steps:
+
 1. **Tokenization:** Convert AST nodes into infix token array
 2. **Shunting-yard:** Convert infix to postfix (RPN) respecting operator precedence
 3. **Tree Building:** Build expression tree from RPN
 
 **Precedence Table:**
+
 ```typescript
 const PRECEDENCE: Record<Operator, number> = {
-  "+": 1,  // Addition (lower precedence)
-  "-": 1,  // Subtraction (lower precedence)
-  "*": 2,  // Multiplication (higher precedence)
-  "/": 2,  // Division (higher precedence)
+  "+": 1, // Addition (lower precedence)
+  "-": 1, // Subtraction (lower precedence)
+  "*": 2, // Multiplication (higher precedence)
+  "/": 2, // Division (higher precedence)
 };
 ```
 
 **Test Coverage:**
+
 - Added 14 new comprehensive tests (24 total)
 - Tests cover: basic precedence, complex expressions, error handling, edge cases
 - All tests passing ✅
 
 **Files Modified:**
+
 - `packages/b_parsers/src/math/calc.ts` (~120 lines, complete rewrite of parseCalcExpression)
 - `packages/b_parsers/src/math/calc.test.ts` (+300 lines of tests)
 
@@ -83,12 +87,14 @@ function unsafeGenerateDeclaration(property: string, ir: unknown): GenerateResul
 ```
 
 **Benefits:**
+
 - Type-safety boundaries are explicit and documented
 - Risk contained to single functions (easier to audit)
 - Main `parseDeclaration()` logic is cleaner
 - Clear signal to future developers about where guarantees break
 
 **Files Modified:**
+
 - `packages/b_declarations/src/parser.ts`
 
 **Commit:** `refactor(declarations): isolate type assertions to internal dispatch functions`
@@ -106,11 +112,13 @@ function unsafeGenerateDeclaration(property: string, ir: unknown): GenerateResul
 
 **Solution:**
 Removed redundant types:
+
 - Removed `PropertyParser<T>` (unused, duplicate of `SingleValueParser<T>`)
 - Removed `CorePropertyGenerator<T>` (duplicate of `PropertyGenerator<T>`)
 - Updated `PropertyDefinition` to use `PropertyGenerator<T>` consistently
 
 **Files Modified:**
+
 - `packages/b_declarations/src/types.ts`
 
 **Commit:** `refactor(declarations): remove duplicate type definitions`
@@ -128,6 +136,7 @@ Some generators (`hex.ts`, `special.ts`) used manual `null` checks and `typeof` 
 Refactored `hex.ts` and `special.ts` to use Zod validation:
 
 **Before:**
+
 ```typescript
 if (color === undefined || color === null) { ... }
 if (typeof color !== "object") { ... }
@@ -135,6 +144,7 @@ if (!("value" in color)) { ... }
 ```
 
 **After:**
+
 ```typescript
 const validation = hexColorSchema.safeParse(color);
 if (!validation.success) {
@@ -144,12 +154,14 @@ return generateOk(validation.data.value);
 ```
 
 **Benefits:**
+
 - Consistent error handling across all generators
 - Better error messages via `zodErrorToIssues()`
 - More declarative and maintainable
 - Leverages Zod schemas for runtime validation
 
 **Files Modified:**
+
 - `packages/b_generators/src/color/hex.ts`
 - `packages/b_generators/src/color/special.ts`
 - Updated tests to expect `invalid-ir` code (from Zod)
@@ -170,6 +182,7 @@ The following suggestions from the executive summary are noted for future work b
 Create a build script that scans `packages/b_declarations/src/properties/**/*` and automatically generates the `PropertyIRMap` interface to reduce manual sync errors as the project scales.
 
 **Why Deferred:**
+
 - Currently only 1 property registered (`background-image`)
 - Becomes more valuable as property count increases (50+)
 - Not blocking current development
@@ -184,9 +197,10 @@ All critical issues and high-impact suggestions from the executive summary have 
 ✅ **Critical Bug:** calc() operator precedence - FIXED  
 ✅ **Type Safety:** `as never` casts - MITIGATED  
 ✅ **Code Quality:** Duplicate types - REMOVED  
-✅ **Consistency:** Generator patterns - STANDARDIZED  
+✅ **Consistency:** Generator patterns - STANDARDIZED
 
 **Session Result:**
+
 - 4 commits
 - 1957/1957 tests passing
 - 0 type errors
