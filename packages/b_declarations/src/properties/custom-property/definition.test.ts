@@ -32,6 +32,8 @@ describe("customProperty definition", () => {
   });
 
   it("should not be multi-value", () => {
+    // Custom properties are NOT multi-value (not comma-separated)
+    // They receive raw string via special case in parser
     expect(customProperty.multiValue).toBe(false);
   });
 

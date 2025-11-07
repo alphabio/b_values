@@ -7,6 +7,7 @@ import type { CustomPropertyIR } from "./types";
 /**
  * Parse custom property value
  * Stores raw string per CSS spec (no interpretation)
+ * Receives raw string to preserve exact whitespace/formatting
  * @see https://www.w3.org/TR/css-variables-1/#defining-variables
  */
 export function parseCustomProperty(value: string): ParseResult<CustomPropertyIR> {

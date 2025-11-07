@@ -10,11 +10,15 @@
 ### What is a Declaration List?
 
 A **declaration list** is a semicolon-separated sequence of CSS declarations:
+
 ```css
-color: red; font-size: 16px; margin: 10px
+color: red;
+font-size: 16px;
+margin: 10px;
 ```
 
 **Key characteristics:**
+
 - No curly braces `{}`
 - Semicolon-separated property:value pairs
 - Last semicolon is optional
@@ -26,21 +30,25 @@ color: red; font-size: 16px; margin: 10px
 ## 🎯 Use Cases
 
 ### 1. **HTML Inline Styles (Primary)**
+
 ```html
-<div style="color: red; background: blue; padding: 10px;">
+<div style="color: red; background: blue; padding: 10px;"></div>
 ```
 
 ### 2. **CSSOM Manipulation**
+
 ```javascript
 element.style.cssText = "color: red; font-size: 16px;";
 ```
 
 ### 3. **CSS-in-JS**
+
 ```javascript
 const styles = parseDeclarationList("color: red; font-size: 16px;");
 ```
 
 ### 4. **Batch Declaration Parsing**
+
 Parse multiple properties at once for validation/transformation
 
 ---
@@ -52,15 +60,13 @@ Parse multiple properties at once for validation/transformation
 css-tree provides built-in support:
 
 ```typescript
-const ast = csstree.parse(
-  'color: red; border: 1px solid black;',
-  { context: 'declarationList' }
-);
+const ast = csstree.parse("color: red; border: 1px solid black;", { context: "declarationList" });
 
 // Returns DeclarationList node with children array of Declaration nodes
 ```
 
 **AST Structure:**
+
 ```json
 {
   "type": "DeclarationList",
@@ -86,13 +92,15 @@ const ast = csstree.parse(
 ### Existing Components
 
 **We already have:**
+
 - ✅ Single declaration parsing (`parseDeclaration`)
 - ✅ Property registry with definitions
-- ✅ Custom property support (--*)
+- ✅ Custom property support (--\*)
 - ✅ Multi-value property support (background-image)
 - ✅ Error handling with partial failures
 
 **What we need:**
+
 - ❌ Declaration list parser (multiple declarations at once)
 - ❌ Batch parsing with partial failure handling
 - ❌ Declaration list generator
@@ -109,9 +117,7 @@ const ast = csstree.parse(
 Instead of reimplementing, leverage existing infrastructure:
 
 ```typescript
-export function parseDeclarationList(
-  css: string
-): ParseResult<DeclarationResult[]> {
+export function parseDeclarationList(css: string): ParseResult<DeclarationResult[]> {
   // 1. Parse with css-tree (declarationList context)
   // 2. Iterate over Declaration nodes
   // 3. Call existing parseDeclaration for each
@@ -121,6 +127,7 @@ export function parseDeclarationList(
 ```
 
 **Benefits:**
+
 - ✅ Reuses all existing parsers
 - ✅ Reuses property registry
 - ✅ Reuses error handling
@@ -144,9 +151,7 @@ export function parseDeclarationList(
  * @example
  * parseDeclarationList("color: red; font-size: 16px; margin: 10px")
  */
-export function parseDeclarationList(
-  css: string
-): ParseResult<DeclarationResult[]>
+export function parseDeclarationList(css: string): ParseResult<DeclarationResult[]>;
 ```
 
 ### Generator
@@ -162,9 +167,7 @@ export function parseDeclarationList(
  * generateDeclarationList([colorIR, fontSizeIR])
  * // "color: red; font-size: 16px"
  */
-export function generateDeclarationList(
-  declarations: DeclarationResult[]
-): GenerateResult
+export function generateDeclarationList(declarations: DeclarationResult[]): GenerateResult;
 ```
 
 ---
@@ -210,46 +213,46 @@ export function generateDeclarationList(
 ```typescript
 describe("parseDeclarationList", () => {
   // Basic
-  it("parses single declaration")
-  it("parses multiple declarations")
-  it("parses with trailing semicolon")
-  it("parses without trailing semicolon")
+  it("parses single declaration");
+  it("parses multiple declarations");
+  it("parses with trailing semicolon");
+  it("parses without trailing semicolon");
 
   // Whitespace
-  it("handles extra whitespace")
-  it("handles newlines")
-  it("handles mixed whitespace")
+  it("handles extra whitespace");
+  it("handles newlines");
+  it("handles mixed whitespace");
 
   // Edge cases
-  it("parses empty string")
-  it("parses only semicolons")
-  it("handles missing values")
+  it("parses empty string");
+  it("parses only semicolons");
+  it("handles missing values");
 
   // Mixed properties
-  it("parses standard + custom properties")
-  it("parses multi-value properties")
+  it("parses standard + custom properties");
+  it("parses multi-value properties");
 
   // Partial failures
-  it("continues on invalid property")
-  it("continues on invalid value")
-  it("collects all errors")
+  it("continues on invalid property");
+  it("continues on invalid value");
+  it("collects all errors");
 
   // Real-world
-  it("parses inline style example")
-  it("parses complex declarations")
-})
+  it("parses inline style example");
+  it("parses complex declarations");
+});
 ```
 
 ### Generator Tests (~10 tests)
 
 ```typescript
 describe("generateDeclarationList", () => {
-  it("generates single declaration")
-  it("generates multiple declarations")
-  it("joins with semicolons")
-  it("handles empty array")
-  it("round-trips correctly")
-})
+  it("generates single declaration");
+  it("generates multiple declarations");
+  it("joins with semicolons");
+  it("handles empty array");
+  it("round-trips correctly");
+});
 ```
 
 ---
@@ -261,11 +264,13 @@ describe("generateDeclarationList", () => {
 **Question:** What to return when some declarations fail?
 
 **Option 1: All or nothing** (Reject if any fail)
+
 - ❌ Loses valid data
 - ❌ Not resilient
 - ❌ Poor DX for batch operations
 
 **Option 2: Collect both successes and errors** ✅
+
 - ✅ Resilient parsing
 - ✅ Matches CSS browser behavior (ignore invalid)
 - ✅ Better DX for validation tools
@@ -274,14 +279,15 @@ describe("generateDeclarationList", () => {
 
 ```typescript
 interface DeclarationListResult {
-  declarations: DeclarationResult[];  // Successfully parsed
-  issues: Issue[];                     // All errors collected
+  declarations: DeclarationResult[]; // Successfully parsed
+  issues: Issue[]; // All errors collected
 }
 ```
 
 ### Order Preservation
 
 **Must preserve declaration order:**
+
 - CSS cascade depends on order
 - Inline styles rely on order
 - Round-trip must be exact
@@ -289,6 +295,7 @@ interface DeclarationListResult {
 ### Invalid CSS Handling
 
 **Strategy:**
+
 1. Parse what we can
 2. Collect errors for invalid declarations
 3. Continue processing remaining declarations
@@ -305,7 +312,7 @@ const style = "color: red; font-size: 16px; margin: 10px;";
 const result = parseDeclarationList(style);
 
 if (result.ok) {
-  result.value.forEach(decl => {
+  result.value.forEach((decl) => {
     console.log(`${decl.property}: ${JSON.stringify(decl.ir)}`);
   });
 }
@@ -316,7 +323,7 @@ if (result.ok) {
 ```typescript
 const declarations: DeclarationResult[] = [
   { property: "color", ir: colorIR, original: "red" },
-  { property: "font-size", ir: fontSizeIR, original: "16px" }
+  { property: "font-size", ir: fontSizeIR, original: "16px" },
 ];
 
 const result = generateDeclarationList(declarations);
@@ -332,7 +339,7 @@ const userStyles = "color: red; invalid-prop: bad; margin: 10px;";
 const result = parseDeclarationList(userStyles);
 
 if (result.ok) {
-  const valid = result.value.filter(d => !hasErrors(d));
+  const valid = result.value.filter((d) => !hasErrors(d));
   const invalid = result.issues;
 
   console.log(`Valid: ${valid.length}, Invalid: ${invalid.length}`);
@@ -364,4 +371,3 @@ if (result.ok) {
 ---
 
 **Ready to implement?** This is a high-value, low-effort feature that unlocks inline style support.
-

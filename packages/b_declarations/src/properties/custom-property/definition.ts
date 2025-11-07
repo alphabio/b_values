@@ -7,6 +7,7 @@ import type { CustomPropertyIR } from "./types";
 /**
  * Custom property definition (--*)
  * Note: This is a template - actual properties are dynamic
+ * Special case in parser: receives raw string (not AST) to preserve exact formatting
  */
 export const customProperty = defineProperty<CustomPropertyIR>({
   name: "--*",

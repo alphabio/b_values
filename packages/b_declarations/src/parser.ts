@@ -8,7 +8,7 @@ import {
   type Issue,
   type GenerateResult,
 } from "@b/types";
-import { propertyRegistry } from "./core";
+import { getPropertyDefinition, isCustomProperty } from "./core";
 import type { CSSDeclaration, DeclarationResult } from "./types";
 import { generateDeclaration } from "./generator";
 import * as csstree from "@eslint/css-tree";
@@ -53,8 +53,8 @@ export function parseDeclaration(input: string | CSSDeclaration): ParseResult<De
     value = input.value;
   }
 
-  // Step 1: Look up property definition
-  const definition = propertyRegistry.get(property);
+  // Step 1: Look up property definition (with custom property fallback)
+  const definition = getPropertyDefinition(property);
 
   if (!definition) {
     return parseErr(createError("invalid-value", `Unknown CSS property: ${property}`));
@@ -63,8 +63,11 @@ export function parseDeclaration(input: string | CSSDeclaration): ParseResult<De
   // Step 2: Parse based on property type
   let parseResult: ParseResult<unknown>;
 
-  if (definition.multiValue) {
-    // Multi-value property: Pass raw string to parser
+  // Special case: Custom properties (--*) receive raw string to preserve formatting
+  if (isCustomProperty(property)) {
+    parseResult = unsafeCallParser(definition.parser, value);
+  } else if (definition.multiValue) {
+    // Multi-value property: Pass raw string to parser (will split on commas)
     parseResult = unsafeCallParser(definition.parser, value);
   } else {
     // Single-value property: Parse to AST first

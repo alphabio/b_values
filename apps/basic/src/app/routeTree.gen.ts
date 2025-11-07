@@ -1,4 +1,3 @@
-// b_path:: apps/basic/src/app/routeTree.gen.ts
 /* eslint-disable */
 
 // @ts-nocheck
@@ -11,32 +10,83 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as publicIndexRouteImport } from './routes/(public)/index'
+import { Route as publicTimelineRouteImport } from './routes/(public)/timeline'
+import { Route as publicTestSimpleRouteImport } from './routes/(public)/test-simple'
+import { Route as publicTestGrowthRouteImport } from './routes/(public)/test-growth'
+import { Route as publicJourneyMapRouteImport } from './routes/(public)/journey-map'
 
 const publicIndexRoute = publicIndexRouteImport.update({
   id: '/(public)/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const publicTimelineRoute = publicTimelineRouteImport.update({
+  id: '/(public)/timeline',
+  path: '/timeline',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const publicTestSimpleRoute = publicTestSimpleRouteImport.update({
+  id: '/(public)/test-simple',
+  path: '/test-simple',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const publicTestGrowthRoute = publicTestGrowthRouteImport.update({
+  id: '/(public)/test-growth',
+  path: '/test-growth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const publicJourneyMapRoute = publicJourneyMapRouteImport.update({
+  id: '/(public)/journey-map',
+  path: '/journey-map',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
+  '/journey-map': typeof publicJourneyMapRoute
+  '/test-growth': typeof publicTestGrowthRoute
+  '/test-simple': typeof publicTestSimpleRoute
+  '/timeline': typeof publicTimelineRoute
   '/': typeof publicIndexRoute
 }
 export interface FileRoutesByTo {
+  '/journey-map': typeof publicJourneyMapRoute
+  '/test-growth': typeof publicTestGrowthRoute
+  '/test-simple': typeof publicTestSimpleRoute
+  '/timeline': typeof publicTimelineRoute
   '/': typeof publicIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
+  '/(public)/journey-map': typeof publicJourneyMapRoute
+  '/(public)/test-growth': typeof publicTestGrowthRoute
+  '/(public)/test-simple': typeof publicTestSimpleRoute
+  '/(public)/timeline': typeof publicTimelineRoute
   '/(public)/': typeof publicIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/journey-map'
+    | '/test-growth'
+    | '/test-simple'
+    | '/timeline'
+    | '/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/(public)/'
+  to: '/journey-map' | '/test-growth' | '/test-simple' | '/timeline' | '/'
+  id:
+    | '__root__'
+    | '/(public)/journey-map'
+    | '/(public)/test-growth'
+    | '/(public)/test-simple'
+    | '/(public)/timeline'
+    | '/(public)/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
+  publicJourneyMapRoute: typeof publicJourneyMapRoute
+  publicTestGrowthRoute: typeof publicTestGrowthRoute
+  publicTestSimpleRoute: typeof publicTestSimpleRoute
+  publicTimelineRoute: typeof publicTimelineRoute
   publicIndexRoute: typeof publicIndexRoute
 }
 
@@ -49,10 +99,42 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof publicIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/(public)/timeline': {
+      id: '/(public)/timeline'
+      path: '/timeline'
+      fullPath: '/timeline'
+      preLoaderRoute: typeof publicTimelineRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/(public)/test-simple': {
+      id: '/(public)/test-simple'
+      path: '/test-simple'
+      fullPath: '/test-simple'
+      preLoaderRoute: typeof publicTestSimpleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/(public)/test-growth': {
+      id: '/(public)/test-growth'
+      path: '/test-growth'
+      fullPath: '/test-growth'
+      preLoaderRoute: typeof publicTestGrowthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/(public)/journey-map': {
+      id: '/(public)/journey-map'
+      path: '/journey-map'
+      fullPath: '/journey-map'
+      preLoaderRoute: typeof publicJourneyMapRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
+  publicJourneyMapRoute: publicJourneyMapRoute,
+  publicTestGrowthRoute: publicTestGrowthRoute,
+  publicTestSimpleRoute: publicTestSimpleRoute,
+  publicTimelineRoute: publicTimelineRoute,
   publicIndexRoute: publicIndexRoute,
 }
 export const routeTree = rootRouteImport

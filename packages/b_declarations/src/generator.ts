@@ -1,6 +1,6 @@
 // b_path:: packages/b_declarations/src/generator.ts
 import { generateOk, generateErr, createError, type GenerateResult } from "@b/types";
-import { propertyRegistry } from "./core";
+import { getPropertyDefinition } from "./core";
 import type { PropertyIRMap, RegisteredProperty, PropertyGenerator } from "./types";
 
 /**
@@ -38,8 +38,8 @@ export function generateDeclaration<TProperty extends RegisteredProperty>(
 ): GenerateResult {
   const { property, ir } = input;
 
-  // Look up property definition
-  const definition = propertyRegistry.get(property);
+  // Look up property definition (with custom property fallback)
+  const definition = getPropertyDefinition(property);
 
   if (!definition) {
     return generateErr(
