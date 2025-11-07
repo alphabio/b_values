@@ -3,7 +3,7 @@
 // It should be auto-generated in the future.
 
 import type { GenerateResult, ParseResult } from "@b/types";
-import type { BackgroundImageIR } from "./properties";
+import type { BackgroundImageIR, CustomPropertyIR } from "./properties";
 
 /**
  * Map of CSS property names to their IR types.
@@ -11,6 +11,7 @@ import type { BackgroundImageIR } from "./properties";
  */
 export interface PropertyIRMap {
   "background-image": BackgroundImageIR;
+  [key: `--${string}`]: CustomPropertyIR;
 }
 
 /**
