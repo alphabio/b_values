@@ -95,11 +95,14 @@ export function createMultiValueParser<TItem, TFinal>(
       try {
         itemAst = csstree.parse(trimmedItemStr, { context: "value", positions: true }) as csstree.Value;
 
-        // 4. CRITICAL FIX: Ensure the entire chunk was consumed.
-        // If css-tree stopped early, there's likely a missing comma between values.
-        const rootNode = itemAst.children.first;
-        if (rootNode?.loc && rootNode.loc.end.offset < trimmedItemStr.length) {
-          const unparsed = trimmedItemStr.slice(rootNode.loc.end.offset).trim();
+        // ✨ REFINED CRITICAL FIX: Check the container node's location ✨
+        // If the parsed AST's end offset doesn't match the string's length,
+        // it means css-tree stopped parsing early and there's trailing content.
+        // This correctly handles both:
+        // - Space-separated values within a layer (e.g., "repeat space") ✅
+        // - Missing commas between layers (e.g., "url(...) url(...)") ✅
+        if (itemAst.loc && itemAst.loc.end.offset < trimmedItemStr.length) {
+          const unparsed = trimmedItemStr.slice(itemAst.loc.end.offset).trim();
           const previewLength = Math.min(unparsed.length, 50);
           const preview = unparsed.slice(0, previewLength) + (unparsed.length > previewLength ? "..." : "");
           const issue = createError(

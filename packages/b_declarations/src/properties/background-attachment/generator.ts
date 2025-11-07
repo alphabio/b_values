@@ -1,0 +1,22 @@
+// b_path:: packages/b_declarations/src/properties/background-attachment/generator.ts
+import { generateOk, type GenerateResult } from "@b/types";
+import * as Generators from "@b/generators";
+import type { BackgroundAttachmentIR } from "./types";
+
+/**
+ * Generate CSS for background-attachment property.
+ */
+export function generateBackgroundAttachment(ir: BackgroundAttachmentIR): GenerateResult {
+  if (ir.kind === "keyword") {
+    return generateOk(ir.value, "background-attachment");
+  }
+
+  const layerStrings: string[] = [];
+  for (const layer of ir.layers) {
+    const result = Generators.Background.generateBackgroundAttachmentValue(layer);
+    if (!result.ok) return result;
+    layerStrings.push(result.value);
+  }
+
+  return generateOk(layerStrings.join(", "), "background-attachment");
+}

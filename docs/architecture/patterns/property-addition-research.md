@@ -8,19 +8,21 @@
 ## 🔍 What background-image Actually Uses
 
 ### Parser Imports
+
 ```typescript
 import { createError, parseErr, parseOk, forwardParseErr, type ParseResult } from "@b/types";
-import * as Parsers from "@b/parsers";  // ⚠️ Namespace import!
+import * as Parsers from "@b/parsers"; // ⚠️ Namespace import!
 import { isCSSWideKeyword, parseCSSWideKeyword, createMultiValueParser } from "../../utils";
-import * as Ast from "@b/utils";  // ⚠️ Namespace import!
+import * as Ast from "@b/utils"; // ⚠️ Namespace import!
 import type { BackgroundImageIR, ImageLayer } from "./types";
 import type * as csstree from "@eslint/css-tree";
 ```
 
 ### Generator Imports
+
 ```typescript
 import { generateOk, generateErr, createError, type GenerateResult } from "@b/types";
-import * as Generators from "@b/generators";  // ⚠️ Namespace import!
+import * as Generators from "@b/generators"; // ⚠️ Namespace import!
 import type { BackgroundImageIR, ImageLayer } from "./types";
 ```
 
@@ -29,7 +31,9 @@ import type { BackgroundImageIR, ImageLayer } from "./types";
 ## 📦 Package Breakdown
 
 ### `@b/types` - Result & Issue System
+
 **What we actually use:**
+
 ```typescript
 // Result constructors
 parseOk, parseErr, generateOk, generateErr
@@ -48,7 +52,9 @@ type Gradient  // From @b/types - DON'T recreate
 ```
 
 ### `@b/parsers` - Value Parsers (Namespace Import Pattern)
+
 **Available parsers:**
+
 ```typescript
 import * as Parsers from "@b/parsers";
 
@@ -65,6 +71,7 @@ Parsers.Math.*  // calc(), min(), max()
 ```
 
 ### `@b/generators` - Value Generators (Namespace Import Pattern)
+
 ```typescript
 import * as Generators from "@b/generators";
 
@@ -79,7 +86,9 @@ Generators.Position.*
 ```
 
 ### `@b/utils` - AST Helpers (Namespace Import Pattern)
+
 **Critical AST utilities:**
+
 ```typescript
 import * as Ast from "@b/utils";
 
@@ -100,20 +109,22 @@ Ast.convertLocation(...)
 ```
 
 ### `../../utils` - Declaration-Level Utilities
+
 **Multi-value parsing:**
+
 ```typescript
-import { 
-  createMultiValueParser,   // ⚠️ KEY for comma-separated values!
+import {
+  createMultiValueParser, // ⚠️ KEY for comma-separated values!
   isCSSWideKeyword,
   parseCSSWideKeyword,
 } from "../../utils";
 
 // Factory for resilient list parsing:
 createMultiValueParser<ItemType, FinalIR>({
-  preParse,      // Handle keywords before parsing list
-  itemParser,    // Parse single item
-  aggregator,    // Combine items into final IR
-})
+  preParse, // Handle keywords before parsing list
+  itemParser, // Parse single item
+  aggregator, // Combine items into final IR
+});
 ```
 
 ---
@@ -121,6 +132,7 @@ createMultiValueParser<ItemType, FinalIR>({
 ## 🎯 Key Patterns from background-image
 
 ### 1. Multi-Value Parser Factory
+
 ```typescript
 export const parseBackgroundImage = createMultiValueParser<ImageLayer, BackgroundImageIR>({
   // Pre-parse: Handle global keywords
@@ -130,28 +142,28 @@ export const parseBackgroundImage = createMultiValueParser<ImageLayer, Backgroun
       const result = parseCSSWideKeyword(value);
       if (result.ok) return parseOk({ kind: "keyword", value: result.value });
     }
-    return null;  // Not a keyword, parse as list
+    return null; // Not a keyword, parse as list
   },
-  
+
   // Item parser: Parse each layer
   itemParser(valueNode: csstree.Value): ParseResult<ImageLayer> {
     const children = Ast.nodeListToArray(valueNode.children);
     const firstNode = children[0];
-    
+
     // Check node types...
     if (Ast.isIdentifier(firstNode, "none")) {
       return parseOk({ kind: "none" });
     }
-    
+
     if (Ast.isFunctionNode(firstNode, "url")) {
       const urlResult = Parsers.Url.parseUrlFromNode(firstNode);
       if (urlResult.ok) return parseOk({ kind: "url", url: urlResult.value.value });
-      return forwardParseErr<ImageLayer>(urlResult);  // ⚠️ Forward errors!
+      return forwardParseErr<ImageLayer>(urlResult); // ⚠️ Forward errors!
     }
-    
+
     // ... more checks
   },
-  
+
   // Aggregator: Combine into final IR
   aggregator(layers: ImageLayer[]): BackgroundImageIR {
     return { kind: "layers", layers };
@@ -160,6 +172,7 @@ export const parseBackgroundImage = createMultiValueParser<ImageLayer, Backgroun
 ```
 
 ### 2. Namespace Import Pattern
+
 **Why?** Cleaner, less verbose, organized by domain.
 
 ```typescript
@@ -176,13 +189,14 @@ import * as Ast from "@b/utils";
 ```
 
 ### 3. Node Type Checking with Type Guards
+
 ```typescript
 const firstNode = children[0];
 
 // Type guards narrow the type!
 if (Ast.isFunctionNode(firstNode, "url")) {
   // firstNode is now csstree.FunctionNode
-  const name = firstNode.name;  // TypeScript knows this exists
+  const name = firstNode.name; // TypeScript knows this exists
 }
 
 if (Ast.isIdentifier(firstNode, "none")) {
@@ -192,6 +206,7 @@ if (Ast.isIdentifier(firstNode, "none")) {
 ```
 
 ### 4. Error Forwarding
+
 ```typescript
 const urlResult = Parsers.Url.parseUrlFromNode(node);
 if (urlResult.ok) {
@@ -204,6 +219,7 @@ return forwardParseErr<ImageLayer>(urlResult);
 ```
 
 ### 5. Generator Iteration Pattern
+
 ```typescript
 // Generate each layer
 const layerStrings: string[] = [];
@@ -212,18 +228,18 @@ const allIssues: Issue[] = [];
 for (let i = 0; i < ir.layers.length; i++) {
   const layer = ir.layers[i];
   const layerResult = generateImageLayer(layer, ["layers", i]);
-  
+
   if (!layerResult.ok) {
-    return layerResult;  // Early return on error
+    return layerResult; // Early return on error
   }
-  
+
   layerStrings.push(layerResult.value);
   allIssues.push(...layerResult.issues);
 }
 
 return {
   ok: true,
-  value: layerStrings.join(", "),  // Comma-separated
+  value: layerStrings.join(", "), // Comma-separated
   property: "background-image",
   issues: allIssues,
 };
@@ -234,6 +250,7 @@ return {
 ## 🛠️ Complete Utility Reference
 
 ### From `@b/types`
+
 ```typescript
 // Results
 parseOk(value), parseErr(error)
@@ -251,6 +268,7 @@ Gradient, Color, ColorStop, Position, Length, Angle, Percentage
 ```
 
 ### From `@b/parsers` (Namespace)
+
 ```typescript
 Parsers.Color.*
 Parsers.Length.*
@@ -262,6 +280,7 @@ Parsers.Math.*  // calc(), min(), max()
 ```
 
 ### From `@b/generators` (Namespace)
+
 ```typescript
 Generators.Color.*
 Generators.Length.*
@@ -271,6 +290,7 @@ Generators.Gradient.generate(ir, options)
 ```
 
 ### From `@b/utils` (Namespace - AST)
+
 ```typescript
 // Type guards
 Ast.isFunctionNode(node, name?)
@@ -288,13 +308,14 @@ Ast.getNodeLocation(node)
 ```
 
 ### From `../../utils` (Declaration Utils)
+
 ```typescript
 // Multi-value parsing
-createMultiValueParser<ItemType, FinalIR>({ preParse, itemParser, aggregator })
+createMultiValueParser<ItemType, FinalIR>({ preParse, itemParser, aggregator });
 
 // Keywords
-isCSSWideKeyword(value)
-parseCSSWideKeyword(value)
+isCSSWideKeyword(value);
+parseCSSWideKeyword(value);
 ```
 
 ---

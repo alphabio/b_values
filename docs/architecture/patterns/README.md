@@ -7,9 +7,11 @@
 ## 📚 Available Patterns
 
 ### [Property Addition Research](./property-addition-research.md)
+
 Deep dive into how properties are built based on `background-image` implementation.
 
 **Covers:**
+
 - Real imports and utilities used
 - Package breakdown with actual code
 - Key patterns (multi-value parser, namespace imports, type guards)
@@ -19,9 +21,11 @@ Deep dive into how properties are built based on `background-image` implementati
 **When to read:** Before adding properties, understanding the system.
 
 ### [CSS Values and Functions](./css-values-functions.md)
+
 Complete explanation of CSS value types and function handling.
 
 **Covers:**
+
 - Value categories (simple, functions, gradients)
 - Function anatomy and AST structure
 - Parsing patterns

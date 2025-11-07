@@ -21,6 +21,21 @@
 
 ---
 
+PROTOCOL
+
+keyword -> type -> unit -> test TDD -> implementation
+
+packages/b_keywords
+packages/b_types
+packages/b_units
+
+implementation
+
+packages/b_generators
+packages/b_parsers
+
+---
+
 ## 📦 Import Pattern (Use Namespaces!)
 
 ```typescript
@@ -301,3 +316,11 @@ Always handle `inherit`, `initial`, `unset`, `revert` in `preParse`.
 **Example:** See `properties/background-image/` for complete implementation.
 
 **Deep dive:** See `docs/architecture/patterns/property-addition-research.md` for detailed patterns.
+
+---
+
+Additionally you can use /Users/alphab/Dev/LLM/DEV/b_value as a reference
+
+We are migrating from b_value to this repo b_values
+
+IMPORTANT: only use b_value as a reference. We have a completely different design over here...

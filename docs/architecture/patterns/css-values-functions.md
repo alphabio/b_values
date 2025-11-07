@@ -10,12 +10,12 @@
 In CSS, every property accepts certain types of values:
 
 ```css
-color: red;                    /* keyword */
-width: 100px;                  /* length */
-opacity: 0.5;                  /* number */
-transform: rotate(45deg);      /* function */
-background: url(img.png);      /* function with url */
-font-size: calc(100% + 2px);   /* math function */
+color: red; /* keyword */
+width: 100px; /* length */
+opacity: 0.5; /* number */
+transform: rotate(45deg); /* function */
+background: url(img.png); /* function with url */
+font-size: calc(100% + 2px); /* math function */
 ```
 
 **Our job:** Parse these values into IR, then generate them back to CSS.
@@ -25,16 +25,18 @@ font-size: calc(100% + 2px);   /* math function */
 ## 📦 Value Categories
 
 ### 1. Simple Values
+
 **What:** Direct values - no functions, no complex syntax.
 
 ```css
-color: red;           /* Named color */
-width: 100px;         /* Dimension (number + unit) */
-opacity: 0.5;         /* Number */
-display: block;       /* Keyword */
+color: red; /* Named color */
+width: 100px; /* Dimension (number + unit) */
+opacity: 0.5; /* Number */
+display: block; /* Keyword */
 ```
 
 **How we handle:**
+
 ```typescript
 // Direct AST node parsing
 if (Ast.isIdentifier(node, "red")) {
@@ -47,6 +49,7 @@ if (Ast.isDimension(node)) {
 ```
 
 ### 2. Functions
+
 **What:** Values that use function notation `name(args)`.
 
 ```css
@@ -71,21 +74,26 @@ var(--custom-prop)
 ```
 
 **How we handle:**
+
 ```typescript
 // Function dispatcher pattern
 if (Ast.isFunctionNode(node)) {
   const funcName = node.name.toLowerCase();
-  
+
   switch (funcName) {
-    case "rgb": return Parsers.Color.parseRgbFromNode(node);
-    case "calc": return Parsers.Math.parseCalcFromNode(node);
-    case "url": return Parsers.Url.parseUrlFromNode(node);
+    case "rgb":
+      return Parsers.Color.parseRgbFromNode(node);
+    case "calc":
+      return Parsers.Math.parseCalcFromNode(node);
+    case "url":
+      return Parsers.Url.parseUrlFromNode(node);
     // ... etc
   }
 }
 ```
 
 ### 3. Gradients (Special Functions)
+
 **What:** Complex functions with multiple layers and color stops.
 
 ```css
@@ -97,6 +105,7 @@ conic-gradient(from 45deg, red, yellow, green)
 **Why special:** They have their own sub-syntax (positions, angles, color stops).
 
 **How we handle:**
+
 ```typescript
 if (funcName.includes("gradient")) {
   return Parsers.Gradient.parseFromNode(node);
@@ -108,6 +117,7 @@ if (funcName.includes("gradient")) {
 ## 🔍 Function Anatomy
 
 ### Basic Function Structure
+
 ```css
 function-name(arg1, arg2, arg3)
      ↓          ↓    ↓    ↓
@@ -115,6 +125,7 @@ function-name(arg1, arg2, arg3)
 ```
 
 **In css-tree AST:**
+
 ```typescript
 {
   type: "Function",
@@ -126,32 +137,34 @@ function-name(arg1, arg2, arg3)
 ### Parsing Functions
 
 **Pattern 1: Parse from AST node**
+
 ```typescript
 function parseRgbFromNode(node: csstree.FunctionNode): ParseResult<ColorIR> {
   // Extract children
   const children = Ast.nodeListToArray(node.children);
-  
+
   // Parse each argument
   const r = parseNumber(children[0]);
   const g = parseNumber(children[1]);
   const b = parseNumber(children[2]);
-  
+
   // Validate and return
   return parseOk({
     kind: "rgb",
     r: r.value,
     g: g.value,
-    b: b.value
+    b: b.value,
   });
 }
 ```
 
 **Pattern 2: Parse from string (for complex syntax)**
+
 ```typescript
 function parseCalc(value: string): ParseResult<MathIR> {
   // Use css-tree to parse the full expression
   const ast = csstree.parse(value, { context: "value" });
-  
+
   // Process AST...
   return parseOk({ kind: "calc", expression: ... });
 }
@@ -162,9 +175,10 @@ function parseCalc(value: string): ParseResult<MathIR> {
 ## 🎨 Real Examples from Our Codebase
 
 ### Example 1: Color Functions
+
 ```typescript
 // From @b/parsers/color
-Parsers.Color.parseFromNode(node)
+Parsers.Color.parseFromNode(node);
 
 // Handles:
 // - rgb(255, 0, 0)
@@ -174,9 +188,10 @@ Parsers.Color.parseFromNode(node)
 ```
 
 ### Example 2: Gradient Functions
+
 ```typescript
 // From @b/parsers/gradient
-Parsers.Gradient.parseFromNode(node)
+Parsers.Gradient.parseFromNode(node);
 
 // Handles:
 // - linear-gradient(...)
@@ -186,9 +201,10 @@ Parsers.Gradient.parseFromNode(node)
 ```
 
 ### Example 3: URL Function
+
 ```typescript
 // From @b/parsers/url
-Parsers.Url.parseUrlFromNode(node)
+Parsers.Url.parseUrlFromNode(node);
 
 // Handles:
 // - url(image.png)
@@ -197,10 +213,11 @@ Parsers.Url.parseUrlFromNode(node)
 ```
 
 ### Example 4: Math Functions
+
 ```typescript
 // From @b/parsers/math
-Parsers.Math.parseCalcFromNode(node)
-Parsers.Math.parseMinMaxFromNode(node)
+Parsers.Math.parseCalcFromNode(node);
+Parsers.Math.parseMinMaxFromNode(node);
 
 // Handles:
 // - calc(100% - 20px)
@@ -214,11 +231,13 @@ Parsers.Math.parseMinMaxFromNode(node)
 ## 🔧 How Functions Fit Into Properties
 
 ### Single-Value Property
+
 ```css
 color: rgb(255, 0, 0);
 ```
 
 **Flow:**
+
 1. Property parser receives AST node for the value
 2. Detects it's a function node
 3. Dispatches to color function parser
@@ -226,11 +245,13 @@ color: rgb(255, 0, 0);
 5. Property wraps it: `{ kind: "color", value: colorIR }`
 
 ### Multi-Value Property
+
 ```css
 background-image: url(a.png), linear-gradient(...);
 ```
 
 **Flow:**
+
 1. Property parser receives string (multiValue: true)
 2. Uses `createMultiValueParser` to split by commas
 3. For each layer:
@@ -263,7 +284,7 @@ if (Ast.isFunctionNode(firstNode, "url")) {
 // Gradient functions
 if (Ast.isFunctionNode(firstNode)) {
   const funcName = firstNode.name.toLowerCase();
-  
+
   if (funcName.includes("gradient")) {
     const gradientResult = Parsers.Gradient.parseFromNode(firstNode);
     if (gradientResult.ok) return parseOk({ kind: "gradient", gradient: gradientResult.value });
@@ -279,20 +300,24 @@ if (Ast.isFunctionNode(firstNode)) {
 ## 🎯 Key Takeaways
 
 ### For Simple Values
+
 - Use AST type guards: `Ast.isIdentifier()`, `Ast.isDimension()`
 - Direct parsing, no function dispatch needed
 
 ### For Functions
+
 - Check: `Ast.isFunctionNode(node, "name")`
 - Dispatch to specialized parser: `Parsers.Color.*`, `Parsers.Gradient.*`
 - Forward errors: `forwardParseErr<T>(result)`
 
 ### For Multi-Value Properties
+
 - Use `createMultiValueParser` factory
 - Handle each item independently
 - Aggregate results
 
 ### Always Handle
+
 - CSS-wide keywords: `inherit`, `initial`, `unset`, `revert`
 - Type narrowing with type guards
 - Error forwarding when chaining parsers
@@ -315,7 +340,7 @@ Property (background-image)
     Dispatch: Parsers.Url.parseUrlFromNode()
     ↓
     Return: { kind: "url", url: "a.png" }
-    
+
   Item 2: linear-gradient(...)
     ↓
     Detect: Function node "linear-gradient"
@@ -323,7 +348,7 @@ Property (background-image)
     Dispatch: Parsers.Gradient.parseFromNode()
     ↓
     Return: { kind: "gradient", gradient: { ... } }
-    
+
     ↓
   Aggregate: { kind: "layers", layers: [url, gradient] }
 ```
@@ -340,6 +365,7 @@ Property (background-image)
 4. **Sub-value parser** - Parses components (colors, lengths, angles)
 
 **Each level:**
+
 - Validates its domain
 - Returns structured IR
 - Forwards errors up the chain
@@ -361,27 +387,27 @@ Property (background-image)
 **The CssValue union type - represents ANY CSS value:**
 
 ```typescript
-type CssValue = 
+type CssValue =
   // Structural
   | { kind: "list"; separator: " " | ","; values: CssValue[] }
-  
+
   // Primitives
   | { kind: "literal"; value: number; unit?: string }
   | { kind: "keyword"; value: string }
   | { kind: "string"; value: string }
   | { kind: "hex-color"; value: string }
   | { kind: "variable"; name: string; fallback?: CssValue }
-  
+
   // Math Functions
   | { kind: "calc"; value: CssValue }
   | { kind: "calc-operation"; operator: "+" | "-" | "*" | "/"; left: CssValue; right: CssValue }
   | { kind: "min" | "max"; values: CssValue[] }
   | { kind: "clamp"; min: CssValue; preferred: CssValue; max: CssValue }
-  
+
   // Other Functions
   | { kind: "url"; url: string }
   | { kind: "attr"; name: string; typeOrUnit?: string; fallback?: CssValue }
-  | { kind: "function"; name: string; args: CssValue[] }  // Generic fallback
+  | { kind: "function"; name: string; args: CssValue[] }; // Generic fallback
 ```
 
 **Key insight:** All CSS values normalize to this discriminated union. It's recursive!
@@ -399,6 +425,7 @@ const result = parseNodeToCssValue(node);
 ```
 
 **How it works:**
+
 1. Check if node is a Function
 2. If yes, dispatch to `parseComplexFunction()`
 3. If not recognized, fall back to `parseCssValueNode()` from `@b/utils`
@@ -430,9 +457,9 @@ const PARSER_MAP: Record<string, FunctionParser> = {
 export function parseComplexFunction(node: csstree.FunctionNode): ParseResult<CssValue> | null {
   const funcName = node.name.toLowerCase();
   const parser = PARSER_MAP[funcName];
-  
+
   if (parser) return parser(node);
-  return null;  // Not recognized, caller handles as generic
+  return null; // Not recognized, caller handles as generic
 }
 ```
 
@@ -446,12 +473,12 @@ export function parseComplexFunction(node: csstree.FunctionNode): ParseResult<Cs
 import { isCssValueFunction } from "@b/parsers/utils/css-value-functions";
 
 // Distinguish value functions from color functions
-isCssValueFunction(varNode)   // true - var(--value)
-isCssValueFunction(calcNode)  // true - calc(50% + 10px)
-isCssValueFunction(minNode)   // true - min(10px, 20px)
+isCssValueFunction(varNode); // true - var(--value)
+isCssValueFunction(calcNode); // true - calc(50% + 10px)
+isCssValueFunction(minNode); // true - min(10px, 20px)
 
-isCssValueFunction(rgbNode)   // false - rgb(255, 0, 0)
-isCssValueFunction(hslNode)   // false - hsl(0, 100%, 50%)
+isCssValueFunction(rgbNode); // false - rgb(255, 0, 0)
+isCssValueFunction(hslNode); // false - hsl(0, 100%, 50%)
 ```
 
 **Why this matters:** In gradients, `rgb()` is a color stop, but `calc()` is a position value.
@@ -461,6 +488,7 @@ isCssValueFunction(hslNode)   // false - hsl(0, 100%, 50%)
 ## 🎯 How to Use These
 
 ### Pattern 1: Parse a Simple Value
+
 ```typescript
 import { parseNodeToCssValue } from "@b/parsers/utils/css-value-parser";
 
@@ -482,6 +510,7 @@ if (result.ok) {
 ```
 
 ### Pattern 2: Check Function Type Before Parsing
+
 ```typescript
 import { isCssValueFunction } from "@b/parsers/utils/css-value-functions";
 
@@ -497,23 +526,24 @@ if (Ast.isFunctionNode(node)) {
 ```
 
 ### Pattern 3: When Building Property Parsers
+
 ```typescript
 import { parseNodeToCssValue } from "@b/parsers/utils/css-value-parser";
 
 function parseMyProperty(valueNode: csstree.Value): ParseResult<MyPropertyIR> {
   const children = Ast.nodeListToArray(valueNode.children);
-  
+
   // Parse each component as a CssValue
   const firstValue = parseNodeToCssValue(children[0]);
   const secondValue = parseNodeToCssValue(children[1]);
-  
+
   if (!firstValue.ok) return forwardParseErr(firstValue);
   if (!secondValue.ok) return forwardParseErr(secondValue);
-  
+
   return parseOk({
     kind: "my-property",
     first: firstValue.value,
-    second: secondValue.value
+    second: secondValue.value,
   });
 }
 ```
@@ -523,17 +553,20 @@ function parseMyProperty(valueNode: csstree.Value): ParseResult<MyPropertyIR> {
 ## 💡 Why This Architecture
 
 **Composition over duplication:**
+
 - Each parser focuses on its domain
 - Complex functions delegate to specialists
 - Generic fallback for unknown functions
 - Type system ensures correctness
 
 **Single source of truth:**
+
 - `function-dispatcher.ts` - Routes all functions
 - `css-value.ts` - Defines all value types
 - No scattered logic, easy to extend
 
 **Recursive by design:**
+
 - `CssValue` can contain `CssValue` (lists, calc operations)
 - Handles arbitrarily nested expressions
 - Type-safe at every level
