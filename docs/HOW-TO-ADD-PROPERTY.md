@@ -300,4 +300,4 @@ Always handle `inherit`, `initial`, `unset`, `revert` in `preParse`.
 
 **Example:** See `properties/background-image/` for complete implementation.
 
-**Deep dive:** See `docs/sessions/054/property-addition-research.md` for detailed patterns.
+**Deep dive:** See `docs/architecture/patterns/property-addition-research.md` for detailed patterns.
