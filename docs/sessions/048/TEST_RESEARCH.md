@@ -61,7 +61,7 @@ expect(result.value?.r).toEqual({ kind: "literal", value: 255 });
 ❌ Wrong: Expecting url() to be in dispatcher
 ✅ Right: url() returns null from dispatcher (handled elsewhere)
 
-❌ Wrong: Writing tests before understanding actual behavior  
+❌ Wrong: Writing tests before understanding actual behavior
 ✅ Right: Research actual types and behavior FIRST
 
 ### 5. Files Still Need Tests
