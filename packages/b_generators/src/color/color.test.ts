@@ -115,35 +115,35 @@ describe("color generator (dispatcher)", () => {
   });
 
   describe("Error cases", () => {
-    it("should return error for null", () => {
+    it("should return error for null (runtime type error)", () => {
       const result = Color.generate(null as unknown as Type.Color);
       expect(result.ok).toBe(false);
       if (!result.ok) {
-        expect(result.issues[0].code).toBe("missing-required-field");
+        expect(result.issues[0].code).toBe("unsupported-kind");
       }
     });
 
-    it("should return error for undefined", () => {
+    it("should return error for undefined (runtime type error)", () => {
       const result = Color.generate(undefined as unknown as Type.Color);
       expect(result.ok).toBe(false);
       if (!result.ok) {
-        expect(result.issues[0].code).toBe("missing-required-field");
+        expect(result.issues[0].code).toBe("unsupported-kind");
       }
     });
 
-    it("should return error for non-object", () => {
+    it("should return error for non-object (runtime type error)", () => {
       const result = Color.generate("red" as unknown as Type.Color);
       expect(result.ok).toBe(false);
       if (!result.ok) {
-        expect(result.issues[0].code).toBe("missing-required-field");
+        expect(result.issues[0].code).toBe("unsupported-kind");
       }
     });
 
-    it("should return error for missing kind field", () => {
+    it("should return error for missing kind field (runtime type error)", () => {
       const result = Color.generate({} as unknown as Type.Color);
       expect(result.ok).toBe(false);
       if (!result.ok) {
-        expect(result.issues[0].code).toBe("missing-required-field");
+        expect(result.issues[0].code).toBe("unsupported-kind");
       }
     });
 

@@ -18,12 +18,10 @@ import * as Special from "./special";
  * @see https://drafts.csswg.org/css-color/#typedef-color
  */
 export function generate(color: Type.Color, context?: GenerateContext): GenerateResult {
-  if (!color || typeof color !== "object" || !("kind" in color)) {
-    return generateErr(
-      createError("missing-required-field", "Invalid color IR: missing 'kind' field", {
-        suggestion: "Ensure IR was parsed correctly",
-      }),
-    );
+  // Minimal runtime check for null/undefined to prevent crashes
+  // TypeScript ensures correct types, but runtime errors need handling
+  if (!color) {
+    return generateErr(createError("unsupported-kind", "Invalid color IR: null or undefined"));
   }
 
   switch (color.kind) {
@@ -61,14 +59,14 @@ export function generate(color: Type.Color, context?: GenerateContext): Generate
       return ColorFunction.generate(color);
 
     case "variable":
-      // Variable can represent any color type
       return generateOk(cssValueToCss(color));
 
-    default:
+    default: {
+      // Exhaustiveness check - TypeScript ensures all cases are handled
+      const _exhaustive: never = color;
       return generateErr(
-        createError("unsupported-kind", `Unknown color kind: ${(color as { kind?: string }).kind}`, {
-          suggestion: "Check that color IR is valid",
-        }),
+        createError("unsupported-kind", `Unknown color kind: ${(_exhaustive as { kind?: string }).kind}`),
       );
+    }
   }
 }

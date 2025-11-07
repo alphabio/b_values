@@ -1,6 +1,5 @@
 // b_path:: packages/b_declarations/src/parser.ts
-import { createError, createInfo, parseErr, parseOk, forwardParseErr, type ParseResult, type Issue } from "@b/types";
-import { validate } from "@b/utils";
+import { createError, parseErr, parseOk, forwardParseErr, type ParseResult, type Issue } from "@b/types";
 import { propertyRegistry } from "./core";
 import type { CSSDeclaration, DeclarationResult } from "./types";
 import { generateDeclaration } from "./generator";
@@ -54,6 +53,7 @@ export function parseDeclaration(input: string | CSSDeclaration): ParseResult<De
   }
 
   // Step 2: Parse value to AST with positions enabled
+  // This single parse validates syntax AND provides AST for semantic parsing
   let valueAst: csstree.Value;
   try {
     valueAst = csstree.parse(value, {
@@ -66,24 +66,12 @@ export function parseDeclaration(input: string | CSSDeclaration): ParseResult<De
     return parseErr(createError("invalid-syntax", error.message));
   }
 
-  // Step 3: Validate with css-tree for additional warnings
-  const validation = validate(`${property}: ${value}`);
-
-  // Step 4: Parse using property's AST-native parser
+  // Step 3: Parse using property's AST-native parser
+  // Our parser validates semantic correctness (e.g., gradient structure)
   const parseResult = definition.parser(valueAst);
 
-  // Step 5: Collect all issues
+  // Step 4: Collect all issues
   const allIssues: Issue[] = [...parseResult.issues];
-
-  // Add css-tree warnings for visual context
-  if (validation.warnings.length > 0) {
-    const contextIssues = validation.warnings.map((w) =>
-      createInfo("invalid-syntax", w.formattedWarning || w.name, {
-        property: w.property,
-      }),
-    );
-    allIssues.push(...contextIssues);
-  }
 
   // Step 5: Try generation to get semantic warnings (even if parse failed but has partial IR)
   if (parseResult.value) {

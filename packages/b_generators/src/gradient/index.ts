@@ -21,9 +21,12 @@ export function generate(gradient: Gradient, context?: GenerateContext): Generat
       return Radial.generate(gradient, context);
     case "conic":
       return Conic.generate(gradient, context);
-    default:
+    default: {
+      // Exhaustiveness check - TypeScript ensures all gradient types are handled
+      const _exhaustive: never = gradient;
       return generateErr(
-        createError("unsupported-kind", `Unsupported gradient kind: ${(gradient as { kind: string }).kind}`),
+        createError("unsupported-kind", `Unsupported gradient kind: ${(_exhaustive as { kind: string }).kind}`),
       );
+    }
   }
 }
