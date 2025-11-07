@@ -35,7 +35,8 @@ describe("hex generator", () => {
     const result = Hex.generate(color);
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.issues[0]?.code).toBe("missing-required-field");
+      expect(result.issues[0]?.code).toBe("invalid-ir");
+      expect(result.issues[0]?.message).toContain("value");
     }
   });
 

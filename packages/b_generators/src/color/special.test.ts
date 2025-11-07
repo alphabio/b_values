@@ -42,7 +42,8 @@ describe("special color generator", () => {
     const result = Special.generate({ kind: "special" } as unknown as SpecialColor);
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.issues[0]?.code).toBe("missing-required-field");
+      expect(result.issues[0]?.code).toBe("invalid-ir");
+      expect(result.issues[0]?.message).toContain("keyword");
     }
   });
 });

@@ -1,19 +1,15 @@
 // b_path:: packages/b_generators/src/color/special.ts
-import { type GenerateResult, generateErr, generateOk, createError } from "@b/types";
-import type { SpecialColor } from "@b/types";
+import { type GenerateResult, generateErr, generateOk, specialColorSchema } from "@b/types";
+import { zodErrorToIssues } from "@b/utils";
 
 /**
  * @see https://drafts.csswg.org/css-color/#typedef-color
  */
-export function generate(color: SpecialColor): GenerateResult {
-  if (color === undefined || color === null) {
-    return generateErr(createError("invalid-ir", "SpecialColor must not be null or undefined"));
+export function generate(color: unknown): GenerateResult {
+  // Schema validation
+  const validation = specialColorSchema.safeParse(color);
+  if (!validation.success) {
+    return generateErr(zodErrorToIssues(validation.error, { typeName: "SpecialColor" }));
   }
-  if (typeof color !== "object") {
-    return generateErr(createError("invalid-ir", `Expected SpecialColor object, got ${typeof color}`));
-  }
-  if (!("keyword" in color)) {
-    return generateErr(createError("missing-required-field", "SpecialColor must have 'keyword' field"));
-  }
-  return generateOk(color.keyword);
+  return generateOk(validation.data.keyword);
 }
