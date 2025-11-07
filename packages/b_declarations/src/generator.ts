@@ -11,7 +11,7 @@ import type { PropertyIRMap, RegisteredProperty, PropertyGenerator } from "./typ
 
 export interface GenerateDeclarationInput<TProperty extends RegisteredProperty> {
   property: TProperty;
-  ir: PropertyIRMap[TProperty]; // This is the magic lookup!
+  ir: PropertyIRMap[TProperty];
 }
 
 /**
