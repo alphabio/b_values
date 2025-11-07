@@ -4,48 +4,6 @@ import { parseBackgroundAttachment } from "./parser";
 import { generateBackgroundAttachment } from "./generator";
 
 describe("parseBackgroundAttachment", () => {
-  describe("CSS-wide keywords", () => {
-    it("should parse 'inherit'", () => {
-      const result = parseBackgroundAttachment("inherit");
-
-      expect(result.ok).toBe(true);
-      if (!result.ok) return;
-      expect(result.value.kind).toBe("keyword");
-      if (result.value.kind !== "keyword") return;
-      expect(result.value.value).toBe("inherit");
-    });
-
-    it("should parse 'initial'", () => {
-      const result = parseBackgroundAttachment("initial");
-
-      expect(result.ok).toBe(true);
-      if (!result.ok) return;
-      expect(result.value.kind).toBe("keyword");
-      if (result.value.kind !== "keyword") return;
-      expect(result.value.value).toBe("initial");
-    });
-
-    it("should parse 'unset'", () => {
-      const result = parseBackgroundAttachment("unset");
-
-      expect(result.ok).toBe(true);
-      if (!result.ok) return;
-      expect(result.value.kind).toBe("keyword");
-      if (result.value.kind !== "keyword") return;
-      expect(result.value.value).toBe("unset");
-    });
-
-    it("should parse 'revert'", () => {
-      const result = parseBackgroundAttachment("revert");
-
-      expect(result.ok).toBe(true);
-      if (!result.ok) return;
-      expect(result.value.kind).toBe("keyword");
-      if (result.value.kind !== "keyword") return;
-      expect(result.value.value).toBe("revert");
-    });
-  });
-
   describe("single value", () => {
     it("should parse 'scroll'", () => {
       const result = parseBackgroundAttachment("scroll");

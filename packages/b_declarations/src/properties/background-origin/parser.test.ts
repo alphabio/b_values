@@ -4,18 +4,6 @@ import { parseBackgroundOrigin } from "./parser";
 import { generateBackgroundOrigin } from "./generator";
 
 describe("parseBackgroundOrigin", () => {
-  describe("CSS-wide keywords", () => {
-    it("should parse 'inherit'", () => {
-      const result = parseBackgroundOrigin("inherit");
-
-      expect(result.ok).toBe(true);
-      if (!result.ok) return;
-      expect(result.value.kind).toBe("keyword");
-      if (result.value.kind !== "keyword") return;
-      expect(result.value.value).toBe("inherit");
-    });
-  });
-
   describe("single value", () => {
     it("should parse 'border-box'", () => {
       const result = parseBackgroundOrigin("border-box");

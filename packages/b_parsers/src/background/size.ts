@@ -1,17 +1,18 @@
-// b_path:: packages/b_parsers/src/background-size/parser.ts
+// b_path:: packages/b_parsers/src/background/size.ts
 
 import type * as csstree from "@eslint/css-tree";
+import { bgSizeKeywordSchema } from "@b/keywords";
 import {
   createError,
   parseErr,
   parseOk,
   forwardParseErr,
   type ParseResult,
-  type SizeLayer,
-  type SizeValue,
+  type BgSize,
+  type CssValue,
 } from "@b/types";
 import * as Ast from "@b/utils";
-import * as Length from "../length";
+import { parseNodeToCssValue } from "../utils/css-value-parser";
 
 /**
  * Parse a single <bg-size> value from a CSS AST node.
@@ -19,31 +20,31 @@ import * as Length from "../length";
  * Syntax: [ <length-percentage [0,∞]> | auto ]{1,2} | cover | contain
  *
  * @param valueNode - The Value node containing the bg-size
- * @returns ParseResult with SizeLayer
+ * @returns ParseResult with BgSize
  */
-export function parseBackgroundSizeValue(valueNode: csstree.Value): ParseResult<SizeLayer> {
+export function parseBackgroundSizeValue(valueNode: csstree.Value): ParseResult<BgSize> {
   const children = Ast.nodeListToArray(valueNode.children);
 
-  // Handle keywords: cover, contain
+  // Handle keywords: auto, cover, contain
   if (children.length === 1 && children[0].type === "Identifier") {
     const keyword = children[0].name;
-    if (keyword === "cover" || keyword === "contain") {
-      return parseOk({ kind: "keyword", value: keyword });
+    const keywordResult = bgSizeKeywordSchema.safeParse(keyword);
+    if (keywordResult.success) {
+      return parseOk({ kind: "keyword", value: keywordResult.data });
     }
-    // Single 'auto' is an explicit size
-    if (keyword === "auto") {
-      return parseOk({
-        kind: "explicit",
-        width: { kind: "auto" },
-        height: { kind: "auto" },
-      });
-    }
+    // If it's not a bg-size keyword, it's invalid
+    return parseErr(
+      createError(
+        "invalid-syntax",
+        `Invalid background-size keyword '${keyword}'. Expected 'auto', 'cover', 'contain', or a length/percentage.`,
+      ),
+    );
   }
 
   // Handle explicit sizes: 1 or 2 values (width [height])
   if (children.length === 1 || children.length === 2) {
-    const widthResult = parseSizeValue(children[0]);
-    if (!widthResult.ok) return forwardParseErr<SizeLayer>(widthResult);
+    const widthResult = parseSizeComponent(children[0]);
+    if (!widthResult.ok) return forwardParseErr<BgSize>(widthResult);
 
     // If only one value, apply to both width and height
     if (children.length === 1) {
@@ -55,8 +56,8 @@ export function parseBackgroundSizeValue(valueNode: csstree.Value): ParseResult<
     }
 
     // Two values: width height
-    const heightResult = parseSizeValue(children[1]);
-    if (!heightResult.ok) return forwardParseErr<SizeLayer>(heightResult);
+    const heightResult = parseSizeComponent(children[1]);
+    if (!heightResult.ok) return forwardParseErr<BgSize>(heightResult);
 
     return parseOk({
       kind: "explicit",
@@ -68,29 +69,11 @@ export function parseBackgroundSizeValue(valueNode: csstree.Value): ParseResult<
   return parseErr(createError("invalid-syntax", `Expected 1-2 size values, got ${children.length}`));
 }
 
-function parseSizeValue(node: csstree.CssNode): ParseResult<SizeValue> {
-  // auto keyword
-  if (node.type === "Identifier" && node.name === "auto") {
-    return parseOk({ kind: "auto" });
-  }
-
-  // Length
-  if (node.type === "Dimension") {
-    const lengthResult = Length.parseLengthNode(node);
-    if (lengthResult.ok) {
-      return parseOk({ kind: "length", value: lengthResult.value });
-    }
-    return forwardParseErr<SizeValue>(lengthResult);
-  }
-
-  // Percentage
-  if (node.type === "Percentage") {
-    const value = Number(node.value);
-    return parseOk({
-      kind: "percentage",
-      value: { value, unit: "%" },
-    });
-  }
-
-  return parseErr(createError("invalid-syntax", "Expected auto, length, or percentage"));
+/**
+ * Parse a single size component (width or height).
+ * Valid values: auto | <length-percentage> | var() | calc() etc.
+ */
+function parseSizeComponent(node: csstree.CssNode): ParseResult<CssValue> {
+  // Use the generic parser (handles keywords like 'auto', length, percentage, var(), calc(), etc.)
+  return parseNodeToCssValue(node);
 }

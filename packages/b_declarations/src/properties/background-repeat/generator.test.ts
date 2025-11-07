@@ -4,35 +4,6 @@ import { generateBackgroundRepeat } from "./generator";
 import type { BackgroundRepeatIR } from "./types";
 
 describe("generateBackgroundRepeat", () => {
-  describe("CSS-wide keywords", () => {
-    it("should generate 'inherit' keyword", () => {
-      const ir: BackgroundRepeatIR = {
-        kind: "keyword",
-        value: "inherit",
-      };
-
-      const result = generateBackgroundRepeat(ir);
-
-      expect(result.ok).toBe(true);
-      if (!result.ok) return;
-      expect(result.value).toBe("inherit");
-      expect(result.property).toBe("background-repeat");
-    });
-
-    it("should generate 'initial' keyword", () => {
-      const ir: BackgroundRepeatIR = {
-        kind: "keyword",
-        value: "initial",
-      };
-
-      const result = generateBackgroundRepeat(ir);
-
-      expect(result.ok).toBe(true);
-      if (!result.ok) return;
-      expect(result.value).toBe("initial");
-    });
-  });
-
   describe("shorthand", () => {
     it("should generate 'repeat-x'", () => {
       const ir: BackgroundRepeatIR = {

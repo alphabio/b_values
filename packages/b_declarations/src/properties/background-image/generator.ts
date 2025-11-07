@@ -10,7 +10,6 @@ import type { BackgroundImageIR, ImageLayer } from "./types";
  * @returns GenerateResult with CSS string or issues
  */
 export function generateBackgroundImage(ir: BackgroundImageIR): GenerateResult {
-  // Handle CSS-wide keywords
   if (ir.kind === "keyword") {
     return generateOk(ir.value, "background-image");
   }

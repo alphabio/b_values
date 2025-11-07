@@ -8,6 +8,7 @@ import {
   type Issue,
   type GenerateResult,
 } from "@b/types";
+import { cssWideKeywordSchema } from "@b/keywords";
 import { getPropertyDefinition, isCustomProperty } from "./core";
 import type { CSSDeclaration, DeclarationResult } from "./types";
 import { generateDeclaration } from "./generator";
@@ -55,6 +56,23 @@ export function parseDeclaration(input: string | CSSDeclaration): ParseResult<De
     property = input.property;
     value = input.value;
   }
+
+  // ✨ UNIVERSAL CSS-WIDE KEYWORD CHECK ✨
+  // CSS-wide keywords (inherit, initial, unset, revert, revert-layer) are universal
+  // and apply to ALL properties. Check once here instead of in every property parser.
+  // This is architecturally correct: browsers handle these keywords at the top level
+  // before delegating to property-specific parsing logic.
+  const trimmedValue = value.trim().toLowerCase();
+  const wideKeywordCheck = cssWideKeywordSchema.safeParse(trimmedValue);
+
+  if (wideKeywordCheck.success) {
+    // Short-circuit: Return immediately without calling property parser
+    return parseOk({
+      property,
+      ir: { kind: "keyword", value: wideKeywordCheck.data } as never,
+    });
+  }
+  // ✨ END UNIVERSAL CHECK ✨
 
   // Step 1: Look up property definition (with custom property fallback)
   const definition = getPropertyDefinition(property);

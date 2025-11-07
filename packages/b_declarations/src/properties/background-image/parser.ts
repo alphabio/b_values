@@ -14,13 +14,13 @@
 
 import { createError, parseErr, parseOk, forwardParseErr, type ParseResult } from "@b/types";
 import * as Parsers from "@b/parsers";
-import { isCSSWideKeyword, parseCSSWideKeyword, createMultiValueParser } from "../../utils";
+import { createMultiValueParser } from "../../utils";
 import * as Ast from "@b/utils";
 import type { BackgroundImageIR, ImageLayer } from "./types";
 import type * as csstree from "@eslint/css-tree";
 
 /**
- * Pre-parse handler for top-level keywords.
+ * Pre-parse handler for property-specific keywords.
  */
 function preParse(value: string): ParseResult<BackgroundImageIR> | null {
   if (value.toLowerCase() === "none") {
@@ -28,16 +28,6 @@ function preParse(value: string): ParseResult<BackgroundImageIR> | null {
       kind: "keyword",
       value: "none",
     });
-  }
-
-  if (isCSSWideKeyword(value)) {
-    const result = parseCSSWideKeyword(value);
-    if (result.ok) {
-      return parseOk({
-        kind: "keyword",
-        value: result.value,
-      });
-    }
   }
 
   return null; // Not a keyword, proceed to list parsing

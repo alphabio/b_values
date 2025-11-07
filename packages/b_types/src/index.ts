@@ -17,4 +17,4 @@ export * from "./url";
 export * from "./color-stop";
 export * from "./color-interpolation-method";
 export * from "./gradient";
-export * from "./background-size";
+export * from "./bg-size";

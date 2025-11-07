@@ -4,61 +4,6 @@ import { generateBackgroundImage } from "./generator";
 import type { BackgroundImageIR } from "./types";
 
 describe("generateBackgroundImage", () => {
-  describe("CSS-wide keywords", () => {
-    it("should generate 'inherit' keyword", () => {
-      const ir: BackgroundImageIR = {
-        kind: "keyword",
-        value: "inherit",
-      };
-
-      const result = generateBackgroundImage(ir);
-
-      expect(result.ok).toBe(true);
-      if (!result.ok) return;
-      expect(result.value).toBe("inherit");
-      expect(result.property).toBe("background-image");
-    });
-
-    it("should generate 'initial' keyword", () => {
-      const ir: BackgroundImageIR = {
-        kind: "keyword",
-        value: "initial",
-      };
-
-      const result = generateBackgroundImage(ir);
-
-      expect(result.ok).toBe(true);
-      if (!result.ok) return;
-      expect(result.value).toBe("initial");
-    });
-
-    it("should generate 'unset' keyword", () => {
-      const ir: BackgroundImageIR = {
-        kind: "keyword",
-        value: "unset",
-      };
-
-      const result = generateBackgroundImage(ir);
-
-      expect(result.ok).toBe(true);
-      if (!result.ok) return;
-      expect(result.value).toBe("unset");
-    });
-
-    it("should generate 'none' keyword", () => {
-      const ir: BackgroundImageIR = {
-        kind: "keyword",
-        value: "none",
-      };
-
-      const result = generateBackgroundImage(ir);
-
-      expect(result.ok).toBe(true);
-      if (!result.ok) return;
-      expect(result.value).toBe("none");
-    });
-  });
-
   describe("single layer", () => {
     it("should generate none layer", () => {
       const ir: BackgroundImageIR = {

@@ -4,20 +4,23 @@
 
 ---
 
-## 🎯 Core Principles
+## 🎯 Core Principle
 
-1. Use **`cssValueSchema`** for component values → get `var()`, `calc()`, literals **for free**
-2. **CSS-wide keywords (`inherit`, `initial`, etc.) are handled by `parseDeclaration` automatically**
+Use **`cssValueSchema`** for component values → get `var()`, `calc()`, literals, keywords **for free**.
 
 ---
 
 ## 🚦 What Type of Property?
 
-### Type 1: Simple Keywords
+### Type 1: CSS-Wide Keywords Only
+
+Handle directly in property parser.
+
+### Type 2: Simple Keywords
 
 `border-collapse: collapse | separate` → Inline validation.
 
-### Type 2: Reusable Value Type ⭐
+### Type 3: Reusable Value Type ⭐
 
 Property-specific keywords + component values → **Use this pattern**.
 
@@ -25,10 +28,10 @@ Example: `background-size: [ <length-percentage> | auto ]{1,2} | cover | contain
 
 ---
 
-## 📁 Structure for Type 2 (Complex)
+## 📁 Structure for Type 3 (Complex)
 
 ```
-@b/keywords/src/bg-size.ts          # Zod schema for property keywords
+@b/keywords/src/bg-size.ts          # Zod schema for keywords
 @b/types/src/bg-size.ts              # IR schemas (uses cssValueSchema!)
 @b/parsers/src/background/size.ts    # Value parser (uses parseNodeToCssValue)
 @b/generators/src/background/size.ts # Value generator (uses cssValueToCss)
@@ -76,18 +79,18 @@ export const bgSizeSchema = z.discriminatedUnion("kind", [
   }),
   z.object({
     kind: z.literal("explicit"),
-    width: cssValueSchema, // ✨ Handles var(), calc(), etc.
+    width: cssValueSchema, // ✨ Magic! Handles var(), calc(), etc.
     height: cssValueSchema,
   }),
 ]);
 
 export type BgSize = z.infer<typeof bgSizeSchema>;
 
-// Property-level schema
+// Property-level schema (CSS-wide keywords at THIS level!)
 export const bgSizeListSchema = z.discriminatedUnion("kind", [
   z.object({
     kind: z.literal("keyword"),
-    value: cssWideKeywordSchema, // For IR type completeness
+    value: cssWideKeywordSchema, // ✅ inherit, initial, etc.
   }),
   z.object({
     kind: z.literal("list"),
@@ -99,8 +102,6 @@ export type BgSizeList = z.infer<typeof bgSizeListSchema>;
 ```
 
 Export from `index.ts`.
-
-**Note:** CSS-wide keywords are in property-level schema for IR type completeness, but `parseDeclaration` handles them before property parsers execute.
 
 ---
 
@@ -124,12 +125,12 @@ export function parseBackgroundSizeValue(valueNode: csstree.Value): ParseResult<
     if (result.success) {
       return parseOk({ kind: "keyword", value: result.data });
     }
-    return parseErr(createError("invalid-syntax", `Invalid keyword: '${keyword}'`));
+    return parseErr(createError("invalid-syntax", `Invalid: '${keyword}'`));
   }
 
   // Explicit size(s)
   if (children.length === 1 || children.length === 2) {
-    const widthResult = parseNodeToCssValue(children[0]); // ✨ Generic!
+    const widthResult = parseNodeToCssValue(children[0]); // ✨ Generic parser!
     if (!widthResult.ok) return forwardParseErr<BgSize>(widthResult);
 
     if (children.length === 1) {
@@ -150,7 +151,7 @@ export function parseBackgroundSizeValue(valueNode: csstree.Value): ParseResult<
     });
   }
 
-  return parseErr(createError("invalid-syntax", "Expected 1-2 values"));
+  return parseErr(createError("invalid-syntax", `Expected 1-2 values`));
 }
 ```
 
@@ -170,7 +171,7 @@ export function generateBackgroundSizeValue(size: BgSize): GenerateResult {
     return generateOk(size.value);
   }
 
-  const widthCss = cssValueToCss(size.width); // ✨ Generic!
+  const widthCss = cssValueToCss(size.width); // ✨ Generic generator!
   const heightCss = cssValueToCss(size.height);
 
   // Optimize: same value → output once
@@ -202,18 +203,24 @@ export const backgroundSizeSchema = bgSizeListSchema;
 
 ```typescript
 // packages/b_declarations/src/properties/background-size/parser.ts
-import { type ParseResult, type BgSize } from "@b/types";
+import { parseErr, parseOk, type ParseResult, type BgSize } from "@b/types";
 import * as Parsers from "@b/parsers";
-import { createMultiValueParser } from "../../utils";
+import { isCSSWideKeyword, parseCSSWideKeyword, createMultiValueParser } from "../../utils";
 import type * as csstree from "@eslint/css-tree";
 import type { BackgroundSize } from "./types";
 
 export const parseBackgroundSize = createMultiValueParser<BgSize, BackgroundSize>({
-  // NOTE: No preParse for CSS-wide keywords! They're handled by parseDeclaration.
-  // Only use preParse for property-specific keywords like 'none'.
+  preParse(value: string): ParseResult<BackgroundSize> | null {
+    if (isCSSWideKeyword(value)) {
+      const result = parseCSSWideKeyword(value);
+      if (result.ok) return parseOk({ kind: "keyword", value: result.value });
+      return parseErr(result.issues[0]);
+    }
+    return null;
+  },
 
   itemParser(valueNode: csstree.Value): ParseResult<BgSize> {
-    return Parsers.Background.parseBackgroundSizeValue(valueNode);
+    return Parsers.Background.parseBackgroundSizeValue(valueNode); // ✅ Delegate!
   },
 
   aggregator(values: BgSize[]): BackgroundSize {
@@ -222,7 +229,7 @@ export const parseBackgroundSize = createMultiValueParser<BgSize, BackgroundSize
 });
 ```
 
-**Thin!** Just comma-separation. CSS-wide keywords handled automatically.
+**Thin!** Just comma-separation + CSS-wide keywords.
 
 ---
 
@@ -236,17 +243,17 @@ import type { BackgroundSize } from "./types";
 
 export function generateBackgroundSize(ir: BackgroundSize): GenerateResult {
   if (ir.kind === "keyword") {
-    return generateOk(ir.value);
+    return generateOk(ir.value, "background-size");
   }
 
   const valueStrings: string[] = [];
   for (const value of ir.values) {
-    const result = Generators.Background.generateBackgroundSizeValue(value);
+    const result = Generators.Background.generateBackgroundSizeValue(value); // ✅ Delegate!
     if (!result.ok) return result;
     valueStrings.push(result.value);
   }
 
-  return generateOk(valueStrings.join(", "));
+  return generateOk(valueStrings.join(", "), "background-size");
 }
 ```
 
@@ -267,7 +274,6 @@ defineProperty({
   syntax: "<bg-size>#",
   parser: parseBackgroundSize,
   generator: generateBackgroundSize,
-  multiValue: true, // Comma-separated
   inherited: false,
   initial: "auto",
 });
@@ -275,7 +281,7 @@ defineProperty({
 
 ---
 
-## 🔧 Key Utilities
+## �� Key Utilities
 
 ```typescript
 // From @b/utils
@@ -286,7 +292,9 @@ Ast.nodeListToArray(list)
 Ast.isIdentifier(node, value?)
 
 // From @b/declarations/utils
-createMultiValueParser({ itemParser, aggregator, preParse? })
+createMultiValueParser({ preParse, itemParser, aggregator })
+isCSSWideKeyword(value)
+parseCSSWideKeyword(value)
 
 // From @b/types
 createError(code, message)
@@ -299,38 +307,40 @@ generateOk(css, property?)
 
 ## ✅ Checklist
 
-- [ ] **Keywords**: Zod schema in `@b/keywords`
+- [ ] **Keywords**: Create Zod schema in `@b/keywords`
 - [ ] **Types**: Use `cssValueSchema` in `@b/types`
 - [ ] **Parser**: Use `parseNodeToCssValue` in `@b/parsers`
 - [ ] **Generator**: Use `cssValueToCss` in `@b/generators`
 - [ ] **Property**: Thin orchestrators in `@b/declarations`
-- [ ] **Tests**: Cover var(), calc(), edge cases
+- [ ] **Tests**: Property-level (cover var(), calc(), edge cases)
 - [ ] **Verify**: `pnpm test && just check && just build`
 
 ---
 
 ## 🚨 Pitfalls
 
-1. ❌ Checking CSS-wide keywords in property parser → ✅ `parseDeclaration` handles them
-2. ❌ CSS-wide keywords in `cssValueSchema` → ✅ Property-level IR only
-3. ❌ Custom parsers for common values → ✅ Use `parseNodeToCssValue`
-4. ❌ Inline value logic in property → ✅ Delegate to value-level
-5. ❌ Lose error context → ✅ Use `forwardParseErr`
+1. ❌ CSS-wide keywords in `cssValueSchema` → ✅ At property IR level
+2. ❌ Custom parsers for common values → ✅ Use `parseNodeToCssValue`
+3. ❌ Inline value logic in property code → ✅ Delegate to value-level
+4. ❌ Lose error context → ✅ Use `forwardParseErr`
 
 ---
 
 ## 💡 The Magic
 
-### Using `cssValueSchema` gives you:
+### By using `cssValueSchema`:
 
-✅ Literals: `100px`, `50%`  
-✅ Keywords: `auto`, `none`  
-✅ Variables: `var(--size)`, `var(--x, 100px)`  
-✅ Functions: `calc(50% + 10px)`, `min()`, `max()`, `clamp()`  
-✅ Nested: `calc(var(--base) * 2)`
+✅ **Free support for:**
 
-**Future-proof:** New CSS features work automatically  
-**No duplication:** One parser/generator, many properties
+- Literals: `100px`, `50%`
+- Keywords: `auto`, `none`
+- Variables: `var(--size)`, `var(--x, 100px)`
+- Functions: `calc(50% + 10px)`, `min()`, `max()`, `clamp()`
+- Nested: `calc(var(--base) * 2)`
+
+✅ **Future-proof:** New CSS features work automatically
+
+✅ **No duplication:** One parser/generator, many properties
 
 ---
 
@@ -343,5 +353,5 @@ generateOk(css, property?)
 
 ---
 
-**Last Updated:** 2025-11-08  
-**Pattern:** `cssValueSchema` for values, `parseDeclaration` for CSS-wide keywords
+**Last Updated:** 2025-11-07
+**Pattern:** `cssValueSchema` for component values

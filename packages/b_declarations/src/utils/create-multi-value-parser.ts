@@ -36,7 +36,11 @@ export interface MultiValueParserConfig<TItem, TFinal> {
   aggregator: (items: TItem[]) => TFinal;
 
   /**
-   * Optional: A function to handle top-level keywords (like 'none') before list splitting occurs.
+   * Optional: A function to handle property-specific keywords (like 'none') before list splitting.
+   *
+   * NOTE: CSS-wide keywords (inherit, initial, unset, revert, revert-layer) are handled
+   * by the top-level parseDeclaration orchestrator. Do NOT check for them here.
+   *
    * If it returns a result, the list parsing is skipped.
    */
   preParse?: (value: string) => ParseResult<TFinal> | null;

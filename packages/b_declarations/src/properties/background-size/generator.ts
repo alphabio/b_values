@@ -9,13 +9,13 @@ export function generateBackgroundSize(ir: BackgroundSize): GenerateResult {
     return generateOk(ir.value, "background-size");
   }
 
-  const layerStrings: string[] = [];
+  const valueStrings: string[] = [];
 
-  for (let i = 0; i < ir.layers.length; i++) {
-    const result = Generators.Background.generateBackgroundSizeValue(ir.layers[i]);
+  for (let i = 0; i < ir.values.length; i++) {
+    const result = Generators.Background.generateBackgroundSizeValue(ir.values[i]);
     if (!result.ok) return result;
-    layerStrings.push(result.value);
+    valueStrings.push(result.value);
   }
 
-  return generateOk(layerStrings.join(", "), "background-size");
+  return generateOk(valueStrings.join(", "), "background-size");
 }

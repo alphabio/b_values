@@ -4,35 +4,6 @@ import { generateBackgroundClip } from "./generator";
 import type { BackgroundClipIR } from "./types";
 
 describe("generateBackgroundClip", () => {
-  describe("CSS-wide keywords", () => {
-    it("should generate 'inherit' keyword", () => {
-      const ir: BackgroundClipIR = {
-        kind: "keyword",
-        value: "inherit",
-      };
-
-      const result = generateBackgroundClip(ir);
-
-      expect(result.ok).toBe(true);
-      if (!result.ok) return;
-      expect(result.value).toBe("inherit");
-      expect(result.property).toBe("background-clip");
-    });
-
-    it("should generate 'initial' keyword", () => {
-      const ir: BackgroundClipIR = {
-        kind: "keyword",
-        value: "initial",
-      };
-
-      const result = generateBackgroundClip(ir);
-
-      expect(result.ok).toBe(true);
-      if (!result.ok) return;
-      expect(result.value).toBe("initial");
-    });
-  });
-
   describe("single value", () => {
     it("should generate 'border-box'", () => {
       const ir: BackgroundClipIR = {

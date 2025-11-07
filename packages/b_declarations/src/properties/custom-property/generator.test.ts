@@ -4,48 +4,6 @@ import { generateCustomProperty } from "./generator";
 import type { CustomPropertyIR } from "./types";
 
 describe("generateCustomProperty", () => {
-  describe("keywords", () => {
-    it("should generate 'inherit'", () => {
-      const ir: CustomPropertyIR = { kind: "keyword", value: "inherit" };
-      const result = generateCustomProperty(ir);
-
-      expect(result.ok).toBe(true);
-      if (result.ok) {
-        expect(result.value).toBe("inherit");
-      }
-    });
-
-    it("should generate 'initial'", () => {
-      const ir: CustomPropertyIR = { kind: "keyword", value: "initial" };
-      const result = generateCustomProperty(ir);
-
-      expect(result.ok).toBe(true);
-      if (result.ok) {
-        expect(result.value).toBe("initial");
-      }
-    });
-
-    it("should generate 'unset'", () => {
-      const ir: CustomPropertyIR = { kind: "keyword", value: "unset" };
-      const result = generateCustomProperty(ir);
-
-      expect(result.ok).toBe(true);
-      if (result.ok) {
-        expect(result.value).toBe("unset");
-      }
-    });
-
-    it("should generate 'revert'", () => {
-      const ir: CustomPropertyIR = { kind: "keyword", value: "revert" };
-      const result = generateCustomProperty(ir);
-
-      expect(result.ok).toBe(true);
-      if (result.ok) {
-        expect(result.value).toBe("revert");
-      }
-    });
-  });
-
   describe("simple values", () => {
     it("should generate color keyword", () => {
       const ir: CustomPropertyIR = { kind: "value", value: "blue" };

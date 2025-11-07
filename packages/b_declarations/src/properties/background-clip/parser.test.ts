@@ -4,18 +4,6 @@ import { parseBackgroundClip } from "./parser";
 import { generateBackgroundClip } from "./generator";
 
 describe("parseBackgroundClip", () => {
-  describe("CSS-wide keywords", () => {
-    it("should parse 'inherit'", () => {
-      const result = parseBackgroundClip("inherit");
-
-      expect(result.ok).toBe(true);
-      if (!result.ok) return;
-      expect(result.value.kind).toBe("keyword");
-      if (result.value.kind !== "keyword") return;
-      expect(result.value.value).toBe("inherit");
-    });
-  });
-
   describe("single value", () => {
     it("should parse 'border-box'", () => {
       const result = parseBackgroundClip("border-box");

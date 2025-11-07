@@ -22,13 +22,6 @@ describe("background-image property", () => {
       if (result.value.kind !== "keyword") return;
       expect(result.value.value).toBe("none");
     });
-
-    it("should parse CSS-wide keywords", () => {
-      const result = parseBackgroundImageFromString("inherit");
-      expect(result.ok).toBe(true);
-      if (!result.ok) return;
-      expect(result.value.kind).toBe("keyword");
-    });
   });
 
   describe("single layer", () => {

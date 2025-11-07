@@ -1,5 +1,6 @@
 // b_path:: packages/b_keywords/src/index.ts
-export * from "./background-size";
+export * from "./bg-size";
+export * from "./common";
 export * from "./color-interpolation";
 export * from "./color-space";
 export * from "./gradient-direction";

@@ -4,35 +4,6 @@ import { generateBackgroundOrigin } from "./generator";
 import type { BackgroundOriginIR } from "./types";
 
 describe("generateBackgroundOrigin", () => {
-  describe("CSS-wide keywords", () => {
-    it("should generate 'inherit' keyword", () => {
-      const ir: BackgroundOriginIR = {
-        kind: "keyword",
-        value: "inherit",
-      };
-
-      const result = generateBackgroundOrigin(ir);
-
-      expect(result.ok).toBe(true);
-      if (!result.ok) return;
-      expect(result.value).toBe("inherit");
-      expect(result.property).toBe("background-origin");
-    });
-
-    it("should generate 'initial' keyword", () => {
-      const ir: BackgroundOriginIR = {
-        kind: "keyword",
-        value: "initial",
-      };
-
-      const result = generateBackgroundOrigin(ir);
-
-      expect(result.ok).toBe(true);
-      if (!result.ok) return;
-      expect(result.value).toBe("initial");
-    });
-  });
-
   describe("single value", () => {
     it("should generate 'border-box'", () => {
       const ir: BackgroundOriginIR = {

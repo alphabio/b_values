@@ -1,55 +1,30 @@
-// b_path:: packages/b_generators/src/background-size/generator.ts
+// b_path:: packages/b_generators/src/background/size.ts
 
-import { generateOk, generateErr, createError, type GenerateResult, type SizeLayer, type SizeValue } from "@b/types";
-import * as Length from "../length";
+import { generateOk, type GenerateResult, type BgSize } from "@b/types";
+import { cssValueToCss } from "@b/utils";
 
 /**
  * Generate CSS string for a single <bg-size> value.
  *
  * Syntax: [ <length-percentage [0,∞]> | auto ]{1,2} | cover | contain
  *
- * @param layer - The SizeLayer IR
+ * @param size - The BgSize IR
  * @returns GenerateResult with CSS string
  */
-export function generateBackgroundSizeValue(layer: SizeLayer): GenerateResult {
-  if (layer.kind === "keyword") {
-    return generateOk(layer.value);
+export function generateBackgroundSizeValue(size: BgSize): GenerateResult {
+  if (size.kind === "keyword") {
+    return generateOk(size.value);
   }
 
   // Explicit size
-  const widthResult = generateSizeValue(layer.width);
-  if (!widthResult.ok) return widthResult;
-
-  const heightResult = generateSizeValue(layer.height);
-  if (!heightResult.ok) return heightResult;
+  const widthCss = cssValueToCss(size.width);
+  const heightCss = cssValueToCss(size.height);
 
   // If both values are the same, output only one
-  if (widthResult.value === heightResult.value) {
-    return generateOk(widthResult.value);
+  if (widthCss === heightCss) {
+    return generateOk(widthCss);
   }
 
   // Different values - output both
-  return generateOk(`${widthResult.value} ${heightResult.value}`);
-}
-
-function generateSizeValue(value: SizeValue): GenerateResult {
-  if (value.kind === "auto") {
-    return generateOk("auto");
-  }
-
-  if (value.kind === "length") {
-    const result = Length.generate(value.value);
-    if (!result.ok) {
-      return generateErr(createError("invalid-value", "Failed to generate length"));
-    }
-    return generateOk(result.value);
-  }
-
-  if (value.kind === "percentage") {
-    // Simple percentage generation: value + unit
-    const cssValue = `${value.value.value}${value.value.unit}`;
-    return generateOk(cssValue);
-  }
-
-  return generateErr(createError("invalid-value", `Unknown size value kind: ${(value as { kind: string }).kind}`));
+  return generateOk(`${widthCss} ${heightCss}`);
 }

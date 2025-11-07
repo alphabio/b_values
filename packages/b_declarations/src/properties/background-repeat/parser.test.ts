@@ -4,28 +4,6 @@ import { parseBackgroundRepeat } from "./parser";
 import { generateBackgroundRepeat } from "./generator";
 
 describe("parseBackgroundRepeat", () => {
-  describe("CSS-wide keywords", () => {
-    it("should parse 'inherit'", () => {
-      const result = parseBackgroundRepeat("inherit");
-
-      expect(result.ok).toBe(true);
-      if (!result.ok) return;
-      expect(result.value.kind).toBe("keyword");
-      if (result.value.kind !== "keyword") return;
-      expect(result.value.value).toBe("inherit");
-    });
-
-    it("should parse 'initial'", () => {
-      const result = parseBackgroundRepeat("initial");
-
-      expect(result.ok).toBe(true);
-      if (!result.ok) return;
-      expect(result.value.kind).toBe("keyword");
-      if (result.value.kind !== "keyword") return;
-      expect(result.value.value).toBe("initial");
-    });
-  });
-
   describe("shorthand", () => {
     it("should parse 'repeat-x'", () => {
       const result = parseBackgroundRepeat("repeat-x");
