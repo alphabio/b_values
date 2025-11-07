@@ -8,14 +8,22 @@
 
 ## 📁 Test Organization Pattern
 
-### Structure
+### Rule: Co-locate by default, decompose when needed
 
+**Default: Co-located**
 ```
 packages/{package}/src/
 ├── {feature}/
 │   ├── implementation.ts
-│   ├── implementation.test.ts      ← Basic smoke tests
-│   └── __tests__/{feature}/        ← Comprehensive tests
+│   └── implementation.test.ts      ← Co-located (default)
+```
+
+**Exception: Decomposed into multiple files**
+```
+packages/{package}/src/
+├── {feature}/
+│   ├── implementation.ts
+│   └── __tests__/{feature}/        ← Only when splitting tests
 │       ├── direction.test.ts
 │       ├── color-interpolation.test.ts
 │       ├── color-stops.test.ts
@@ -24,18 +32,20 @@ packages/{package}/src/
 │       └── error-handling.test.ts
 ```
 
-### Benefits
+### When to Use `__tests__/`
 
-- ✅ **Scalable**: Keeps feature root clean
-- ✅ **Organized**: Groups related comprehensive tests
-- ✅ **Discoverable**: Clear naming convention
-- ✅ **Manageable**: Each file 150-500 lines
+**ONLY when you need to split tests into multiple files.**
 
-### When to Use
+Examples:
+- ✅ Gradients: 7-8 aspects (direction, stops, interpolation, etc)
+- ✅ Complex properties with distinct test categories
+- ❌ Single test file (even if 300+ lines) → use co-location
 
-- Use `__tests__/` subdirectory when feature has >30 test cases
-- Keep simple features with <20 tests co-located
-- Mirror structure between parser and generator packages
+### Benefits of This Rule
+
+- ✅ **Simple**: One clear decision point
+- ✅ **Consistent**: Matches 90% of existing codebase
+- ✅ **Pragmatic**: Create `__tests__/` only when you actually need it
 
 ---
 
