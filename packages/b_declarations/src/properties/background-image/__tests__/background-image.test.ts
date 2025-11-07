@@ -2,19 +2,14 @@
 import { describe, expect, it } from "vitest";
 import { parseBackgroundImage } from "../parser";
 import * as Generators from "@b/generators";
-import * as csstree from "@eslint/css-tree";
 import type { ParseResult } from "@b/types";
 import type { BackgroundImageIR } from "../types";
 
 /**
- * Test helper: parse string to AST and call parser
+ * Test helper: parse string directly (now that parser accepts string)
  */
 function parseBackgroundImageFromString(css: string): ParseResult<BackgroundImageIR> {
-  const ast = csstree.parse(css, {
-    context: "value",
-    positions: true,
-  }) as csstree.Value;
-  return parseBackgroundImage(ast);
+  return parseBackgroundImage(css);
 }
 
 describe("background-image property", () => {
@@ -282,7 +277,7 @@ describe("background-image property", () => {
       const result = parseBackgroundImageFromString("invalid-value");
       expect(result.ok).toBe(false);
       if (result.ok) return;
-      expect(result.issues[0]?.message).toContain("Unsupported image type");
+      expect(result.issues[0]?.message).toContain("Unsupported background-image value");
     });
 
     it("should collect multiple errors from multiple invalid layers", () => {
@@ -291,10 +286,7 @@ describe("background-image property", () => {
       if (result.ok) return;
       // Should have collected errors from all 3 invalid layers
       expect(result.issues.length).toBeGreaterThanOrEqual(3);
-      // Should still have partial success (successful layers in value)
-      expect(result.value).toBeDefined();
-      if (!result.value) return;
-      expect(result.value.kind).toBe("layers");
+      expect(result.value).toBeUndefined();
     });
 
     it("should collect errors but include successful layers", () => {

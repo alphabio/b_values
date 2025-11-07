@@ -12,7 +12,7 @@ describe("PropertyRegistry", () => {
     const definition = defineProperty({
       name: "color",
       syntax: "<color>",
-      parser: (_node): ParseResult<string> => parseOk("test"),
+      parser: (): ParseResult<string> => parseOk("test"),
       inherited: true,
       initial: "black",
     });
@@ -30,7 +30,7 @@ describe("PropertyRegistry", () => {
     defineProperty({
       name: "color",
       syntax: "<color>",
-      parser: (_node): ParseResult<string> => parseOk("test"),
+      parser: (): ParseResult<string> => parseOk("test"),
       inherited: true,
       initial: "black",
     });
@@ -38,7 +38,7 @@ describe("PropertyRegistry", () => {
     defineProperty({
       name: "background",
       syntax: "<background>",
-      parser: (_node): ParseResult<string> => parseOk("test"),
+      parser: (): ParseResult<string> => parseOk("test"),
       inherited: false,
       initial: "transparent",
     });
@@ -53,7 +53,7 @@ describe("PropertyRegistry", () => {
     defineProperty({
       name: "color",
       syntax: "<color>",
-      parser: (_node): ParseResult<string> => parseOk("test"),
+      parser: (): ParseResult<string> => parseOk("test"),
       inherited: true,
       initial: "black",
     });

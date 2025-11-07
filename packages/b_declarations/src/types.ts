@@ -23,6 +23,20 @@ export type RegisteredProperty = keyof PropertyIRMap;
  */
 export type PropertyGenerator<T = unknown> = (ir: T) => GenerateResult;
 
+/**
+ * Parser for single-value properties.
+ * Receives a pre-parsed AST node from css-tree.
+ * Example: color, opacity, width
+ */
+export type SingleValueParser<T> = (node: import("@eslint/css-tree").Value) => ParseResult<T>;
+
+/**
+ * Parser for multi-value (comma-separated) properties.
+ * Receives the raw string value and handles splitting + partial failures.
+ * Example: background-image, font-family
+ */
+export type MultiValueParser<T> = (value: string) => ParseResult<T>;
+
 // ===================================
 // Moved from  ./core/types.ts
 // ===================================
@@ -52,7 +66,18 @@ export interface DeclarationResult<T = unknown> {
 export interface PropertyDefinition<T = unknown> {
   name: string;
   syntax: string;
-  parser: (node: import("@eslint/css-tree").Value) => ParseResult<T>;
+  /**
+   * Parser can be either:
+   * - SingleValueParser: Receives pre-parsed AST node (for single values)
+   * - MultiValueParser: Receives raw string (for comma-separated lists)
+   */
+  parser: SingleValueParser<T> | MultiValueParser<T>;
+  /**
+   * Flag indicating if this property accepts multiple comma-separated values.
+   * When true, parser will be called with raw string.
+   * When false/undefined, parser will be called with AST node.
+   */
+  multiValue?: boolean;
   generator?: (ir: T) => GenerateResult;
   inherited: boolean;
   initial: string;

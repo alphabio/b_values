@@ -52,28 +52,35 @@ export function parseDeclaration(input: string | CSSDeclaration): ParseResult<De
     return parseErr(createError("invalid-value", `Unknown CSS property: ${property}`));
   }
 
-  // Step 2: Parse value to AST with positions enabled
-  // This single parse validates syntax AND provides AST for semantic parsing
-  let valueAst: csstree.Value;
-  try {
-    valueAst = csstree.parse(value, {
-      context: "value",
-      positions: true,
-    }) as csstree.Value;
-  } catch (e: unknown) {
-    // Fatal parse error from css-tree
-    const error = e as Error;
-    return parseErr(createError("invalid-syntax", error.message));
+  // Step 2: Parse based on property type
+  let parseResult: ParseResult<unknown>;
+
+  if (definition.multiValue) {
+    // Multi-value property: Pass raw string to parser
+    // Parser will split by comma and handle partial failures
+    parseResult = definition.parser(value as never);
+  } else {
+    // Single-value property: Parse to AST first
+    let valueAst: csstree.Value;
+    try {
+      valueAst = csstree.parse(value, {
+        context: "value",
+        positions: true,
+      }) as csstree.Value;
+    } catch (e: unknown) {
+      // Fatal syntax error for single-value property
+      const error = e as Error;
+      return parseErr(createError("invalid-syntax", error.message));
+    }
+
+    // Pass validated AST to parser
+    parseResult = definition.parser(valueAst as never);
   }
 
-  // Step 3: Parse using property's AST-native parser
-  // Our parser validates semantic correctness (e.g., gradient structure)
-  const parseResult = definition.parser(valueAst);
-
-  // Step 4: Collect all issues
+  // Step 3: Collect all issues
   const allIssues: Issue[] = [...parseResult.issues];
 
-  // Step 5: Try generation to get semantic warnings (even if parse failed but has partial IR)
+  // Step 4: Try generation to get semantic warnings (even if parse failed but has partial IR)
   if (parseResult.value) {
     try {
       // Type assertion needed for generic generateDeclaration signature
@@ -93,7 +100,7 @@ export function parseDeclaration(input: string | CSSDeclaration): ParseResult<De
     }
   }
 
-  // Step 6: Return result
+  // Step 5: Return result
   if (!parseResult.ok) {
     return {
       ok: false,

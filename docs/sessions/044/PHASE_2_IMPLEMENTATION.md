@@ -19,6 +19,7 @@ Successfully implemented Phase 2 performance optimizations by removing redundant
 **File:** `packages/b_declarations/src/parser.ts`
 
 **Before:**
+
 ```typescript
 // Step 2: Parse value to AST
 valueAst = csstree.parse(value, { positions: true }) as csstree.Value;
@@ -36,6 +37,7 @@ if (validation.warnings.length > 0) {
 ```
 
 **After:**
+
 ```typescript
 // Step 2: Parse value to AST with positions
 // This single parse validates syntax AND provides AST for semantic parsing
@@ -50,6 +52,7 @@ const allIssues: Issue[] = [...parseResult.issues];
 ```
 
 **Impact:**
+
 - ✅ Eliminated duplicate parse pass
 - ✅ Removed unnecessary validation import
 - ✅ Simplified code flow
@@ -62,17 +65,17 @@ const allIssues: Issue[] = [...parseResult.issues];
 **File:** `packages/b_generators/src/color/color.ts`
 
 **Before:**
+
 ```typescript
 export function generate(color: Type.Color, context?: GenerateContext): GenerateResult {
   // Redundant runtime type checking
   if (!color || typeof color !== "object" || !("kind" in color)) {
-    return generateErr(
-      createError("missing-required-field", "Invalid color IR: missing 'kind' field")
-    );
+    return generateErr(createError("missing-required-field", "Invalid color IR: missing 'kind' field"));
   }
 
   switch (color.kind) {
-    case "hex": return Hex.generate(color);
+    case "hex":
+      return Hex.generate(color);
     // ... other cases
     default:
       return generateErr(createError("unsupported-kind", "Unknown color kind"));
@@ -81,6 +84,7 @@ export function generate(color: Type.Color, context?: GenerateContext): Generate
 ```
 
 **After:**
+
 ```typescript
 export function generate(color: Type.Color, context?: GenerateContext): GenerateResult {
   // Minimal null check to prevent crashes
@@ -89,7 +93,8 @@ export function generate(color: Type.Color, context?: GenerateContext): Generate
   }
 
   switch (color.kind) {
-    case "hex": return Hex.generate(color);
+    case "hex":
+      return Hex.generate(color);
     // ... other cases
     default: {
       // TypeScript exhaustiveness check
@@ -107,6 +112,7 @@ export function generate(color: Type.Color, context?: GenerateContext): Generate
 **Similar changes** - Added exhaustiveness checking with `never` type.
 
 **Impact:**
+
 - ✅ Trusts TypeScript type system
 - ✅ Removed redundant runtime checks
 - ✅ Added compile-time exhaustiveness validation
@@ -119,10 +125,12 @@ export function generate(color: Type.Color, context?: GenerateContext): Generate
 **File:** `packages/b_generators/src/color/color.test.ts`
 
 **Changed error expectations:**
+
 - Old: `"missing-required-field"`
 - New: `"unsupported-kind"`
 
 **Added context in test names:**
+
 ```typescript
 it("should return error for null (runtime type error)", () => {
   const result = Color.generate(null as unknown as Type.Color);
@@ -151,15 +159,18 @@ just build     # All packages build successfully
 ## 🎯 Performance Expectations
 
 ### Phase 1 (Complete)
+
 - AST-native parsing: ~6% improvement
 - Status: ✅ Done in Session 042-043
 
 ### Phase 2 (Complete)
+
 - Remove validate(): ~20% improvement
 - Remove type guards: ~10% improvement
 - **Total Phase 2: ~30% improvement**
 
 ### Combined Target
+
 - **Total expected: 35-40% improvement**
 - Next: Run benchmarks to measure actual gains
 

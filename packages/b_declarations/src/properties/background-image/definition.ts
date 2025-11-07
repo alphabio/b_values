@@ -11,6 +11,7 @@ export const backgroundImage = defineProperty<BackgroundImageIR>({
   name: "background-image",
   syntax: "<bg-image>#",
   parser: parseBackgroundImage,
+  multiValue: true, // Multi-value parser: handles comma-separated layers
   generator: generateBackgroundImage,
   inherited: false,
   initial: "none",
