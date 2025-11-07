@@ -9,10 +9,11 @@
 ## 🔍 The Problem
 
 ### Current Behavior (WRONG)
+
 ```typescript
 const result = parseBackgroundImage(`
   url(a.png),           // ✅ Valid
-  notacolor,            // ⚠️ Warning: unknown color  
+  notacolor,            // ⚠️ Warning: unknown color
   linear-gradient(...)  // ✅ Valid
 `);
 
@@ -33,7 +34,7 @@ const result = parseBackgroundImage(`
 {
   ok: true,   // ✅ Success: we have IR
   value: { layers: [url1, gradient3] },
-  issues: [{ 
+  issues: [{
     severity: "warning",  // ⚠️ Warning
     message: "Skipped invalid layer: unknown color 'notacolor'"
   }]
@@ -43,7 +44,7 @@ const result = parseBackgroundImage(`
 {
   ok: false,  // ❌ Failure: no IR possible
   value: undefined,
-  issues: [{ 
+  issues: [{
     severity: "error",  // ❌ Error
     message: "Fatal syntax error: calc(50% & 20px)"
   }]
@@ -56,18 +57,18 @@ const result = parseBackgroundImage(`
 
 ### What `ok` Should Mean
 
-| `ok` value | Meaning | `value` | `issues` | Use case |
-|------------|---------|---------|----------|----------|
-| `true` | Successfully created IR | Always present (type T) | Can have warnings | CSS is representable |
-| `false` | Cannot create IR | `undefined` | Has at least one error | CSS is not representable |
+| `ok` value | Meaning                 | `value`                 | `issues`               | Use case                 |
+| ---------- | ----------------------- | ----------------------- | ---------------------- | ------------------------ |
+| `true`     | Successfully created IR | Always present (type T) | Can have warnings      | CSS is representable     |
+| `false`    | Cannot create IR        | `undefined`             | Has at least one error | CSS is not representable |
 
 ### What `severity` Should Mean
 
-| Severity | Meaning | Should block `ok: true`? |
-|----------|---------|--------------------------|
-| `error` | Fatal - cannot proceed | ✅ YES → `ok: false` |
-| `warning` | Non-fatal - can proceed | ❌ NO → `ok: true` |
-| `info` | Informational only | ❌ NO → `ok: true` |
+| Severity  | Meaning                 | Should block `ok: true`? |
+| --------- | ----------------------- | ------------------------ |
+| `error`   | Fatal - cannot proceed  | ✅ YES → `ok: false`     |
+| `warning` | Non-fatal - can proceed | ❌ NO → `ok: true`       |
+| `info`    | Informational only      | ❌ NO → `ok: true`       |
 
 ---
 
@@ -93,20 +94,22 @@ if (layerResults.some(r => !r.ok)) {
 ```
 
 **Fix:** Check issue severity, not `ok` flag:
+
 ```typescript
-const allErrors = layerResults.flatMap(r => r.issues).filter(i => i.severity === "error");
-const hasValue = layerResults.some(r => r.value !== undefined);
+const allErrors = layerResults.flatMap((r) => r.issues).filter((i) => i.severity === "error");
+const hasValue = layerResults.some((r) => r.value !== undefined);
 
 if (allErrors.length > 0 && !hasValue) {
-  return { ok: false, issues: allIssues };  // Total failure
+  return { ok: false, issues: allIssues }; // Total failure
 }
 
-return { ok: true, value: { layers: validLayers }, issues: allIssues };  // Partial success
+return { ok: true, value: { layers: validLayers }, issues: allIssues }; // Partial success
 ```
 
 ### Issue 2: Unknown Color Treated as Error
 
 **Current:**
+
 ```typescript
 // Unknown named color
 return parseErr(createError("invalid-value", "Unknown color"));
@@ -114,12 +117,13 @@ return parseErr(createError("invalid-value", "Unknown color"));
 ```
 
 **Should be:**
+
 ```typescript
 // Unknown named color - skip it but continue
 return parseOk(undefined, [
   createWarning("invalid-value", "Unknown color 'notacolor'", {
-    suggestion: "Skipped this color, using other valid colors"
-  })
+    suggestion: "Skipped this color, using other valid colors",
+  }),
 ]);
 ```
 
@@ -130,33 +134,35 @@ return parseOk(undefined, [
 ### Option 1: Fix at Aggregation Level (Recommended)
 
 **Pros:**
+
 - Minimal changes to existing parsers
 - Centralized logic in aggregation functions
 - Backward compatible
 
 **Implementation:**
+
 ```typescript
 function aggregateLayerResults(results: ParseResult<Layer>[]): ParseResult<BackgroundImageIR> {
-  const validLayers = results.map(r => r.value).filter(v => v !== undefined);
-  const allIssues = results.flatMap(r => r.issues);
-  
+  const validLayers = results.map((r) => r.value).filter((v) => v !== undefined);
+  const allIssues = results.flatMap((r) => r.issues);
+
   // Check for ERRORS (not just ok: false)
-  const errors = allIssues.filter(i => i.severity === "error");
-  
+  const errors = allIssues.filter((i) => i.severity === "error");
+
   // If we have any valid layers, it's success with warnings
   if (validLayers.length > 0) {
     return {
-      ok: true,  // ✅ Success! We have IR
+      ok: true, // ✅ Success! We have IR
       value: { kind: "layers", layers: validLayers },
-      issues: allIssues  // Include all warnings/errors
+      issues: allIssues, // Include all warnings/errors
     };
   }
-  
+
   // Total failure - no valid layers
   return {
-    ok: false,  // ❌ Failure - no IR
+    ok: false, // ❌ Failure - no IR
     value: undefined,
-    issues: allIssues
+    issues: allIssues,
   };
 }
 ```
@@ -164,14 +170,17 @@ function aggregateLayerResults(results: ParseResult<Layer>[]): ParseResult<Backg
 ### Option 2: Change Parsers to Return Warnings
 
 **Pros:**
+
 - More semantically correct at source
 - Clear distinction: errors vs warnings
 
 **Cons:**
+
 - Requires changing many parsers
 - More invasive
 
 **Example:**
+
 ```typescript
 // Before:
 if (!isValidColor(name)) {
@@ -182,8 +191,8 @@ if (!isValidColor(name)) {
 if (!isValidColor(name)) {
   return parseOk(undefined, [
     createWarning("invalid-value", "Unknown color", {
-      suggestion: "Skipped invalid color"
-    })
+      suggestion: "Skipped invalid color",
+    }),
   ]);
 }
 ```
@@ -195,28 +204,31 @@ if (!isValidColor(name)) {
 ### 1. Multi-value Parser Aggregation
 
 **Files:**
+
 - `packages/b_declarations/src/properties/background-image/parser.ts`
 - Any other multi-value property parsers (future)
 
 **Current logic:**
+
 ```typescript
 // Checks ok: false (WRONG)
-if (layerResults.some(r => !r.ok)) {
+if (layerResults.some((r) => !r.ok)) {
   return { ok: false, value: partialValue, issues };
 }
 ```
 
 **Should be:**
+
 ```typescript
 // Check error severity (RIGHT)
-const hasErrors = issues.some(i => i.severity === "error");
+const hasErrors = issues.some((i) => i.severity === "error");
 const hasValue = validLayers.length > 0;
 
 if (!hasValue && hasErrors) {
-  return { ok: false, issues };  // Total failure
+  return { ok: false, issues }; // Total failure
 }
 
-return { ok: true, value: layers, issues };  // Success (maybe with warnings)
+return { ok: true, value: layers, issues }; // Success (maybe with warnings)
 ```
 
 ### 2. combineResults Utility
@@ -224,25 +236,27 @@ return { ok: true, value: layers, issues };  // Success (maybe with warnings)
 **File:** `packages/b_types/src/result/parse.ts`
 
 **Current:**
+
 ```typescript
 export function combineResults<T>(results: ParseResult<T>[]): ParseResult<T[]> {
-  const allOk = results.every((r) => r.ok);  // ← WRONG logic
+  const allOk = results.every((r) => r.ok); // ← WRONG logic
   // ...
 }
 ```
 
 **Should be:**
+
 ```typescript
 export function combineResults<T>(results: ParseResult<T>[]): ParseResult<T[]> {
-  const values = results.map((r) => r.value).filter(v => v !== undefined);
+  const values = results.map((r) => r.value).filter((v) => v !== undefined);
   const allIssues = results.flatMap((r) => r.issues);
-  const errors = allIssues.filter(i => i.severity === "error");
-  
+  const errors = allIssues.filter((i) => i.severity === "error");
+
   // Success if we have ANY values and no fatal errors
   if (values.length > 0) {
     return { ok: true, value: values, issues: allIssues };
   }
-  
+
   // Total failure if no values
   return { ok: false, issues: allIssues };
 }
@@ -272,8 +286,8 @@ const result = parseBackgroundImage("url(a.png), invalid, url(b.png)");
 
 if (result.ok) {
   // ✅ Gets here! We have IR (2 valid URLs)
-  console.log(result.value.layers);  // [url1, url2]
-  
+  console.log(result.value.layers); // [url1, url2]
+
   if (result.issues.length > 0) {
     // ⚠️ But check warnings
     console.warn("Some layers skipped:", result.issues);
@@ -311,21 +325,25 @@ if (result.ok) {
 ## 🚀 Recommended Action
 
 ### Phase 5a: Fix Aggregation Logic (30 min)
+
 1. Update `aggregateLayerResults` in background-image parser
 2. Check error severity instead of `ok` flag
 3. Return `ok: true` if any valid layers exist
 
 ### Phase 5b: Fix combineResults Utility (15 min)
+
 1. Update `combineResults` in parse.ts
 2. Use severity checking logic
 3. Allow partial success
 
 ### Phase 5c: Add Tests (30 min)
+
 1. Test partial success scenarios
 2. Verify `ok: true` with warnings
 3. Verify `ok: false` only for total failure
 
 ### Phase 5d: Update Documentation (15 min)
+
 1. Clarify `ok` semantics in JSDoc
 2. Add examples of partial success
 3. Document warning vs error distinction

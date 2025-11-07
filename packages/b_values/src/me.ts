@@ -111,6 +111,9 @@ console.log(
       green
     ),
 
+    linear-gradient(to 45deg, red, blue)
+
+
     radial-gradient(
       10em 20%,
       at center,

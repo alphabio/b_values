@@ -1,129 +1,110 @@
-# Session 045: Phase 3 Cleanup - Code Removal & Deprecation
+# Session 046: Phase 5 - Source Context & Enrichment
 
 **Date:** 2025-11-07
-**Focus:** Remove obsolete code after AST-native refactoring
+**Focus:** Implement source context formatting and fix enrichment logic bug
 
 ---
 
 ## ✅ Accomplished
 
-- ✅ Session 045 initialized
-- ✅ Previous session (044) archived successfully
-- ✅ All documentation reviewed
-- ✅ Created ADR-004: Test Suite Optimization (Phase 2.3 - Future work)
-- ✅ Created Phase 3 cleanup plan
-- ✅ **Phase 3 audit complete:** Discovered actual architecture (not what we expected!)
-- ✅ Removed obsolete disambiguation code (unused file + tests)
-- ✅ Documented dual-parser architecture: `docs/architecture/patterns/parser-architectures.md`
-- ✅ All tests passing (1959/1959) - down from 1984 (removed disambiguation tests)
+- ✅ Session 046 initialized
+- ✅ Previous session (045) archived successfully
+- ✅ **Phase 5.1 COMPLETE**: Added `sourceContext` field to Issue type
+- ✅ **Phase 5.2 COMPLETE**: Implemented enrichment in parseDeclaration
+- ✅ **Phase 5.3 COMPLETE**: Created comprehensive TDD tests (10 new tests)
+- ✅ **Phase 5.4 COMPLETE**: All quality checks passing
+- ✅ **Phase 5.5 COMPLETE**: Architecture decision documented
+- ✅ All tests passing (1969 tests total)
+- ✅ All typechecks passing
+- ✅ All builds passing
 
 ---
 
 ## 📊 Current State
 
 **Working:**
-
-- ✅ All tests passing (1959/1959) - 25 disambiguation tests removed
+- ✅ All tests passing (1969/1969) - added 10 new enrichment tests
 - ✅ All typechecks passing
 - ✅ All builds passing
-- ✅ Multi-value parser architecture complete and documented
-- ✅ Regression fixed (background-image parsing)
-- ✅ Phase 2 optimizations complete
-- ✅ Phase 3 cleanup complete (removed unused code)
+- ✅ Issue enrichment fully implemented
+- ✅ Property context ALWAYS added
+- ✅ Source context added when location available
 
 **Not working:**
-
 - Nothing blocking! 🎉
 
 ---
 
-## 🎯 Next Steps
+## 🎯 What We Built
 
-**Phase 5: Source Context & Enrichment Logic (HIGH PRIORITY)**
+### Issue Enrichment System
 
-### Issue 1: formatSourceContext Not Used
-- Built utility `Ast.formatSourceContext()` but never wired it up
-- Users get raw `location` objects instead of formatted context with visual pointers
-- Need to add `sourceContext?: string` to Issue type
-- Need to enrich issues in parseDeclaration
+**All issues now enriched with:**
+- `property` field: ALWAYS added (property name context)
+- `sourceContext` field: Added when `location` exists (formatted visual pointer)
 
-### Issue 2: Enrichment Only on Success Path
-**Bug in parser.ts:**
-```typescript
-if (!parseResult.ok) {
-  return {
-    ok: false,
-    issues: allIssues,  // ← NOT enriched! Missing sourceContext
-  };
-}
-// Only success path enriches (WRONG)
-```
-
-**Should be:**
-- Enrich issues regardless of `ok` value
-- Both success and failure need formatted context
-- Move enrichment before the ok check
-
-**Current semantics (documented in parse.ts):**
-- `ok: true` + `value` = Successfully represented ALL as IR
-- `ok: false` + `value` = Partially represented (some failed, some succeeded)
-- `ok: false` + `undefined` = Cannot represent at all
-
-**Time estimate:** 1-2 hours
+**Implementation:**
+- Modified `Issue` type in `@b/types` to include `sourceContext?: string`
+- Added `enrichIssues()` helper in parseDeclaration
+- Enrichment happens on ALL code paths (success, failure, partial success)
+- 10 comprehensive tests covering all scenarios
 
 ---
 
-## 📌 Deferred Priorities (Future Sessions)
+## 🏗️ Architecture Decisions
+
+### Decision: Keep Opportunistic sourceContext Enrichment
+
+**Rationale:**
+- css-tree sometimes provides location data (syntax errors)
+- Our parsers/generators usually don't (by design)
+- When available → add beautiful formatted context ✅
+- When absent → still have property + path ✅
+- Complementary information, not competing
+
+**What Gets Enriched:**
+
+| Field | Always? | When Available |
+|-------|---------|----------------|
+| `property` | ✅ YES | Always (from parseDeclaration) |
+| `sourceContext` | ⚠️ Sometimes | When issue has `location` |
+| `path` | ⚠️ Sometimes | Generator issues (IR navigation) |
+
+**Result:** Best of both worlds!
+- Generator issues: Have `path` for IR navigation
+- Parser issues: Sometimes have `sourceContext` for visual pointer
+- All issues: Always have `property` for context
+
+---
+
+## 💡 Key Learnings
+
+1. Multi-value parsers DO use AST (with positions enabled)
+2. Location data lost in generator phase (operates on IR)
+3. `path` provides excellent IR navigation (complementary to sourceContext)
+4. Opportunistic enrichment valuable when available
+5. Property context always valuable (even without sourceContext)
+
+---
+
+## 🚀 Next Steps (Deferred)
 
 1. **Performance benchmarking** (High Priority)
-   - Measure Phase 1 + Phase 2 improvements
-   - Compare against baseline from Session 041
-   - Expected: 25-35% total improvement
-
 2. **Implement single-value properties** (High Priority)
-   - Start with `color` property (most common)
-   - Use `SingleValueParser` pattern (AST-native)
-   - Add `opacity`, `width`, other atomic values
-
 3. **Audit other multi-value properties** (Medium Priority)
-   - `font-family` - Add multiValue flag + parser
-   - `background` shorthand - Complex multi-value
-   - `box-shadow` - Multi-value with complex syntax
-
-4. **Test optimization (Phase 2.3)** - See ADR-004 (Low Priority)
-   - Replace round-trip validation with direct assertions
-   - Expected: ~15% faster test suite
-
----
-
-## 💡 Key Decisions
-
-- Session properly initialized following protocol
-- **Phase 3 & 4 executed together:** Comprehensive cleanup and audit
-- **Key discovery:** String utilities NOT obsolete - part of MultiValueParser design
-- **Dual architecture documented:** SingleValueParser (AST-native) vs MultiValueParser (string-split + AST)
-- **Removed:** disambiguation.ts (truly obsolete, 25 tests)
-- **Cleaned:** Active console.log statement in adhoc test file
-- **Documented:** Type assertions with detailed comments explaining limitations
-- **Result:** Codebase in excellent health with minimal technical debt
-- **Phase 5 discovered (user catch):** Missing source context formatting and enrichment bug in failure path
+4. **Test optimization (Phase 2.3)** (Low Priority)
 
 ---
 
 ## 📚 Session Artifacts
 
-- `docs/sessions/045/PHASE_3_CLEANUP_PLAN.md` - Phase 3 original plan
-- `docs/sessions/045/AUDIT_FINDINGS.md` - Phase 3 discoveries
-- `docs/sessions/045/PHASE_4_AUDIT.md` - Comprehensive codebase audit
-- `docs/sessions/045/SESSION_COMPLETE.md` - Phase 3 completion summary
-- `docs/sessions/045/FINAL_SUMMARY.md` - Phases 3 & 4 complete summary
-- `docs/sessions/045/PHASE_5_MISSING_FEATURE.md` - Source context formatting issue
-- `docs/sessions/045/PHASE_5_SEMANTIC_ISSUE.md` - ParseResult semantics (resolved - already documented correctly)
-- `docs/architecture/patterns/parser-architectures.md` - Dual-parser pattern documentation
-- `docs/architecture/decisions/004-draft-test-suite-optimization.md` - ADR for Phase 2.3
+- `docs/sessions/046/PHASE_5_PROPOSAL.md` - Original proposal
+- `docs/sessions/046/ARCHITECTURE_DECISION.md` - Final decision rationale
+- `docs/sessions/046/SOURCE_CONTEXT_EXPLANATION.md` - User-facing explanation
+- `docs/sessions/046/test-source-context.ts` - Interactive demonstration
 
 ---
 
-**🚀 Session 045: Phases 3 & 4 complete! Phase 5 discovered and documented.**
+**🚀 Session 046: Phase 5 COMPLETE!**
 
-**Next session focus:** Implement Phase 5 - Source context formatting and fix enrichment logic bug.
+All 1969 tests passing. Issue enrichment fully implemented. Ready for next session!

@@ -79,6 +79,18 @@ export interface SourceLocationRange {
  * Strongly typed for IDE autocomplete and type safety.
  * All fields are intentionally flat (no nested objects) for simplicity.
  *
+ * @example
+ * ```typescript
+ * {
+ *   code: "invalid-value",
+ *   severity: "error",
+ *   message: "Unknown named color 'notacolor'",
+ *   property: "color",
+ *   location: { start: { line: 1, column: 8 }, end: { line: 1, column: 18 } },
+ *   sourceContext: "   1 | color: notacolor\n               ^"
+ * }
+ * ```
+ *
  * @public
  */
 export interface Issue {
@@ -94,6 +106,8 @@ export interface Issue {
   suggestion?: string;
   /** Optional location range in input string (for parse errors) */
   location?: SourceLocationRange;
+  /** Optional formatted source context with visual pointer to error location */
+  sourceContext?: string;
   /** Optional path to error in IR structure (for generation errors) */
   path?: (string | number)[];
   /** Optional expected type or value */
@@ -119,6 +133,7 @@ export function createError(
     property?: string;
     suggestion?: string;
     location?: SourceLocationRange;
+    sourceContext?: string;
     path?: (string | number)[];
     expected?: string;
     received?: string;
@@ -151,6 +166,7 @@ export function createWarning(
     property?: string;
     suggestion?: string;
     location?: SourceLocationRange;
+    sourceContext?: string;
     path?: (string | number)[];
     expected?: string;
     received?: string;
@@ -181,6 +197,7 @@ export function createInfo(
     property?: string;
     suggestion?: string;
     location?: SourceLocationRange;
+    sourceContext?: string;
     path?: (string | number)[];
     expected?: string;
     received?: string;
