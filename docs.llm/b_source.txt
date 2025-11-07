@@ -1,3 +1,7 @@
+Excluding patterns: 
+Documentation for LLMs
+Excluding patterns: 
+Excluding patterns: -not -path */__pycache__/* -not -path */__tests__/* -not -path */.git/* -not -path */.idea/* -not -path */.next/* -not -path */.venv/* -not -path */.vscode/* -not -path */*.spec.py -not -path */*.spec.ts -not -path */*.spec.tsx -not -path */*.test.py -not -path */*.test.ts -not -path */*.test.tsx -not -path */*test.py -not -path */*test.ts -not -path */*test.tsx -not -path */build/* -not -path */dist/* -not -path */me.ts -not -path */node_modules/* -not -path */test_*.py -not -path */test.ts -not -path */test.ts -not -path */tests/* -not -path */venv/*
 === File: packages/b_declarations/src/core/index.ts ===
 // b_path:: packages/b_declarations/src/core/index.ts
 export * from "./registry";
@@ -164,20 +168,19 @@ export * from "./properties";
 
 === File: packages/b_declarations/src/parser.ts ===
 // b_path:: packages/b_declarations/src/parser.ts
-import { createError, createInfo, parseErr, parseOk, forwardParseErr, type ParseResult, type Issue } from "@b/types";
-import { validate } from "@b/utils";
+import { createError, parseErr, parseOk, forwardParseErr, type ParseResult, type Issue } from "@b/types";
 import { propertyRegistry } from "./core";
 import type { CSSDeclaration, DeclarationResult } from "./types";
 import { generateDeclaration } from "./generator";
+import * as csstree from "@eslint/css-tree";
 
 /**
  * Parse a CSS declaration string or object into its IR representation.
  *
- * Enhanced with css-tree validation and generator warnings:
- * 1. Validates syntax with css-tree (fail fast on syntax errors)
- * 2. Parses with our system (semantic validation)
- * 3. Adds css-tree warnings for visual context
- * 4. Runs generator to collect semantic warnings (if parse succeeded)
+ * AST-native architecture: Single-pass parsing with direct AST traversal.
+ * 1. Parses CSS to AST with css-tree (positions enabled)
+ * 2. Passes AST node directly to property parser
+ * 3. Errors naturally include location data from AST
  *
  * @param input - CSS declaration string (e.g., "color: red;" or "color: red") or object
  * @returns Result with the parsed IR or an error
@@ -218,29 +221,50 @@ export function parseDeclaration(input: string | CSSDeclaration): ParseResult<De
     return parseErr(createError("invalid-value", `Unknown CSS property: ${property}`));
   }
 
-  // Step 2: Validate with css-tree and collect any formatted warnings
-  const validation = validate(`${property}: ${value}`);
+  // Step 2: Parse based on property type
+  let parseResult: ParseResult<unknown>;
 
-  // Step 3: Parse the value using the property's parser
-  const parseResult = definition.parser(value);
+  if (definition.multiValue) {
+    // Multi-value property: Pass raw string to parser
+    // Parser will split by comma and handle partial failures
+    //
+    // Type assertion: `as never` required because TypeScript cannot infer
+    // the relationship between the property name and its parser signature.
+    // The parser could be SingleValueParser<T> | MultiValueParser<T>,
+    // but we know it's MultiValueParser here due to runtime multiValue check.
+    parseResult = definition.parser(value as never);
+  } else {
+    // Single-value property: Parse to AST first
+    let valueAst: csstree.Value;
+    try {
+      valueAst = csstree.parse(value, {
+        context: "value",
+        positions: true,
+      }) as csstree.Value;
+    } catch (e: unknown) {
+      // Fatal syntax error for single-value property
+      const error = e as Error;
+      return parseErr(createError("invalid-syntax", error.message));
+    }
 
-  // Step 4: Collect all issues
-  const allIssues: Issue[] = [...parseResult.issues];
-
-  // Add css-tree warnings for visual context
-  if (validation.warnings.length > 0) {
-    const contextIssues = validation.warnings.map((w) =>
-      createInfo("invalid-syntax", w.formattedWarning || w.name, {
-        property: w.property,
-      }),
-    );
-    allIssues.push(...contextIssues);
+    // Pass validated AST to parser
+    //
+    // Type assertion: `as never` required (same reason as above).
+    // We know it's SingleValueParser here, but TypeScript's type system
+    // cannot narrow the union based on runtime multiValue check.
+    parseResult = definition.parser(valueAst as never);
   }
 
-  // Step 5: Try generation to get semantic warnings (even if parse failed but has partial IR)
+  // Step 3: Collect all issues
+  const allIssues: Issue[] = [...parseResult.issues];
+
+  // Step 4: Try generation to get semantic warnings (even if parse failed but has partial IR)
   if (parseResult.value) {
     try {
-      // Type assertion needed for generic generateDeclaration signature
+      // Type assertions: `as never` required for the same reason as parser calls.
+      // generateDeclaration is generic over TProperty extends RegisteredProperty,
+      // but TypeScript cannot infer TProperty from the runtime property string value.
+      // This is a limitation of TypeScript's type system with string-indexed unions.
       const genResult = generateDeclaration({
         property: property as never,
         ir: parseResult.value as never,
@@ -257,12 +281,18 @@ export function parseDeclaration(input: string | CSSDeclaration): ParseResult<De
     }
   }
 
+  // Step 5: Enrich all issues with property context
+  const enrichedIssues = allIssues.map((issue) => ({
+    ...issue,
+    property,
+  }));
+
   // Step 6: Return result
   if (!parseResult.ok) {
     return {
       ok: false,
       value: parseResult.value as DeclarationResult | undefined,
-      issues: allIssues,
+      issues: enrichedIssues,
       property,
     };
   }
@@ -273,7 +303,7 @@ export function parseDeclaration(input: string | CSSDeclaration): ParseResult<De
       ir: parseResult.value,
       original: value,
     }),
-    issues: allIssues,
+    issues: enrichedIssues,
   };
 }
 
@@ -325,6 +355,7 @@ export const backgroundImage = defineProperty<BackgroundImageIR>({
   name: "background-image",
   syntax: "<bg-image>#",
   parser: parseBackgroundImage,
+  multiValue: true, // Multi-value parser: handles comma-separated layers
   generator: generateBackgroundImage,
   inherited: false,
   initial: "none",
@@ -412,38 +443,45 @@ export * from "./types";
 
 === File: packages/b_declarations/src/properties/background-image/parser.ts ===
 // b_path:: packages/b_declarations/src/properties/background-image/parser.ts
-import { createError, parseErr, parseOk, forwardParseErr, type ParseResult } from "@b/types";
-import * as Parsers from "@b/parsers";
-import { isCSSWideKeyword, parseCSSWideKeyword, splitByComma } from "../../utils";
-import type { BackgroundImageIR, ImageLayer } from "./types";
-
 /**
- * Parse a background-image value.
+ * Multi-value background-image parser
+ *
+ * Architecture: Multi-value parser (receives raw string)
+ * - Splits value by top-level commas
+ * - Parses EACH layer to AST individually
+ * - One bad layer doesn't break others (resilient)
  *
  * Property syntax: background-image = <bg-image>#
  * Where <bg-image> = <image> | none
- * And <image> = <url> | <gradient> | <image()> | etc.
+ * And <image> = <url> | <gradient>
+ */
+
+import { createError, parseErr, parseOk, forwardParseErr, type ParseResult } from "@b/types";
+import * as Parsers from "@b/parsers";
+import { isCSSWideKeyword, parseCSSWideKeyword, splitByComma } from "../../utils";
+import * as Ast from "@b/utils";
+import type { BackgroundImageIR, ImageLayer } from "./types";
+import * as csstree from "@eslint/css-tree";
+
+/**
+ * Parse background-image from raw string value.
  *
- * This parser:
- * 1. Handles CSS-wide keywords (inherit, initial, etc.)
- * 2. Splits comma-separated layers
- * 3. Delegates each layer to appropriate VALUE parser
+ * Multi-value parser: Handles comma-separated layers with partial failure resilience.
  */
 export function parseBackgroundImage(value: string): ParseResult<BackgroundImageIR> {
   const trimmed = value.trim();
 
-  // Handle CSS-wide keywords
+  // Handle single keywords: 'none', 'inherit', 'initial', etc.
   if (isCSSWideKeyword(trimmed)) {
-    const keywordResult = parseCSSWideKeyword(trimmed);
-    if (keywordResult.ok) {
+    const result = parseCSSWideKeyword(trimmed);
+    if (result.ok) {
       return parseOk({
         kind: "keyword",
-        value: keywordResult.value,
+        value: result.value,
       });
     }
   }
 
-  // Handle 'none' keyword
   if (trimmed.toLowerCase() === "none") {
     return parseOk({
       kind: "keyword",
@@ -451,152 +489,138 @@ export function parseBackgroundImage(value: string): ParseResult<BackgroundImage
     });
   }
 
-  // Split into layers (comma-separated)
+  // Split by top-level commas
   const layerStrings = splitByComma(trimmed);
   const layerResults: ParseResult<ImageLayer>[] = [];
 
   for (const layerStr of layerStrings) {
-    const layer = layerStr.trim();
-
-    // Parse 'none'
-    if (layer.toLowerCase() === "none") {
-      layerResults.push(parseOk({ kind: "none" }));
+    // ✨ Parse EACH layer to AST individually
+    let layerAst: csstree.Value;
+    try {
+      layerAst = csstree.parse(layerStr.trim(), {
+        context: "value",
+        positions: true,
+      }) as csstree.Value;
+    } catch (e) {
+      // This layer has syntax error - record and continue to next
+      const errorMessage = e instanceof Error ? e.message : String(e);
+      const issue = createError("invalid-syntax", `Invalid syntax in background layer: ${errorMessage}`);
+      layerResults.push(parseErr(issue));
       continue;
     }
 
-    // Delegate to url() parser
-    if (layer.startsWith("url(")) {
-      const urlResult = Parsers.Url.parseUrl(layer);
-      if (urlResult.ok) {
-        layerResults.push(
-          parseOk({
-            kind: "url",
-            url: urlResult.value.value,
-          }),
-        );
-      } else {
-        layerResults.push(forwardParseErr<ImageLayer>(urlResult));
-      }
-      continue;
-    }
-
-    // Delegate to linear-gradient parser
-    if (layer.startsWith("linear-gradient(") || layer.startsWith("repeating-linear-gradient(")) {
-      const gradientResult = Parsers.Gradient.Linear.parse(layer);
-      if (gradientResult.ok) {
-        layerResults.push(
-          parseOk({
-            kind: "gradient",
-            gradient: gradientResult.value,
-          }),
-        );
-      } else {
-        // Preserve partial gradient value for generator inspection
-        if (gradientResult.value) {
-          layerResults.push({
-            ok: false,
-            value: {
-              kind: "gradient",
-              gradient: gradientResult.value,
-            },
-            issues: gradientResult.issues,
-          });
-        } else {
-          layerResults.push(forwardParseErr<ImageLayer>(gradientResult));
-        }
-      }
-      continue;
-    }
-
-    // Delegate to radial-gradient parser
-    if (layer.startsWith("radial-gradient(") || layer.startsWith("repeating-radial-gradient(")) {
-      const gradientResult = Parsers.Gradient.Radial.parse(layer);
-      if (gradientResult.ok) {
-        layerResults.push(
-          parseOk({
-            kind: "gradient",
-            gradient: gradientResult.value,
-          }),
-        );
-      } else {
-        // Preserve partial gradient value for generator inspection
-        if (gradientResult.value) {
-          layerResults.push({
-            ok: false,
-            value: {
-              kind: "gradient",
-              gradient: gradientResult.value,
-            },
-            issues: gradientResult.issues,
-          });
-        } else {
-          layerResults.push(forwardParseErr<ImageLayer>(gradientResult));
-        }
-      }
-      continue;
-    }
-
-    // Delegate to conic-gradient parser
-    if (layer.startsWith("conic-gradient(") || layer.startsWith("repeating-conic-gradient(")) {
-      const gradientResult = Parsers.Gradient.Conic.parse(layer);
-      if (gradientResult.ok) {
-        layerResults.push(
-          parseOk({
-            kind: "gradient",
-            gradient: gradientResult.value,
-          }),
-        );
-      } else {
-        // Preserve partial gradient value for generator inspection
-        if (gradientResult.value) {
-          layerResults.push({
-            ok: false,
-            value: {
-              kind: "gradient",
-              gradient: gradientResult.value,
-            },
-            issues: gradientResult.issues,
-          });
-        } else {
-          layerResults.push(forwardParseErr<ImageLayer>(gradientResult));
-        }
-      }
-      continue;
-    }
-
-    // TODO: Handle other <image> types:
-    // - image()
-    // - image-set()
-    // - cross-fade()
-    // - element()
-
-    layerResults.push(parseErr(createError("invalid-value", `Unsupported image type in background-image: ${layer}`)));
+    // Parse the validated AST for this layer
+    const layerResult = parseImageLayerFromAST(layerAst);
+    layerResults.push(layerResult);
   }
 
-  // Aggregate all issues from layer results
-  const allIssues = layerResults.flatMap((r) => r.issues);
-  const successfulLayers = layerResults.filter((r) => r.ok).map((r) => r.value as ImageLayer);
-  // Also collect partial layers (failed but has value) to enable generator warnings
-  const partialLayers = layerResults.filter((r) => !r.ok && r.value).map((r) => r.value as ImageLayer);
-  const allLayers = [...successfulLayers, ...partialLayers];
+  // Aggregate results - collect valid layers and all issues
+  return aggregateLayerResults(layerResults);
+}
 
-  const finalValue: BackgroundImageIR = {
-    kind: "layers",
-    layers: allLayers,
-  };
+/**
+ * Parse a single background layer from its AST.
+ * Helper function for layer-by-layer parsing.
+ */
+function parseImageLayerFromAST(valueNode: csstree.Value): ParseResult<ImageLayer> {
+  if (!valueNode || !valueNode.children) {
+    return parseErr(createError("invalid-value", "Invalid AST node: missing children"));
+  }
 
-  // If there are any errors, return failure with all issues but still include successful layers
-  if (allIssues.some((i) => i.severity === "error")) {
-    const result: ParseResult<BackgroundImageIR> = {
-      ok: false,
-      value: finalValue,
+  const children = Ast.nodeListToArray(valueNode.children);
+
+  if (children.length === 0) {
+    return parseErr(createError("missing-value", "Empty background layer"));
+  }
+
+  const firstNode = children[0];
+
+  // Handle 'none' identifier
+  if (Ast.isIdentifier(firstNode, "none")) {
+    return parseOk({ kind: "none" });
+  }
+
+  // Handle Url node (css-tree parses url() as Url type, not Function)
+  if (firstNode.type === "Url") {
+    return parseOk({
+      kind: "url",
+      url: firstNode.value,
+    });
+  }
+
+  // Handle url() function (for completeness)
+  if (Ast.isFunctionNode(firstNode, "url")) {
+    const urlResult = Parsers.Url.parseUrlFromNode(firstNode);
+
+    if (urlResult.ok) {
+      return parseOk({
+        kind: "url",
+        url: urlResult.value.value,
+      });
+    }
+    return forwardParseErr<ImageLayer>(urlResult);
+  }
+
+  // Handle gradient functions
+  if (Ast.isFunctionNode(firstNode)) {
+    const funcName = (firstNode as csstree.FunctionNode).name.toLowerCase();
+
+    if (funcName.includes("gradient")) {
+      const gradientResult = Parsers.Gradient.parseFromNode(firstNode);
+
+      if (gradientResult.ok) {
+        return parseOk({
+          kind: "gradient",
+          gradient: gradientResult.value,
+        });
+      }
+      return forwardParseErr<ImageLayer>(gradientResult);
+    }
+  }
+
+  return parseErr(
+    createError("invalid-value", "Unsupported background-image value", {
+      suggestion: "Use url(), gradient, or 'none'",
+    }),
+  );
+}
+
+/**
+ * Aggregate layer results into final BackgroundImageIR.
+ * Collects all valid layers and all issues from all layers.
+ */
+function aggregateLayerResults(layerResults: ParseResult<ImageLayer>[]): ParseResult<BackgroundImageIR> {
+  const validLayers: ImageLayer[] = [];
+  const allIssues: Array<NonNullable<ParseResult<ImageLayer>["issues"][number]>> = [];
+
+  for (const result of layerResults) {
+    // Collect all issues
+    allIssues.push(...result.issues);
+
+    // Collect valid values
+    if (result.value) {
+      validLayers.push(result.value);
+    }
+  }
+
+  // If we have at least one valid layer, return success with partial results
+  if (validLayers.length > 0) {
+    return {
+      ok: allIssues.length === 0,
+      value: {
+        kind: "layers",
+        layers: validLayers,
+      },
       issues: allIssues,
-      property: "background-image",
     };
-    return result;
   }
 
-  return parseOk(finalValue, "background-image");
+  // No valid layers - return error
+  return {
+    ok: false,
+    value: undefined,
+    issues: allIssues.length > 0 ? allIssues : [createError("invalid-value", "No valid background layers found")],
+  };
 }
 
 
@@ -655,6 +679,20 @@ export type RegisteredProperty = keyof PropertyIRMap;
  */
 export type PropertyGenerator<T = unknown> = (ir: T) => GenerateResult;
 
+/**
+ * Parser for single-value properties.
+ * Receives a pre-parsed AST node from css-tree.
+ * Example: color, opacity, width
+ */
+export type SingleValueParser<T> = (node: import("@eslint/css-tree").Value) => ParseResult<T>;
+
+/**
+ * Parser for multi-value (comma-separated) properties.
+ * Receives the raw string value and handles splitting + partial failures.
+ * Example: background-image, font-family
+ */
+export type MultiValueParser<T> = (value: string) => ParseResult<T>;
+
 // ===================================
 // Moved from  ./core/types.ts
 // ===================================
@@ -684,7 +722,18 @@ export interface DeclarationResult<T = unknown> {
 export interface PropertyDefinition<T = unknown> {
   name: string;
   syntax: string;
-  parser: (value: string) => ParseResult<T>;
+  /**
+   * Parser can be either:
+   * - SingleValueParser: Receives pre-parsed AST node (for single values)
+   * - MultiValueParser: Receives raw string (for comma-separated lists)
+   */
+  parser: SingleValueParser<T> | MultiValueParser<T>;
+  /**
+   * Flag indicating if this property accepts multiple comma-separated values.
+   * When true, parser will be called with raw string.
+   * When false/undefined, parser will be called with AST node.
+   */
+  multiValue?: boolean;
   generator?: (ir: T) => GenerateResult;
   inherited: boolean;
   initial: string;
@@ -694,7 +743,7 @@ export interface PropertyDefinition<T = unknown> {
 /**
  * Property parser function type.
  */
-export type PropertyParser<T = unknown> = (value: string) => ParseResult<T>;
+export type PropertyParser<T = unknown> = (node: import("@eslint/css-tree").Value) => ParseResult<T>;
 
 /**
  * Property generator function type (from core/types).
@@ -881,12 +930,10 @@ import * as Special from "./special";
  * @see https://drafts.csswg.org/css-color/#typedef-color
  */
 export function generate(color: Type.Color, context?: GenerateContext): GenerateResult {
-  if (!color || typeof color !== "object" || !("kind" in color)) {
-    return generateErr(
-      createError("missing-required-field", "Invalid color IR: missing 'kind' field", {
-        suggestion: "Ensure IR was parsed correctly",
-      }),
-    );
+  // Minimal runtime check for null/undefined to prevent crashes
+  // TypeScript ensures correct types, but runtime errors need handling
+  if (!color) {
+    return generateErr(createError("unsupported-kind", "Invalid color IR: null or undefined"));
   }
 
   switch (color.kind) {
@@ -924,15 +971,15 @@ export function generate(color: Type.Color, context?: GenerateContext): Generate
       return ColorFunction.generate(color);
 
     case "variable":
-      // Variable can represent any color type
       return generateOk(cssValueToCss(color));
 
-    default:
+    default: {
+      // Exhaustiveness check - TypeScript ensures all cases are handled
+      const _exhaustive: never = color;
       return generateErr(
-        createError("unsupported-kind", `Unknown color kind: ${(color as { kind?: string }).kind}`, {
-          suggestion: "Check that color IR is valid",
-        }),
+        createError("unsupported-kind", `Unknown color kind: ${(_exhaustive as { kind?: string }).kind}`),
       );
+    }
   }
 }
 
@@ -1656,10 +1703,13 @@ export function generate(gradient: Gradient, context?: GenerateContext): Generat
       return Radial.generate(gradient, context);
     case "conic":
       return Conic.generate(gradient, context);
-    default:
+    default: {
+      // Exhaustiveness check - TypeScript ensures all gradient types are handled
+      const _exhaustive: never = gradient;
       return generateErr(
-        createError("unsupported-kind", `Unsupported gradient kind: ${(gradient as { kind: string }).kind}`),
+        createError("unsupported-kind", `Unsupported gradient kind: ${(_exhaustive as { kind: string }).kind}`),
       );
+    }
   }
 }
 
@@ -2466,7 +2516,7 @@ export default defineConfig({
 
 === File: packages/b_parsers/src/angle.ts ===
 // b_path:: packages/b_parsers/src/angle.ts
-import type * as csstree from "css-tree";
+import type * as csstree from "@eslint/css-tree";
 import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
 import type * as Type from "@b/types";
 import * as Unit from "@b/units";
@@ -2496,10 +2546,10 @@ export function parseAngleNode(node: csstree.CssNode): ParseResult<Type.Angle> {
 
 === File: packages/b_parsers/src/color/color-function.ts ===
 // b_path:: packages/b_parsers/src/color/color-function.ts
-import type * as csstree from "css-tree";
+import type * as csstree from "@eslint/css-tree";
 import { createError, parseErr, parseOk, forwardParseErr, type ParseResult } from "@b/types";
 import type { ColorFunction } from "@b/types";
-import { parseCssValueNodeEnhanced } from "../css-value-parser-enhanced";
+import { parseCssValueNodeWrapper } from "../css-value-parser";
 import { getChildren, getValues } from "@b/utils";
 import { colorFunctionSpaceSchema } from "@b/keywords";
 
@@ -2536,13 +2586,13 @@ export function parseColorFunction(node: csstree.FunctionNode): ParseResult<Colo
   }
 
   // Parse the three channel values
-  const c1Result = parseCssValueNodeEnhanced(values[1]);
+  const c1Result = parseCssValueNodeWrapper(values[1]);
   if (!c1Result.ok) return forwardParseErr<ColorFunction>(c1Result);
 
-  const c2Result = parseCssValueNodeEnhanced(values[2]);
+  const c2Result = parseCssValueNodeWrapper(values[2]);
   if (!c2Result.ok) return forwardParseErr<ColorFunction>(c2Result);
 
-  const c3Result = parseCssValueNodeEnhanced(values[3]);
+  const c3Result = parseCssValueNodeWrapper(values[3]);
   if (!c3Result.ok) return forwardParseErr<ColorFunction>(c3Result);
 
   const colorFunc: ColorFunction = {
@@ -2553,7 +2603,7 @@ export function parseColorFunction(node: csstree.FunctionNode): ParseResult<Colo
 
   // Optional alpha channel (5th value after the 4 required)
   if (values.length === 5) {
-    const alphaResult = parseCssValueNodeEnhanced(values[4]);
+    const alphaResult = parseCssValueNodeWrapper(values[4]);
     if (!alphaResult.ok) return forwardParseErr<ColorFunction>(alphaResult);
     colorFunc.alpha = alphaResult.value;
   }
@@ -2564,11 +2614,10 @@ export function parseColorFunction(node: csstree.FunctionNode): ParseResult<Colo
 
 === File: packages/b_parsers/src/color/color.ts ===
 // b_path:: packages/b_parsers/src/color/color.ts
-import type * as csstree from "css-tree";
-import * as csstree from '@eslint/css-tree';;
+import * as csstree from "@eslint/css-tree";
 import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
 import type * as Type from "@b/types";
-import { parseCssValueNodeEnhanced } from "../css-value-parser-enhanced";
+import { parseCssValueNodeWrapper } from "../css-value-parser";
 import { parseRgbFunction } from "./rgb";
 import { parseHslFunction } from "./hsl";
 import { parseHwbFunction } from "./hwb";
@@ -2599,7 +2648,7 @@ export function parseNode(node: csstree.CssNode): ParseResult<Type.Color> {
 
     // Handle var() which can represent any color
     if (funcName === "var") {
-      const result = parseCssValueNodeEnhanced(node);
+      const result = parseCssValueNodeWrapper(node);
       if (result.ok && result.value.kind === "variable") {
         return parseOk(result.value as Type.Color);
       }
@@ -2650,10 +2699,10 @@ export function parseNode(node: csstree.CssNode): ParseResult<Type.Color> {
  */
 export function parse(value: string): ParseResult<Type.Color> {
   try {
-    const ast = cssTree.parse(value, { context: "value" });
+    const ast = csstree.parse(value, { context: "value" });
 
     let firstNode: csstree.CssNode | null = null;
-    cssTree.walk(ast, {
+    csstree.walk(ast, {
       enter(node: csstree.CssNode) {
         if (!firstNode && node.type !== "Value") {
           firstNode = node;
@@ -2676,10 +2725,10 @@ export function parse(value: string): ParseResult<Type.Color> {
 
 === File: packages/b_parsers/src/color/hsl.ts ===
 // b_path:: packages/b_parsers/src/color/hsl.ts
-import type * as csstree from "css-tree";
+import type * as csstree from "@eslint/css-tree";
 import { createError, parseErr, parseOk, forwardParseErr, type ParseResult } from "@b/types";
 import type { HSLColor } from "@b/types";
-import { parseCssValueNodeEnhanced } from "../css-value-parser-enhanced";
+import { parseCssValueNodeWrapper } from "../css-value-parser";
 import { getChildren, getValues } from "@b/utils";
 
 /**
@@ -2697,13 +2746,13 @@ export function parseHslFunction(node: csstree.FunctionNode): ParseResult<HSLCol
     return parseErr(createError("invalid-syntax", `HSL function must have 3 or 4 values, got ${values.length}`));
   }
 
-  const hResult = parseCssValueNodeEnhanced(values[0]);
+  const hResult = parseCssValueNodeWrapper(values[0]);
   if (!hResult.ok) return forwardParseErr<HSLColor>(hResult);
 
-  const sResult = parseCssValueNodeEnhanced(values[1]);
+  const sResult = parseCssValueNodeWrapper(values[1]);
   if (!sResult.ok) return forwardParseErr<HSLColor>(sResult);
 
-  const lResult = parseCssValueNodeEnhanced(values[2]);
+  const lResult = parseCssValueNodeWrapper(values[2]);
   if (!lResult.ok) return forwardParseErr<HSLColor>(lResult);
 
   const hsl: HSLColor = {
@@ -2714,7 +2763,7 @@ export function parseHslFunction(node: csstree.FunctionNode): ParseResult<HSLCol
   };
 
   if (values.length === 4) {
-    const alphaResult = parseCssValueNodeEnhanced(values[3]);
+    const alphaResult = parseCssValueNodeWrapper(values[3]);
     if (!alphaResult.ok) return forwardParseErr<HSLColor>(alphaResult);
     hsl.alpha = alphaResult.value;
   }
@@ -2725,10 +2774,10 @@ export function parseHslFunction(node: csstree.FunctionNode): ParseResult<HSLCol
 
 === File: packages/b_parsers/src/color/hwb.ts ===
 // b_path:: packages/b_parsers/src/color/hwb.ts
-import type * as csstree from "css-tree";
+import type * as csstree from "@eslint/css-tree";
 import { createError, parseErr, parseOk, forwardParseErr, type ParseResult } from "@b/types";
 import type { HWBColor } from "@b/types";
-import { parseCssValueNodeEnhanced } from "../css-value-parser-enhanced";
+import { parseCssValueNodeWrapper } from "../css-value-parser";
 import { getChildren, getValues } from "@b/utils";
 
 /**
@@ -2746,13 +2795,13 @@ export function parseHwbFunction(node: csstree.FunctionNode): ParseResult<HWBCol
     return parseErr(createError("invalid-syntax", `HWB function must have 3 or 4 values, got ${values.length}`));
   }
 
-  const hResult = parseCssValueNodeEnhanced(values[0]);
+  const hResult = parseCssValueNodeWrapper(values[0]);
   if (!hResult.ok) return forwardParseErr<HWBColor>(hResult);
 
-  const wResult = parseCssValueNodeEnhanced(values[1]);
+  const wResult = parseCssValueNodeWrapper(values[1]);
   if (!wResult.ok) return forwardParseErr<HWBColor>(wResult);
 
-  const bResult = parseCssValueNodeEnhanced(values[2]);
+  const bResult = parseCssValueNodeWrapper(values[2]);
   if (!bResult.ok) return forwardParseErr<HWBColor>(bResult);
 
   const hwb: HWBColor = {
@@ -2763,7 +2812,7 @@ export function parseHwbFunction(node: csstree.FunctionNode): ParseResult<HWBCol
   };
 
   if (values.length === 4) {
-    const alphaResult = parseCssValueNodeEnhanced(values[3]);
+    const alphaResult = parseCssValueNodeWrapper(values[3]);
     if (!alphaResult.ok) return forwardParseErr<HWBColor>(alphaResult);
     hwb.alpha = alphaResult.value;
   }
@@ -2788,10 +2837,10 @@ export * from "./oklch";
 
 === File: packages/b_parsers/src/color/lab.ts ===
 // b_path:: packages/b_parsers/src/color/lab.ts
-import type * as csstree from "css-tree";
+import type * as csstree from "@eslint/css-tree";
 import { createError, parseErr, parseOk, forwardParseErr, type ParseResult } from "@b/types";
 import type { LABColor } from "@b/types";
-import { parseCssValueNodeEnhanced } from "../css-value-parser-enhanced";
+import { parseCssValueNodeWrapper } from "../css-value-parser";
 import { getChildren, getValues } from "@b/utils";
 
 /**
@@ -2809,13 +2858,13 @@ export function parseLabFunction(node: csstree.FunctionNode): ParseResult<LABCol
     return parseErr(createError("invalid-syntax", `LAB function must have 3 or 4 values, got ${values.length}`));
   }
 
-  const lResult = parseCssValueNodeEnhanced(values[0]);
+  const lResult = parseCssValueNodeWrapper(values[0]);
   if (!lResult.ok) return forwardParseErr<LABColor>(lResult);
 
-  const aResult = parseCssValueNodeEnhanced(values[1]);
+  const aResult = parseCssValueNodeWrapper(values[1]);
   if (!aResult.ok) return forwardParseErr<LABColor>(aResult);
 
-  const bResult = parseCssValueNodeEnhanced(values[2]);
+  const bResult = parseCssValueNodeWrapper(values[2]);
   if (!bResult.ok) return forwardParseErr<LABColor>(bResult);
 
   const lab: LABColor = {
@@ -2826,7 +2875,7 @@ export function parseLabFunction(node: csstree.FunctionNode): ParseResult<LABCol
   };
 
   if (values.length === 4) {
-    const alphaResult = parseCssValueNodeEnhanced(values[3]);
+    const alphaResult = parseCssValueNodeWrapper(values[3]);
     if (!alphaResult.ok) return forwardParseErr<LABColor>(alphaResult);
     lab.alpha = alphaResult.value;
   }
@@ -2837,10 +2886,10 @@ export function parseLabFunction(node: csstree.FunctionNode): ParseResult<LABCol
 
 === File: packages/b_parsers/src/color/lch.ts ===
 // b_path:: packages/b_parsers/src/color/lch.ts
-import type * as csstree from "css-tree";
+import type * as csstree from "@eslint/css-tree";
 import { createError, parseErr, parseOk, forwardParseErr, type ParseResult } from "@b/types";
 import type { LCHColor } from "@b/types";
-import { parseCssValueNodeEnhanced } from "../css-value-parser-enhanced";
+import { parseCssValueNodeWrapper } from "../css-value-parser";
 import { getChildren, getValues } from "@b/utils";
 
 /**
@@ -2858,13 +2907,13 @@ export function parseLchFunction(node: csstree.FunctionNode): ParseResult<LCHCol
     return parseErr(createError("invalid-syntax", `LCH function must have 3 or 4 values, got ${values.length}`));
   }
 
-  const lResult = parseCssValueNodeEnhanced(values[0]);
+  const lResult = parseCssValueNodeWrapper(values[0]);
   if (!lResult.ok) return forwardParseErr<LCHColor>(lResult);
 
-  const cResult = parseCssValueNodeEnhanced(values[1]);
+  const cResult = parseCssValueNodeWrapper(values[1]);
   if (!cResult.ok) return forwardParseErr<LCHColor>(cResult);
 
-  const hResult = parseCssValueNodeEnhanced(values[2]);
+  const hResult = parseCssValueNodeWrapper(values[2]);
   if (!hResult.ok) return forwardParseErr<LCHColor>(hResult);
 
   const lch: LCHColor = {
@@ -2875,7 +2924,7 @@ export function parseLchFunction(node: csstree.FunctionNode): ParseResult<LCHCol
   };
 
   if (values.length === 4) {
-    const alphaResult = parseCssValueNodeEnhanced(values[3]);
+    const alphaResult = parseCssValueNodeWrapper(values[3]);
     if (!alphaResult.ok) return forwardParseErr<LCHColor>(alphaResult);
     lch.alpha = alphaResult.value;
   }
@@ -2886,10 +2935,10 @@ export function parseLchFunction(node: csstree.FunctionNode): ParseResult<LCHCol
 
 === File: packages/b_parsers/src/color/oklab.ts ===
 // b_path:: packages/b_parsers/src/color/oklab.ts
-import type * as csstree from "css-tree";
+import type * as csstree from "@eslint/css-tree";
 import { createError, parseErr, parseOk, forwardParseErr, type ParseResult } from "@b/types";
 import type { OKLabColor } from "@b/types";
-import { parseCssValueNodeEnhanced } from "../css-value-parser-enhanced";
+import { parseCssValueNodeWrapper } from "../css-value-parser";
 import { getChildren, getValues } from "@b/utils";
 
 /**
@@ -2907,13 +2956,13 @@ export function parseOklabFunction(node: csstree.FunctionNode): ParseResult<OKLa
     return parseErr(createError("invalid-syntax", `OKLab function must have 3 or 4 values, got ${values.length}`));
   }
 
-  const lResult = parseCssValueNodeEnhanced(values[0]);
+  const lResult = parseCssValueNodeWrapper(values[0]);
   if (!lResult.ok) return forwardParseErr<OKLabColor>(lResult);
 
-  const aResult = parseCssValueNodeEnhanced(values[1]);
+  const aResult = parseCssValueNodeWrapper(values[1]);
   if (!aResult.ok) return forwardParseErr<OKLabColor>(aResult);
 
-  const bResult = parseCssValueNodeEnhanced(values[2]);
+  const bResult = parseCssValueNodeWrapper(values[2]);
   if (!bResult.ok) return forwardParseErr<OKLabColor>(bResult);
 
   const oklab: OKLabColor = {
@@ -2924,7 +2973,7 @@ export function parseOklabFunction(node: csstree.FunctionNode): ParseResult<OKLa
   };
 
   if (values.length === 4) {
-    const alphaResult = parseCssValueNodeEnhanced(values[3]);
+    const alphaResult = parseCssValueNodeWrapper(values[3]);
     if (!alphaResult.ok) return forwardParseErr<OKLabColor>(alphaResult);
     oklab.alpha = alphaResult.value;
   }
@@ -2935,10 +2984,10 @@ export function parseOklabFunction(node: csstree.FunctionNode): ParseResult<OKLa
 
 === File: packages/b_parsers/src/color/oklch.ts ===
 // b_path:: packages/b_parsers/src/color/oklch.ts
-import type * as csstree from "css-tree";
+import type * as csstree from "@eslint/css-tree";
 import { createError, parseErr, parseOk, forwardParseErr, type ParseResult } from "@b/types";
 import type { OKLCHColor } from "@b/types";
-import { parseCssValueNodeEnhanced } from "../css-value-parser-enhanced";
+import { parseCssValueNodeWrapper } from "../css-value-parser";
 import { getChildren, getValues } from "@b/utils";
 
 /**
@@ -2956,13 +3005,13 @@ export function parseOklchFunction(node: csstree.FunctionNode): ParseResult<OKLC
     return parseErr(createError("invalid-syntax", `OKLCH function must have 3 or 4 values, got ${values.length}`));
   }
 
-  const lResult = parseCssValueNodeEnhanced(values[0]);
+  const lResult = parseCssValueNodeWrapper(values[0]);
   if (!lResult.ok) return forwardParseErr<OKLCHColor>(lResult);
 
-  const cResult = parseCssValueNodeEnhanced(values[1]);
+  const cResult = parseCssValueNodeWrapper(values[1]);
   if (!cResult.ok) return forwardParseErr<OKLCHColor>(cResult);
 
-  const hResult = parseCssValueNodeEnhanced(values[2]);
+  const hResult = parseCssValueNodeWrapper(values[2]);
   if (!hResult.ok) return forwardParseErr<OKLCHColor>(hResult);
 
   const oklch: OKLCHColor = {
@@ -2973,7 +3022,7 @@ export function parseOklchFunction(node: csstree.FunctionNode): ParseResult<OKLC
   };
 
   if (values.length === 4) {
-    const alphaResult = parseCssValueNodeEnhanced(values[3]);
+    const alphaResult = parseCssValueNodeWrapper(values[3]);
     if (!alphaResult.ok) return forwardParseErr<OKLCHColor>(alphaResult);
     oklch.alpha = alphaResult.value;
   }
@@ -2984,10 +3033,10 @@ export function parseOklchFunction(node: csstree.FunctionNode): ParseResult<OKLC
 
 === File: packages/b_parsers/src/color/rgb.ts ===
 // b_path:: packages/b_parsers/src/color/rgb.ts
-import type * as csstree from "css-tree";
+import type * as csstree from "@eslint/css-tree";
 import { createError, parseErr, parseOk, forwardParseErr, type ParseResult } from "@b/types";
 import type { RGBColor } from "@b/types";
-import { parseCssValueNodeEnhanced } from "../css-value-parser-enhanced";
+import { parseCssValueNodeWrapper } from "../css-value-parser";
 import { getChildren, getValues } from "@b/utils";
 
 /**
@@ -3006,13 +3055,13 @@ export function parseRgbFunction(node: csstree.FunctionNode): ParseResult<RGBCol
     return parseErr(createError("invalid-syntax", `RGB function must have 3 or 4 values, got ${values.length}`));
   }
 
-  const rResult = parseCssValueNodeEnhanced(values[0]);
+  const rResult = parseCssValueNodeWrapper(values[0]);
   if (!rResult.ok) return forwardParseErr<RGBColor>(rResult);
 
-  const gResult = parseCssValueNodeEnhanced(values[1]);
+  const gResult = parseCssValueNodeWrapper(values[1]);
   if (!gResult.ok) return forwardParseErr<RGBColor>(gResult);
 
-  const bResult = parseCssValueNodeEnhanced(values[2]);
+  const bResult = parseCssValueNodeWrapper(values[2]);
   if (!bResult.ok) return forwardParseErr<RGBColor>(bResult);
 
   const rgb: RGBColor = {
@@ -3023,7 +3072,7 @@ export function parseRgbFunction(node: csstree.FunctionNode): ParseResult<RGBCol
   };
 
   if (values.length === 4) {
-    const alphaResult = parseCssValueNodeEnhanced(values[3]);
+    const alphaResult = parseCssValueNodeWrapper(values[3]);
     if (!alphaResult.ok) return forwardParseErr<RGBColor>(alphaResult);
     rgb.alpha = alphaResult.value;
   }
@@ -3032,18 +3081,18 @@ export function parseRgbFunction(node: csstree.FunctionNode): ParseResult<RGBCol
 }
 
 
-=== File: packages/b_parsers/src/css-value-parser-enhanced.ts ===
-// b_path:: packages/b_parsers/src/css-value-parser-enhanced.ts
-import type * as csstree from "css-tree";
+=== File: packages/b_parsers/src/css-value-parser.ts ===
+// b_path:: packages/b_parsers/src/css-value-parser.ts
+import type * as csstree from "@eslint/css-tree";
 import { forwardParseErr, type ParseResult, type CssValue } from "@b/types";
 import { parseCssValueNode } from "@b/utils";
 import { parseComplexFunction } from "./function-dispatcher";
 
 /**
- * Enhanced CSS value parser that delegates complex functions to specialized parsers.
+ * CSS value parser that delegates complex functions to specialized parsers.
  *
  * This wrapper combines the basic parseCssValueNode from @b/utils with the
- * complex function dispatcher from @b/parsers, solving the circular dependency issue.
+ * complex function dispatcher from @b/parsers.
  *
  * Use this function instead of parseCssValueNode when you want calc(), min(), max(),
  * clamp(), rgb(), hsl(), etc. to be parsed into their semantic IR structures.
@@ -3051,7 +3100,7 @@ import { parseComplexFunction } from "./function-dispatcher";
  * @param node - CSS AST node to parse
  * @returns ParseResult with CssValue (may include complex function IRs)
  */
-export function parseCssValueNodeEnhanced(node: csstree.CssNode): ParseResult<CssValue> {
+export function parseCssValueNodeWrapper(node: csstree.CssNode): ParseResult<CssValue> {
   // For function nodes, try the complex function dispatcher first
   if (node.type === "Function") {
     const complexResult = parseComplexFunction(node);
@@ -3071,7 +3120,7 @@ export function parseCssValueNodeEnhanced(node: csstree.CssNode): ParseResult<Cs
 
 === File: packages/b_parsers/src/function-dispatcher.ts ===
 // b_path:: packages/b_parsers/src/function-dispatcher.ts
-import type * as csstree from "css-tree";
+import type * as csstree from "@eslint/css-tree";
 import type { ParseResult, CssValue } from "@b/types";
 import * as Color from "./color";
 import * as MathFunctions from "./math";
@@ -3129,10 +3178,10 @@ export function parseComplexFunction(node: csstree.FunctionNode): ParseResult<Cs
 
 === File: packages/b_parsers/src/gradient/color-stop.ts ===
 // b_path:: packages/b_parsers/src/gradient/color-stop.ts
-import type * as csstree from "css-tree";
+import type * as csstree from "@eslint/css-tree";
 import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
 import type * as Type from "@b/types";
-import { parseCssValueNodeEnhanced } from "../css-value-parser-enhanced";
+import { parseCssValueNodeWrapper } from "../css-value-parser";
 import * as Color from "../color";
 
 /**
@@ -3160,7 +3209,7 @@ export function fromNodes(nodes: csstree.CssNode[]): ParseResult<Type.ColorStopO
   // If it's not a color and we only have one node, it might be a color hint
   if (!colorResult.ok && nodes.length === 1) {
     // Try parsing as a length/percentage (color hint)
-    const hintResult = parseCssValueNodeEnhanced(firstNode);
+    const hintResult = parseCssValueNodeWrapper(firstNode);
     if (hintResult.ok) {
       const hint = hintResult.value;
       // Validate that it's actually a length-percentage (not just any CSS value)
@@ -3204,7 +3253,7 @@ export function fromNodes(nodes: csstree.CssNode[]): ParseResult<Type.ColorStopO
     const posNode = nodes[i];
     if (!posNode) continue;
 
-    const posResult = parseCssValueNodeEnhanced(posNode);
+    const posResult = parseCssValueNodeWrapper(posNode);
     if (posResult.ok) {
       positions.push(posResult.value);
     } else {
@@ -3236,10 +3285,10 @@ export function fromNodes(nodes: csstree.CssNode[]): ParseResult<Type.ColorStopO
 
 === File: packages/b_parsers/src/gradient/conic.ts ===
 // b_path:: packages/b_parsers/src/gradient/conic.ts
-import type * as csstree from "css-tree";
+import type * as csstree from "@eslint/css-tree";
 import { createError, parseErr, parseOk, forwardParseErr, type ParseResult } from "@b/types";
 import type * as Type from "@b/types";
-import { parseCssValueNodeEnhanced } from "../css-value-parser-enhanced";
+import { parseCssValueNodeWrapper } from "../css-value-parser";
 import { parsePosition2D } from "../position";
 import * as ColorStop from "./color-stop";
 import * as SharedParsing from "./shared-parsing";
@@ -3307,7 +3356,7 @@ export function fromFunction(fn: csstree.FunctionNode): ParseResult<Type.ConicGr
           return parseErr(createError("invalid-syntax", "conic-gradient 'from' keyword requires an angle value"));
         }
 
-        const angleResult = parseCssValueNodeEnhanced(angleNode);
+        const angleResult = parseCssValueNodeWrapper(angleNode);
         if (!angleResult.ok) {
           return forwardParseErr<Type.ConicGradient>(angleResult);
         }
@@ -3454,168 +3503,15 @@ export function parse(css: string): ParseResult<Type.ConicGradient> {
 }
 
 
-=== File: packages/b_parsers/src/gradient/disambiguation.ts ===
-// b_path:: packages/b_parsers/src/gradient/disambiguation.ts
-import type * as csstree from "css-tree";
-import * as Utils from "../utils";
-
-/**
- * Result of first argument disambiguation
- */
-export type DisambiguationResult = "direction" | "color";
-
-/**
- * List of CSS color function names
- */
-const COLOR_FUNCTIONS = ["rgb", "rgba", "hsl", "hsla", "hwb", "lab", "lch", "oklab", "oklch", "color"] as const;
-
-/**
- * Check if a function name is a color function
- */
-function isColorFunction(funcName: string): boolean {
-  return COLOR_FUNCTIONS.includes(funcName.toLowerCase() as (typeof COLOR_FUNCTIONS)[number]);
-}
-
-/**
- * Disambiguate whether the first argument in a gradient should be parsed
- * as a direction/position or as the first color stop.
- *
- * This handles the ambiguity where CSS value functions like var() and calc()
- * could represent either a direction/angle OR a color value depending on context.
- *
- * **Strategy:**
- * - Unambiguous cases: Explicit types (Dimension, Hash, color functions) → determined directly
- * - Ambiguous cases (var/calc/clamp/min/max): Use lookahead to count remaining stops
- *   - If >= 2 stops remain after consuming as direction → parse as direction
- *   - Otherwise → parse as color stop
- *
- * @param children - Array of AST nodes from the gradient function
- * @returns "direction" if should parse as direction, "color" if should parse as color stop
- *
- * @example
- * ```typescript
- * // Unambiguous: angle
- * disambiguateFirstArg([Dimension(45deg), ...]) // "direction"
- *
- * // Unambiguous: color
- * disambiguateFirstArg([Hash(#ff0000), ...]) // "color"
- * disambiguateFirstArg([Function(rgb), ...]) // "color"
- *
- * // Ambiguous: var with 2+ colors
- * disambiguateFirstArg([Function(var), Identifier(red), Identifier(blue)]) // "direction"
- *
- * // Ambiguous: var with 1 color
- * disambiguateFirstArg([Function(var), Identifier(blue)]) // "color"
- * ```
- */
-export function disambiguateFirstArg(children: csstree.CssNode[]): DisambiguationResult {
-  if (children.length === 0) {
-    return "color"; // Default to color for empty
-  }
-
-  const firstNode = children[0];
-  if (!firstNode) {
-    return "color";
-  }
-
-  // Skip leading whitespace
-  let idx = 0;
-  while (children[idx] && children[idx]?.type === "WhiteSpace") {
-    idx++;
-  }
-  const first = children[idx];
-  if (!first) {
-    return "color";
-  }
-
-  // ========================================
-  // UNAMBIGUOUS: Direction
-  // ========================================
-
-  // Explicit angle with unit (45deg, 0.5turn, 100grad, 1.5rad)
-  if (first.type === "Dimension") {
-    return "direction";
-  }
-
-  // Unitless number (treated as degrees: 0, 45, 90, etc)
-  if (first.type === "Number") {
-    return "direction";
-  }
-
-  // Keyword direction (to top, to right, to bottom left, etc)
-  if (first.type === "Identifier" && first.name.toLowerCase() === "to") {
-    return "direction";
-  }
-
-  // ========================================
-  // UNAMBIGUOUS: Color
-  // ========================================
-
-  // Hex color (#ff0000, #f00)
-  if (first.type === "Hash") {
-    return "color";
-  }
-
-  // Named color identifier (red, blue, transparent)
-  // Excludes 'to' which is handled above
-  if (first.type === "Identifier") {
-    return "color";
-  }
-
-  // ========================================
-  // POTENTIALLY AMBIGUOUS: Functions
-  // ========================================
-
-  if (first.type === "Function") {
-    const funcName = first.name.toLowerCase();
-
-    // Color functions are unambiguous
-    if (isColorFunction(funcName)) {
-      return "color";
-    }
-
-    // CSS value functions (var, calc, clamp, min, max) are ambiguous
-    // They could be:
-    // - var(--angle) → direction
-    // - var(--color) → color
-    // - calc(45deg + 10deg) → direction
-    // - calc(rgb(255,0,0) + rgb(0,0,255)) → color (hypothetically)
-
-    // Strategy: Count remaining comma-separated groups after this node
-    // If >= 2 groups remain, then this can be direction with valid gradient
-    // If < 2 groups remain, must be color (gradient needs >= 2 color stops)
-
-    const remainingGroups = Utils.Ast.splitNodesByComma(children, {
-      startIndex: idx + 1,
-      trimWhitespace: true,
-    });
-
-    if (remainingGroups.length >= 2) {
-      // Valid: first arg as direction + 2+ color stops
-      return "direction";
-    }
-
-    // Not enough stops if we consume this as direction
-    // Must be a color stop
-    return "color";
-  }
-
-  // ========================================
-  // DEFAULT: Color
-  // ========================================
-
-  // For any other node type, default to color stop
-  return "color";
-}
-
-
 === File: packages/b_parsers/src/gradient/gradient.ts ===
 // b_path:: packages/b_parsers/src/gradient/gradient.ts
 import type { ParseResult } from "@b/types";
 import type * as Type from "@b/types";
+import type * as csstree from "@eslint/css-tree";
 import * as Radial from "./radial";
 import * as Linear from "./linear";
 import * as Conic from "./conic";
+import { createError, parseErr } from "@b/types";
 
 /**
  * Unified gradient parser that detects gradient type and dispatches to appropriate parser.
@@ -3655,6 +3551,33 @@ export function parse(css: string): ParseResult<Type.Gradient> {
   };
 }
 
+/**
+ * AST-native gradient parser from FunctionNode.
+ *
+ * Dispatches to appropriate gradient parser based on function name.
+ * Part of AST-native architecture refactoring.
+ *
+ * @param node - css-tree FunctionNode representing gradient
+ * @returns Parsed gradient IR
+ */
+export function parseFromNode(node: csstree.FunctionNode): ParseResult<Type.Gradient> {
+  const funcName = node.name.toLowerCase();
+
+  if (funcName.includes("radial")) {
+    return Radial.fromFunction(node);
+  }
+
+  if (funcName.includes("linear")) {
+    return Linear.fromFunction(node);
+  }
+
+  if (funcName.includes("conic")) {
+    return Conic.fromFunction(node);
+  }
+
+  return parseErr(createError("unsupported-kind", `Not a gradient function: ${funcName}`));
+}
+
 
 === File: packages/b_parsers/src/gradient/index.ts ===
 // b_path:: packages/b_parsers/src/gradient/index.ts
@@ -3667,10 +3590,10 @@ export * from "./gradient";
 
 === File: packages/b_parsers/src/gradient/linear.ts ===
 // b_path:: packages/b_parsers/src/gradient/linear.ts
-import type * as csstree from "css-tree";
+import type * as csstree from "@eslint/css-tree";
 import { createError, parseErr, parseOk, forwardParseErr, type ParseResult } from "@b/types";
 import type * as Type from "@b/types";
-import { parseCssValueNodeEnhanced } from "../css-value-parser-enhanced";
+import { parseCssValueNodeWrapper } from "../css-value-parser";
 import * as ColorStop from "./color-stop";
 import * as SharedParsing from "./shared-parsing";
 import * as Utils from "../utils";
@@ -3691,7 +3614,7 @@ function parseDirection(
   }
 
   if (node.type === "Dimension" || node.type === "Number" || isCssValueFunction(node)) {
-    const angleResult = parseCssValueNodeEnhanced(node);
+    const angleResult = parseCssValueNodeWrapper(node);
     if (angleResult.ok) {
       return parseOk({
         direction: {
@@ -3953,12 +3876,12 @@ export function parse(css: string): ParseResult<Type.LinearGradient> {
 
 === File: packages/b_parsers/src/gradient/radial.ts ===
 // b_path:: packages/b_parsers/src/gradient/radial.ts
-import type * as csstree from "css-tree";
+import type * as csstree from "@eslint/css-tree";
 import { createError, parseErr, parseOk, forwardParseErr, type ParseResult } from "@b/types";
 import type * as Type from "@b/types";
 import type { RadialShape, RadialSizeKeyword } from "@b/keywords";
 import { parsePosition2D } from "../position";
-import { parseCssValueNodeEnhanced } from "../css-value-parser-enhanced";
+import { parseCssValueNodeWrapper } from "../css-value-parser";
 import * as ColorStop from "./color-stop";
 import * as SharedParsing from "./shared-parsing";
 import * as Utils from "../utils";
@@ -4006,7 +3929,7 @@ function parseShapeAndSize(
         (nextNode.type === "Dimension" || nextNode.type === "Percentage" || isCssValueFunction(nextNode))
       ) {
         if (shape === "circle") {
-          const radiusResult = parseCssValueNodeEnhanced(nextNode);
+          const radiusResult = parseCssValueNodeWrapper(nextNode);
           if (radiusResult.ok) {
             size = {
               kind: "circle-explicit",
@@ -4015,12 +3938,12 @@ function parseShapeAndSize(
             idx++;
           }
         } else {
-          const rxResult = parseCssValueNodeEnhanced(nextNode);
+          const rxResult = parseCssValueNodeWrapper(nextNode);
           if (rxResult.ok) {
             idx++;
             const ryNode = nodes[idx];
             if (ryNode && (ryNode.type === "Dimension" || ryNode.type === "Percentage" || isCssValueFunction(ryNode))) {
-              const ryResult = parseCssValueNodeEnhanced(ryNode);
+              const ryResult = parseCssValueNodeWrapper(ryNode);
               if (ryResult.ok) {
                 size = {
                   kind: "ellipse-explicit",
@@ -4052,7 +3975,7 @@ function parseShapeAndSize(
   } else if (node.type === "Dimension" || node.type === "Percentage") {
     // Only parse bare dimensions/percentages as sizes, not functions
     // Functions as first node are likely colors (rgb, hsl, var, etc.)
-    const firstResult = parseCssValueNodeEnhanced(node);
+    const firstResult = parseCssValueNodeWrapper(node);
     if (firstResult.ok) {
       idx++;
       const secondNode = nodes[idx];
@@ -4061,7 +3984,7 @@ function parseShapeAndSize(
         secondNode &&
         (secondNode.type === "Dimension" || secondNode.type === "Percentage" || isCssValueFunction(secondNode))
       ) {
-        const secondResult = parseCssValueNodeEnhanced(secondNode);
+        const secondResult = parseCssValueNodeWrapper(secondNode);
         if (secondResult.ok) {
           size = {
             kind: "ellipse-explicit",
@@ -4353,7 +4276,7 @@ export function parse(css: string): ParseResult<Type.RadialGradient> {
 
 === File: packages/b_parsers/src/gradient/shared-parsing.ts ===
 // b_path:: packages/b_parsers/src/gradient/shared-parsing.ts
-import type * as csstree from "css-tree";
+import type * as csstree from "@eslint/css-tree";
 import { createWarning, parseOk, type ParseResult, forwardParseErr } from "@b/types";
 import type * as Type from "@b/types";
 import * as Utils from "../utils";
@@ -4442,12 +4365,12 @@ export * as Url from "./url";
 export * as Utils from "./utils";
 export * as Math from "./math";
 export * from "./function-dispatcher";
-export { parseCssValueNodeEnhanced } from "./css-value-parser-enhanced";
+export { parseCssValueNodeWrapper as parseCssValueNodeEnhanced } from "./css-value-parser";
 
 
 === File: packages/b_parsers/src/length.ts ===
 // b_path:: packages/b_parsers/src/length.ts
-import type * as csstree from "css-tree";
+import type * as csstree from "@eslint/css-tree";
 import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
 import type * as Type from "@b/types";
 import * as Unit from "@b/units";
@@ -4543,9 +4466,9 @@ export function parseNumberNode(node: csstree.CssNode): ParseResult<number> {
 
 === File: packages/b_parsers/src/math/calc.ts ===
 // b_path:: packages/b_parsers/src/math/calc.ts
-import type * as csstree from "css-tree";
+import type * as csstree from "@eslint/css-tree";
 import { createError, parseErr, parseOk, type ParseResult, type CssValue } from "@b/types";
-import { parseCssValueNodeEnhanced } from "../css-value-parser-enhanced";
+import { parseCssValueNodeWrapper } from "../css-value-parser";
 
 /**
  * Parses a calc() expression from AST nodes.
@@ -4577,7 +4500,7 @@ function parseCalcExpression(nodes: csstree.CssNode[]): ParseResult<CssValue> {
       }
     } else {
       // Recursively parse operands (can be literals, variables, nested calcs)
-      const operandResult = parseCssValueNodeEnhanced(node);
+      const operandResult = parseCssValueNodeWrapper(node);
       if (operandResult.ok) {
         values.push(operandResult.value);
       } else {
@@ -4666,9 +4589,9 @@ export function parseCalcFunction(node: csstree.FunctionNode): ParseResult<{ kin
 
 === File: packages/b_parsers/src/math/clamp.ts ===
 // b_path:: packages/b_parsers/src/math/clamp.ts
-import type * as csstree from "css-tree";
+import type * as csstree from "@eslint/css-tree";
 import { createError, parseErr, parseOk, type ParseResult, type CssValue } from "@b/types";
-import { parseCssValueNodeEnhanced } from "../css-value-parser-enhanced";
+import { parseCssValueNodeWrapper } from "../css-value-parser";
 import { splitNodesByComma } from "../utils/ast";
 
 /**
@@ -4704,7 +4627,7 @@ export function parseClampFunction(
       continue;
     }
 
-    const result = parseCssValueNodeEnhanced(group[0]);
+    const result = parseCssValueNodeWrapper(group[0]);
 
     if (result.ok) {
       args.push(result.value);
@@ -4751,9 +4674,9 @@ export * from "./clamp";
 
 === File: packages/b_parsers/src/math/minmax.ts ===
 // b_path:: packages/b_parsers/src/math/minmax.ts
-import type * as csstree from "css-tree";
+import type * as csstree from "@eslint/css-tree";
 import { createError, parseErr, parseOk, type ParseResult, type CssValue } from "@b/types";
-import { parseCssValueNodeEnhanced } from "../css-value-parser-enhanced";
+import { parseCssValueNodeWrapper } from "../css-value-parser";
 import { splitNodesByComma } from "../utils/ast";
 
 /**
@@ -4787,7 +4710,7 @@ export function parseMinmaxFunction(
 
     // Handle single-node arguments
     if (group.length === 1) {
-      const result = parseCssValueNodeEnhanced(group[0]);
+      const result = parseCssValueNodeWrapper(group[0]);
 
       if (result.ok) {
         values.push(result.value);
@@ -4804,7 +4727,7 @@ export function parseMinmaxFunction(
       issues.push(createError("invalid-syntax", `Unexpected multiple nodes in ${funcName}() argument`));
 
       // Try parsing first node anyway
-      const result = parseCssValueNodeEnhanced(group[0]);
+      const result = parseCssValueNodeWrapper(group[0]);
       if (result.value) {
         values.push(result.value);
       }
@@ -4831,10 +4754,10 @@ export function parseMinmaxFunction(
 
 === File: packages/b_parsers/src/position.ts ===
 // b_path:: packages/b_parsers/src/position.ts
-import type * as csstree from "css-tree";
+import type * as csstree from "@eslint/css-tree";
 import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
 import type * as Type from "@b/types";
-import { parseCssValueNodeEnhanced } from "./css-value-parser-enhanced";
+import { parseCssValueNodeWrapper } from "./css-value-parser";
 
 /**
  * Parse 2D position from array of AST nodes.
@@ -4858,7 +4781,7 @@ export function parsePosition2D(
     const node = nodes[idx];
     if (!node) break;
 
-    const value = parseCssValueNodeEnhanced(node);
+    const value = parseCssValueNodeWrapper(node);
     if (!value.ok) break;
 
     positionValues.push(value.value);
@@ -5056,6 +4979,7 @@ function getEdgeKeyword(value: Type.CssValue): "left" | "right" | "top" | "botto
 // b_path:: packages/b_parsers/src/url.ts
 import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
 import type { Url } from "@b/types";
+import type * as csstree from "@eslint/css-tree";
 
 /**
  * Parse a CSS url() function.
@@ -5105,10 +5029,63 @@ export function parseUrl(input: string): ParseResult<Url> {
   return parseErr(createError("invalid-syntax", `Empty url() function in "${input}"`));
 }
 
+/**
+ * Parse a CSS url() function from AST node.
+ * AST-native version for improved performance and error locations.
+ *
+ * @param node - FunctionNode representing url()
+ * @returns Parsed URL IR
+ */
+export function parseUrlFromNode(node: csstree.FunctionNode): ParseResult<Url> {
+  if (node.name.toLowerCase() !== "url") {
+    return parseErr(createError("invalid-syntax", `Expected url() function, got: ${node.name}()`));
+  }
+
+  const children = node.children.toArray();
+
+  // url() should have exactly one child (the URL string or identifier)
+  if (children.length === 0) {
+    return parseErr(createError("invalid-syntax", "Empty url() function"));
+  }
+
+  if (children.length > 1) {
+    return parseErr(createError("invalid-syntax", "url() function should have exactly one argument"));
+  }
+
+  const child = children[0];
+
+  // Handle string literals (quoted)
+  if (child.type === "String") {
+    return parseOk({
+      kind: "url",
+      value: child.value,
+    });
+  }
+
+  // Handle raw URL (identifier or url token)
+  if (child.type === "Url") {
+    return parseOk({
+      kind: "url",
+      value: child.value,
+    });
+  }
+
+  // Handle identifier (unquoted URL)
+  if (child.type === "Identifier") {
+    return parseOk({
+      kind: "url",
+      value: child.name,
+    });
+  }
+
+  // Unexpected child type
+  return parseErr(createError("invalid-syntax", `Unexpected content in url() function: ${child.type}`));
+}
+
 
 === File: packages/b_parsers/src/utils/ast/functions.ts ===
 // b_path:: packages/b_parsers/src/utils/ast/functions.ts
-import * as csstree from '@eslint/css-tree';;
+import * as csstree from "@eslint/css-tree";
 import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
 
 /**
@@ -5140,8 +5117,8 @@ export function findFunctionNode(
   try {
     csstree.walk(ast, {
       visit: "Function",
-      enter(node: csstree.FunctionNode) {
-        if (lowerNames.includes(node.name.toLowerCase())) {
+      enter(node: csstree.CssNode) {
+        if (node.type === "Function" && lowerNames.includes(node.name.toLowerCase())) {
           foundNode = node;
         }
       },
@@ -5194,7 +5171,7 @@ export * from "./split-by-comma";
 
 === File: packages/b_parsers/src/utils/ast/split-by-comma.ts ===
 // b_path:: packages/b_parsers/src/utils/ast/split-by-comma.ts
-import type * as csstree from "css-tree";
+import type * as csstree from "@eslint/css-tree";
 
 export interface SplitByCommaOptions {
   /** Start index in nodes array (default: 0) */
@@ -5298,7 +5275,7 @@ export function skipComma(nodes: csstree.CssNode[], index: number): number {
 
 === File: packages/b_parsers/src/utils/color-interpolation.ts ===
 // b_path:: packages/b_parsers/src/utils/color-interpolation.ts
-import type * as csstree from "css-tree";
+import type * as csstree from "@eslint/css-tree";
 import type { ColorInterpolationMethod } from "@b/types";
 import type { HueInterpolationMethod } from "@b/keywords";
 
@@ -5374,7 +5351,7 @@ export function parseColorInterpolationMethod(
 
 === File: packages/b_parsers/src/utils/css-value-functions.ts ===
 // b_path:: packages/b_parsers/src/utils/css-value-functions.ts
-import type * as csstree from "css-tree";
+import type * as csstree from "@eslint/css-tree";
 
 /**
  * Check if a Function node is a CSS value function (var, calc, clamp, min, max)
@@ -6533,24 +6510,21 @@ export interface IssueCodeMap {
 export type IssueCode = IssueCodeMap[keyof IssueCodeMap];
 
 /**
- * Source location in input string.
- *
- * Used for parse errors to point to specific characters.
- *
- * @public
- */
-export interface SourceLocation {
-  /** Zero-based offset from start of input */
-  offset: number;
-  /** Number of characters */
-  length: number;
-}
-
-/**
  * Issue reported during parsing or generation.
  *
  * Strongly typed for IDE autocomplete and type safety.
  * All fields are intentionally flat (no nested objects) for simplicity.
+ *
+ * @example
+ * ```typescript
+ * {
+ *   code: "invalid-value",
+ *   severity: "error",
+ *   message: "Unknown named color 'notacolor'",
+ *   property: "color",
+ *   path: ["ir", "color", "value"]
+ * }
+ * ```
  *
  * @public
  */
@@ -6565,8 +6539,6 @@ export interface Issue {
   property?: string;
   /** Optional suggestion for fixing the issue */
   suggestion?: string;
-  /** Optional location in input string (for parse errors) */
-  location?: SourceLocation;
   /** Optional path to error in IR structure (for generation errors) */
   path?: (string | number)[];
   /** Optional expected type or value */
@@ -6591,7 +6563,6 @@ export function createError(
   options?: {
     property?: string;
     suggestion?: string;
-    location?: SourceLocation;
     path?: (string | number)[];
     expected?: string;
     received?: string;
@@ -6623,7 +6594,6 @@ export function createWarning(
   options?: {
     property?: string;
     suggestion?: string;
-    location?: SourceLocation;
     path?: (string | number)[];
     expected?: string;
     received?: string;
@@ -6653,7 +6623,6 @@ export function createInfo(
   options?: {
     property?: string;
     suggestion?: string;
-    location?: SourceLocation;
     path?: (string | number)[];
     expected?: string;
     received?: string;
@@ -7824,9 +7793,164 @@ export * from "./string";
 export * from "./validation";
 
 
+=== File: packages/b_utils/src/parse/ast.ts ===
+// b_path:: packages/b_utils/src/parse/ast.ts
+/**
+ * AST utility functions for working with css-tree nodes
+ * Part of the AST-native architecture refactoring
+ */
+
+import type * as csstree from "@eslint/css-tree";
+
+/**
+ * Split AST nodes by comma operators
+ *
+ * Replaces string-based splitByComma with AST-native approach.
+ * Handles nested functions naturally via AST structure.
+ *
+ * @example
+ * ```ts
+ * // Input: [red, Function(calc), Operator(,), blue]
+ * // Output: [[red, Function(calc)], [blue]]
+ * const groups = splitNodesByComma(nodes);
+ * ```
+ */
+export function splitNodesByComma(nodes: csstree.CssNode[]): csstree.CssNode[][] {
+  const groups: csstree.CssNode[][] = [];
+  let current: csstree.CssNode[] = [];
+
+  for (const node of nodes) {
+    if (node.type === "Operator" && node.value === ",") {
+      if (current.length > 0) {
+        groups.push(current);
+        current = [];
+      }
+    } else {
+      current.push(node);
+    }
+  }
+
+  if (current.length > 0) {
+    groups.push(current);
+  }
+
+  return groups;
+}
+
+/**
+ * Check if node is a specific function
+ *
+ * Type guard for FunctionNode with optional name matching.
+ *
+ * @example
+ * ```ts
+ * if (isFunctionNode(node, "calc")) {
+ *   // node is FunctionNode with name "calc"
+ * }
+ * ```
+ */
+export function isFunctionNode(node: csstree.CssNode, name?: string): node is csstree.FunctionNode {
+  if (node.type !== "Function") return false;
+  if (name) return node.name.toLowerCase() === name.toLowerCase();
+  return true;
+}
+
+/**
+ * Check if node is an identifier with optional value matching
+ */
+export function isIdentifier(node: csstree.CssNode, value?: string): node is csstree.Identifier {
+  if (node.type !== "Identifier") return false;
+  if (value) return node.name.toLowerCase() === value.toLowerCase();
+  return true;
+}
+
+/**
+ * Check if node is a dimension (number with unit)
+ */
+export function isDimension(node: csstree.CssNode): node is csstree.Dimension {
+  return node.type === "Dimension";
+}
+
+/**
+ * Check if node is a percentage
+ */
+export function isPercentage(node: csstree.CssNode): node is csstree.Percentage {
+  return node.type === "Percentage";
+}
+
+/**
+ * Check if node is a number
+ */
+export function isNumber(node: csstree.CssNode): boolean {
+  return node.type === "Number";
+}
+
+/**
+ * Convert AST node list to array
+ *
+ * css-tree uses linked lists, this converts to standard arrays.
+ */
+export function nodeListToArray(list: csstree.List<csstree.CssNode>): csstree.CssNode[] {
+  return list.toArray();
+}
+
+/**
+ * Extract location from a node, returning undefined if not available
+ */
+export function getNodeLocation(node: csstree.CssNode): csstree.CssLocationRange | undefined {
+  return node.loc ?? undefined;
+}
+
+/**
+ * Convert css-tree location to our SourceLocation format
+ *
+ * css-tree provides line/column ranges, we need offset/length.
+ * This is a best-effort conversion - if source is available we calculate offset,
+ * otherwise we return undefined (location tracking disabled).
+ *
+ * @param loc - css-tree location range
+ * @param source - original source string (needed to calculate offsets)
+ * @returns SourceLocation with offset/length, or undefined if not calculable
+ */
+export function convertLocation(
+  loc: csstree.CssLocationRange | undefined,
+  source?: string,
+): { offset: number; length: number } | undefined {
+  if (!loc || !source) return undefined;
+
+  // Calculate offset from line/column
+  const lines = source.split("\n");
+  let offset = 0;
+
+  // Add all complete lines before start line
+  for (let i = 0; i < loc.start.line - 1; i++) {
+    offset += lines[i].length + 1; // +1 for newline
+  }
+
+  // Add column offset on start line
+  offset += loc.start.column - 1;
+
+  // Calculate length
+  let length = 0;
+  if (loc.start.line === loc.end.line) {
+    // Same line: just column difference
+    length = loc.end.column - loc.start.column;
+  } else {
+    // Multiple lines: calculate total
+    length = lines[loc.start.line - 1].length - (loc.start.column - 1);
+    for (let i = loc.start.line; i < loc.end.line - 1; i++) {
+      length += lines[i].length + 1;
+    }
+    length += loc.end.column;
+  }
+
+  return { offset, length };
+}
+
+
 === File: packages/b_utils/src/parse/css-value-parser.ts ===
 // b_path:: packages/b_utils/src/parse/css-value-parser.ts
-import * as csstree from '@eslint/css-tree';;
+import * as csstree from "@eslint/css-tree";
 import { createError, forwardParseErr, parseErr, parseOk, type ParseResult } from "@b/types";
 import type { CssValue } from "@b/types";
 
@@ -8010,56 +8134,14 @@ export function getValues(children: csstree.CssNode[]): csstree.CssNode[] {
 
 === File: packages/b_utils/src/parse/index.ts ===
 // b_path:: packages/b_utils/src/parse/index.ts
+export * from "./ast";
 export * from "./css-value-parser";
 export * from "./test-utils";
-export * from "./validate";
-
-
-=== File: packages/b_utils/src/parse/schema.ts ===
-// b_path:: packages/b_utils/src/parse/schema.ts
-/**
- * CSS Tree syntax parsing error
- */
-export interface CssTreeSyntaxParseError {
-  name: string;
-  message: string;
-  line?: number;
-  column?: number;
-  property?: string;
-  offset?: number;
-  length?: number;
-}
-
-/**
- * Custom warning for CSS property validation
- */
-export interface BStyleWarning {
-  /** CSS property that has the warning */
-  property: string;
-  /** Warning name/type */
-  name: string;
-  /** CSS syntax that caused the warning */
-  syntax?: string;
-  /** Formatted warning message for display */
-  formattedWarning?: string;
-}
-
-/**
- * Result of CSS stylesheet validation
- */
-export interface StylesheetValidation {
-  /** Whether validation passed (no errors) */
-  ok: boolean;
-  /** Array of syntax parsing errors */
-  errors: CssTreeSyntaxParseError[];
-  /** Array of property validation warnings */
-  warnings: BStyleWarning[];
-}
 
 
 === File: packages/b_utils/src/parse/test-utils.ts ===
 // b_path:: packages/b_utils/src/parse/test-utils.ts
-import * as csstree from '@eslint/css-tree';;
+import * as csstree from "@eslint/css-tree";
 
 /**
  * Extract a function node from a CSS function string for testing
@@ -8081,448 +8163,6 @@ export function extractFunctionFromValue(input: string): csstree.FunctionNode {
   }
 
   return func;
-}
-
-
-=== File: packages/b_utils/src/parse/validate.ts ===
-// b_path:: packages/b_utils/src/parse/validate.ts
-/**
- * Validates CSS stylesheet syntax and property values, providing detailed error formatting.
- *
- * This function parses CSS using the css-tree library and validates each CSS property
- * against the CSS specification. When validation errors are found, it generates
- * formatted error messages with visual context including line numbers, code snippets,
- * and precise error location indicators.
- *
- * @param css - The CSS string to validate
- *
- * @returns StylesheetValidation object containing:
- *   - ok: boolean indicating if validation passed (no errors)
- *   - errors: Array of syntax parsing errors (malformed CSS)
- *   - warnings: Array of property validation errors (invalid property values)
- *
- * @remarks
- * - Context window shows ±2 lines around each error for better debugging
- * - Long lines are intelligently truncated with ellipses (…) for readability
- * - Pointer indicators (^^^) precisely mark the error location and length
- * - Duplicate declarations are automatically deduplicated to avoid redundant warnings
- *
- * @throws Does not throw - parsing errors are captured in the returned errors array
- *
- * @since 1.0.0
- */
-
-import * as csstree from '@eslint/css-tree';;
-import type { BStyleWarning, StylesheetValidation } from "./schema";
-
-// Constants
-const DEFAULT_MAX_LINE_WIDTH = 80;
-const LINE_NUMBER_PADDING = 4;
-const DEFAULT_CONTEXT_WINDOW_SIZE = 2; // Lines before and after error
-
-export interface BStyleMatchError extends csstree.SyntaxMatchError {
-  property: string;
-  formattedError?: string;
-}
-
-export type { BStyleWarning, StylesheetValidation };
-
-export interface Declaration {
-  property: string;
-  value: csstree.Value | csstree.Raw;
-  node: csstree.CssNode;
-}
-
-/**
- * Checks if a CSS value contains dynamic functions (var, calc, etc.)
- * that csstree cannot validate.
- *
- * @param value - The CSS value AST node to check
- * @returns true if the value contains var(), calc(), or other dynamic functions
- */
-function containsDynamicValue(value: csstree.Value | csstree.Raw): boolean {
-  let hasDynamic = false;
-
-  csstree.walk(value, (node) => {
-    if (node.type === "Function") {
-      const funcName = node.name.toLowerCase();
-      // Dynamic functions that csstree cannot validate
-      if (
-        funcName === "var" ||
-        funcName === "calc" ||
-        funcName === "min" ||
-        funcName === "max" ||
-        funcName === "clamp" ||
-        funcName === "attr"
-      ) {
-        hasDynamic = true;
-      }
-    }
-  });
-
-  return hasDynamic;
-}
-
-export interface ErrorFormatOptions {
-  maxLineWidth: number;
-  contextWindowSize?: number;
-}
-
-interface TruncationBounds {
-  startPos: number;
-  endPos: number;
-  needsStartEllipsis: boolean;
-  needsEndEllipsis: boolean;
-  availableWidth: number;
-}
-
-interface FormattedLine {
-  content: string;
-  adjustedColumn: number;
-}
-
-/**
- * Validates a CSS stylesheet for syntax and property value errors.
- *
- * @param css - The CSS string to validate
- * @returns StylesheetValidation object containing validation results
- */
-export function validate(css: string): StylesheetValidation {
-  const errors: csstree.SyntaxParseError[] = [];
-  const warnings: BStyleMatchError[] = [];
-  const declarations: Declaration[] = [];
-  const syntax = csstree.lexer;
-  const uniqueDecls = new Map<string, number>();
-
-  // Parse CSS
-  const ast = csstree.parse(css, {
-    context: "declarationList",
-    positions: true,
-    parseAtrulePrelude: false,
-    parseRulePrelude: false,
-    parseCustomProperty: false,
-    onParseError(err: csstree.SyntaxParseError) {
-      // biome-ignore lint/correctness/noUnusedVariables: remove stack from err
-      const { stack, ...rest } = err;
-      errors.push(rest);
-    },
-  });
-
-  // Extract declarations
-  csstree.walk(ast, (node) => {
-    if (node.type !== "Declaration") {
-      return;
-    }
-    const id = csstree.generate(node);
-    if (uniqueDecls.has(id)) {
-      uniqueDecls.set(id, uniqueDecls.get(id)! + 1);
-      return;
-    }
-    uniqueDecls.set(id, 1);
-    declarations.push({ property: node.property, value: node.value, node });
-  });
-
-  // Validate declarations
-  // Suppress noisy csstree-match iteration warnings during matching.
-  // Control via env var: BStyle_CSSTREE_LOG_LEVEL=ERROR (default) suppresses these messages.
-  const suppressNoise = (msg: unknown): boolean => {
-    try {
-      const s = String(msg);
-      return /\[csstree-match\]\s*BREAK after/i.test(s);
-    } catch {
-      return false;
-    }
-  };
-  const LOG_LEVEL = (process.env.BStyle_CSSTREE_LOG_LEVEL || "ERROR").toUpperCase();
-  const QUIET = LOG_LEVEL === "ERROR" || LOG_LEVEL === "SILENT";
-  // biome-ignore lint/suspicious/noConsole: suppress console method reassignment
-  const origWarn = console.warn;
-  // biome-ignore lint/suspicious/noConsole: suppress console method reassignment
-  const origError = console.error;
-  try {
-    if (QUIET) {
-      console.warn = (...args: Parameters<typeof console.warn>) => {
-        if (args.length && suppressNoise(args[0])) return;
-        return origWarn(...args);
-      };
-      console.error = (...args: Parameters<typeof console.error>) => {
-        if (args.length && suppressNoise(args[0])) return;
-        return origError(...args);
-      };
-    }
-
-    for (const decl of declarations) {
-      // Skip validation for declarations with dynamic values (var, calc, etc.)
-      // csstree cannot validate these and will throw errors
-      if (containsDynamicValue(decl.value)) {
-        continue;
-      }
-
-      const match = syntax.matchProperty(decl.property, decl.value);
-      const error = match.error as csstree.SyntaxMatchError;
-
-      if (!error) continue;
-
-      // biome-ignore lint/correctness/noUnusedVariables: remove stack from error
-      const { stack, name, ...rest } = error;
-      warnings.push({
-        property: decl.property,
-        name,
-        ...rest,
-      });
-    }
-  } finally {
-    // Always restore console methods
-    console.warn = origWarn;
-    console.error = origError;
-  }
-
-  // Format and display warnings
-  const formattedWarnings: BStyleWarning[] = [];
-
-  if (warnings.length > 0) {
-    const cssLines = css.split("\n");
-    for (const warning of warnings) {
-      const formattedError = formatErrorDisplay(cssLines, warning);
-      formattedWarnings.push({
-        property: warning.property,
-        name: warning.name,
-        syntax: warning.syntax,
-        formattedWarning: `Errors found in: ${warning.property}\n${formattedError.join("\n")}`,
-      });
-    }
-  }
-
-  // Return result with runtime type safety
-  const result: StylesheetValidation = {
-    ok: errors.length === 0,
-    errors,
-    warnings: formattedWarnings,
-  };
-
-  return result;
-}
-
-export function validateDeclaration(value: string, prop: string): StylesheetValidation {
-  const css = `.class {${prop}: ${value};}`;
-  const result = validate(css);
-  return result;
-}
-
-// Helper functions
-/**
- * Calculates the line window to display around an error line.
- * Shows contextWindowSize lines before and after the error for better context.
- *
- * @param errorLine - The line number where the error occurred
- * @param totalLines - Total number of lines in the CSS
- * @param contextWindowSize - Number of lines to show before and after error (default: 2)
- * @returns Object with start and end line numbers for the context window
- */
-function calculateLineWindow(
-  errorLine: number,
-  totalLines: number,
-  contextWindowSize: number = DEFAULT_CONTEXT_WINDOW_SIZE,
-): { start: number; end: number } {
-  const start = Math.max(1, errorLine - contextWindowSize);
-  const end = Math.min(totalLines, errorLine + contextWindowSize);
-  return { start, end };
-}
-
-function formatLineNumber(lineNum: number, maxLineNum: number): string {
-  const maxDigits = Math.max(maxLineNum.toString().length, 1);
-  const paddedNum = lineNum.toString().padStart(maxDigits, " ");
-  const prefix = " ".repeat(LINE_NUMBER_PADDING - maxDigits);
-  return `${prefix}${paddedNum} |`;
-}
-
-function trimLine(line: string): { trimmed: string; spacesRemoved: number } {
-  const trimmed = line.trimStart();
-  const spacesRemoved = line.length - trimmed.length;
-  return { trimmed, spacesRemoved };
-}
-
-function calculateTruncationBounds(lineLength: number, errorColumn: number, maxWidth: number): TruncationBounds {
-  if (lineLength <= maxWidth) {
-    return {
-      startPos: 0,
-      endPos: lineLength,
-      needsStartEllipsis: false,
-      needsEndEllipsis: false,
-      availableWidth: maxWidth,
-    };
-  }
-
-  // Reserve space for potential ellipses
-  let availableWidth = maxWidth - 2;
-  const halfWidth = Math.floor(availableWidth / 2);
-  let startPos = Math.max(0, errorColumn - halfWidth - 1);
-
-  // Determine if we need start ellipsis
-  const needsStartEllipsis = startPos > 0;
-
-  if (!needsStartEllipsis) {
-    // No start truncation - reclaim space for end-only ellipsis
-    availableWidth = maxWidth - 1;
-  } else {
-    // Skip one additional character for better spacing after ellipsis
-    startPos = startPos + 1;
-  }
-
-  let endPos = startPos + availableWidth;
-  let needsEndEllipsis = endPos < lineLength;
-
-  // Adjust if we hit the end of the line
-  if (endPos >= lineLength) {
-    endPos = lineLength;
-    needsEndEllipsis = false;
-
-    if (needsStartEllipsis) {
-      startPos = Math.max(0, endPos - availableWidth);
-    }
-  }
-
-  return {
-    startPos,
-    endPos,
-    needsStartEllipsis,
-    needsEndEllipsis,
-    availableWidth,
-  };
-}
-
-function applyTruncation(line: string, bounds: TruncationBounds, originalErrorColumn: number): FormattedLine {
-  let content = line.slice(bounds.startPos, bounds.endPos);
-  let adjustedColumn = originalErrorColumn - bounds.startPos;
-
-  if (bounds.needsStartEllipsis) {
-    content = `…${content}`;
-    adjustedColumn = adjustedColumn + 1;
-  }
-
-  if (bounds.needsEndEllipsis) {
-    content = `${content}…`;
-  }
-
-  return { content, adjustedColumn };
-}
-
-function formatContextLine(line: string, maxWidth: number): string {
-  const { trimmed } = trimLine(line);
-
-  if (trimmed.length <= maxWidth) {
-    return trimmed;
-  }
-
-  return `${trimmed.slice(0, maxWidth - 1)}…`;
-}
-
-function formatErrorLine(line: string, errorColumn: number, maxWidth: number): FormattedLine {
-  // Input validation
-  if (errorColumn < 1) {
-    throw new Error("Error column must be >= 1");
-  }
-
-  const { trimmed, spacesRemoved } = trimLine(line);
-  const adjustedErrorColumn = Math.max(1, errorColumn - spacesRemoved);
-
-  // Handle case where line fits without truncation after trimming
-  if (trimmed.length <= maxWidth) {
-    return {
-      content: trimmed,
-      adjustedColumn: adjustedErrorColumn,
-    };
-  }
-
-  // Calculate truncation bounds using the original error column position
-  const bounds = calculateTruncationBounds(line.length, errorColumn, maxWidth);
-
-  // Special handling for start-of-line case (after trimming consideration)
-  if (bounds.startPos === 0 || bounds.startPos <= spacesRemoved) {
-    // Use trimmed line for start-of-line truncation
-    const trimmedBounds = calculateTruncationBounds(trimmed.length, adjustedErrorColumn, maxWidth);
-    return applyTruncation(trimmed, trimmedBounds, adjustedErrorColumn);
-  }
-
-  // Standard middle-of-line truncation
-  return applyTruncation(line, bounds, errorColumn);
-}
-
-function createPointerLine(prefixLength: number, column: number, length: number): string {
-  const safeLength = Math.max(1, length ?? 1);
-  const safeColumn = Math.max(1, column);
-
-  const pointerPrefix = " ".repeat(prefixLength);
-  const dashes = "-".repeat(safeColumn - 1);
-  const carets = "^".repeat(safeLength);
-
-  return pointerPrefix + dashes + carets;
-}
-
-/**
- * Formats and displays CSS validation errors with visual context.
- * Shows the error line with surrounding context, line numbers, and pointer indicators.
- *
- * @param cssLines - Array of CSS source lines
- * @param warning - The validation error/warning to format
- * @param options - Formatting options (maxLineWidth, contextWindowSize)
- * @returns Array of formatted strings representing the error display
- *
- * @example
- * // Error at line 5, column 10:
- * //   3 | .class {
- * //   4 |   margin: 10px;
- * //   5 |   color: notacolor;
- * //       ---------^^^^^^^^^^^
- * //   6 | }
- */
-function formatErrorDisplay(
-  cssLines: string[],
-  warning: BStyleMatchError,
-  options: ErrorFormatOptions = {
-    maxLineWidth: DEFAULT_MAX_LINE_WIDTH,
-    contextWindowSize: DEFAULT_CONTEXT_WINDOW_SIZE,
-  },
-): string[] {
-  // Input validation
-  if (!cssLines.length || warning.line < 1 || warning.line > cssLines.length) {
-    return [`Invalid error location: line ${warning.line}`];
-  }
-  const errorLine = warning.line;
-  const errorColumn = warning.column;
-  const mismatchLength = warning.mismatchLength ?? 1;
-  const contextWindowSize = options.contextWindowSize ?? DEFAULT_CONTEXT_WINDOW_SIZE;
-
-  const { start, end } = calculateLineWindow(errorLine, cssLines.length, contextWindowSize);
-  const maxLineNum = end;
-  const linePrefix = formatLineNumber(1, maxLineNum);
-  const prefixLength = linePrefix.length;
-  const availableWidth = options.maxLineWidth - prefixLength;
-
-  const result: string[] = [];
-
-  for (let lineNum = start; lineNum <= end; lineNum++) {
-    const lineIndex = lineNum - 1;
-    const currentLine = cssLines[lineIndex] ?? "";
-    const currentPrefix = formatLineNumber(lineNum, maxLineNum);
-
-    if (lineNum === errorLine) {
-      // Format error line
-      const { content, adjustedColumn } = formatErrorLine(currentLine, errorColumn, availableWidth);
-
-      result.push(currentPrefix + content);
-
-      // Add pointer line
-      const pointerLine = createPointerLine(prefixLength, adjustedColumn, mismatchLength);
-      result.push(pointerLine);
-    } else {
-      // Format context line
-      const formattedLine = formatContextLine(currentLine, availableWidth);
-      result.push(currentPrefix + formattedLine);
-    }
-  }
-
-  return result;
 }
 
 
@@ -8960,3 +8600,5 @@ export default defineConfig({
     },
   },
 });
+
+

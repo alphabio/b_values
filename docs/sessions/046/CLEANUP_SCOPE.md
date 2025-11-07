@@ -10,6 +10,7 @@
 ### 1. Issue Type (packages/b_types/src/result/issue.ts)
 
 **Remove:**
+
 - ✅ `SourceLocation` interface (lines 51-58)
 - ✅ `SourceLocationRange` interface (lines 67-74)
 - ✅ `location?: SourceLocationRange` field from Issue (line 108)
@@ -19,6 +20,7 @@
 - ✅ Example in JSDoc showing location/sourceContext (lines 89-90)
 
 **Keep:**
+
 - ✅ `property` field (valuable!)
 - ✅ `path` field (excellent!)
 - ✅ All other fields
@@ -28,14 +30,16 @@
 ### 2. Parser Enrichment (packages/b_declarations/src/parser.ts)
 
 **Remove:**
+
 - ✅ `import * as Ast from "@b/utils"` (line 7)
 - ✅ `enrichIssues()` function (lines 175-201)
 - ✅ Call to `enrichIssues()` before returns (lines 119, 127)
 
 **Simplify to:**
+
 ```typescript
 // Just add property, nothing else
-const enrichedIssues = allIssues.map(issue => ({
+const enrichedIssues = allIssues.map((issue) => ({
   ...issue,
   property,
 }));
@@ -46,10 +50,12 @@ const enrichedIssues = allIssues.map(issue => ({
 ### 3. Utils (packages/b_utils/src/parse/ast.ts)
 
 **Remove:**
+
 - ✅ `formatSourceContext()` function (lines 44-83)
 - ✅ Related JSDoc/comments
 
 **Keep:**
+
 - ✅ `splitNodesByComma()` - still used!
 - ✅ Other AST utilities
 
@@ -58,6 +64,7 @@ const enrichedIssues = allIssues.map(issue => ({
 ### 4. Tests (packages/b_declarations/src/parser.test.ts)
 
 **Remove these test suites:**
+
 - ✅ "issue enrichment - source context" (lines ~220-380)
   - should add sourceContext when issue has location (string input)
   - should add sourceContext when issue has location (object input)
@@ -66,6 +73,7 @@ const enrichedIssues = allIssues.map(issue => ({
   - should enrich all issues (multiple errors)
 
 **Keep these test suites:**
+
 - ✅ "issue enrichment - property context" (lines ~160-220)
   - should add property to issues on parse failure
   - should add property to issues from string input
@@ -74,6 +82,7 @@ const enrichedIssues = allIssues.map(issue => ({
 - ✅ "issue enrichment - partial success"
 
 **Update:**
+
 - ✅ Remove assertions checking `sourceContext` field
 - ✅ Remove assertions checking `location` field
 
@@ -82,6 +91,7 @@ const enrichedIssues = allIssues.map(issue => ({
 ### 5. Type Tests (packages/b_types/src/result/issue.test.ts)
 
 **Check and remove:**
+
 - ✅ Any tests for `SourceLocation` type
 - ✅ Any tests for `SourceLocationRange` type
 - ✅ Tests checking `location` field in Issue
@@ -91,11 +101,13 @@ const enrichedIssues = allIssues.map(issue => ({
 ### 6. Documentation (docs/sessions/046/)
 
 **Keep for historical record:**
+
 - ✅ All investigation documents
 - ✅ Decision rationale
 - ✅ Why it didn't work
 
 **Add:**
+
 - ✅ Create CLEANUP_SUMMARY.md documenting what was removed
 
 ---
@@ -118,15 +130,17 @@ After cleanup:
 ## 🎯 What Remains (Good Code)
 
 **Issue enrichment:**
+
 ```typescript
 // Simple property enrichment
-const enrichedIssues = allIssues.map(issue => ({
+const enrichedIssues = allIssues.map((issue) => ({
   ...issue,
-  property,  // ← Always added, valuable!
+  property, // ← Always added, valuable!
 }));
 ```
 
 **Issue fields users get:**
+
 - ✅ `property` - which CSS property failed
 - ✅ `path` - IR navigation (generator issues)
 - ✅ `code`, `severity`, `message` - core info
@@ -137,6 +151,7 @@ const enrichedIssues = allIssues.map(issue => ({
 ## 📊 Lines of Code Impact
 
 **Estimated removals:**
+
 - Issue type: ~80 lines
 - Parser enrichment: ~30 lines
 - formatSourceContext: ~40 lines
@@ -144,6 +159,7 @@ const enrichedIssues = allIssues.map(issue => ({
 - **Total: ~350 lines removed**
 
 **Estimated additions:**
+
 - Simplified enrichment: ~5 lines
 - Documentation: ~20 lines
 - **Total: ~25 lines added**
@@ -155,6 +171,7 @@ const enrichedIssues = allIssues.map(issue => ({
 ## ⚠️ Breaking Changes
 
 **Public API changes:**
+
 - ❌ Remove `SourceLocation` export from `@b/types`
 - ❌ Remove `SourceLocationRange` export from `@b/types`
 - ❌ Remove `location` field from Issue
@@ -167,6 +184,7 @@ const enrichedIssues = allIssues.map(issue => ({
 ## ✅ Result
 
 **After cleanup:**
+
 - Simpler codebase
 - No dead code
 - Consistent UX (`path` always there)
@@ -174,6 +192,7 @@ const enrichedIssues = allIssues.map(issue => ({
 - All tests passing
 
 **Better DX:**
+
 - Users always get `path` (reliable)
 - Users always get `property` (valuable)
 - No "sometimes available" confusion

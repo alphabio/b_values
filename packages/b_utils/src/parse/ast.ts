@@ -42,47 +42,6 @@ export function splitNodesByComma(nodes: csstree.CssNode[]): csstree.CssNode[][]
 }
 
 /**
- * Format source context from location data
- *
- * Creates a formatted error message with line numbers and a pointer
- * to the exact character where the error occurred.
- *
- * @example
- * ```ts
- * // Input: "color: rgb(300, 0, 0)", loc at "300"
- * // Output:
- * //   1 | color: rgb(300, 0, 0)
- * //                  ^
- * const context = formatSourceContext(source, loc);
- * ```
- */
-export function formatSourceContext(source: string, loc: csstree.CssLocationRange): string {
-  const lines = source.split("\n");
-  const startLine = loc.start.line;
-  const column = loc.start.column;
-
-  // Build snippet with line numbers (show up to 2 lines before if available)
-  const contextLines = 2;
-  const snippetStart = Math.max(1, startLine - contextLines);
-  const snippetEnd = startLine;
-
-  const snippet = lines
-    .slice(snippetStart - 1, snippetEnd) // Convert to 0-indexed for array
-    .map((line, idx) => {
-      const lineNum = snippetStart + idx;
-      const prefix = `${String(lineNum).padStart(4)} |`;
-      return `${prefix} ${line}`;
-    })
-    .join("\n");
-
-  // Add pointer line (account for line number prefix + space)
-  const pointerOffset = column - 1 + 6; // 4 digits + " | " = 6 chars
-  const pointer = `${" ".repeat(pointerOffset)}^`;
-
-  return `${snippet}\n${pointer}`;
-}
-
-/**
  * Check if node is a specific function
  *
  * Type guard for FunctionNode with optional name matching.

@@ -2,4 +2,3 @@
 export * from "./ast";
 export * from "./css-value-parser";
 export * from "./test-utils";
-export * from "./validate";

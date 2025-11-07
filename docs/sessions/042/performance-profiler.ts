@@ -1,3 +1,4 @@
+// b_path:: docs/sessions/042/performance-profiler.ts
 /**
  * Performance Profiler: Detailed timing breakdown
  *

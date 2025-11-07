@@ -1,3 +1,4 @@
+// b_path:: docs/sessions/046/test-source-context.ts
 // Comprehensive test to understand source context enrichment
 import * as decl from "@b/declarations";
 

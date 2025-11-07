@@ -41,39 +41,6 @@ export interface IssueCodeMap {
 export type IssueCode = IssueCodeMap[keyof IssueCodeMap];
 
 /**
- * Location within a CSS source (compatible with css-tree).
- *
- * Represents a single point in the source with offset, line, and column.
- * Line and column are 1-indexed (human-readable), offset is 0-indexed.
- *
- * @public
- */
-export interface SourceLocation {
-  /** The 0-indexed character offset from the beginning of the source. */
-  offset: number;
-  /** The 1-indexed line number. */
-  line: number;
-  /** The 1-indexed column number. */
-  column: number;
-}
-
-/**
- * Range of locations within a CSS source (compatible with css-tree).
- *
- * Represents a span from start to end location, optionally with source filename.
- *
- * @public
- */
-export interface SourceLocationRange {
-  /** The source file name. If not provided, it will be set to `<unknown>`. */
-  source?: string;
-  /** The starting location of the range. */
-  start: SourceLocation;
-  /** The ending location of the range. */
-  end: SourceLocation;
-}
-
-/**
  * Issue reported during parsing or generation.
  *
  * Strongly typed for IDE autocomplete and type safety.
@@ -86,8 +53,7 @@ export interface SourceLocationRange {
  *   severity: "error",
  *   message: "Unknown named color 'notacolor'",
  *   property: "color",
- *   location: { start: { line: 1, column: 8 }, end: { line: 1, column: 18 } },
- *   sourceContext: "   1 | color: notacolor\n               ^"
+ *   path: ["ir", "color", "value"]
  * }
  * ```
  *
@@ -104,10 +70,6 @@ export interface Issue {
   property?: string;
   /** Optional suggestion for fixing the issue */
   suggestion?: string;
-  /** Optional location range in input string (for parse errors) */
-  location?: SourceLocationRange;
-  /** Optional formatted source context with visual pointer to error location */
-  sourceContext?: string;
   /** Optional path to error in IR structure (for generation errors) */
   path?: (string | number)[];
   /** Optional expected type or value */
@@ -132,8 +94,6 @@ export function createError(
   options?: {
     property?: string;
     suggestion?: string;
-    location?: SourceLocationRange;
-    sourceContext?: string;
     path?: (string | number)[];
     expected?: string;
     received?: string;
@@ -165,8 +125,6 @@ export function createWarning(
   options?: {
     property?: string;
     suggestion?: string;
-    location?: SourceLocationRange;
-    sourceContext?: string;
     path?: (string | number)[];
     expected?: string;
     received?: string;
@@ -196,8 +154,6 @@ export function createInfo(
   options?: {
     property?: string;
     suggestion?: string;
-    location?: SourceLocationRange;
-    sourceContext?: string;
     path?: (string | number)[];
     expected?: string;
     received?: string;

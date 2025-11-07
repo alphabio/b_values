@@ -1,4 +1,4 @@
-// b_path:: packages/b_parsers/src/css-value-parser-enhanced.ts
+// b_path:: packages/b_parsers/src/css-value-parser.ts
 import type * as csstree from "@eslint/css-tree";
 import { forwardParseErr, type ParseResult, type CssValue } from "@b/types";
 import { parseCssValueNode } from "@b/utils";

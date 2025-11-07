@@ -3,7 +3,6 @@ import { describe, expect, test } from "vitest";
 import * as csstree from "@eslint/css-tree";
 import {
   splitNodesByComma,
-  formatSourceContext,
   isFunctionNode,
   isIdentifier,
   isDimension,
@@ -59,44 +58,6 @@ describe("splitNodesByComma", () => {
 
     // Should ignore trailing comma
     expect(groups).toHaveLength(2);
-  });
-});
-
-describe("formatSourceContext", () => {
-  test("formats single-line error context", () => {
-    const source = "color: rgb(300, 0, 0)";
-    const loc: csstree.CssLocationRange = {
-      start: { line: 1, column: 12, offset: 11 },
-      end: { line: 1, column: 15, offset: 14 },
-      source: "",
-    };
-
-    const context = formatSourceContext(source, loc);
-
-    expect(context).toContain("1 | color: rgb(300, 0, 0)");
-    expect(context).toContain("^");
-    // Verify pointer is at correct position (column 12)
-    const lines = context.split("\n");
-    const pointerLine = lines[lines.length - 1];
-    const pointerIndex = pointerLine.indexOf("^");
-    expect(pointerIndex).toBeGreaterThan(0);
-  });
-
-  test("includes context lines before error", () => {
-    const source = "line1\nline2\ncolor: red";
-    const loc: csstree.CssLocationRange = {
-      start: { line: 3, column: 8, offset: 18 },
-      end: { line: 3, column: 11, offset: 21 },
-      source: "",
-    };
-
-    const context = formatSourceContext(source, loc);
-
-    // Should show lines 1-3
-    expect(context).toContain("1 | line1");
-    expect(context).toContain("2 | line2");
-    expect(context).toContain("3 | color: red");
-    expect(context).toContain("^");
   });
 });
 

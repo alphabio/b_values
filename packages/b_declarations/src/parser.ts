@@ -4,7 +4,6 @@ import { propertyRegistry } from "./core";
 import type { CSSDeclaration, DeclarationResult } from "./types";
 import { generateDeclaration } from "./generator";
 import * as csstree from "@eslint/css-tree";
-import * as Ast from "@b/utils";
 
 /**
  * Parse a CSS declaration string or object into its IR representation.
@@ -32,11 +31,9 @@ import * as Ast from "@b/utils";
 export function parseDeclaration(input: string | CSSDeclaration): ParseResult<DeclarationResult> {
   let property: string;
   let value: string;
-  let sourceText: string;
 
   // Parse string input
   if (typeof input === "string") {
-    sourceText = input;
     const parsed = parseDeclarationString(input);
     if (!parsed.ok) {
       return forwardParseErr<DeclarationResult>(parsed);
@@ -46,7 +43,6 @@ export function parseDeclaration(input: string | CSSDeclaration): ParseResult<De
   } else {
     property = input.property;
     value = input.value;
-    sourceText = `${property}: ${value}`;
   }
 
   // Step 1: Look up property definition
@@ -116,8 +112,11 @@ export function parseDeclaration(input: string | CSSDeclaration): ParseResult<De
     }
   }
 
-  // Step 5: Enrich all issues with property and source context
-  const enrichedIssues = enrichIssues(allIssues, property, sourceText);
+  // Step 5: Enrich all issues with property context
+  const enrichedIssues = allIssues.map((issue) => ({
+    ...issue,
+    property,
+  }));
 
   // Step 6: Return result
   if (!parseResult.ok) {
@@ -170,39 +169,4 @@ function parseDeclarationString(input: string): ParseResult<CSSDeclaration> {
   }
 
   return parseOk({ property, value });
-}
-
-/**
- * Enrich issues with property context and formatted source context.
- *
- * Adds property name to all issues for context.
- * If issue has location data, formats it as visual source context with pointer.
- *
- * Note: Multi-value parsers (e.g., background-image) use string-split approach,
- * so issues from individual segments won't have location data. They still get
- * property context, which is valuable for debugging.
- *
- * @internal
- */
-function enrichIssues(issues: Issue[], property: string, sourceText: string): Issue[] {
-  return issues.map((issue) => {
-    const enriched: Issue = {
-      ...issue,
-      property, // Always add property context
-    };
-
-    // Add formatted source context if location exists
-    if (issue.location) {
-      // Convert SourceLocationRange to CssLocationRange
-      // (they're compatible, just source field is optional vs required)
-      const cssLocation = {
-        source: issue.location.source || "<unknown>",
-        start: issue.location.start,
-        end: issue.location.end,
-      };
-      enriched.sourceContext = Ast.formatSourceContext(sourceText, cssLocation);
-    }
-
-    return enriched;
-  });
 }

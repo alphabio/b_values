@@ -60,26 +60,18 @@ export function parseUrl(input: string): ParseResult<Url> {
  */
 export function parseUrlFromNode(node: csstree.FunctionNode): ParseResult<Url> {
   if (node.name.toLowerCase() !== "url") {
-    return parseErr(
-      createError("invalid-syntax", `Expected url() function, got: ${node.name}()`, {
-        location: node.loc || undefined,
-      }),
-    );
+    return parseErr(createError("invalid-syntax", `Expected url() function, got: ${node.name}()`));
   }
 
   const children = node.children.toArray();
 
   // url() should have exactly one child (the URL string or identifier)
   if (children.length === 0) {
-    return parseErr(createError("invalid-syntax", "Empty url() function", { location: node.loc || undefined }));
+    return parseErr(createError("invalid-syntax", "Empty url() function"));
   }
 
   if (children.length > 1) {
-    return parseErr(
-      createError("invalid-syntax", "url() function should have exactly one argument", {
-        location: node.loc || undefined,
-      }),
-    );
+    return parseErr(createError("invalid-syntax", "url() function should have exactly one argument"));
   }
 
   const child = children[0];
@@ -109,9 +101,5 @@ export function parseUrlFromNode(node: csstree.FunctionNode): ParseResult<Url> {
   }
 
   // Unexpected child type
-  return parseErr(
-    createError("invalid-syntax", `Unexpected content in url() function: ${child.type}`, {
-      location: child.loc || undefined,
-    }),
-  );
+  return parseErr(createError("invalid-syntax", `Unexpected content in url() function: ${child.type}`));
 }

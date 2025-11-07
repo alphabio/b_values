@@ -1,3 +1,4 @@
+// b_path:: docs/sessions/042/performance-benchmark.ts
 /**
  * Performance Benchmark: Current Architecture Baseline
  *
