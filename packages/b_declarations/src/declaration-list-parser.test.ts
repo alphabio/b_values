@@ -229,4 +229,98 @@ describe("parseDeclarationList", () => {
       expect(result.ok).toBe(false);
     });
   });
+
+  describe("duplicate properties", () => {
+    it("should warn on duplicate properties", () => {
+      const result = parseDeclarationList(`
+        --color: red;
+        --angle: 10deg;
+        --color: blue;
+      `);
+
+      expect(result.ok).toBe(true);
+      expect(result.value).toHaveLength(3); // All declarations returned
+
+      // Check for warning issue
+      const duplicateWarning = result.issues.find(
+        (issue) => issue.code === "duplicate-property" && issue.property === "--color",
+      );
+      expect(duplicateWarning).toBeDefined();
+      expect(duplicateWarning?.severity).toBe("warning");
+      expect(duplicateWarning?.message).toContain("--color");
+      expect(duplicateWarning?.message).toContain("multiple times");
+    });
+
+    it("should warn on multiple duplicates of same property", () => {
+      const result = parseDeclarationList(`
+        --color: red;
+        --color: blue;
+        --color: green;
+      `);
+
+      expect(result.ok).toBe(true);
+      expect(result.value).toHaveLength(3);
+
+      // Should have 2 warnings (second and third occurrence)
+      const warnings = result.issues.filter((issue) => issue.code === "duplicate-property");
+      expect(warnings).toHaveLength(2);
+      expect(warnings.every((w) => w.property === "--color")).toBe(true);
+    });
+
+    it("should track duplicates per property independently", () => {
+      const result = parseDeclarationList(`
+        --color: red;
+        --angle: 10deg;
+        --color: blue;
+        --angle: 20deg;
+      `);
+
+      expect(result.ok).toBe(true);
+      expect(result.value).toHaveLength(4);
+
+      // Should have 2 warnings (one for --color, one for --angle)
+      const warnings = result.issues.filter((issue) => issue.code === "duplicate-property");
+      expect(warnings).toHaveLength(2);
+
+      const colorWarning = warnings.find((w) => w.property === "--color");
+      const angleWarning = warnings.find((w) => w.property === "--angle");
+
+      expect(colorWarning).toBeDefined();
+      expect(angleWarning).toBeDefined();
+    });
+
+    it("should not warn when properties are not duplicated", () => {
+      const result = parseDeclarationList(`
+        --color: red;
+        --angle: 10deg;
+      `);
+
+      expect(result.ok).toBe(true);
+      expect(result.value).toHaveLength(2);
+
+      // Should have no warnings
+      const warnings = result.issues.filter((issue) => issue.code === "duplicate-property");
+      expect(warnings).toHaveLength(0);
+    });
+
+    it("should only warn on successful parse duplicates", () => {
+      const result = parseDeclarationList(`
+        --color: red;
+        background-image: INVALID;
+        --color: blue;
+      `);
+
+      expect(result.ok).toBe(true); // Has warnings but parsed successfully (2 valid declarations)
+      expect(result.value).toHaveLength(2); // Only valid ones
+
+      // Should have 1 duplicate warning for --color
+      const duplicateWarnings = result.issues.filter((issue) => issue.code === "duplicate-property");
+      expect(duplicateWarnings).toHaveLength(1);
+      expect(duplicateWarnings[0].property).toBe("--color");
+
+      // Should also have parse error for background-image
+      const parseErrors = result.issues.filter((issue) => issue.severity === "error");
+      expect(parseErrors.length).toBeGreaterThan(0);
+    });
+  });
 });

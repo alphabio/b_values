@@ -1,5 +1,5 @@
 // b_path:: packages/b_declarations/src/declaration-list-parser.ts
-import { createError, parseErr, parseOk, type ParseResult, type Issue } from "@b/types";
+import { createError, createWarning, parseErr, parseOk, type ParseResult, type Issue } from "@b/types";
 import { parseDeclaration } from "./parser";
 import type { DeclarationResult } from "./types";
 import * as csstree from "@eslint/css-tree";
@@ -45,6 +45,7 @@ export function parseDeclarationList(css: string): ParseResult<DeclarationResult
   // Collect results and issues
   const declarations: DeclarationResult[] = [];
   const allIssues: Issue[] = [];
+  const seenProperties = new Set<string>();
 
   // Iterate over declaration nodes
   if (!ast.children) {
@@ -72,6 +73,15 @@ export function parseDeclarationList(css: string): ParseResult<DeclarationResult
     const result = parseDeclaration({ property, value });
 
     if (result.ok) {
+      // Check for duplicate property
+      if (seenProperties.has(property)) {
+        allIssues.push(
+          createWarning("duplicate-property", `Property "${property}" declared multiple times. Last value wins.`, {
+            property,
+          }),
+        );
+      }
+      seenProperties.add(property);
       declarations.push(result.value);
     }
 
