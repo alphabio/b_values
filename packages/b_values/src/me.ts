@@ -114,7 +114,7 @@ console.log(
     radial-gradient(
       10em 20%,
       at center,
-      #ff00ff,
+      notacolor,
       transparent calc(50% / 20px)
     ),
 
