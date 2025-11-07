@@ -78,18 +78,8 @@ export interface PropertyDefinition<T = unknown> {
    * When false/undefined, parser will be called with AST node.
    */
   multiValue?: boolean;
-  generator?: (ir: T) => GenerateResult;
+  generator?: PropertyGenerator<T>;
   inherited: boolean;
   initial: string;
   computed?: string;
 }
-
-/**
- * Property parser function type.
- */
-export type PropertyParser<T = unknown> = (node: import("@eslint/css-tree").Value) => ParseResult<T>;
-
-/**
- * Property generator function type (from core/types).
- */
-export type CorePropertyGenerator<T = unknown> = (ir: T) => GenerateResult;
