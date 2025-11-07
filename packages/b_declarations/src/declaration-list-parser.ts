@@ -66,8 +66,7 @@ export function parseDeclarationList(css: string): ParseResult<DeclarationResult
       return;
     }
 
-    // Generate CSS string from value node
-    const value = csstree.generate(valueNode);
+    const value = csstree.generate(valueNode).trim();
 
     // Parse the declaration using existing infrastructure
     const result = parseDeclaration({ property, value });
