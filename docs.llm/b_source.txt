@@ -1,3 +1,7 @@
+Excluding patterns: 
+Documentation for LLMs
+Excluding patterns: 
+Excluding patterns: -not -path */__pycache__/* -not -path */__tests__/* -not -path */.git/* -not -path */.idea/* -not -path */.next/* -not -path */.venv/* -not -path */.vscode/* -not -path */*.spec.py -not -path */*.spec.ts -not -path */*.spec.tsx -not -path */*.test.py -not -path */*.test.ts -not -path */*.test.tsx -not -path */*test.py -not -path */*test.ts -not -path */*test.tsx -not -path */build/* -not -path */dist/* -not -path */me.ts -not -path */node_modules/* -not -path */test_*.py -not -path */test.ts -not -path */test.ts -not -path */tests/* -not -path */venv/*
 === File: packages/b_declarations/src/core/index.ts ===
 // b_path:: packages/b_declarations/src/core/index.ts
 export * from "./registry";
@@ -78,7 +82,7 @@ import type { PropertyIRMap, RegisteredProperty, PropertyGenerator } from "./typ
 
 export interface GenerateDeclarationInput<TProperty extends RegisteredProperty> {
   property: TProperty;
-  ir: PropertyIRMap[TProperty]; // This is the magic lookup!
+  ir: PropertyIRMap[TProperty];
 }
 
 /**
@@ -164,7 +168,15 @@ export * from "./properties";
 
 === File: packages/b_declarations/src/parser.ts ===
 // b_path:: packages/b_declarations/src/parser.ts
-import { createError, parseErr, parseOk, forwardParseErr, type ParseResult, type Issue } from "@b/types";
+import {
+  createError,
+  parseErr,
+  parseOk,
+  forwardParseErr,
+  type ParseResult,
+  type Issue,
+  type GenerateResult,
+} from "@b/types";
 import { propertyRegistry } from "./core";
 import type { CSSDeclaration, DeclarationResult } from "./types";
 import { generateDeclaration } from "./generator";
@@ -222,13 +234,7 @@ export function parseDeclaration(input: string | CSSDeclaration): ParseResult<De
 
   if (definition.multiValue) {
     // Multi-value property: Pass raw string to parser
-    // Parser will split by comma and handle partial failures
-    //
-    // Type assertion: `as never` required because TypeScript cannot infer
-    // the relationship between the property name and its parser signature.
-    // The parser could be SingleValueParser<T> | MultiValueParser<T>,
-    // but we know it's MultiValueParser here due to runtime multiValue check.
-    parseResult = definition.parser(value as never);
+    parseResult = unsafeCallParser(definition.parser, value);
   } else {
     // Single-value property: Parse to AST first
     let valueAst: csstree.Value;
@@ -244,11 +250,7 @@ export function parseDeclaration(input: string | CSSDeclaration): ParseResult<De
     }
 
     // Pass validated AST to parser
-    //
-    // Type assertion: `as never` required (same reason as above).
-    // We know it's SingleValueParser here, but TypeScript's type system
-    // cannot narrow the union based on runtime multiValue check.
-    parseResult = definition.parser(valueAst as never);
+    parseResult = unsafeCallParser(definition.parser, valueAst);
   }
 
   // Step 3: Collect all issues
@@ -257,19 +259,12 @@ export function parseDeclaration(input: string | CSSDeclaration): ParseResult<De
   // Step 4: Try generation to get semantic warnings (even if parse failed but has partial IR)
   if (parseResult.value) {
     try {
-      // Type assertions: `as never` required for the same reason as parser calls.
-      // generateDeclaration is generic over TProperty extends RegisteredProperty,
-      // but TypeScript cannot infer TProperty from the runtime property string value.
-      // This is a limitation of TypeScript's type system with string-indexed unions.
-      const genResult = generateDeclaration({
-        property: property as never,
-        ir: parseResult.value as never,
-      });
+      const genResult = unsafeGenerateDeclaration(property, parseResult.value);
 
       if (genResult.issues.length > 0) {
         // Add generator warnings (deduplicate by message to avoid duplicates)
-        const existingMessages = new Set(allIssues.map((i) => i.message));
-        const newIssues = genResult.issues.filter((i) => !existingMessages.has(i.message));
+        const existingMessages = new Set(allIssues.map((issue) => issue.message));
+        const newIssues = genResult.issues.filter((issue) => !existingMessages.has(issue.message));
         allIssues.push(...newIssues);
       }
     } catch (_err) {
@@ -334,6 +329,50 @@ function parseDeclarationString(input: string): ParseResult<CSSDeclaration> {
   }
 
   return parseOk({ property, value });
+}
+
+/**
+ * Internal unsafe dispatch function for calling property parsers.
+ *
+ * This function isolates the `as never` type assertion required because TypeScript
+ * cannot connect a dynamic property string to the specific parser signature.
+ *
+ * **⚠️ TYPE SAFETY BOUNDARY:**
+ * The risk is that the parser and input might not match. This is mitigated by:
+ * - PropertyRegistry ensures parsers are registered with correct types
+ * - Runtime multiValue check ensures correct input type (string vs AST)
+ * - This function makes the type-safety boundary explicit and auditable
+ *
+ * @internal
+ */
+function unsafeCallParser(parser: unknown, input: unknown): ParseResult<unknown> {
+  // The `as never` cast is necessary here. The parser function signature is generic,
+  // but we're calling it with a dynamically determined input type.
+  // We cast both parser and input to bypass TypeScript's strict type checking.
+  return (parser as (input: never) => ParseResult<unknown>)(input as never);
+}
+
+/**
+ * Internal unsafe dispatch function for calling generateDeclaration.
+ *
+ * This function isolates the `as never` type assertion required because TypeScript
+ * cannot infer the generic TProperty type from a runtime string value.
+ *
+ * **⚠️ TYPE SAFETY BOUNDARY:**
+ * The risk is that property and IR might not match. This is mitigated by:
+ * - The IR was just parsed by the property's parser, so it should match
+ * - PropertyRegistry ensures type consistency at registration time
+ * - This function makes the type-safety boundary explicit and auditable
+ *
+ * @internal
+ */
+function unsafeGenerateDeclaration(property: string, ir: unknown): GenerateResult {
+  // The `as never` casts are necessary here. TypeScript cannot connect
+  // the runtime string `property` to the specific generic type TProperty.
+  return generateDeclaration({
+    property: property as never,
+    ir: ir as never,
+  });
 }
 
 
@@ -685,21 +724,11 @@ export interface PropertyDefinition<T = unknown> {
    * When false/undefined, parser will be called with AST node.
    */
   multiValue?: boolean;
-  generator?: (ir: T) => GenerateResult;
+  generator?: PropertyGenerator<T>;
   inherited: boolean;
   initial: string;
   computed?: string;
 }
-
-/**
- * Property parser function type.
- */
-export type PropertyParser<T = unknown> = (node: import("@eslint/css-tree").Value) => ParseResult<T>;
-
-/**
- * Property generator function type (from core/types).
- */
-export type CorePropertyGenerator<T = unknown> = (ir: T) => GenerateResult;
 
 
 === File: packages/b_declarations/src/utils/create-multi-value-parser.ts ===
@@ -1104,23 +1133,19 @@ export function generate(color: Type.Color, context?: GenerateContext): Generate
 
 === File: packages/b_generators/src/color/hex.ts ===
 // b_path:: packages/b_generators/src/color/hex.ts
-import { type GenerateResult, generateErr, generateOk, createError } from "@b/types";
-import type { HexColor } from "@b/types";
+import { type GenerateResult, generateErr, generateOk, hexColorSchema } from "@b/types";
+import { zodErrorToIssues } from "@b/utils";
 
 /**
  * @see https://drafts.csswg.org/css-color/#hex-notation
  */
-export function generate(color: HexColor): GenerateResult {
-  if (color === undefined || color === null) {
-    return generateErr(createError("invalid-ir", "HexColor must not be null or undefined"));
+export function generate(color: unknown): GenerateResult {
+  // Schema validation
+  const validation = hexColorSchema.safeParse(color);
+  if (!validation.success) {
+    return generateErr(zodErrorToIssues(validation.error, { typeName: "HexColor" }));
   }
-  if (typeof color !== "object") {
-    return generateErr(createError("invalid-ir", `Expected HexColor object, got ${typeof color}`));
-  }
-  if (!("value" in color)) {
-    return generateErr(createError("missing-required-field", "HexColor must have 'value' field"));
-  }
-  return generateOk(color.value);
+  return generateOk(validation.data.value);
 }
 
 
@@ -1575,23 +1600,19 @@ export function generate(color: unknown, context?: GenerateContext): GenerateRes
 
 === File: packages/b_generators/src/color/special.ts ===
 // b_path:: packages/b_generators/src/color/special.ts
-import { type GenerateResult, generateErr, generateOk, createError } from "@b/types";
-import type { SpecialColor } from "@b/types";
+import { type GenerateResult, generateErr, generateOk, specialColorSchema } from "@b/types";
+import { zodErrorToIssues } from "@b/utils";
 
 /**
  * @see https://drafts.csswg.org/css-color/#typedef-color
  */
-export function generate(color: SpecialColor): GenerateResult {
-  if (color === undefined || color === null) {
-    return generateErr(createError("invalid-ir", "SpecialColor must not be null or undefined"));
+export function generate(color: unknown): GenerateResult {
+  // Schema validation
+  const validation = specialColorSchema.safeParse(color);
+  if (!validation.success) {
+    return generateErr(zodErrorToIssues(validation.error, { typeName: "SpecialColor" }));
   }
-  if (typeof color !== "object") {
-    return generateErr(createError("invalid-ir", `Expected SpecialColor object, got ${typeof color}`));
-  }
-  if (!("keyword" in color)) {
-    return generateErr(createError("missing-required-field", "SpecialColor must have 'keyword' field"));
-  }
-  return generateOk(color.keyword);
+  return generateOk(validation.data.keyword);
 }
 
 
@@ -4585,82 +4606,116 @@ export function parseNumberNode(node: csstree.CssNode): ParseResult<number> {
 === File: packages/b_parsers/src/math/calc.ts ===
 // b_path:: packages/b_parsers/src/math/calc.ts
 import type * as csstree from "@eslint/css-tree";
-import { createError, parseErr, parseOk, type ParseResult, type CssValue } from "@b/types";
+import { createError, parseErr, parseOk, type ParseResult, type CssValue, type Issue } from "@b/types";
 import { parseNodeToCssValue } from "../css-value-parser";
 
+type Operator = "+" | "-" | "*" | "/";
+type InfixToken = CssValue | Operator;
+
+const PRECEDENCE: Record<Operator, number> = {
+  "+": 1,
+  "-": 1,
+  "*": 2,
+  "/": 2,
+};
+
 /**
- * Parses a calc() expression from AST nodes.
+ * Parses a `calc()` expression from AST nodes into a valid expression tree.
  *
- * Builds a tree of calc-operation nodes respecting operator precedence.
- * NOTE: This is a simplified implementation that builds left-to-right.
- * Full spec-compliant calc() requires proper precedence handling.
+ * This implementation uses the Shunting-yard algorithm to correctly handle
+ * CSS operator precedence (multiplication/division before addition/subtraction).
  *
- * @param nodes - Array of expression nodes inside calc()
- * @returns Result containing the root CssValue (calc-operation or single value)
+ * The process involves three main steps:
+ * 1. **Tokenization:** Convert css-tree nodes into an infix list of `CssValue` and `Operator` tokens.
+ * 2. **Shunting-yard:** Convert the infix token list to a postfix (Reverse Polish Notation) list.
+ * 3. **Tree Building:** Build the final `calc-operation` tree from the postfix list.
+ *
+ * @param nodes - Array of expression nodes inside `calc()`
+ * @returns Result containing the root `CssValue` of the expression tree.
  */
 function parseCalcExpression(nodes: csstree.CssNode[]): ParseResult<CssValue> {
-  const values: CssValue[] = [];
-  const operators: Array<"+" | "-" | "*" | "/"> = [];
-  const issues: ReturnType<typeof createError>[] = [];
+  const issues: Issue[] = [];
 
-  // Filter out whitespace
+  // --- Step 1: Tokenize into an Infix expression array ---
+  const infix: InfixToken[] = [];
   const expressionNodes = nodes.filter((n) => n.type !== "WhiteSpace");
 
-  for (let i = 0; i < expressionNodes.length; i++) {
-    const node = expressionNodes[i];
-
+  for (const node of expressionNodes) {
     if (node.type === "Operator") {
-      const op = node.value.trim(); // Trim whitespace from operator
-      if (op === "+" || op === "-" || op === "*" || op === "/") {
-        operators.push(op);
+      const op = node.value.trim() as Operator;
+      if (PRECEDENCE[op] !== undefined) {
+        infix.push(op);
       } else {
         issues.push(createError("invalid-syntax", `Unsupported operator in calc(): ${op}`));
       }
     } else {
-      // Recursively parse operands (can be literals, variables, nested calcs)
       const operandResult = parseNodeToCssValue(node);
       if (operandResult.ok) {
-        values.push(operandResult.value);
+        infix.push(operandResult.value);
+        issues.push(...operandResult.issues);
       } else {
         issues.push(...operandResult.issues);
+        // If an operand fails to parse, we can't continue building the tree.
         return parseErr(createError("invalid-value", "Invalid operand in calculation"), "calc");
       }
     }
   }
 
-  // Single value with no operators
-  if (values.length === 1 && operators.length === 0) {
-    if (issues.length > 0) {
-      return { ok: false, value: values[0], issues, property: "calc" };
+  // --- Step 2: Shunting-yard algorithm (Infix to Postfix/RPN) ---
+  const postfix: InfixToken[] = [];
+  const operatorStack: Operator[] = [];
+
+  for (const token of infix) {
+    if (typeof token === "object") {
+      // Token is a CssValue (operand)
+      postfix.push(token);
+    } else {
+      // Token is an Operator
+      const op1 = token;
+      while (operatorStack.length > 0 && PRECEDENCE[operatorStack[operatorStack.length - 1]] >= PRECEDENCE[op1]) {
+        postfix.push(operatorStack.pop()!);
+      }
+      operatorStack.push(op1);
     }
-    return parseOk(values[0]);
   }
 
-  // Validate we have correct structure
-  if (values.length <= operators.length) {
-    return parseErr(createError("invalid-syntax", "Malformed calc expression: missing operand"), "calc");
+  while (operatorStack.length > 0) {
+    postfix.push(operatorStack.pop()!);
   }
 
-  // Build expression tree (simplified left-to-right)
-  let resultTree: CssValue = values[0];
-  let valueIndex = 1;
+  // --- Step 3: Build Expression Tree from Postfix (RPN) ---
+  const buildStack: CssValue[] = [];
 
-  for (const op of operators) {
-    const right = values[valueIndex];
-    if (!right) {
-      return parseErr(createError("invalid-syntax", "Malformed calc expression: missing right operand"), "calc");
+  for (const token of postfix) {
+    if (typeof token === "object") {
+      // Token is a CssValue (operand)
+      buildStack.push(token);
+    } else {
+      // Token is an Operator
+      if (buildStack.length < 2) {
+        return parseErr(
+          createError("invalid-syntax", `Malformed calc expression: missing operands for operator '${token}'`),
+          "calc",
+        );
+      }
+      const right = buildStack.pop()!;
+      const left = buildStack.pop()!;
+      buildStack.push({
+        kind: "calc-operation",
+        operator: token,
+        left,
+        right,
+      });
     }
-    valueIndex++;
-
-    resultTree = {
-      kind: "calc-operation",
-      operator: op,
-      left: resultTree,
-      right: right,
-    };
   }
 
+  if (buildStack.length !== 1) {
+    return parseErr(createError("invalid-syntax", "Malformed calc expression: too many values."), "calc");
+  }
+
+  const resultTree = buildStack[0];
   const finalResult: ParseResult<CssValue> = parseOk(resultTree, "calc");
+
   if (issues.length > 0) {
     finalResult.issues.push(...issues);
   }
@@ -8718,3 +8773,5 @@ export default defineConfig({
     },
   },
 });
+
+
