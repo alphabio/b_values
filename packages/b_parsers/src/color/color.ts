@@ -3,7 +3,7 @@ import type * as csstree from "css-tree";
 import * as cssTree from "css-tree";
 import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
 import type * as Type from "@b/types";
-import { parseCssValueNodeEnhanced } from "../css-value-parser-enhanced";
+import { parseCssValueNodeWrapper } from "../css-value-parser";
 import { parseRgbFunction } from "./rgb";
 import { parseHslFunction } from "./hsl";
 import { parseHwbFunction } from "./hwb";
@@ -34,7 +34,7 @@ export function parseNode(node: csstree.CssNode): ParseResult<Type.Color> {
 
     // Handle var() which can represent any color
     if (funcName === "var") {
-      const result = parseCssValueNodeEnhanced(node);
+      const result = parseCssValueNodeWrapper(node);
       if (result.ok && result.value.kind === "variable") {
         return parseOk(result.value as Type.Color);
       }

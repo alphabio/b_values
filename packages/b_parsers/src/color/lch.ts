@@ -2,7 +2,7 @@
 import type * as csstree from "css-tree";
 import { createError, parseErr, parseOk, forwardParseErr, type ParseResult } from "@b/types";
 import type { LCHColor } from "@b/types";
-import { parseCssValueNodeEnhanced } from "../css-value-parser-enhanced";
+import { parseCssValueNodeWrapper } from "../css-value-parser";
 import { getChildren, getValues } from "@b/utils";
 
 /**
@@ -20,13 +20,13 @@ export function parseLchFunction(node: csstree.FunctionNode): ParseResult<LCHCol
     return parseErr(createError("invalid-syntax", `LCH function must have 3 or 4 values, got ${values.length}`));
   }
 
-  const lResult = parseCssValueNodeEnhanced(values[0]);
+  const lResult = parseCssValueNodeWrapper(values[0]);
   if (!lResult.ok) return forwardParseErr<LCHColor>(lResult);
 
-  const cResult = parseCssValueNodeEnhanced(values[1]);
+  const cResult = parseCssValueNodeWrapper(values[1]);
   if (!cResult.ok) return forwardParseErr<LCHColor>(cResult);
 
-  const hResult = parseCssValueNodeEnhanced(values[2]);
+  const hResult = parseCssValueNodeWrapper(values[2]);
   if (!hResult.ok) return forwardParseErr<LCHColor>(hResult);
 
   const lch: LCHColor = {
@@ -37,7 +37,7 @@ export function parseLchFunction(node: csstree.FunctionNode): ParseResult<LCHCol
   };
 
   if (values.length === 4) {
-    const alphaResult = parseCssValueNodeEnhanced(values[3]);
+    const alphaResult = parseCssValueNodeWrapper(values[3]);
     if (!alphaResult.ok) return forwardParseErr<LCHColor>(alphaResult);
     lch.alpha = alphaResult.value;
   }

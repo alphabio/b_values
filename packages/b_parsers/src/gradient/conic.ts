@@ -2,7 +2,7 @@
 import type * as csstree from "css-tree";
 import { createError, parseErr, parseOk, forwardParseErr, type ParseResult } from "@b/types";
 import type * as Type from "@b/types";
-import { parseCssValueNodeEnhanced } from "../css-value-parser-enhanced";
+import { parseCssValueNodeWrapper } from "../css-value-parser";
 import { parsePosition2D } from "../position";
 import * as ColorStop from "./color-stop";
 import * as SharedParsing from "./shared-parsing";
@@ -70,7 +70,7 @@ export function fromFunction(fn: csstree.FunctionNode): ParseResult<Type.ConicGr
           return parseErr(createError("invalid-syntax", "conic-gradient 'from' keyword requires an angle value"));
         }
 
-        const angleResult = parseCssValueNodeEnhanced(angleNode);
+        const angleResult = parseCssValueNodeWrapper(angleNode);
         if (!angleResult.ok) {
           return forwardParseErr<Type.ConicGradient>(angleResult);
         }

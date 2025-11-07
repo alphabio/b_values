@@ -4,7 +4,7 @@ import { createError, parseErr, parseOk, forwardParseErr, type ParseResult } fro
 import type * as Type from "@b/types";
 import type { RadialShape, RadialSizeKeyword } from "@b/keywords";
 import { parsePosition2D } from "../position";
-import { parseCssValueNodeEnhanced } from "../css-value-parser-enhanced";
+import { parseCssValueNodeWrapper } from "../css-value-parser";
 import * as ColorStop from "./color-stop";
 import * as SharedParsing from "./shared-parsing";
 import * as Utils from "../utils";
@@ -52,7 +52,7 @@ function parseShapeAndSize(
         (nextNode.type === "Dimension" || nextNode.type === "Percentage" || isCssValueFunction(nextNode))
       ) {
         if (shape === "circle") {
-          const radiusResult = parseCssValueNodeEnhanced(nextNode);
+          const radiusResult = parseCssValueNodeWrapper(nextNode);
           if (radiusResult.ok) {
             size = {
               kind: "circle-explicit",
@@ -61,12 +61,12 @@ function parseShapeAndSize(
             idx++;
           }
         } else {
-          const rxResult = parseCssValueNodeEnhanced(nextNode);
+          const rxResult = parseCssValueNodeWrapper(nextNode);
           if (rxResult.ok) {
             idx++;
             const ryNode = nodes[idx];
             if (ryNode && (ryNode.type === "Dimension" || ryNode.type === "Percentage" || isCssValueFunction(ryNode))) {
-              const ryResult = parseCssValueNodeEnhanced(ryNode);
+              const ryResult = parseCssValueNodeWrapper(ryNode);
               if (ryResult.ok) {
                 size = {
                   kind: "ellipse-explicit",
@@ -98,7 +98,7 @@ function parseShapeAndSize(
   } else if (node.type === "Dimension" || node.type === "Percentage") {
     // Only parse bare dimensions/percentages as sizes, not functions
     // Functions as first node are likely colors (rgb, hsl, var, etc.)
-    const firstResult = parseCssValueNodeEnhanced(node);
+    const firstResult = parseCssValueNodeWrapper(node);
     if (firstResult.ok) {
       idx++;
       const secondNode = nodes[idx];
@@ -107,7 +107,7 @@ function parseShapeAndSize(
         secondNode &&
         (secondNode.type === "Dimension" || secondNode.type === "Percentage" || isCssValueFunction(secondNode))
       ) {
-        const secondResult = parseCssValueNodeEnhanced(secondNode);
+        const secondResult = parseCssValueNodeWrapper(secondNode);
         if (secondResult.ok) {
           size = {
             kind: "ellipse-explicit",

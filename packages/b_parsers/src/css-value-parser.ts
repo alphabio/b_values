@@ -5,10 +5,10 @@ import { parseCssValueNode } from "@b/utils";
 import { parseComplexFunction } from "./function-dispatcher";
 
 /**
- * Enhanced CSS value parser that delegates complex functions to specialized parsers.
+ * CSS value parser that delegates complex functions to specialized parsers.
  *
  * This wrapper combines the basic parseCssValueNode from @b/utils with the
- * complex function dispatcher from @b/parsers, solving the circular dependency issue.
+ * complex function dispatcher from @b/parsers.
  *
  * Use this function instead of parseCssValueNode when you want calc(), min(), max(),
  * clamp(), rgb(), hsl(), etc. to be parsed into their semantic IR structures.
@@ -16,7 +16,7 @@ import { parseComplexFunction } from "./function-dispatcher";
  * @param node - CSS AST node to parse
  * @returns ParseResult with CssValue (may include complex function IRs)
  */
-export function parseCssValueNodeEnhanced(node: csstree.CssNode): ParseResult<CssValue> {
+export function parseCssValueNodeWrapper(node: csstree.CssNode): ParseResult<CssValue> {
   // For function nodes, try the complex function dispatcher first
   if (node.type === "Function") {
     const complexResult = parseComplexFunction(node);

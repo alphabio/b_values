@@ -2,7 +2,7 @@
 // @ts-nocheck
 // // DO NOT DELETE THIS FILE. IT IS BY THE USER FOR ADHOC TESTING PURPOSES ONLY.
 
-import * as decl from "@b/declarations";
+// import * as decl from "@b/declarations";
 
 // console.log(
 //   JSON.stringify(
@@ -99,33 +99,29 @@ import * as decl from "@b/declarations";
 //   ),
 // );
 
-console.log(
-  JSON.stringify(
-    decl.parseDeclaration(`
-  background-image:
-   linear-gradient(
-      blue,
-      25%,
-      yellow 50%,
-      75%,
-      green
-    ),
+// console.log(
+//   decl.parseDeclaration(`
+//   background-image:
+//    linear-gradient(
+//       blue,
+//       25%,
+//       yellow 50%,
+//       75%,
+//       green
+//     ),
 
-    radial-gradient(
-      10em 20%,
-      at center,
-      #ff00ff,
-      transparent calc(50% + 20px)
-    ),
+//     radial-gradient(
+//       10em 20%,
+//       at center,
+//       #ff00ff,
+//       transparent calc(50% & 20px)
+//     ),
 
-    conic-gradient(
-      from -100grad,
-      hsl(50 100% 50% / 0.5) 0%,
-      hsl(100 100% 50% / 0.9) 12.5%,
-      hsl(150 100% 50%) 100%
-    );
-  `),
-    null,
-    2,
-  ),
-);
+//     conic-gradient(
+//       from -100grad,
+//       hsl(50 100% 50% / 0.5) 0%,
+//       hsl(100 100% 50% / 0.9) 12.5%,
+//       hsl(150 100% 50%) 100%
+//     );
+//   `).issues[1],
+// );

@@ -2,7 +2,7 @@
 import type * as csstree from "css-tree";
 import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
 import type * as Type from "@b/types";
-import { parseCssValueNodeEnhanced } from "./css-value-parser-enhanced";
+import { parseCssValueNodeWrapper } from "./css-value-parser";
 
 /**
  * Parse 2D position from array of AST nodes.
@@ -26,7 +26,7 @@ export function parsePosition2D(
     const node = nodes[idx];
     if (!node) break;
 
-    const value = parseCssValueNodeEnhanced(node);
+    const value = parseCssValueNodeWrapper(node);
     if (!value.ok) break;
 
     positionValues.push(value.value);

@@ -2,7 +2,7 @@
 import type * as csstree from "css-tree";
 import { createError, parseErr, parseOk, forwardParseErr, type ParseResult } from "@b/types";
 import type { LABColor } from "@b/types";
-import { parseCssValueNodeEnhanced } from "../css-value-parser-enhanced";
+import { parseCssValueNodeWrapper } from "../css-value-parser";
 import { getChildren, getValues } from "@b/utils";
 
 /**
@@ -20,13 +20,13 @@ export function parseLabFunction(node: csstree.FunctionNode): ParseResult<LABCol
     return parseErr(createError("invalid-syntax", `LAB function must have 3 or 4 values, got ${values.length}`));
   }
 
-  const lResult = parseCssValueNodeEnhanced(values[0]);
+  const lResult = parseCssValueNodeWrapper(values[0]);
   if (!lResult.ok) return forwardParseErr<LABColor>(lResult);
 
-  const aResult = parseCssValueNodeEnhanced(values[1]);
+  const aResult = parseCssValueNodeWrapper(values[1]);
   if (!aResult.ok) return forwardParseErr<LABColor>(aResult);
 
-  const bResult = parseCssValueNodeEnhanced(values[2]);
+  const bResult = parseCssValueNodeWrapper(values[2]);
   if (!bResult.ok) return forwardParseErr<LABColor>(bResult);
 
   const lab: LABColor = {
@@ -37,7 +37,7 @@ export function parseLabFunction(node: csstree.FunctionNode): ParseResult<LABCol
   };
 
   if (values.length === 4) {
-    const alphaResult = parseCssValueNodeEnhanced(values[3]);
+    const alphaResult = parseCssValueNodeWrapper(values[3]);
     if (!alphaResult.ok) return forwardParseErr<LABColor>(alphaResult);
     lab.alpha = alphaResult.value;
   }

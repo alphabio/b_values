@@ -2,7 +2,7 @@
 import type * as csstree from "css-tree";
 import { createError, parseErr, parseOk, forwardParseErr, type ParseResult } from "@b/types";
 import type { RGBColor } from "@b/types";
-import { parseCssValueNodeEnhanced } from "../css-value-parser-enhanced";
+import { parseCssValueNodeWrapper } from "../css-value-parser";
 import { getChildren, getValues } from "@b/utils";
 
 /**
@@ -21,13 +21,13 @@ export function parseRgbFunction(node: csstree.FunctionNode): ParseResult<RGBCol
     return parseErr(createError("invalid-syntax", `RGB function must have 3 or 4 values, got ${values.length}`));
   }
 
-  const rResult = parseCssValueNodeEnhanced(values[0]);
+  const rResult = parseCssValueNodeWrapper(values[0]);
   if (!rResult.ok) return forwardParseErr<RGBColor>(rResult);
 
-  const gResult = parseCssValueNodeEnhanced(values[1]);
+  const gResult = parseCssValueNodeWrapper(values[1]);
   if (!gResult.ok) return forwardParseErr<RGBColor>(gResult);
 
-  const bResult = parseCssValueNodeEnhanced(values[2]);
+  const bResult = parseCssValueNodeWrapper(values[2]);
   if (!bResult.ok) return forwardParseErr<RGBColor>(bResult);
 
   const rgb: RGBColor = {
@@ -38,7 +38,7 @@ export function parseRgbFunction(node: csstree.FunctionNode): ParseResult<RGBCol
   };
 
   if (values.length === 4) {
-    const alphaResult = parseCssValueNodeEnhanced(values[3]);
+    const alphaResult = parseCssValueNodeWrapper(values[3]);
     if (!alphaResult.ok) return forwardParseErr<RGBColor>(alphaResult);
     rgb.alpha = alphaResult.value;
   }
