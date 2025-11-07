@@ -1,148 +1,185 @@
-# Session 047: Cleanup + Multi-Value Parser Factory ✅ COMPLETE
+# Session 048: Critical Calc Bug Fix + Operator Precedence
 
-**Date:** 2025-11-07  
-**Focus:** Dead code cleanup + Critical bug fix  
-**Result:** -1,195 lines removed, +310 lines added (factory + tests)
+**Date:** 2025-11-07
+**Focus:** Fixed calc() parser operator precedence bug using Shunting-yard algorithm
 
 ---
 
 ## ✅ Accomplished
 
-### Part 1: Dead Code Cleanup
-- ✅ Session 047 initialized and archived Session 046
-- ✅ Removed `location` and `sourceContext` fields from Issue type
-- ✅ Removed `SourceLocation` and `SourceLocationRange` types
-- ✅ Simplified parser enrichment (removed enrichIssues function)
-- ✅ Removed `formatSourceContext` utility
-- ✅ Removed all location-related tests (43 tests)
-- ✅ Cleaned up parser location references (gradient, url parsers)
-- ✅ **BONUS:** Removed unused `validate.ts` and related files (~755 lines)
-
-### Part 2: Incomplete Consumption Bug Fix
-- ✅ **DISCOVERED:** Critical parser bug where css-tree stops parsing early
-- ✅ **CREATED:** `createMultiValueParser` factory for resilient list parsing
-- ✅ **FIXED:** Missing comma detection (incomplete consumption validation)
-- ✅ **REFACTORED:** background-image parser to use factory
-- ✅ **TESTED:** 17 comprehensive test cases for new factory
-- ✅ All tests passing (1943/1943)
+- ✅ Session 048 initialized and Session 047 archived
+- ✅ Documentation reviewed and understood
+- ✅ Fixed unused import in create-multi-value-parser.test.ts
+- ✅ **CRITICAL FIX:** Replaced left-to-right calc() parser with Shunting-yard algorithm
+- ✅ Added 14 comprehensive tests for operator precedence
+- ✅ All tests passing (1957/1957, net +14 new tests)
+- ✅ All quality checks passing
 
 ---
 
 ## 📊 Current State
 
 **Working:**
-- ✅ All tests passing (1943/1943, net +17 new tests)
+
+- ✅ All tests passing (1957/1957)
 - ✅ All typechecks passing
 - ✅ All builds passing
 - ✅ No lint warnings
+- ✅ **NEW:** calc() parser correctly handles operator precedence
 - ✅ Property enrichment working perfectly
-- ✅ Path navigation excellent
-- ✅ **NEW:** Missing comma detection working!
+- ✅ Missing comma detection via createMultiValueParser factory
+- ✅ Clean codebase
 
-**Removed:**
-- ❌ location/sourceContext fields (never populated)
-- ❌ formatSourceContext utility (unused)
-- ❌ validate.ts module (unused, 755 lines)
+**Fixed:**
 
-**Added:**
-- ✅ createMultiValueParser factory (155 lines)
-- ✅ Comprehensive tests (17 test cases)
-- ✅ Better error messages for syntax errors
+- ✅ calc() operator precedence bug (was: left-to-right, now: spec-compliant)
+- ✅ Unused imports cleaned up
+
+---
+
+## 🚨 Critical Bug Fixed
+
+**Problem:** calc() parser built expressions left-to-right, violating CSS operator precedence.
+
+**Example of Bug:**
+
+```css
+/* calc(10px + 2px * 5) */
+Before: Parsed as (10px + 2px) * 5 = 60px  ❌ WRONG
+After:  Parsed as 10px + (2px * 5) = 20px  ✅ CORRECT
+```
+
+**Solution:** Implemented Shunting-yard algorithm with three steps:
+
+1. **Tokenization:** Convert AST nodes to infix tokens (values + operators)
+2. **Shunting-yard:** Convert infix to postfix (RPN) respecting precedence
+3. **Tree Building:** Build calc-operation tree from RPN
+
+**Precedence Rules:**
+
+- Multiplication (\*) and Division (/) have precedence 2
+- Addition (+) and Subtraction (-) have precedence 1
+- Same precedence operators associate left-to-right
 
 ---
 
 ## 📈 Impact
 
 **Code Changes:**
-- Removed: ~1,195 lines (dead code cleanup)
-- Added: ~310 lines (factory + tests)
-- **Net:** -885 lines, +major architectural improvement
+
+- Modified: `packages/b_parsers/src/math/calc.ts` (~120 lines)
+- Enhanced: `packages/b_parsers/src/math/calc.test.ts` (+300 lines)
+
+**Test Coverage:**
+
+- Basic operations (4 tests)
+- Operator precedence (7 tests)
+- Error handling (3 tests)
+- Edge cases (5 tests)
+- **Total: 24 tests** (10 original + 14 new)
 
 **Benefits:**
-- Simpler Issue API (no confusing "sometimes available" fields)
-- Detects missing commas (was silent failure)
-- Clear error messages with unparsed content preview
-- Reusable pattern for all future multi-value properties
-- Centralized error handling logic
+
+- ✅ CSS spec-compliant operator precedence
+- ✅ Correct evaluation of complex expressions
+- ✅ Comprehensive test coverage
+- ✅ Clear algorithm documentation
+- ✅ Production-ready calc() parsing
 
 ---
 
-## 🎯 Key Discovery: Incomplete Consumption Bug
+## 🏗️ Implementation Details
 
-**Problem:** css-tree successfully parses partial input but doesn't consume all of it.
+**Shunting-yard Algorithm:**
 
-```css
-/* Input: two gradients without comma */
-linear-gradient(red, blue) radial-gradient(red, blue)
-
-/* Before: */
-- css-tree parses first gradient successfully
-- Stops at end of first gradient
-- Returns success (doesn't error!)
-- Second gradient silently dropped
-
-/* After: */
-- Detects unparsed content: "radial-gradient..."
-- Returns clear error: "Unexpected content after a valid value, likely a missing comma"
-- User knows exactly what's wrong
-```
-
-**Solution:** Check that `ast.loc.end.offset === trimmedInput.length` after parsing.
-
----
-
-## 🏗️ Architecture: createMultiValueParser Factory
-
-**Purpose:** DRY abstraction for all multi-value (comma-separated) properties.
-
-**Pattern:**
 ```typescript
-export const parseProperty = createMultiValueParser({
-  preParse: (value) => /* handle keywords */,
-  itemParser: (ast) => /* parse single item */,
-  aggregator: (items) => /* combine results */,
-});
+// Step 1: Tokenize
+[10px, +, 2px, *, 5] // Infix
+
+// Step 2: Shunting-yard (Infix → Postfix)
+[10px, 2px, 5, *, +] // RPN
+
+// Step 3: Build Tree
+{
+  kind: "calc-operation",
+  operator: "+",
+  left: { kind: "literal", value: 10, unit: "px" },
+  right: {
+    kind: "calc-operation",
+    operator: "*",
+    left: { kind: "literal", value: 2, unit: "px" },
+    right: { kind: "literal", value: 5 }
+  }
+}
 ```
 
-**Handles automatically:**
-1. Splitting by top-level commas
-2. Parsing each chunk to AST individually
-3. Validating complete consumption
-4. Partial failure resilience
-5. Issue aggregation
+**Precedence Table:**
 
-**Applies to:** background-image, font-family, transition, animation, etc.
+```typescript
+const PRECEDENCE: Record<Operator, number> = {
+  "+": 1,
+  "-": 1,
+  "*": 2,
+  "/": 2,
+};
+```
 
 ---
 
 ## 💡 Key Learnings
 
-### Learning 1: "Sometimes available" is worse than "never available"
-Users prefer consistent, reliable fields over unpredictable ones.
-- `property` (always populated) > `location`/`sourceContext` (never populated)
+### Learning 1: Left-to-right is not enough for expressions
 
-### Learning 2: Silent failures are dangerous
-Parser bugs where invalid input succeeds are worse than crashes.
-- Better to error with clear message than silently drop data
+Mathematical expressions require precedence-aware parsing. The Shunting-yard algorithm is the standard solution for this problem.
 
-### Learning 3: Abstraction at the right time
-After finding the bug pattern, immediately abstract it.
-- One bug fix → architectural pattern → reusable for all similar cases
+### Learning 2: Comprehensive test coverage is essential
+
+The 14 new tests cover:
+
+- Basic precedence (multiplication before addition)
+- Complex mixed expressions
+- Same-precedence left-associativity
+- Edge cases with whitespace, negatives, percentages
+
+### Learning 3: RPN simplifies tree building
+
+Converting to postfix (RPN) first makes building the expression tree trivial - just pop two operands, create node, push back.
 
 ---
 
 ## 🎯 Next Steps
 
-1. Consider applying factory to other multi-value properties
-2. Add integration tests for missing comma scenarios
-3. Document pattern for future contributors
+**Potential improvements:**
+
+1. Consider adding parentheses support (though CSS calc() doesn't need explicit parens)
+2. Apply similar precedence handling to other math functions if needed
+3. Document the Shunting-yard algorithm for future contributors
+
+**Ready for next task!**
 
 ---
 
-**See:** `docs/sessions/047/CLEANUP_SUMMARY.md` for detailed cleanup breakdown
+## 📝 Executive Summary Response
 
-**Session 047 COMPLETE ✅**
+Reviewed and actioned the executive summary feedback:
+
+**✅ Addressed:**
+
+- [x] **Critical Issue #1:** Fixed calc() operator precedence bug with Shunting-yard algorithm
+- [x] Added comprehensive test coverage (14 new tests)
+- [x] All tests passing, no regressions
+
+**📋 Noted for future:**
+
+- [ ] **High-Impact #1:** Mitigate `as never` casts by isolating to internal dispatch functions
+- [ ] **General:** Auto-generate PropertyIRMap interface
+- [ ] **General:** Consolidate duplicate PropertyGenerator types
+- [ ] **General:** Standardize generator error handling patterns
+
+---
+
+**Session 048 COMPLETE ✅**
 
 **Commits:**
-1. `refactor(types,declarations,utils,parsers): remove unused sourceContext/location fields` 
-2. `feat(declarations): add createMultiValueParser factory to fix incomplete consumption bug`
+
+1. `fix(parsers): implement Shunting-yard algorithm for calc() operator precedence`

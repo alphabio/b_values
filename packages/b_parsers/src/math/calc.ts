@@ -1,81 +1,115 @@
 // b_path:: packages/b_parsers/src/math/calc.ts
 import type * as csstree from "@eslint/css-tree";
-import { createError, parseErr, parseOk, type ParseResult, type CssValue } from "@b/types";
+import { createError, parseErr, parseOk, type ParseResult, type CssValue, type Issue } from "@b/types";
 import { parseNodeToCssValue } from "../css-value-parser";
 
+type Operator = "+" | "-" | "*" | "/";
+type InfixToken = CssValue | Operator;
+
+const PRECEDENCE: Record<Operator, number> = {
+  "+": 1,
+  "-": 1,
+  "*": 2,
+  "/": 2,
+};
+
 /**
- * Parses a calc() expression from AST nodes.
+ * Parses a `calc()` expression from AST nodes into a valid expression tree.
  *
- * Builds a tree of calc-operation nodes respecting operator precedence.
- * NOTE: This is a simplified implementation that builds left-to-right.
- * Full spec-compliant calc() requires proper precedence handling.
+ * This implementation uses the Shunting-yard algorithm to correctly handle
+ * CSS operator precedence (multiplication/division before addition/subtraction).
  *
- * @param nodes - Array of expression nodes inside calc()
- * @returns Result containing the root CssValue (calc-operation or single value)
+ * The process involves three main steps:
+ * 1. **Tokenization:** Convert css-tree nodes into an infix list of `CssValue` and `Operator` tokens.
+ * 2. **Shunting-yard:** Convert the infix token list to a postfix (Reverse Polish Notation) list.
+ * 3. **Tree Building:** Build the final `calc-operation` tree from the postfix list.
+ *
+ * @param nodes - Array of expression nodes inside `calc()`
+ * @returns Result containing the root `CssValue` of the expression tree.
  */
 function parseCalcExpression(nodes: csstree.CssNode[]): ParseResult<CssValue> {
-  const values: CssValue[] = [];
-  const operators: Array<"+" | "-" | "*" | "/"> = [];
-  const issues: ReturnType<typeof createError>[] = [];
+  const issues: Issue[] = [];
 
-  // Filter out whitespace
+  // --- Step 1: Tokenize into an Infix expression array ---
+  const infix: InfixToken[] = [];
   const expressionNodes = nodes.filter((n) => n.type !== "WhiteSpace");
 
-  for (let i = 0; i < expressionNodes.length; i++) {
-    const node = expressionNodes[i];
-
+  for (const node of expressionNodes) {
     if (node.type === "Operator") {
-      const op = node.value.trim(); // Trim whitespace from operator
-      if (op === "+" || op === "-" || op === "*" || op === "/") {
-        operators.push(op);
+      const op = node.value.trim() as Operator;
+      if (PRECEDENCE[op] !== undefined) {
+        infix.push(op);
       } else {
         issues.push(createError("invalid-syntax", `Unsupported operator in calc(): ${op}`));
       }
     } else {
-      // Recursively parse operands (can be literals, variables, nested calcs)
       const operandResult = parseNodeToCssValue(node);
       if (operandResult.ok) {
-        values.push(operandResult.value);
+        infix.push(operandResult.value);
+        issues.push(...operandResult.issues);
       } else {
         issues.push(...operandResult.issues);
+        // If an operand fails to parse, we can't continue building the tree.
         return parseErr(createError("invalid-value", "Invalid operand in calculation"), "calc");
       }
     }
   }
 
-  // Single value with no operators
-  if (values.length === 1 && operators.length === 0) {
-    if (issues.length > 0) {
-      return { ok: false, value: values[0], issues, property: "calc" };
+  // --- Step 2: Shunting-yard algorithm (Infix to Postfix/RPN) ---
+  const postfix: InfixToken[] = [];
+  const operatorStack: Operator[] = [];
+
+  for (const token of infix) {
+    if (typeof token === "object") {
+      // Token is a CssValue (operand)
+      postfix.push(token);
+    } else {
+      // Token is an Operator
+      const op1 = token;
+      while (operatorStack.length > 0 && PRECEDENCE[operatorStack[operatorStack.length - 1]] >= PRECEDENCE[op1]) {
+        postfix.push(operatorStack.pop()!);
+      }
+      operatorStack.push(op1);
     }
-    return parseOk(values[0]);
   }
 
-  // Validate we have correct structure
-  if (values.length <= operators.length) {
-    return parseErr(createError("invalid-syntax", "Malformed calc expression: missing operand"), "calc");
+  while (operatorStack.length > 0) {
+    postfix.push(operatorStack.pop()!);
   }
 
-  // Build expression tree (simplified left-to-right)
-  let resultTree: CssValue = values[0];
-  let valueIndex = 1;
+  // --- Step 3: Build Expression Tree from Postfix (RPN) ---
+  const buildStack: CssValue[] = [];
 
-  for (const op of operators) {
-    const right = values[valueIndex];
-    if (!right) {
-      return parseErr(createError("invalid-syntax", "Malformed calc expression: missing right operand"), "calc");
+  for (const token of postfix) {
+    if (typeof token === "object") {
+      // Token is a CssValue (operand)
+      buildStack.push(token);
+    } else {
+      // Token is an Operator
+      if (buildStack.length < 2) {
+        return parseErr(
+          createError("invalid-syntax", `Malformed calc expression: missing operands for operator '${token}'`),
+          "calc",
+        );
+      }
+      const right = buildStack.pop()!;
+      const left = buildStack.pop()!;
+      buildStack.push({
+        kind: "calc-operation",
+        operator: token,
+        left,
+        right,
+      });
     }
-    valueIndex++;
-
-    resultTree = {
-      kind: "calc-operation",
-      operator: op,
-      left: resultTree,
-      right: right,
-    };
   }
 
+  if (buildStack.length !== 1) {
+    return parseErr(createError("invalid-syntax", "Malformed calc expression: too many values."), "calc");
+  }
+
+  const resultTree = buildStack[0];
   const finalResult: ParseResult<CssValue> = parseOk(resultTree, "calc");
+
   if (issues.length > 0) {
     finalResult.issues.push(...issues);
   }

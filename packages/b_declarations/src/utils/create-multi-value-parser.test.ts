@@ -1,7 +1,7 @@
 // b_path:: packages/b_declarations/src/utils/create-multi-value-parser.test.ts
 import { describe, it, expect } from "vitest";
 import { createMultiValueParser } from "./create-multi-value-parser";
-import { parseOk, parseErr, createError, type ParseResult } from "@b/types";
+import { parseOk, parseErr, createError } from "@b/types";
 import * as csstree from "@eslint/css-tree";
 
 // Test types
