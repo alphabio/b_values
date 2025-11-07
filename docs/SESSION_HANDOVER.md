@@ -149,8 +149,25 @@ export type ImageLayer = Image | { kind: "none" };
 ## 📁 Key Documents
 
 - `docs/architecture/patterns/atom-vs-molecule-principle.md` - Foundation principle
+- `docs/architecture/patterns/HOW-TO-ADD-PROPERTY-V2.md` - **THE complete guide** ⭐
 - `docs/sessions/057/` - Previous session (CSS-wide keywords refactor + audit)
 - `docs/sessions/058/` - This session (naming convention alignment)
+  - `phase-1-namespace-imports-complete.md`
+  - `phase-2-reusable-molecules-complete.md`
+  - `refactor-plan.md` - **INCOMPLETE** - 3 properties still need refactor
+
+---
+
+## ⚠️ Important Note
+
+**Background properties refactor is NOT complete:**
+- ✅ background-image, background-repeat, background-size (refactored)
+- ❌ background-attachment, background-clip, background-origin (still OLD pattern)
+
+See `docs/sessions/058/refactor-plan.md` for remaining work.
+These 3 properties need keywords moved to `@b/keywords` and types updated.
+
+**Next session should complete this.**
 
 ---
 
