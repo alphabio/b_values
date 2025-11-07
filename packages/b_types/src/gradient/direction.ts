@@ -1,6 +1,6 @@
 // b_path:: packages/b_types/src/gradient/direction.ts
 import { z } from "zod";
-import { gradientCornerSchema, gradientSideSchema } from "@b/keywords";
+import * as Keywords from "@b/keywords";
 import { cssValueSchema } from "../values";
 
 /**
@@ -16,13 +16,13 @@ export const gradientDirectionSchema = z.union([
   z
     .object({
       kind: z.literal("to-side"),
-      value: gradientSideSchema,
+      value: Keywords.gradientSide,
     })
     .strict(),
   z
     .object({
       kind: z.literal("to-corner"),
-      value: gradientCornerSchema,
+      value: Keywords.gradientCorner,
     })
     .strict(),
 ]);

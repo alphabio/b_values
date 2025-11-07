@@ -8,6 +8,7 @@
 ## Reference: background-size (Session 056)
 
 **Structure:**
+
 ```
 @b/keywords/src/bg-size.ts          # Zod schema for keywords
 @b/types/src/bg-size.ts             # Uses cssValueSchema
@@ -17,6 +18,7 @@
 ```
 
 **Key patterns:**
+
 - Property-specific keywords in `@b/keywords` (auto, cover, contain)
 - Component values use `cssValueSchema` → get var(), calc() for free
 - Value parsers delegate to generic utilities
@@ -27,8 +29,11 @@
 ## Properties to Audit
 
 ### 1. background-repeat
+
 ### 2. background-origin
+
 ### 3. background-clip
+
 ### 4. background-attachment
 
 ---
@@ -49,4 +54,3 @@ For each property, check:
 ## Findings
 
 (To be filled during audit)
-

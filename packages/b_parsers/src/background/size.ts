@@ -1,7 +1,7 @@
 // b_path:: packages/b_parsers/src/background/size.ts
 
 import type * as csstree from "@eslint/css-tree";
-import { bgSizeKeywordSchema } from "@b/keywords";
+import * as Keywords from "@b/keywords";
 import {
   createError,
   parseErr,
@@ -28,7 +28,7 @@ export function parseBackgroundSizeValue(valueNode: csstree.Value): ParseResult<
   // Handle keywords: auto, cover, contain
   if (children.length === 1 && children[0].type === "Identifier") {
     const keyword = children[0].name;
-    const keywordResult = bgSizeKeywordSchema.safeParse(keyword);
+    const keywordResult = Keywords.bgSize.safeParse(keyword);
     if (keywordResult.success) {
       return parseOk({ kind: "keyword", value: keywordResult.data });
     }

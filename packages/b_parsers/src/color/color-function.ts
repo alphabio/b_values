@@ -4,7 +4,7 @@ import { createError, parseErr, parseOk, forwardParseErr, type ParseResult } fro
 import type { ColorFunction } from "@b/types";
 import { parseNodeToCssValue } from "../utils";
 import { getChildren, getValues } from "@b/utils";
-import { colorFunctionSpaceSchema } from "@b/keywords";
+import * as Keywords from "@b/keywords";
 
 /**
  * Parse color() function from css-tree AST.
@@ -33,7 +33,7 @@ export function parseColorFunction(node: csstree.FunctionNode): ParseResult<Colo
     return parseErr(createError("invalid-syntax", "color() function must start with a color space identifier"));
   }
 
-  const colorSpaceResult = colorFunctionSpaceSchema.safeParse(colorSpaceNode.name);
+  const colorSpaceResult = Keywords.colorFunctionSpace.safeParse(colorSpaceNode.name);
   if (!colorSpaceResult.success) {
     return parseErr(createError("invalid-syntax", `Invalid color space: ${colorSpaceNode.name}`));
   }

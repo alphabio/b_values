@@ -1,111 +1,165 @@
-# Session 057: CSS-Wide Keywords + Background Properties Audit
+# Session 058: Naming Convention & Atom-Molecule Pattern Alignment
 
-**Date:** 2025-11-08  
-**Status:** ✅ Refactor complete, ⚠️ Pattern consistency issue discovered
+**Date:** 2025-11-07
+**Focus:** Finalize THE naming convention and type organization pattern
 
 ---
 
 ## ✅ Accomplished
 
-### Part 1: CSS-Wide Keywords Architecture
-- ✅ Moved to `parseDeclaration` orchestrator (DRY)
-- ✅ Simplified 6 property parsers (~80 lines removed)
-- ✅ Updated documentation (HOW-TO-ADD-PROPERTY.md corrected)
-- ✅ All 2322 tests passing
-
-### Part 2: Background Properties Audit
-- ✅ Audited 4 properties (repeat, origin, clip, attachment)
-- ✅ Key insight: Not all properties need `cssValueSchema` (keyword-only)
-- ✅ Recommendation: Refactor for package separation consistency
-- ✅ Plan created for delete & recreate approach (~2.5 hours)
+- ✅ Reviewed `atom-vs-molecule-principle.md` architecture pattern
+- ✅ Analyzed CSS spec for `<mask>` property (confirmed reusability)
+- ✅ Identified reusable molecules: `<image>`, `<repeat-style>`, `<bg-size>`, `<position>`
+- ✅ **FINALIZED** naming convention for entire codebase
 
 ---
 
-## ⚠️ CRITICAL: Pattern Inconsistency Discovered
+## 💡 Key Decisions
 
-**Problem:** background-size and background-image have different patterns
+### 1. Namespace Import Pattern for Keywords (Better DX)
 
-**background-size:**
+**Decision:** Always import keywords as namespace
+
+```typescript
+// ✅ THE Pattern
+import * as Keywords from "@b/keywords";
+
+// Usage
+Keywords.bgSize; // clean, contextual
+Keywords.cssWide;
+Keywords.repetition;
 ```
-@b/types/src/bg-size.ts       → BgSize, BgSizeList (Zod schemas)
-@b/declarations/.../types.ts  → Just re-exports (pointless indirection)
+
+**Rationale:**
+
+- Cleaner, shorter names at definition site (no "Keyword" suffix needed)
+- Clear context at usage site via `Keywords.` prefix
+- Better auto-complete experience
+- Matches DX philosophy
+
+### 2. THE Naming Convention (FINAL - Spec-Driven)
+
+#### Keywords (`@b/keywords`)
+
+```typescript
+// File: @b/keywords/src/bg-size.ts
+export const bgSize = z.union([...]);          // Match CSS <bg-size>
+export const BG_SIZE = getLiteralValues(...);  // Constant array (uppercase)
+export type BgSize = z.infer<typeof bgSize>;   // Type (PascalCase)
 ```
 
-**background-image:**
+#### Reusable Types (`@b/types`) - Atoms & Molecules
+
+```typescript
+// File: @b/types/src/image.ts
+export const imageSchema = z.discriminatedUnion(...);  // Match CSS <image>
+export type Image = z.infer<typeof imageSchema>;
+
+// File: @b/types/src/repeat-style.ts
+export const repeatStyleSchema = z.discriminatedUnion(...);  // Match CSS <repeat-style>
+export type RepeatStyle = z.infer<typeof repeatStyleSchema>;
+
+// File: @b/types/src/bg-size.ts (already exists ✅)
+export const bgSizeSchema = z.discriminatedUnion(...);  // Match CSS <bg-size>
+export type BgSize = z.infer<typeof bgSizeSchema>;
 ```
-@b/types/src/                 → NO types (missing!)
-@b/declarations/.../types.ts  → Types defined inline (WRONG location)
+
+#### Property Types (`@b/declarations`)
+
+```typescript
+// File: @b/declarations/properties/background-image/types.ts
+export type BackgroundImage = { kind: "keyword"; ... } | { kind: "layers"; ... };
+export type ImageLayer = Image | { kind: "none" };
+
+// Pattern: PropertyName (PascalCase from property-name)
 ```
 
-**User requirement:** "Consistency is paramount if we going to scale to 50+ properties"
+### 3. Reusability Matrix (from CSS Spec Analysis)
 
----
+**Confirmed Reusable Molecules** (belong in `@b/types`):
 
-## 🎯 THE Pattern (To Be Finalized)
+- `<bg-size>` → Used by: `background-size`, `mask` ✅ Already in @b/types
+- `<image>` → Used by: `background-image`, `mask-reference`, `border-image-source`, `list-style-image`, `cursor` ❌ NEEDS CREATION
+- `<repeat-style>` → Used by: `background-repeat`, `mask` ❌ NEEDS CREATION
+- `<position>` → Used by: `background-position`, `mask`, `object-position` ✅ Already in @b/types
 
-**MUST decide for Session 058:**
+**Property-Specific Types** (stay in `@b/declarations`):
 
-1. **Where do types live?**
-   - In `@b/types` only? (no local types.ts)
-   - What gets re-exported in declarations?
-
-2. **Naming convention:**
-   - Component: `ImageLayer` or `BgImageLayer`?
-   - Property: `BackgroundImage` or `BgImageList`?
-
-3. **types.ts file in declarations:**
-   - Delete entirely? (import directly from @b/types)
-   - Keep for re-exports? (if so, what purpose?)
-
-**Questions for next session:**
-- Should `@b/declarations/properties/*/types.ts` exist at all?
-- If yes, what should it contain?
-- How do we ensure ONE pattern for all 50+ properties?
+- `BackgroundImage`, `BackgroundRepeat`, etc. (wrappers around reusable molecules)
 
 ---
 
 ## 📊 Current State
 
-- ✅ All tests passing, production build verified
-- ✅ CSS-wide keywords architecture complete
-- ⚠️ Pattern consistency needs alignment before continuing
+**Working:**
+
+- ✅ All 2322 tests passing
+- ✅ Naming convention finalized and documented
+- ✅ Atom-molecule principle clearly understood
+- ✅ Session 057 properly archived
+
+**Ready to implement:**
+
+- Refactor `@b/keywords` to remove "Keyword" suffix from exports
+- Update all imports to namespace pattern `import * as Keywords`
+- Create reusable molecules: `image.ts`, `repeat-style.ts`
+- Refactor background properties to use new pattern
 
 ---
 
-## 🎯 Next Session 058
+## 🎯 Next Steps
 
-**MUST DO FIRST:**
-1. Align on THE pattern (types location, naming, structure)
-2. Document THE pattern clearly
-3. Update HOW-TO-ADD-PROPERTY.md with THE pattern
-4. THEN refactor all 4 background properties in single pass
+### Phase 1: Keywords Refactor
 
-**DO NOT proceed with refactor until pattern is 100% clear**
+1. Remove "Keyword" suffix from all `@b/keywords` exports
+2. Update all imports across codebase to namespace pattern
+3. Run tests to verify
+
+### Phase 2: Create Reusable Molecules
+
+1. Create `@b/types/src/image.ts` with `imageSchema`, `Image` type
+2. Create `@b/types/src/repeat-style.ts` with `repeatStyleSchema`, `RepeatStyle` type
+3. Export from `@b/types/index.ts`
+
+### Phase 3: Refactor Background Properties
+
+1. Update `background-image` to import from `@b/types`
+2. Update `background-repeat` to import from `@b/types`
+3. Simplify property-level `types.ts` files to simple re-exports
+4. Verify all tests pass
+
+### Phase 4: Documentation
+
+1. Update `HOW-TO-ADD-PROPERTY.md` with THE pattern
+2. Document namespace import convention
+3. Update any other affected docs
 
 ---
 
 ## 📁 Key Documents
 
-- `docs/sessions/057/css-wide-keywords-refactor.md` - Architecture analysis
-- `docs/sessions/057/background-properties-audit-COMPLETE.md` - Full audit
-- `docs/sessions/057/refactor-plan.md` - Delete & recreate plan
-- `docs/architecture/patterns/HOW-TO-ADD-PROPERTY.md` - Needs update
+- `docs/architecture/patterns/atom-vs-molecule-principle.md` - Foundation principle
+- `docs/sessions/057/` - Previous session (CSS-wide keywords refactor + audit)
+- `docs/sessions/058/` - This session (naming convention alignment)
 
 ---
 
-## 💭 Open Questions for Discussion
+## 🎨 The Rule
 
-1. Should declarations have a `types.ts` file at all?
-2. If yes, should it just be a single line re-export or serve a purpose?
-3. Naming: `BgSize` vs `BackgroundSize` - which for component vs property?
-4. Should property-level types be in `@b/types` or `@b/declarations`?
+**Naming follows CSS spec production names:**
 
-**User wants to discuss further to nail THE pattern before scaling to 50+ properties**
+- `<bg-size>` → `bgSizeSchema` / `BgSize`
+- `<image>` → `imageSchema` / `Image`
+- `<repeat-style>` → `repeatStyleSchema` / `RepeatStyle`
+
+**No suffixes needed when using namespace imports:**
+
+- Keywords: `import * as Keywords from "@b/keywords"`
+- Use: `Keywords.bgSize` (NOT `Keywords.bgSizeKeyword`)
+
+**Consistency is paramount for scaling to 50+ properties.**
 
 ---
 
-**Status:** 🟡 **Blocked - Need Pattern Alignment**  
-**Commits:** 2 (CSS-wide keywords refactor + audit)  
-**Next:** Session 058 - Align on pattern, then execute refactor
-
-**Token usage:** Running low - ready for fresh session with pattern discussion
+**Status:** 🟢 **Ready to Execute**  
+**Next:** Begin Phase 1 - Keywords refactor with namespace imports

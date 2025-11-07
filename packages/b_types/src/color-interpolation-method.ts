@@ -1,6 +1,6 @@
 // b_path:: packages/b_types/src/color-interpolation-method.ts
 import { z } from "zod";
-import { hueInterpolationMethodSchema, polarColorSpaceSchema, rectangularColorSpaceSchema } from "@b/keywords";
+import * as Keywords from "@b/keywords";
 
 /**
  * @see https://developer.mozilla.org/en-US/docs/Web/CSS/color-interpolation-method
@@ -8,13 +8,13 @@ import { hueInterpolationMethodSchema, polarColorSpaceSchema, rectangularColorSp
 export const colorInterpolationMethodSchema = z.union([
   z
     .object({
-      colorSpace: rectangularColorSpaceSchema,
+      colorSpace: Keywords.rectangularColorSpace,
     })
     .strict(),
   z
     .object({
-      colorSpace: polarColorSpaceSchema,
-      hueInterpolationMethod: hueInterpolationMethodSchema.optional(),
+      colorSpace: Keywords.polarColorSpace,
+      hueInterpolationMethod: Keywords.hueInterpolationMethod.optional(),
     })
     .strict(),
 ]);

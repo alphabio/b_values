@@ -7,9 +7,9 @@ import { getLiteralValues } from "./utils";
  * Defines keywords for background-size and mask-size properties.
  * @see https://developer.mozilla.org/en-US/docs/Web/CSS/background-size#values
  */
-export const bgSizeKeywordSchema = z.union([z.literal("auto"), z.literal("cover"), z.literal("contain")]);
+export const bgSize = z.union([z.literal("auto"), z.literal("cover"), z.literal("contain")]);
 
 // Extract the raw string values for convenience
-export const BG_SIZE_KEYWORDS = getLiteralValues(bgSizeKeywordSchema);
+export const BG_SIZE = getLiteralValues(bgSize);
 
-export type BgSizeKeyword = z.infer<typeof bgSizeKeywordSchema>;
+export type BgSize = z.infer<typeof bgSize>;

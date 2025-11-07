@@ -163,6 +163,6 @@ export const namedColorsValues = namedColors.flatMap(getLiteralValues);
 
 // Zod union schema for named colors
 // Context for better error messages is provided at validation sites
-export const namedColorSchema = z.union(namedColors);
+export const namedColor = z.union(namedColors);
 
-export type NamedColor = z.infer<typeof namedColorSchema>;
+export type NamedColor = z.infer<typeof namedColor>;

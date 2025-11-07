@@ -8,7 +8,7 @@ import {
   type Issue,
   type GenerateResult,
 } from "@b/types";
-import { cssWideKeywordSchema } from "@b/keywords";
+import * as Keywords from "@b/keywords";
 import { getPropertyDefinition, isCustomProperty } from "./core";
 import type { CSSDeclaration, DeclarationResult } from "./types";
 import { generateDeclaration } from "./generator";
@@ -63,7 +63,7 @@ export function parseDeclaration(input: string | CSSDeclaration): ParseResult<De
   // This is architecturally correct: browsers handle these keywords at the top level
   // before delegating to property-specific parsing logic.
   const trimmedValue = value.trim().toLowerCase();
-  const wideKeywordCheck = cssWideKeywordSchema.safeParse(trimmedValue);
+  const wideKeywordCheck = Keywords.cssWide.safeParse(trimmedValue);
 
   if (wideKeywordCheck.success) {
     // Short-circuit: Return immediately without calling property parser

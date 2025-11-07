@@ -4,7 +4,7 @@ import { z } from "zod";
  * Defines CSS-wide keywords that apply to all properties.
  * @see https://www.w3.org/TR/css-values-4/#common-keywords
  */
-export const cssWideKeywordSchema = z.union([
+export const cssWide = z.union([
   z.literal("inherit"),
   z.literal("initial"),
   z.literal("unset"),
@@ -12,4 +12,4 @@ export const cssWideKeywordSchema = z.union([
   z.literal("revert-layer"),
 ]);
 
-export type CssWideKeyword = z.infer<typeof cssWideKeywordSchema>;
+export type CssWide = z.infer<typeof cssWide>;

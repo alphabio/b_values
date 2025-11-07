@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 import { cssValueSchema } from "./values/css-value";
-import { cssWideKeywordSchema, bgSizeKeywordSchema } from "@b/keywords";
+import * as Keywords from "@b/keywords";
 
 /**
  * Represents a single background size value (one item in the comma-separated list).
@@ -16,7 +16,7 @@ export const bgSizeSchema = z.discriminatedUnion("kind", [
   // Handles 'cover' and 'contain'
   z.object({
     kind: z.literal("keyword"),
-    value: bgSizeKeywordSchema,
+    value: Keywords.bgSize,
   }),
   // Handles 1-value syntax ('auto', '50%') and 2-value syntax ('50% auto')
   z.object({
@@ -38,7 +38,7 @@ export const bgSizeListSchema = z.discriminatedUnion("kind", [
   // For global keywords like 'inherit', 'unset', etc.
   z.object({
     kind: z.literal("keyword"),
-    value: cssWideKeywordSchema,
+    value: Keywords.cssWide,
   }),
   // For one or more <bg-size> values
   z.object({

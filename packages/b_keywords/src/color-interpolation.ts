@@ -5,7 +5,7 @@ import { z } from "zod";
  * @see https://developer.mozilla.org/en-US/docs/Web/CSS/color-interpolation-method
  */
 
-export const rectangularColorSpaceSchema = z.union([
+export const rectangularColorSpace = z.union([
   z.literal("srgb"),
   z.literal("srgb-linear"),
   z.literal("display-p3"),
@@ -20,27 +20,22 @@ export const rectangularColorSpaceSchema = z.union([
   z.literal("xyz-d65"),
 ]);
 
-export type RectangularColorSpace = z.infer<typeof rectangularColorSpaceSchema>;
+export type RectangularColorSpace = z.infer<typeof rectangularColorSpace>;
 
-export const polarColorSpaceSchema = z.union([
-  z.literal("hsl"),
-  z.literal("hwb"),
-  z.literal("lch"),
-  z.literal("oklch"),
-]);
+export const polarColorSpace = z.union([z.literal("hsl"), z.literal("hwb"), z.literal("lch"), z.literal("oklch")]);
 
-export type PolarColorSpace = z.infer<typeof polarColorSpaceSchema>;
+export type PolarColorSpace = z.infer<typeof polarColorSpace>;
 
-export const hueInterpolationMethodSchema = z.union([
+export const hueInterpolationMethod = z.union([
   z.literal("shorter hue"),
   z.literal("longer hue"),
   z.literal("increasing hue"),
   z.literal("decreasing hue"),
 ]);
 
-export type HueInterpolationMethod = z.infer<typeof hueInterpolationMethodSchema>;
+export type HueInterpolationMethod = z.infer<typeof hueInterpolationMethod>;
 
 // For backward compatibility, keep the simple union
-export const colorInterpolationSchema = z.union([rectangularColorSpaceSchema, polarColorSpaceSchema]);
+export const colorInterpolation = z.union([rectangularColorSpace, polarColorSpace]);
 
-export type ColorInterpolation = z.infer<typeof colorInterpolationSchema>;
+export type ColorInterpolation = z.infer<typeof colorInterpolation>;

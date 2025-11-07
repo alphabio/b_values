@@ -1,6 +1,6 @@
 // b_path:: packages/b_types/src/gradient/radial-size.ts
 import { z } from "zod";
-import { radialSizeKeywordSchema } from "@b/keywords";
+import * as Keywords from "@b/keywords";
 import { cssValueSchema } from "../values";
 
 /**
@@ -10,7 +10,7 @@ export const radialGradientSizeSchema = z.union([
   z
     .object({
       kind: z.literal("keyword"),
-      value: radialSizeKeywordSchema,
+      value: Keywords.radialSizeKeyword,
     })
     .strict(),
   z

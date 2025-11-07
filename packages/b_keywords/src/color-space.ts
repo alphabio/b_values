@@ -5,7 +5,7 @@ import { z } from "zod";
  * Color spaces supported by the color() function
  * @see https://www.w3.org/TR/css-color-4/#color-function
  */
-export const colorFunctionSpaceSchema = z.union([
+export const colorFunctionSpace = z.union([
   z.literal("srgb"),
   z.literal("srgb-linear"),
   z.literal("display-p3"),
@@ -17,4 +17,4 @@ export const colorFunctionSpaceSchema = z.union([
   z.literal("xyz-d65"),
 ]);
 
-export type ColorFunctionSpace = z.infer<typeof colorFunctionSpaceSchema>;
+export type ColorFunctionSpace = z.infer<typeof colorFunctionSpace>;

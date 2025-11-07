@@ -8,7 +8,7 @@ import * as Keywords from "@b/keywords";
 export const namedColorSchema = z
   .object({
     kind: z.literal("named"),
-    name: Keywords.namedColorSchema,
+    name: Keywords.namedColor,
   })
   .strict();
 
