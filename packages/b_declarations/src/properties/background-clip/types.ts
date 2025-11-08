@@ -2,13 +2,15 @@
 
 import { z } from "zod";
 import * as Keywords from "@b/keywords";
+import { cssValueSchema } from "@b/types";
 
 /**
  * Single background-clip value. This is the component type, <box>.
- * It's a keyword from our vocabulary.
+ * Accepts specific keywords (border-box, padding-box, content-box, text)
+ * OR any CssValue (var(), calc(), etc.)
  * @see https://developer.mozilla.org/en-US/docs/Web/CSS/background-clip
  */
-const backgroundClipValueSchema = Keywords.backgroundClip;
+const backgroundClipValueSchema = cssValueSchema;
 
 /**
  * The final IR schema for the entire `background-clip` property.

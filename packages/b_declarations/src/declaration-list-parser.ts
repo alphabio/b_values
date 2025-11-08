@@ -40,7 +40,7 @@ export function parseDeclarationList(css: string): ParseResult<DeclarationResult
   } catch (e: unknown) {
     const error = e as Error;
     return parseErr(
-      "InvalidSyntax",
+      "declaration-list",
       createError("invalid-syntax", `Failed to parse declaration list: ${error.message}`),
     );
   }
@@ -64,6 +64,7 @@ export function parseDeclarationList(css: string): ParseResult<DeclarationResult
     // Extract property and value from AST node
     const property = node.property;
     const valueNode = node.value;
+    const important = Boolean(node.important);
 
     if (!valueNode) {
       allIssues.push(createError("missing-value", `Missing value for property: ${property}`, { property }));
@@ -73,7 +74,7 @@ export function parseDeclarationList(css: string): ParseResult<DeclarationResult
     const value = csstree.generate(valueNode).trim();
 
     // Parse the declaration using existing infrastructure
-    const result = parseDeclaration({ property, value });
+    const result = parseDeclaration({ property, value, important });
 
     if (result.ok) {
       // Check for duplicate property

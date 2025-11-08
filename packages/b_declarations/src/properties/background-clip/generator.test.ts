@@ -8,7 +8,7 @@ describe("generateBackgroundClip", () => {
     it("should generate 'border-box'", () => {
       const ir: BackgroundClipIR = {
         kind: "list",
-        values: ["border-box"],
+        values: [{ kind: "keyword", value: "border-box" }],
       };
 
       const result = generateBackgroundClip(ir);
@@ -21,7 +21,7 @@ describe("generateBackgroundClip", () => {
     it("should generate 'padding-box'", () => {
       const ir: BackgroundClipIR = {
         kind: "list",
-        values: ["padding-box"],
+        values: [{ kind: "keyword", value: "padding-box" }],
       };
 
       const result = generateBackgroundClip(ir);
@@ -34,7 +34,7 @@ describe("generateBackgroundClip", () => {
     it("should generate 'content-box'", () => {
       const ir: BackgroundClipIR = {
         kind: "list",
-        values: ["content-box"],
+        values: [{ kind: "keyword", value: "content-box" }],
       };
 
       const result = generateBackgroundClip(ir);
@@ -47,7 +47,7 @@ describe("generateBackgroundClip", () => {
     it("should generate 'text'", () => {
       const ir: BackgroundClipIR = {
         kind: "list",
-        values: ["text"],
+        values: [{ kind: "keyword", value: "text" }],
       };
 
       const result = generateBackgroundClip(ir);
@@ -62,7 +62,10 @@ describe("generateBackgroundClip", () => {
     it("should generate two values", () => {
       const ir: BackgroundClipIR = {
         kind: "list",
-        values: ["border-box", "padding-box"],
+        values: [
+          { kind: "keyword", value: "border-box" },
+          { kind: "keyword", value: "padding-box" },
+        ],
       };
 
       const result = generateBackgroundClip(ir);
@@ -75,7 +78,12 @@ describe("generateBackgroundClip", () => {
     it("should generate all valid values", () => {
       const ir: BackgroundClipIR = {
         kind: "list",
-        values: ["border-box", "padding-box", "content-box", "text"],
+        values: [
+          { kind: "keyword", value: "border-box" },
+          { kind: "keyword", value: "padding-box" },
+          { kind: "keyword", value: "content-box" },
+          { kind: "keyword", value: "text" },
+        ],
       };
 
       const result = generateBackgroundClip(ir);

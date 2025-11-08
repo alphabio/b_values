@@ -14,6 +14,7 @@ export const customProperty = defineProperty<CustomPropertyIR>({
   syntax: "<declaration-value>",
   parser: parseCustomProperty,
   multiValue: false,
+  rawValue: true,
   generator: generateCustomProperty,
   inherited: true,
   initial: "",

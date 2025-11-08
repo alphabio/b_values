@@ -15,6 +15,7 @@ describe("parseDeclaration", () => {
       defineProperty({
         name: "color",
         syntax: "<color>",
+        multiValue: false,
         parser: (node: csstree.Value): ParseResult<string> => {
           // Simple test parser: just convert back to string
           const value = csstree.generate(node).trim();
@@ -37,6 +38,7 @@ describe("parseDeclaration", () => {
       defineProperty({
         name: "color",
         syntax: "<color>",
+        multiValue: false,
         parser: (node: csstree.Value): ParseResult<string> => {
           const value = csstree.generate(node).trim();
           return parseOk(value);
@@ -58,6 +60,7 @@ describe("parseDeclaration", () => {
       defineProperty({
         name: "background-image",
         syntax: "<image>",
+        multiValue: false,
         parser: (node: csstree.Value): ParseResult<string> => {
           const value = csstree.generate(node).trim();
           return parseOk(value);
@@ -110,6 +113,7 @@ background-image: url(image.png);
       defineProperty({
         name: "color",
         syntax: "<color>",
+        multiValue: false,
         parser: (node: csstree.Value): ParseResult<string> => {
           const value = csstree.generate(node).trim();
           return parseOk(value);
@@ -145,6 +149,7 @@ background-image: url(image.png);
       defineProperty({
         name: "test-prop",
         syntax: "<test>",
+        multiValue: false,
         parser: (): ParseResult<never> => parseErr("InvalidValue", createError("invalid-value", "Parser error")),
         inherited: false,
         initial: "none",
@@ -164,6 +169,7 @@ background-image: url(image.png);
       defineProperty({
         name: "test-prop",
         syntax: "<test>",
+        multiValue: false,
         parser: (): ParseResult<never> => parseErr("InvalidValue", createError("invalid-value", "Test error")),
         inherited: false,
         initial: "none",
@@ -181,6 +187,7 @@ background-image: url(image.png);
       defineProperty({
         name: "color",
         syntax: "<color>",
+        multiValue: false,
         parser: (): ParseResult<never> => parseErr("InvalidValue", createError("invalid-value", "Bad color")),
         inherited: true,
         initial: "black",
@@ -202,6 +209,7 @@ background-image: url(image.png);
       defineProperty({
         name: "background-image",
         syntax: "<image>",
+        multiValue: false,
         parser: (): ParseResult<never> => parseErr("InvalidValue", createError("invalid-value", "Bad image")),
         inherited: false,
         initial: "none",
@@ -228,6 +236,7 @@ background-image: url(image.png);
       defineProperty({
         name: "color",
         syntax: "<color>",
+        multiValue: false,
         parser: (node: csstree.Value): ParseResult<string> => {
           const value = csstree.generate(node).trim();
           // Success but with warning

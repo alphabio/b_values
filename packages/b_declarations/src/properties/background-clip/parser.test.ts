@@ -13,7 +13,7 @@ describe("parseBackgroundClip", () => {
       expect(result.value.kind).toBe("list");
       if (result.value.kind !== "list") return;
       expect(result.value.values).toHaveLength(1);
-      expect(result.value.values[0]).toBe("border-box");
+      expect(result.value.values[0]).toMatchObject({ kind: "keyword", value: "border-box" });
     });
 
     it("should parse 'padding-box'", () => {
@@ -23,7 +23,7 @@ describe("parseBackgroundClip", () => {
       if (!result.ok) return;
       expect(result.value.kind).toBe("list");
       if (result.value.kind !== "list") return;
-      expect(result.value.values[0]).toBe("padding-box");
+      expect(result.value.values[0]).toMatchObject({ kind: "keyword", value: "padding-box" });
     });
 
     it("should parse 'content-box'", () => {
@@ -33,7 +33,7 @@ describe("parseBackgroundClip", () => {
       if (!result.ok) return;
       expect(result.value.kind).toBe("list");
       if (result.value.kind !== "list") return;
-      expect(result.value.values[0]).toBe("content-box");
+      expect(result.value.values[0]).toMatchObject({ kind: "keyword", value: "content-box" });
     });
 
     it("should parse 'text'", () => {
@@ -43,7 +43,7 @@ describe("parseBackgroundClip", () => {
       if (!result.ok) return;
       expect(result.value.kind).toBe("list");
       if (result.value.kind !== "list") return;
-      expect(result.value.values[0]).toBe("text");
+      expect(result.value.values[0]).toMatchObject({ kind: "keyword", value: "text" });
     });
   });
 
@@ -56,8 +56,8 @@ describe("parseBackgroundClip", () => {
       expect(result.value.kind).toBe("list");
       if (result.value.kind !== "list") return;
       expect(result.value.values).toHaveLength(2);
-      expect(result.value.values[0]).toBe("border-box");
-      expect(result.value.values[1]).toBe("padding-box");
+      expect(result.value.values[0]).toMatchObject({ kind: "keyword", value: "border-box" });
+      expect(result.value.values[1]).toMatchObject({ kind: "keyword", value: "padding-box" });
     });
 
     it("should parse all valid values", () => {

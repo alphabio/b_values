@@ -39,13 +39,16 @@ export function findFunctionNode(
     });
 
     if (!foundNode) {
-      return parseErr("Function", createError("missing-value", `No function found with name(s): ${names.join(", ")}`));
+      return parseErr(
+        "function-node",
+        createError("missing-value", `No function found with name(s): ${names.join(", ")}`),
+      );
     }
 
     return parseOk(foundNode);
   } catch (e) {
     return parseErr(
-      "InvalidSyntax",
+      "css-ast",
       createError("invalid-syntax", `Failed to search AST: ${e instanceof Error ? e.message : String(e)}`),
     );
   }
@@ -72,7 +75,7 @@ export function parseCssString(css: string, context: "value" | "declaration" = "
     return parseOk(ast);
   } catch (e) {
     return parseErr(
-      "InvalidSyntax",
+      "css-ast",
       createError("invalid-syntax", `Failed to parse CSS: ${e instanceof Error ? e.message : String(e)}`),
     );
   }

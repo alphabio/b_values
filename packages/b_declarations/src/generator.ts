@@ -1,5 +1,5 @@
 // b_path:: packages/b_declarations/src/generator.ts
-import { generateOk, generateErr, createError, type GenerateResult } from "@b/types";
+import { generateOk, generateErr, createError, type GenerateResult, type Issue } from "@b/types";
 import { getPropertyDefinition } from "./core";
 import type { PropertyIRMap, RegisteredProperty, PropertyGenerator } from "./types";
 
@@ -12,6 +12,7 @@ import type { PropertyIRMap, RegisteredProperty, PropertyGenerator } from "./typ
 export interface GenerateDeclarationInput<TProperty extends RegisteredProperty> {
   property: TProperty;
   ir: PropertyIRMap[TProperty];
+  important?: boolean;
 }
 
 /**
@@ -36,7 +37,7 @@ export interface GenerateDeclarationInput<TProperty extends RegisteredProperty> 
 export function generateDeclaration<TProperty extends RegisteredProperty>(
   input: GenerateDeclarationInput<TProperty>,
 ): GenerateResult {
-  const { property, ir } = input;
+  const { property, ir, important } = input;
 
   // Look up property definition (with custom property fallback)
   const definition = getPropertyDefinition(property);
@@ -66,18 +67,42 @@ export function generateDeclaration<TProperty extends RegisteredProperty>(
   // is the correct one for the IR we have. This is a safe assertion because our registration
   // process will guarantee it.
   const generator = definition.generator as PropertyGenerator<PropertyIRMap[TProperty]>;
-  const generateResult = generator(ir);
+  const rawResult = generator(ir);
+  const result = ensureProperty(rawResult, property);
 
-  if (!generateResult.ok) {
-    return generateResult;
+  if (!result.ok) {
+    return result;
   }
 
   // Format as CSS declaration: "property: value"
-  const declaration = `${property}: ${generateResult.value}`;
+  // Append !important if specified
+  const declaration = important ? `${property}: ${result.value} !important` : `${property}: ${result.value}`;
 
-  // Preserve issues from the generator result
   return {
     ...generateOk(declaration, property),
-    issues: generateResult.issues,
+    issues: result.issues,
   };
+}
+
+function ensureProperty(result: GenerateResult, property: string): GenerateResult {
+  const stampedIssues = stampIssues(result.issues, property);
+
+  if (result.ok) {
+    return {
+      ok: true,
+      value: result.value,
+      issues: stampedIssues,
+      property,
+    };
+  }
+
+  return {
+    ok: false,
+    issues: stampedIssues,
+    property,
+  };
+}
+
+function stampIssues(issues: Issue[], property: string): Issue[] {
+  return issues.map((issue) => (issue.property ? issue : { ...issue, property }));
 }

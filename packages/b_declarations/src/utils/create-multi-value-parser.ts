@@ -113,15 +113,25 @@ export function createMultiValueParser<TItem, TFinal>(
             "invalid-syntax",
             `Unexpected content after a valid value, likely a missing comma. Unparsed: "${preview}"`,
           );
-          itemResults.push(parseErr("InvalidSyntax", issue));
+          itemResults.push(parseErr("multi-value", issue));
           continue;
         }
       } catch (e) {
-        const issue = createError(
-          "invalid-syntax",
-          `Invalid syntax in list item: ${e instanceof Error ? e.message : String(e)}`,
-        );
-        itemResults.push(parseErr("InvalidSyntax", issue));
+        const errorMessage = e instanceof Error ? e.message : String(e);
+
+        // Detect common mistakes and provide helpful messages
+        let improvedMessage = `Invalid syntax in list item: ${errorMessage}`;
+
+        if (trimmedItemStr.includes("!important")) {
+          improvedMessage = `Found '!important' in value. Use parseDeclaration() for declarations with !important, not property parsers directly.`;
+        } else if (/\s+!/.test(trimmedItemStr)) {
+          improvedMessage = `Invalid syntax: '!' character found. Did you mean to use parseDeclaration() with !important?`;
+        } else if (errorMessage.toLowerCase().includes("unexpected")) {
+          improvedMessage = `Invalid syntax in list item: ${errorMessage}. Check for typos, missing quotes, or invalid tokens.`;
+        }
+
+        const issue = createError("invalid-syntax", improvedMessage);
+        itemResults.push(parseErr("multi-value", issue));
         continue;
       }
 
@@ -144,6 +154,7 @@ export function createMultiValueParser<TItem, TFinal>(
     if (validItems.length === 0) {
       return {
         ok: false,
+        property: "multi-value",
         value: undefined,
         issues: allIssues.length > 0 ? allIssues : [createError("invalid-value", "No valid list items found")],
       };
@@ -154,16 +165,19 @@ export function createMultiValueParser<TItem, TFinal>(
 
     // Determine ok status based on whether there were any errors.
     const hasErrors = allIssues.some((issue) => issue.severity === "error");
-    if (!hasErrors) {
+
+    if (hasErrors) {
       return {
-        ok: true,
+        ok: false,
+        property: "multi-value",
         value: finalIR,
-        issues: [],
+        issues: allIssues,
       };
     }
 
     return {
-      ok: false,
+      ok: true,
+      property: "multi-value",
       value: finalIR,
       issues: allIssues,
     };

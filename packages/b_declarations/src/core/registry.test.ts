@@ -16,6 +16,7 @@ describe("PropertyRegistry", () => {
     const definition = defineProperty({
       name: "color",
       syntax: "<color>",
+      multiValue: false,
       parser: (): ParseResult<string> => parseOk("test"),
       inherited: true,
       initial: "black",
@@ -34,6 +35,7 @@ describe("PropertyRegistry", () => {
     defineProperty({
       name: "color",
       syntax: "<color>",
+      multiValue: false,
       parser: (): ParseResult<string> => parseOk("test"),
       inherited: true,
       initial: "black",
@@ -42,6 +44,7 @@ describe("PropertyRegistry", () => {
     defineProperty({
       name: "background",
       syntax: "<background>",
+      multiValue: false,
       parser: (): ParseResult<string> => parseOk("test"),
       inherited: false,
       initial: "transparent",
@@ -56,6 +59,7 @@ describe("PropertyRegistry", () => {
     defineProperty({
       name: "color",
       syntax: "<color>",
+      multiValue: false,
       parser: (): ParseResult<string> => parseOk("test"),
       inherited: true,
       initial: "black",
@@ -95,6 +99,7 @@ describe("getPropertyDefinition", () => {
     const definition = defineProperty({
       name: "color",
       syntax: "<color>",
+      multiValue: false,
       parser: (): ParseResult<string> => parseOk("test"),
       inherited: true,
       initial: "black",
@@ -116,6 +121,7 @@ describe("getPropertyDefinition", () => {
     const definition = defineProperty({
       name: "--special",
       syntax: "<special>",
+      multiValue: false,
       parser: (): ParseResult<string> => parseOk("special"),
       inherited: true,
       initial: "default",

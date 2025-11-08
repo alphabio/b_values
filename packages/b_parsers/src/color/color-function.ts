@@ -13,7 +13,7 @@ import * as Keywords from "@b/keywords";
  */
 export function parseColorFunction(node: csstree.FunctionNode): ParseResult<ColorFunction> {
   if (node.name !== "color") {
-    return parseErr("color", createError("invalid-syntax", "Expected color() function"));
+    return parseErr("color-function", createError("invalid-syntax", "Expected color() function"));
   }
 
   const values = getValues(getChildren(node));
@@ -39,7 +39,7 @@ export function parseColorFunction(node: csstree.FunctionNode): ParseResult<Colo
 
   const colorSpaceResult = Keywords.colorFunctionSpace.safeParse(colorSpaceNode.name);
   if (!colorSpaceResult.success) {
-    return parseErr("color", createError("invalid-syntax", `Invalid color space: ${colorSpaceNode.name}`));
+    return parseErr("color-function", createError("invalid-syntax", `Invalid color space: ${colorSpaceNode.name}`));
   }
 
   // Parse the three channel values

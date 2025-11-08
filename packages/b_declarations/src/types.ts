@@ -1,102 +1,118 @@
 // b_path:: packages/b_declarations/src/types.ts
-// This file contains the PropertyIRMap that maps property names to their IR types.
-// TODO: It should be auto-generated in the future.
 
-import type { GenerateResult, ParseResult } from "@b/types";
+// This module defines the core types for the @b/declarations package.
+//
+// - PropertyIRMap is auto-generated in ./types.map.ts
+// - RegisteredProperty is the union of all known property names
+// - PropertyDefinition describes how each property integrates into the registry
+// - Parser / generator function signatures used by property implementations
+
+import type { ParseResult, GenerateResult } from "@b/types";
 import type { PropertyIRMap } from "./types.map";
 
 export type { PropertyIRMap } from "./types.map";
 
-// import type {
-//   BackgroundAttachmentIR,
-//   BackgroundClipIR,
-//   BackgroundImageIR,
-//   BackgroundOriginIR,
-//   BackgroundRepeatIR,
-//   BackgroundSizeIR,
-//   CustomPropertyIR,
-// } from "./properties";
-
-// /**
-//  * Map of CSS property names to their IR types.
-//  * Used for type-safe parsing and generation.
-//  */
-// export interface PropertyIRMap {
-//   "background-attachment": BackgroundAttachmentIR;
-//   "background-clip": BackgroundClipIR;
-//   "background-image": BackgroundImageIR;
-//   "background-origin": BackgroundOriginIR;
-//   "background-repeat": BackgroundRepeatIR;
-//   "background-size": BackgroundSizeIR;
-//   [key: `--${string}`]: CustomPropertyIR;
-// }
-
 /**
  * Union type of all registered property names.
+ * Backed by the auto-generated PropertyIRMap.
  */
 export type RegisteredProperty = keyof PropertyIRMap;
 
 /**
+ * Basic CSS declaration input structure.
+ * Example: { property: "background-image", value: "linear-gradient(...)", important: true }
+ */
+export interface CSSDeclaration {
+  property: string;
+  value: string;
+  important?: boolean;
+}
+
+/**
+ * Result of parsing a CSS declaration into its IR representation.
+ *
+ * Note:
+ * - `ir` is the property-specific intermediate representation.
+ * - `important` is preserved when originating from declarations that include it.
+ */
+export interface DeclarationResult<T = unknown> {
+  property: string;
+  ir: T;
+  important?: boolean;
+}
+
+/**
  * Property generator function type.
+ *
+ * Given property-specific IR, returns a GenerateResult for the CSS value
+ * (NOT including the "property:" prefix).
  */
 export type PropertyGenerator<T = unknown> = (ir: T) => GenerateResult;
 
 /**
  * Parser for single-value properties.
- * Receives a pre-parsed AST node from css-tree.
- * Example: color, opacity, width
+ * Receives a css-tree Value AST node.
+ * Examples: color, opacity, width.
  */
 export type SingleValueParser<T> = (node: import("@eslint/css-tree").Value) => ParseResult<T>;
 
 /**
  * Parser for multi-value (comma-separated) properties.
- * Receives the raw string value and handles splitting + partial failures.
- * Example: background-image, font-family
+ * Receives the raw value string.
+ * Examples: background-image, font-family.
  */
 export type MultiValueParser<T> = (value: string) => ParseResult<T>;
 
-// ===================================
-// Moved from  ./core/types.ts
-// ===================================
+/**
+ * Parser for "raw" value properties.
+ * Receives the raw value string without AST parsing.
+ * Examples: custom properties, or intentionally opaque properties.
+ */
+export type RawValueParser<T> = (value: string) => ParseResult<T>;
 
 /**
- * A CSS declaration consists of a property name and its value.
- * Example: { property: "background-image", value: "linear-gradient(...)" }
+ * Property definition fragments for different parsing modes.
  */
-export interface CSSDeclaration {
-  property: string;
-  value: string;
-}
 
-/**
- * Result of parsing a CSS declaration into its IR representation.
- */
-export interface DeclarationResult<T = unknown> {
-  property: string;
-  ir: T;
-}
+type SingleValueDefinition<T> = {
+  multiValue?: false;
+  rawValue?: false;
+  parser: SingleValueParser<T>;
+};
+
+type MultiValueDefinition<T> = {
+  multiValue: true;
+  rawValue?: false;
+  parser: MultiValueParser<T>;
+};
+
+type RawValueDefinition<T> = {
+  multiValue?: false;
+  rawValue: true;
+  parser: RawValueParser<T>;
+};
 
 /**
  * Property definition for the registry.
- * Each CSS property must register its metadata, parser, and generator.
+ *
+ * Each CSS property registers:
+ * - its canonical name (CSS syntax),
+ * - syntax string (for docs),
+ * - parser configuration (single, multi, or raw),
+ * - optional generator for IR → CSS,
+ * - inheritance and initial/computed values.
  */
-export interface PropertyDefinition<T = unknown> {
+export type PropertyDefinition<T = unknown> = {
+  /** CSS property name, e.g. "background-image" or "--*" */
   name: string;
+  /** CSS syntax string (for documentation, non-normative) */
   syntax: string;
-  /**
-   * Parser can be either:
-   * - SingleValueParser: Receives pre-parsed AST node (for single values)
-   * - MultiValueParser: Receives raw string (for comma-separated lists)
-   */
-  parser: SingleValueParser<T> | MultiValueParser<T>;
-  /**
-   * Flag indicating if this property accepts multiple comma-separated values.
-   * When true, parser will be called with raw string.
-   * When false/undefined, parser will be called with AST node.
-   */
-  multiValue?: boolean;
-  generator?: PropertyGenerator<T>;
+  /** Whether the property is inherited by default */
   inherited: boolean;
+  /** Initial value per spec */
   initial: string;
+  /** Optional computed value description */
   computed?: string;
-}
+  /** Optional IR → CSS value generator for this property */
+  generator?: PropertyGenerator<T>;
+} & (SingleValueDefinition<T> | MultiValueDefinition<T> | RawValueDefinition<T>);

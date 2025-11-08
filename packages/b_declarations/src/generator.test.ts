@@ -26,6 +26,7 @@ describe("generateDeclaration", () => {
       defineProperty({
         name: "background-image",
         syntax: "<background-image>",
+        multiValue: false,
         parser: mockParser((value: string) => ({ kind: "gradient" as const, value })),
         generator: (ir: ComplexIR): GenerateResult => generateOk(`${ir.kind}(${ir.value})`),
         inherited: false,
@@ -65,6 +66,7 @@ describe("generateDeclaration", () => {
       defineProperty({
         name: "color",
         syntax: "<color>",
+        multiValue: false,
         parser: mockParser((value: string) => value.trim()),
         // No generator provided
         inherited: true,
@@ -91,6 +93,7 @@ describe("generateDeclaration", () => {
       defineProperty({
         name: "test-prop",
         syntax: "<test>",
+        multiValue: false,
         parser: mockParser((value: string) => value),
         generator: (): GenerateResult =>
           generateErr(createError("invalid-ir", "Generator failed", { suggestion: "Fix the IR" }), "test-prop"),
@@ -117,6 +120,7 @@ describe("generateDeclaration", () => {
       defineProperty({
         name: "test-prop",
         syntax: "<test>",
+        multiValue: false,
         parser: mockParser((value: string) => value),
         generator: (): GenerateResult => generateErr(createError("invalid-ir", "Multiple issues"), "test-prop"),
         inherited: false,
@@ -143,6 +147,7 @@ describe("generateDeclaration", () => {
       defineProperty({
         name: "content",
         syntax: "<string>",
+        multiValue: false,
         parser: mockParser((value: string) => value),
         generator: (ir: string): GenerateResult => generateOk(`"${ir}"`),
         inherited: false,
@@ -165,6 +170,7 @@ describe("generateDeclaration", () => {
       defineProperty({
         name: "content",
         syntax: "<string>",
+        multiValue: false,
         parser: mockParser((value: string) => value),
         generator: (ir: string): GenerateResult => generateOk(ir),
         inherited: false,
@@ -181,6 +187,85 @@ describe("generateDeclaration", () => {
       expect(result.ok).toBe(true);
       if (!result.ok) return;
       expect(result.value).toBe('content: "hello\\nworld"');
+    });
+  });
+
+  describe("important flag", () => {
+    beforeEach(() => {
+      defineProperty({
+        name: "color",
+        syntax: "<color>",
+        multiValue: false,
+        parser: mockParser((value: string) => value.trim()),
+        generator: (ir: string): GenerateResult => generateOk(ir),
+        inherited: true,
+        initial: "black",
+      });
+    });
+
+    it("should append !important when flag is true", () => {
+      const result = generateDeclaration({
+        // @ts-expect-error Testing mock property
+        property: "color",
+        // @ts-expect-error Testing mock property
+        ir: "red",
+        important: true,
+      });
+
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      expect(result.value).toBe("color: red !important");
+    });
+
+    it("should not append !important when flag is false", () => {
+      const result = generateDeclaration({
+        // @ts-expect-error Testing mock property
+        property: "color",
+        // @ts-expect-error Testing mock property
+        ir: "blue",
+        important: false,
+      });
+
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      expect(result.value).toBe("color: blue");
+    });
+
+    it("should not append !important when flag is undefined", () => {
+      const result = generateDeclaration({
+        // @ts-expect-error Testing mock property
+        property: "color",
+        // @ts-expect-error Testing mock property
+        ir: "green",
+      });
+
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      expect(result.value).toBe("color: green");
+    });
+
+    it("should append !important even on generator errors", () => {
+      defineProperty({
+        name: "test-important",
+        syntax: "<test>",
+        multiValue: false,
+        parser: mockParser((value: string) => value),
+        generator: (): GenerateResult => generateOk("value-with-warning"),
+        inherited: false,
+        initial: "none",
+      });
+
+      const result = generateDeclaration({
+        // @ts-expect-error Testing mock property
+        property: "test-important",
+        // @ts-expect-error Testing mock property
+        ir: "whatever",
+        important: true,
+      });
+
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      expect(result.value).toBe("test-important: value-with-warning !important");
     });
   });
 });

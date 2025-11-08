@@ -40,6 +40,7 @@ import * as csstree from "@eslint/css-tree";
 export function parseDeclaration(input: string | CSSDeclaration): ParseResult<DeclarationResult> {
   let property: string;
   let value: string;
+  let important = false;
 
   // Parse string input into property and value components
   // Accepts two formats:
@@ -52,9 +53,11 @@ export function parseDeclaration(input: string | CSSDeclaration): ParseResult<De
     }
     property = parsed.value.property;
     value = parsed.value.value;
+    important = parsed.value.important ?? false;
   } else {
     property = input.property;
     value = input.value;
+    important = Boolean(input.important);
   }
 
   // ✨ UNIVERSAL CSS-WIDE KEYWORD CHECK ✨
@@ -62,23 +65,24 @@ export function parseDeclaration(input: string | CSSDeclaration): ParseResult<De
   // and apply to ALL properties. Check once here instead of in every property parser.
   // This is architecturally correct: browsers handle these keywords at the top level
   // before delegating to property-specific parsing logic.
-  const trimmedValue = value.trim().toLowerCase();
-  const wideKeywordCheck = Keywords.cssWide.safeParse(trimmedValue);
 
-  if (wideKeywordCheck.success) {
-    // Short-circuit: Return immediately without calling property parser
-    return parseOk({
-      property,
-      ir: { kind: "keyword", value: wideKeywordCheck.data } as never,
-    });
-  }
-  // ✨ END UNIVERSAL CHECK ✨
+  if (!isCustomProperty(property)) {
+    const trimmedValue = value.trim().toLowerCase();
+    const wideKeywordCheck = Keywords.cssWide.safeParse(trimmedValue);
+    if (wideKeywordCheck.success) {
+      return parseOk({
+        property,
+        ir: { kind: "keyword", value: wideKeywordCheck.data } as never,
+        ...(important ? { important: true } : {}),
+      });
+    }
+  } // ✨ END UNIVERSAL CHECK ✨
 
   // Step 1: Look up property definition (with custom property fallback)
   const definition = getPropertyDefinition(property);
 
   if (!definition) {
-    return parseErr("InvalidValue", createError("invalid-value", `Unknown CSS property: ${property}`));
+    return parseErr("declaration", createError("invalid-value", `Unknown CSS property: ${property}`));
   }
 
   // Step 2: Parse based on property type
@@ -101,7 +105,7 @@ export function parseDeclaration(input: string | CSSDeclaration): ParseResult<De
     } catch (e: unknown) {
       // Fatal syntax error for single-value property
       const error = e as Error;
-      return parseErr("InvalidSyntax", createError("invalid-syntax", error.message));
+      return parseErr("declaration", createError("invalid-syntax", error.message));
     }
 
     // Pass validated AST to parser
@@ -135,19 +139,21 @@ export function parseDeclaration(input: string | CSSDeclaration): ParseResult<De
 
   // Step 6: Return result
   if (!parseResult.ok) {
+    const partialDeclaration =
+      parseResult.value !== undefined
+        ? withImportant<DeclarationResult>({ property, ir: parseResult.value as never }, important)
+        : undefined;
+
     return {
       ok: false,
-      value: parseResult.value as DeclarationResult | undefined,
+      value: partialDeclaration,
       issues: enrichedIssues,
       property,
     };
   }
 
   return {
-    ...parseOk({
-      property,
-      ir: parseResult.value,
-    }),
+    ...parseOk(withImportant<DeclarationResult>({ property, ir: parseResult.value as never }, important)),
     issues: enrichedIssues,
   };
 }
@@ -169,26 +175,38 @@ function parseDeclarationString(input: string): ParseResult<CSSDeclaration> {
 
   if (colonIndex === -1) {
     return parseErr(
-      "InvalidSyntax",
+      "declaration",
       createError("invalid-syntax", `Invalid CSS declaration: missing colon in "${input}"`),
     );
   }
 
   const property = cleaned.slice(0, colonIndex).trim();
-  const value = cleaned.slice(colonIndex + 1).trim();
+  let value = cleaned.slice(colonIndex + 1).trim();
 
   if (!property) {
     return parseErr(
-      "MissingValue",
+      "declaration",
       createError("missing-value", `Invalid CSS declaration: empty property in "${input}"`),
     );
   }
 
   if (!value) {
-    return parseErr("MissingValue", createError("missing-value", `Invalid CSS declaration: empty value in "${input}"`));
+    return parseErr("declaration", createError("missing-value", `Invalid CSS declaration: empty value in "${input}"`));
   }
 
-  return parseOk({ property, value });
+  const importantPattern = /\s*!important$/i;
+  let important = false;
+
+  if (importantPattern.test(value)) {
+    important = true;
+    value = value.replace(importantPattern, "").trim();
+  }
+
+  if (!value) {
+    return parseErr("declaration", createError("missing-value", `Invalid CSS declaration: empty value in "${input}"`));
+  }
+
+  return parseOk({ property, value, important });
 }
 
 /**
@@ -233,4 +251,14 @@ function unsafeGenerateDeclaration(property: string, ir: unknown): GenerateResul
     property: property as never,
     ir: ir as never,
   });
+}
+
+/**
+ * Conditionally adds the important flag to a declaration result.
+ * Only adds the field if important is true.
+ *
+ * @internal
+ */
+function withImportant<T extends DeclarationResult>(decl: T, important: boolean): T {
+  return important ? { ...decl, important: true } : decl;
 }

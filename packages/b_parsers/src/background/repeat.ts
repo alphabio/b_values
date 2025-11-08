@@ -1,8 +1,9 @@
 // b_path:: packages/b_parsers/src/background/repeat.ts
 
 import type * as csstree from "@eslint/css-tree";
-import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
+import { createError, parseErr, parseOk, type ParseResult, type CssValue } from "@b/types";
 import * as Ast from "@b/utils";
+import { parseNodeToCssValue } from "../utils/css-value-parser";
 
 const REPETITION_VALUES = ["repeat", "space", "round", "no-repeat"] as const;
 type RepetitionValue = (typeof REPETITION_VALUES)[number];
@@ -14,12 +15,12 @@ type RepeatStyle =
 /**
  * Parse a single background-repeat value from a CSS AST node.
  *
- * Syntax: repeat-x | repeat-y | [ repeat | space | round | no-repeat ]{1,2}
+ * Syntax: repeat-x | repeat-y | [ repeat | space | round | no-repeat ]{1,2} | var() | calc()
  *
  * @param valueNode - The Value node containing the repeat value
- * @returns ParseResult with RepeatStyle
+ * @returns ParseResult with RepeatStyle or CssValue
  */
-export function parseBackgroundRepeatValue(valueNode: csstree.Value): ParseResult<RepeatStyle> {
+export function parseBackgroundRepeatValue(valueNode: csstree.Value): ParseResult<RepeatStyle | CssValue> {
   const allNodes = Ast.nodeListToArray(valueNode.children);
   const nodes = allNodes.filter((node) => node.type !== "WhiteSpace");
 
@@ -27,12 +28,21 @@ export function parseBackgroundRepeatValue(valueNode: csstree.Value): ParseResul
     return parseErr("background-repeat", createError("invalid-syntax", "Expected repeat value"));
   }
 
+  const firstNode = nodes[0];
+  if (!firstNode) {
+    return parseErr("background-repeat", createError("invalid-syntax", "Expected repeat value"));
+  }
+
+  // Handle var(), calc(), and other CSS functions
+  if (Ast.isFunctionNode(firstNode)) {
+    return parseNodeToCssValue(firstNode);
+  }
+
   if (nodes.length > 2) {
     return parseErr("background-repeat", createError("invalid-syntax", "Too many values for repeat style (max 2)"));
   }
 
-  const firstNode = nodes[0];
-  if (!firstNode || !Ast.isIdentifier(firstNode)) {
+  if (!Ast.isIdentifier(firstNode)) {
     return parseErr("background-repeat", createError("invalid-syntax", "Expected repeat value"));
   }
 
@@ -52,7 +62,7 @@ export function parseBackgroundRepeatValue(valueNode: csstree.Value): ParseResul
       "background-repeat",
       createError(
         "invalid-value",
-        `Invalid repeat value: '${firstValue}'. Expected: repeat, space, round, no-repeat, repeat-x, or repeat-y`,
+        `Invalid repeat value: '${firstValue}'. Expected: repeat, space, round, no-repeat, repeat-x, repeat-y, or a CSS function like var()`,
       ),
     );
   }

@@ -1,6 +1,5 @@
 // b_path:: packages/b_types/src/values/css-value.ts
 import { z } from "zod";
-import { getLiteralValues } from "@b/keywords";
 
 /**
  * Represents a literal numeric value with optional unit
@@ -230,10 +229,8 @@ export const allCssValueSchema = [
   // hslFunctionSchema,
 ];
 
-const allCssValues = allCssValueSchema.flatMap(getLiteralValues);
-
 export const cssValueSchema = z.union(allCssValueSchema, {
-  error: () => `Expected ${allCssValues.join(" | ")}`,
+  error: () => "Expected valid CssValue (literal, keyword, variable, function, ...)",
 });
 
 export type LiteralValue = z.infer<typeof literalValueSchema>;

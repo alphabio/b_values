@@ -1,16 +1,16 @@
 // b_path:: packages/b_generators/src/background/clip.ts
 
-import { generateOk, type GenerateResult } from "@b/types";
-import type { BackgroundClip } from "@b/keywords";
+import { generateOk, type GenerateResult, type CssValue } from "@b/types";
+import { cssValueToCss } from "@b/utils";
 
 /**
  * Generate CSS string for a single background-clip value.
  *
- * Syntax: border-box | padding-box | content-box | text
+ * Syntax: border-box | padding-box | content-box | text | var() | calc()
  *
- * @param value - The box value
+ * @param value - The CssValue (keyword, var(), calc(), etc.)
  * @returns GenerateResult with CSS string
  */
-export function generateBackgroundClipValue(value: BackgroundClip): GenerateResult {
-  return generateOk(value);
+export function generateBackgroundClipValue(value: CssValue): GenerateResult {
+  return generateOk(cssValueToCss(value));
 }

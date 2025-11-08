@@ -87,12 +87,12 @@ export function parseLengthPercentageNode(node: csstree.CssNode): ParseResult<Ty
  */
 export function parseNumberNode(node: csstree.CssNode): ParseResult<number> {
   if (node.type !== "Number") {
-    return parseErr("number", createError("invalid-syntax", `Expected number, but got node type ${node.type}`));
+    return parseErr("length", createError("invalid-syntax", `Expected number, but got node type ${node.type}`));
   }
 
   const value = Number.parseFloat(node.value);
   if (Number.isNaN(value)) {
-    return parseErr("number", createError("invalid-value", "Invalid number value: not a number"));
+    return parseErr("length", createError("invalid-value", "Invalid number value: not a number"));
   }
 
   return parseOk(value);

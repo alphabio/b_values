@@ -35,7 +35,6 @@ export function splitNodesByComma(nodes: csstree.CssNode[], options: SplitByComm
 
   const groups: csstree.CssNode[][] = [];
   let currentGroup: csstree.CssNode[] = [];
-  const nestingDepth = 0; // Track nesting depth for functions
 
   for (let i = startIndex; i < nodes.length; i++) {
     const node = nodes[i];
@@ -54,7 +53,7 @@ export function splitNodesByComma(nodes: csstree.CssNode[], options: SplitByComm
     }
 
     // Only split on top-level commas (when not inside a function)
-    if (node.type === "Operator" && "value" in node && node.value === "," && nestingDepth === 0) {
+    if (node.type === "Operator" && "value" in node && node.value === ",") {
       if (currentGroup.length > 0 || allowEmpty) {
         groups.push(currentGroup);
         currentGroup = [];

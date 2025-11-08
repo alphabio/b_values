@@ -36,10 +36,10 @@ export function generateDeclarationList(declarations: DeclarationResult[]): Gene
     });
 
     if (result.ok) {
-      results.push(result.value);
+      const cssText = decl.important ? `${result.value} !important` : result.value;
+      results.push(cssText);
     }
 
-    // Also collect warnings from successful generations
     if (result.issues.length > 0) {
       allIssues.push(...result.issues);
     }

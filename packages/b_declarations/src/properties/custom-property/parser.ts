@@ -12,7 +12,7 @@ import type { CustomPropertyIR } from "./types";
 export function parseCustomProperty(value: string): ParseResult<CustomPropertyIR> {
   const trimmed = value.trim();
   if (trimmed === "") {
-    return parseErr("MissingValue", createError("missing-value", "Custom property value cannot be empty"));
+    return parseErr("custom-property", createError("missing-value", "Custom property value cannot be empty"));
   }
 
   return parseOk({ kind: "raw", value: trimmed });
