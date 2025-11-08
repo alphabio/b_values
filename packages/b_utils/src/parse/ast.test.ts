@@ -9,6 +9,8 @@ import {
   isPercentage,
   isNumber,
   nodeListToArray,
+  getNodeLocation,
+  convertLocation,
 } from "./ast";
 
 describe("splitNodesByComma", () => {
@@ -109,5 +111,105 @@ describe("nodeListToArray", () => {
 
     expect(Array.isArray(array)).toBe(true);
     expect(array.length).toBeGreaterThan(0);
+  });
+});
+
+describe("getNodeLocation", () => {
+  test("returns location when available", () => {
+    const ast = csstree.parse("red", {
+      context: "value",
+      positions: true,
+    }) as csstree.Value;
+    const node = ast.children.first!;
+
+    const location = getNodeLocation(node);
+    expect(location).toBeDefined();
+    expect(location).toHaveProperty("start");
+    expect(location).toHaveProperty("end");
+  });
+
+  test("returns undefined when location not available", () => {
+    const ast = csstree.parse("red", { context: "value" }) as csstree.Value;
+    const node = ast.children.first!;
+
+    const location = getNodeLocation(node);
+    expect(location).toBeUndefined();
+  });
+});
+
+describe("convertLocation", () => {
+  test("returns undefined when location is undefined", () => {
+    const result = convertLocation(undefined, "test source");
+    expect(result).toBeUndefined();
+  });
+
+  test("returns undefined when source is undefined", () => {
+    const mockLoc: csstree.CssLocationRange = {
+      source: "test",
+      start: { line: 1, column: 1, offset: 0 },
+      end: { line: 1, column: 4, offset: 3 },
+    };
+    const result = convertLocation(mockLoc, undefined);
+    expect(result).toBeUndefined();
+  });
+
+  test("calculates offset and length for single line", () => {
+    const mockLoc = {
+      source: "test",
+      start: { line: 1, column: 1, offset: 0 },
+      end: { line: 1, column: 4, offset: 3 },
+    };
+    const source = "red";
+
+    const result = convertLocation(mockLoc, source);
+    expect(result).toEqual({
+      offset: 0,
+      length: 3,
+    });
+  });
+
+  test("calculates offset and length for multiple lines", () => {
+    const mockLoc = {
+      source: "test",
+      start: { line: 1, column: 1, offset: 0 },
+      end: { line: 2, column: 4, offset: 8 },
+    };
+    const source = "red\nblue";
+
+    const result = convertLocation(mockLoc, source);
+    expect(result).toEqual({
+      offset: 0,
+      length: 7,
+    });
+  });
+
+  test("calculates offset with column offset on first line", () => {
+    const mockLoc = {
+      source: "test",
+      start: { line: 1, column: 5, offset: 4 },
+      end: { line: 1, column: 8, offset: 7 },
+    };
+    const source = "    red";
+
+    const result = convertLocation(mockLoc, source);
+    expect(result).toEqual({
+      offset: 4,
+      length: 3,
+    });
+  });
+
+  test("handles complex multi-line location", () => {
+    const mockLoc = {
+      source: "test",
+      start: { line: 2, column: 3, offset: 6 },
+      end: { line: 3, column: 2, offset: 10 },
+    };
+    const source = "line1\nline2\nend";
+
+    const result = convertLocation(mockLoc, source);
+    expect(result).toEqual({
+      offset: 8, // 6 chars in line1 + 1 newline + 1 for column 3 position
+      length: 5, // remaining chars in line2 + newline + 2 chars in line3
+    });
   });
 });

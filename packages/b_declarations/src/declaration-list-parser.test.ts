@@ -131,7 +131,6 @@ describe("parseDeclarationList", () => {
   describe("partial failures", () => {
     it("should continue on invalid property", () => {
       const result = parseDeclarationList("unknown-prop: value; --valid: blue");
-      console.log(JSON.stringify(result, null, 2));
 
       expect(result.ok).toBe(false);
       expect(result.value).toHaveLength(1);

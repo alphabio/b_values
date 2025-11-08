@@ -57,6 +57,7 @@
     "TTFB",
     "Turborepo",
     "typechecks",
+    "unittests",
     "vercel",
     "vite",
     "wasn",

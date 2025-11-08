@@ -152,8 +152,9 @@ export function createMultiValueParser<TItem, TFinal>(
     // Otherwise, we have a partial or full success.
     const finalIR = config.aggregator(validItems);
 
-    // Determine ok status based on whether there were any issues
-    if (allIssues.length === 0) {
+    // Determine ok status based on whether there were any errors.
+    const hasErrors = allIssues.some((issue) => issue.severity === "error");
+    if (!hasErrors) {
       return {
         ok: true,
         value: finalIR,

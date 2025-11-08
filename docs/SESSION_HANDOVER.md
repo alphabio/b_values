@@ -15,10 +15,12 @@
 ## 📊 Current State
 
 **Working:**
+
 - Project structure understood
 - Session protocol followed
 
 **Not working:**
+
 - No specific tasks identified yet
 
 ---

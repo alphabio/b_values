@@ -1,7 +1,7 @@
 // b_path:: packages/b_types/src/result/generate.test.ts
 import { describe, expect, it } from "vitest";
 import { createError, createWarning } from "./issue";
-import { addGenerateIssue, combineGenerateResults, generateErr, generateOk } from "./generate";
+import { addGenerateIssue, combineGenerateResults, generateErr, generateOk, prependPathToIssues } from "./generate";
 
 describe("GenerateResult", () => {
   describe("generateOk()", () => {
@@ -220,6 +220,89 @@ describe("GenerateResult", () => {
       if (combined.ok) {
         expect(combined.value).toBe("line1\nline2");
       }
+    });
+  });
+
+  describe("prependPathToIssues()", () => {
+    it("should prepend path to issue without existing path", () => {
+      const error = createError("invalid-ir", "Invalid structure");
+      const result = generateErr(error);
+
+      const withPath = prependPathToIssues(result, ["colorStops", 0, "color"]);
+
+      expect(withPath.ok).toBe(false);
+      expect(withPath.issues).toHaveLength(1);
+      expect(withPath.issues[0].path).toEqual(["colorStops", 0, "color"]);
+    });
+
+    it("should prepend path to issue with existing path", () => {
+      const error = createError("invalid-ir", "Invalid structure");
+      error.path = ["type"];
+      const result = generateErr(error);
+
+      const withPath = prependPathToIssues(result, ["gradients", 1]);
+
+      expect(withPath.ok).toBe(false);
+      expect(withPath.issues).toHaveLength(1);
+      expect(withPath.issues[0].path).toEqual(["gradients", 1, "type"]);
+    });
+
+    it("should handle empty path prefix", () => {
+      const error = createError("invalid-ir", "Invalid structure");
+      error.path = ["value"];
+      const result = generateErr(error);
+
+      const withPath = prependPathToIssues(result, []);
+
+      expect(withPath.ok).toBe(false);
+      expect(withPath).toBe(result); // Should return same object
+    });
+
+    it("should work with successful results", () => {
+      const warning = createWarning("deprecated-syntax", "Old format");
+      warning.path = ["unit"];
+      const result = addGenerateIssue(generateOk("#ff0000"), warning);
+
+      const withPath = prependPathToIssues(result, ["styles", "color"]);
+
+      expect(withPath.ok).toBe(true);
+      if (withPath.ok) {
+        expect(withPath.value).toBe("#ff0000");
+      }
+      expect(withPath.issues).toHaveLength(1);
+      expect(withPath.issues[0].path).toEqual(["styles", "color", "unit"]);
+    });
+
+    it("should handle multiple issues", () => {
+      const error1 = createError("invalid-ir", "Error 1");
+      error1.path = ["field1"];
+      const error2 = createError("missing-required-field", "Error 2");
+      error2.path = ["field2"];
+      const result = generateErr([error1, error2]);
+
+      const withPath = prependPathToIssues(result, ["root"]);
+
+      expect(withPath.ok).toBe(false);
+      expect(withPath.issues).toHaveLength(2);
+      expect(withPath.issues[0].path).toEqual(["root", "field1"]);
+      expect(withPath.issues[1].path).toEqual(["root", "field2"]);
+    });
+
+    it("should preserve other issue properties", () => {
+      const error = createError("invalid-ir", "Invalid structure");
+      error.path = ["type"];
+      error.suggestion = "Try using 'solid'";
+      error.expected = "string";
+      error.received = "number";
+      const result = generateErr(error, "background-color");
+
+      const withPath = prependPathToIssues(result, ["gradients", 1]);
+
+      expect(withPath.issues[0].message).toBe("Invalid structure");
+      expect(withPath.issues[0].suggestion).toBe("Try using 'solid'");
+      expect(withPath.issues[0].expected).toBe("string");
+      expect(withPath.issues[0].received).toBe("number");
+      expect(withPath.property).toBe("background-color");
     });
   });
 });

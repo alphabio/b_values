@@ -3,15 +3,15 @@ packages:
   - packages/*
 
 catalog:
-  '@auth/core': 0.37.0
+  '@auth/core': ^0.37.0
   '@convex-dev/auth': ^0.0.90
   '@eslint/css-tree': ^3.6.6
-  '@oslojs/crypto': 1.0.1
-  '@radix-ui/react-label': 2.1.8
-  '@tailwindcss/vite': 4.1.17
-  '@tanstack/react-router': 1.134.13
-  '@tanstack/react-router-devtools': 1.134.13
-  '@tanstack/react-start': 1.134.14
+  '@oslojs/crypto': ^1.0.1
+  '@radix-ui/react-label': ^2.1.8
+  '@tailwindcss/vite': ^4.1.17
+  '@tanstack/react-router': ^1.134.13
+  '@tanstack/react-router-devtools': ^1.134.13
+  '@tanstack/react-start': ^1.134.14
   '@types/css-tree': ^2.3.11
   '@types/react': ^19.2.2
   '@types/react-dom': ^19.2.2
@@ -22,17 +22,17 @@ catalog:
   framer-motion: ^12.23.24
   howler: ^2.2.4
   input-otp: ^1.4.2
-  jose: 6.1.0
+  jose: ^6.1.0
   lucide-react: ^0.552.0
   radix-ui: ^1.4.3
   react: ^19.2.0
   react-dom: ^19.2.0
   react-hook-form: ^7.66.0
   recharts: ^3.3.0
-  resend: 6.4.1
+  resend: ^6.4.1
   tailwind-merge: ^3.3.1
-  tailwindcss: 4.1.17
-  typescript: ~5.9.3
-  vite: 7.2.2
+  tailwindcss: ^4.1.17
+  typescript: ^5.9.3
+  vite: ^7.2.2
   zod: ^4.1.12
   zustand: ^5.0.8

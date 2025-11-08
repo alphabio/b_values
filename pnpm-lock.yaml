@@ -6,45 +6,18 @@ settings:
 
 catalogs:
   default:
-    '@eslint/css-tree':
-      specifier: ^3.6.6
-      version: 3.6.6
-    '@tailwindcss/vite':
-      specifier: 4.1.17
-      version: 4.1.17
-    '@tanstack/react-router':
-      specifier: 1.134.13
-      version: 1.134.13
-    '@tanstack/react-router-devtools':
-      specifier: 1.134.13
-      version: 1.134.13
     '@types/react':
       specifier: ^19.2.2
       version: 19.2.2
     '@types/react-dom':
       specifier: ^19.2.2
       version: 19.2.2
-    b_short:
-      specifier: ^2.7.0
-      version: 2.7.0
-    react:
-      specifier: ^19.2.0
-      version: 19.2.0
-    react-dom:
-      specifier: ^19.2.0
-      version: 19.2.0
-    tailwindcss:
-      specifier: 4.1.17
-      version: 4.1.17
     typescript:
-      specifier: ~5.9.3
+      specifier: ^5.9.3
       version: 5.9.3
     vite:
-      specifier: 7.2.2
+      specifier: ^7.2.2
       version: 7.2.2
-    zod:
-      specifier: ^4.1.12
-      version: 4.1.12
 
 importers:
 

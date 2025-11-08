@@ -37,9 +37,6 @@ export function generateDeclarationList(declarations: DeclarationResult[]): Gene
 
     if (result.ok) {
       results.push(result.value);
-    } else {
-      // Collect error but continue processing
-      allIssues.push(...result.issues);
     }
 
     // Also collect warnings from successful generations

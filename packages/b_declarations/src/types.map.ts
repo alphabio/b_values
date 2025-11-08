@@ -1,6 +1,7 @@
 // b_path:: packages/b_declarations/src/types.map.ts
 // This file contains the PropertyIRMap that maps property names to their IR types.
-// TODO: It should be auto-generated in the future.
+//
+// THIS FILE IS AUTO-GENERATED. DO NOT EDIT.
 
 import type {
   BackgroundAttachmentIR,

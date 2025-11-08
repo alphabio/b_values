@@ -9,6 +9,7 @@
   ],
   "packageManager": "pnpm@10.20.0",
   "scripts": {
+    "generate:property-ir-map": "npx tsx scripts/generate-property-ir-map.ts",
     "clean": "rimraf dist node_modules pnpm-lock.yaml",
     "clean:all": "pnpm -r exec rimraf dist node_modules pnpm-lock.yaml && pnpm run clean",
     "preinstall": "pnpx only-allow pnpm",
@@ -20,7 +21,7 @@
     "lint:md": "markdownlint-cli2 --fix '**/*.md'",
     "format": "pnpm run format:md && biome format --write . && biome check --write .",
     "format:md": "prettier --write '**/*.md' --log-level=silent",
-    "check": "pnpm format && pnpm lint && pnpm typecheck",
+    "check": "pnpm generate:property-ir-map && pnpm format && pnpm lint && pnpm typecheck",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
