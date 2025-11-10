@@ -1,14 +1,21 @@
 // b_path:: packages/b_declarations/src/properties/background-attachment/types.ts
 import { z } from "zod";
 import * as Keywords from "@b/keywords";
+import { cssValueSchema } from "@b/types";
 
 /**
- * Single attachment value. This is the component type.
- * Here, it's just a simple keyword from our vocabulary.
+ * Concrete background-attachment values per CSS spec.
  * @see https://developer.mozilla.org/en-US/docs/Web/CSS/background-attachment
  */
-const attachmentValueSchema = Keywords.backgroundAttachment;
-export type AttachmentValue = z.infer<typeof attachmentValueSchema>;
+const backgroundAttachmentSchema = Keywords.backgroundAttachment;
+
+/**
+ * background-attachment value with universal CSS function support.
+ * Can be a concrete keyword OR a CssValue (var(), calc(), etc.)
+ */
+const backgroundAttachmentValueSchema = z.union([backgroundAttachmentSchema, cssValueSchema]);
+
+export type AttachmentValue = z.infer<typeof backgroundAttachmentValueSchema>;
 
 /**
  * The final IR schema for the entire `background-attachment` property.
@@ -25,7 +32,7 @@ export const backgroundAttachmentIRSchema = z.discriminatedUnion("kind", [
   // OPTION B: The entire property is a list of <attachment> values.
   z.object({
     kind: z.literal("list"),
-    values: z.array(attachmentValueSchema).min(1),
+    values: z.array(backgroundAttachmentValueSchema).min(1),
   }),
 ]);
 

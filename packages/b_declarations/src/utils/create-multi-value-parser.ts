@@ -142,7 +142,7 @@ export function createMultiValueParser<TItem, TFinal>(
       // This follows the same pattern as CSS-wide keywords (Session 057).
       const firstNode = itemAst.children.first;
       if (firstNode && isUniversalFunction(firstNode)) {
-        const universalResult = Utils.parseNodeToCssValue(itemAst);
+        const universalResult = Utils.parseNodeToCssValue(firstNode);
         if (universalResult.ok) {
           // Cast is safe: TItem can be CssValue (union type in property schemas)
           itemResults.push(universalResult as ParseResult<TItem>);

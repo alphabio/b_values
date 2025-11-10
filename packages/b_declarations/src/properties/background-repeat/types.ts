@@ -4,10 +4,18 @@ import { z } from "zod";
 import { repeatStyleSchema, cssValueSchema } from "@b/types";
 import * as Keywords from "@b/keywords";
 
-// Union of structured repeat-style OR generic CssValue (for var(), calc(), etc.)
-const repeatStyleOrCssValueSchema = z.union([repeatStyleSchema, cssValueSchema]);
+/**
+ * Concrete background-repeat values per CSS spec.
+ */
+const backgroundRepeatSchema = repeatStyleSchema;
 
-export type RepeatStyleValue = z.infer<typeof repeatStyleOrCssValueSchema>;
+/**
+ * background-repeat value with universal CSS function support.
+ * Can be a concrete repeat-style OR a CssValue (var(), calc(), etc.)
+ */
+const backgroundRepeatValueSchema = z.union([backgroundRepeatSchema, cssValueSchema]);
+
+export type RepeatStyleValue = z.infer<typeof backgroundRepeatValueSchema>;
 
 /**
  * The final IR schema for the entire `background-repeat` property.
@@ -19,10 +27,10 @@ export const backgroundRepeatIRSchema = z.discriminatedUnion("kind", [
     value: Keywords.cssWide,
   }),
 
-  // OPTION B: The entire property is a list of <repeat-style> values OR CssValues.
+  // OPTION B: The entire property is a list of <repeat-style> values.
   z.object({
     kind: z.literal("list"),
-    values: z.array(repeatStyleOrCssValueSchema).min(1),
+    values: z.array(backgroundRepeatValueSchema).min(1),
   }),
 ]);
 

@@ -1,17 +1,19 @@
 // b_path:: packages/b_declarations/src/properties/background-image/types.ts
-import { imageSchema } from "@b/types";
+import { imageSchema, cssValueSchema } from "@b/types";
 import { z } from "zod";
 import * as Keywords from "@b/keywords";
 
 /**
+ * Concrete background-image values per CSS spec.
  * @see https://www.w3.org/TR/css-backgrounds-3/#background-image
  */
-// export type BackgroundImageIR = BackgroundImageList;
+const backgroundImageSchema = imageSchema;
 
 /**
- * Single image layer for background-image property.
+ * background-image value with universal CSS function support.
+ * Can be a concrete image (url, gradient, etc.) OR a CssValue (var(), calc(), etc.)
  */
-// export type ImageLayer = Image;
+const backgroundImageValueSchema = z.union([backgroundImageSchema, cssValueSchema]);
 
 /**
  * The final IR for the entire `background-image` property.
@@ -26,7 +28,7 @@ export const backgroundImageIR = z.discriminatedUnion("kind", [
   // For one or more <image> values
   z.object({
     kind: z.literal("list"),
-    values: z.array(imageSchema).min(1),
+    values: z.array(backgroundImageValueSchema).min(1),
   }),
 ]);
 
