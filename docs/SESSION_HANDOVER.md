@@ -147,15 +147,16 @@ parseDeclarationList(`
    - Fixed broken test imports
    - 478 insertions
 
-3. **[commit]** - `feat(b_declarations): implement Phase 1 injection`
-   - Declaration layer injection in `createMultiValueParser`
-   - Zero per-property parser changes
-   - Integration tests (background-clip, repeat, size working)
+3. **73e9ad0** - `docs(architecture): document universal CSS values pattern`
+   - Philosophy documented: Pure parsers, declaration handles substitution
+   - Pattern in `docs/architecture/patterns/universal-css-values.md`
+   - Analysis docs: research, alignment, comparison
+   - 1,844 insertions
 
-4. **[commit]** - `docs(architecture): document universal CSS values pattern`
-   - Philosophy: Pure parsers, declaration handles substitution
-   - Pattern documented in `docs/architecture/patterns/`
-   - Session handover updated with final architecture
+4. **[pending]** - `feat(b_declarations): complete Phase 2 schema updates`
+   - Fix background-image schema (union with cssValueSchema)
+   - Check background-attachment/origin schemas
+   - Fix integration test expectations
 
 ---
 
