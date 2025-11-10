@@ -13,9 +13,10 @@ IT CONTAINS INFORMATION FOR HOW WE WILL WORK TOGETHER THROUGHOUT THE SESSION
 
 ```
 docs/
-├── README.md              ← You are here
-├── SESSION_HANDOVER.md    ← CURRENT state (always edit this)
-├── CODE_QUALITY.md        ← Standards
+├── README.md              ← You are here (bootstrap)
+├── CODE_QUALITY.md        ← Standards (bootstrap)
+├── SESSION_HANDOVER.md    ← CURRENT state
+├── skills/                ← Executable skills (on-demand)
 ├── sessions/              ← Archived sessions (001/, 002/, ...)
 └── architecture/          ← Technical decisions (ADRs, patterns)
 ```
@@ -26,82 +27,89 @@ docs/
 
 ### Philosophy
 
-Document **only this session**. Don't duplicate history. Link to previous sessions if needed.
+**User-controlled sessions.** Agent never archives automatically.
 
-### Starting a Session
+### Bootstrap (Always Read First)
 
-**Step 1: Archive previous session**
+On every agent start:
 
-```bash
-# Find session numbers
-PREV=$(find docs/sessions -maxdepth 1 -type d -name "[0-9]*" | wc -l | xargs)
-NEXT=$((PREV + 1))
-PREV_DIR="docs/sessions/$(printf "%03d" $PREV)"
-SESSION_DIR="docs/sessions/$(printf "%03d" $NEXT)"
+1. Read `@docs/README.md` (this file)
+2. Read `@docs/CODE_QUALITY.md`
+3. Wait for user command
 
-# Create new session directory
-mkdir -p "$SESSION_DIR"
+### Skills System
 
-# Archive handover and git ref
-mv docs/SESSION_HANDOVER.md "$PREV_DIR/"
-git rev-parse HEAD > "$PREV_DIR/git-ref.txt"
+**Skills are executable protocols stored in `docs/skills/`.**
 
-# Archive any session artifacts
-find docs/ -maxdepth 1 -name "*.md" \
-  -not -name "README.md" \
-  -not -name "CODE_QUALITY.md" \
-  -exec mv {} "$PREV_DIR/" \;
-```
+**How it works:**
+1. User issues command (e.g., "continue session")
+2. Agent maps command → skill file (e.g., `session.continue.md`)
+3. Agent reads skill → executes protocol
 
-**Step 2: Create new handover**
+**Discovering skills:**
 
 ```bash
-cat > docs/SESSION_HANDOVER.md << 'EOF'
-# Session NNN: [Title]
-
-**Date:** YYYY-MM-DD
-**Focus:** [One line summary]
-
----
-
-## ✅ Accomplished
-
-- [What was done]
-
----
-
-## 📊 Current State
-
-**Working:**
-- [Green checkmarks]
-
-**Not working:**
-- [Red issues/blockers]
-
----
-
-## 🎯 Next Steps
-
-1. [Priority 1]
-2. [Priority 2]
-
----
-
-## 💡 Key Decisions
-
-- [Important choices made]
-EOF
+ls docs/skills/
 ```
 
-### During a Session
+Each skill file defines:
+- Command trigger
+- Purpose
+- Step-by-step protocol
 
-- Update `SESSION_HANDOVER.md` as you go
-- Create analysis docs in session dir: `$SESSION_DIR/*.md`
-- Promote lasting docs immediately: `mv $SESSION_DIR/ADR-*.md docs/architecture/decisions/`
+**Common skill naming:**
+- `session.*` - Session management
+- `code.*` - Code operations (future)
+- `docs.*` - Documentation (future)
 
-### Ending a Session
+### Session Status
 
-Write a clear handover. The next agent will archive everything.
+Every `SESSION_HANDOVER.md` must include:
+
+```markdown
+**Status:** 🟢 COMPLETE | 🟡 IN-PROGRESS | 🔴 BLOCKED
+```
+
+- **🟢 COMPLETE**: Work done, ready to archive
+- **🟡 IN-PROGRESS**: Active work, do not archive
+- **🔴 BLOCKED**: Stuck, needs intervention
+
+### Core Session Skills (Foundational)
+
+These are hardcoded and always available:
+
+**`continue session`** ⭐ Most common
+- Resume IN-PROGRESS session (fresh CLI)
+- Skill: `@docs/skills/session.continue.md`
+
+**`check session`**
+- View current state (read-only)
+- Skill: `@docs/skills/session.status.md`
+
+**`update session`**
+- Record progress during work
+- Skill: `@docs/skills/session.update.md`
+
+**`end session`**
+- Mark COMPLETE or IN-PROGRESS
+- Skill: `@docs/skills/session.end.md`
+
+**`new session`**
+- Archive if COMPLETE, start fresh
+- Skill: `@docs/skills/session.init.md`
+
+### Skill Discovery
+
+**To see all available skills:**
+
+```bash
+ls docs/skills/
+```
+
+**New skills can be added without updating README.** Agent discovers by:
+1. User mentions skill name
+2. Agent looks for `docs/skills/{name}.md`
+3. Reads and executes if exists
 
 ---
 
@@ -217,10 +225,19 @@ See `CODE_QUALITY.md` for full standards. Key points:
 
 ## 🚀 Quick Start
 
-1. **Read `SESSION_HANDOVER.md`** - current state, blockers, next steps
-2. **Read `CODE_QUALITY.md`** - non-negotiable standards
-3. **Archive previous session** (commands below)
-4. **Create new handover** (template below)
-5. **Confirm plan** with user → begin
+1. **Read `@docs/README.md`** (this file) - always first
+2. **Read `@docs/CODE_QUALITY.md`** - non-negotiable standards
+3. **Wait for user command** - user controls session flow
 
-**→ Now read `SESSION_HANDOVER.md` for current state 🚀**
+**Most common flow (token limit):**
+1. Old agent: `end session` → marks IN-PROGRESS
+2. New agent: `continue session` → picks up work
+
+**→ User will tell you what to do next 🚀**
+
+1. Old agent: `end session` → marks IN-PROGRESS
+2. New agent: `continue session` → picks up where left off
+
+**→ User will tell you what to do next 🚀**
+
+**→ User will tell you what to do next 🚀**

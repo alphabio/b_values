@@ -26,5 +26,5 @@ If something looks off, point it out and propose a minimal fix
 
 ---
 
-→ Read all for full documentation **[docs/README.md](./docs/README.md)**
-→ Follow instructions and execute
+Read all for full documentation **[docs/README.md](./docs/README.md)**
+Follow instructions and execute

@@ -6,7 +6,7 @@ import * as Keywords from "@b/keywords";
 /**
  * The final IR for the entire `background-size` property.
  */
-export const backgroundSizeIRS = z.discriminatedUnion("kind", [
+export const backgroundSizeIR = z.discriminatedUnion("kind", [
   z.object({
     kind: z.literal("keyword"),
     value: Keywords.cssWide,
@@ -17,4 +17,4 @@ export const backgroundSizeIRS = z.discriminatedUnion("kind", [
   }),
 ]);
 
-export type BackgroundSizeIR = z.infer<typeof backgroundSizeIRS>;
+export type BackgroundSizeIR = z.infer<typeof backgroundSizeIR>;
