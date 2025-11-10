@@ -72,21 +72,24 @@ parseDeclarationList(`
 
 ### ✅ Phase 1: Declaration Layer Injection (COMPLETE)
 - [x] Inject in `createMultiValueParser` (line 140-150)
-- [x] Tests passing: background-clip, background-repeat, background-size
+- [x] Intercepts var/calc/etc BEFORE property parsers
 
-### ⏳ Phase 2: Schema Updates (~5 min)
-1. Fix `background-image/types.ts` - Add `z.union([imageSchema, cssValueSchema])`
-2. Check `background-attachment/types.ts` schema
-3. Check `background-origin/types.ts` schema
+### ⏳ Phase 2: Clean Up Parsers (~30 min) ⭐ NEXT
+**Remove legacy var/calc handling from ALL parsers in `@b/parsers`**
+- [ ] background-clip: Remove `parseNodeToCssValue` calls
+- [ ] background-repeat: Remove universal function handling
+- [ ] background-size: Remove CssValue handling  
+- [ ] Other parsers: Audit and clean
+- **Goal:** Parsers stay PURE (concrete values only)
 
-### ⏳ Phase 3: Integration Tests (~5 min)
-1. Fix test expectations for background-image with var()
-2. Verify all background-* properties work
-3. Test mixed concrete + universal values
+### ⏳ Phase 3: Fix Integration Tests (~10 min)
+- [ ] Update test expectations (CssValue structure, not strings)
+- [ ] Remove tests that check parser-level var() handling
+- [ ] Add tests for declaration-level var() handling
 
-### ⏳ Phase 4: Single-Value Properties (if needed)
-1. Check if single-value properties need injection
-2. Add to `parseDeclaration` if needed
+### ⏳ Phase 4: Documentation (~5 min)
+- [ ] Update parser documentation (pure, no var/calc)
+- [ ] Migration guide if needed
 
 ---
 
@@ -135,6 +138,12 @@ parseDeclarationList(`
 **Architecture Decision:** Injection pattern (parsers pure, declaration handles substitution)
 **Documented:** `docs/architecture/patterns/universal-css-values.md`
 
+**Key Insight (Session End):**
+- Parsers in `@b/parsers` have LEGACY var/calc handling
+- This conflicts with new declaration-layer approach
+- **Solution:** Remove ALL var/calc from parsers (make them pure)
+- Declaration layer is ONLY place that handles universal functions
+
 ## 📦 Commits
 
 1. **358e2f4** - `docs(session-064): universal CSS functions master plan`
@@ -172,16 +181,16 @@ parseDeclarationList(`
 
 **Phase 0:** ✅ Complete (type guards)
 **Phase 1:** ✅ Complete (declaration layer injection) 
-**Phase 2:** ⏳ Pending (schema updates - 3 properties)
-**Phase 3:** ⏳ Pending (fix integration tests)
-**Phase 4:** ⏳ Pending (single-value properties check)
+**Phase 2:** ⏳ Next - Remove var/calc from ALL parsers in `@b/parsers` (make pure)
+**Phase 3:** ⏳ Pending (fix test expectations)
 
-**Total session time:** ~4 hours
+**Total session time:** ~5 hours
 **Lines of planning:** 1,627+ lines
 **Code implemented:** 292 lines (type guards + injection + tests)
-**Tests added:** 19 (all passing)
 **Architecture documented:** ✅ `docs/architecture/patterns/universal-css-values.md`
+
+**Critical Realization:** Legacy parsers have var/calc handling. Must remove to enforce pure architecture.
 
 ---
 
-**Remaining work:** ~10 minutes (schema fixes + test expectations)
+**Next session: Clean up parsers in `@b/parsers` - remove ALL universal function handling.**
