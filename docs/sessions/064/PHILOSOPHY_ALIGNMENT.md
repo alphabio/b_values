@@ -14,6 +14,7 @@ Your philosophy **EXACTLY matches** what we already built!
 ## 🏗️ Architecture Breakdown
 
 ### Layer 1: Parsers/Generators (Pure Domain Logic)
+
 **Location:** `packages/b_parsers/src/` and property-specific parsers
 
 ```typescript
@@ -21,27 +22,29 @@ Your philosophy **EXACTLY matches** what we already built!
 export function parseBackgroundClip(node: csstree.Value): ParseResult<BackgroundClipValue> {
   // PURE: Only knows about border-box, padding-box, content-box, text
   // Does NOT know about var(), calc(), etc.
-  
+
   if (node.type === "Identifier") {
     const keyword = node.name.toLowerCase();
     if (isBackgroundClipKeyword(keyword)) {
       return parseOk("background-clip", keyword);
     }
   }
-  
+
   return parseErr("background-clip", "Expected border-box, padding-box, etc.");
 }
 ```
 
 **Purity guarantee:**
+
 - ✅ No var() handling
-- ✅ No calc() handling  
+- ✅ No calc() handling
 - ✅ No CssValue imports
 - ✅ Only domain-specific CSS spec knowledge
 
 ---
 
 ### Layer 2: Declaration Layer (Knows About Substitution)
+
 **Location:** `packages/b_declarations/src/utils/create-multi-value-parser.ts`
 
 ```typescript
@@ -63,6 +66,7 @@ itemResults.push(config.itemParser(itemAst));
 ```
 
 **Responsibilities:**
+
 - ✅ Knows about var(), calc(), etc.
 - ✅ Intercepts before calling property parser
 - ✅ Returns CssValue when appropriate
@@ -75,6 +79,7 @@ itemResults.push(config.itemParser(itemAst));
 ### Example: background-clip
 
 **Pure Parser (stays unchanged):**
+
 ```typescript
 // packages/b_parsers/src/background/clip.ts
 export function parseBackgroundClip(node) {
@@ -84,6 +89,7 @@ export function parseBackgroundClip(node) {
 ```
 
 **Declaration Layer (already handles substitution):**
+
 ```typescript
 // packages/b_declarations/src/utils/create-multi-value-parser.ts
 if (isUniversalFunction(firstNode)) {
@@ -95,6 +101,7 @@ return config.itemParser(itemAst); // → parseBackgroundClip
 ```
 
 **Result:**
+
 ```typescript
 // Input: "background-clip: var(--x), border-box"
 // IR: {
@@ -111,6 +118,7 @@ return config.itemParser(itemAst); // → parseBackgroundClip
 ## 📊 What's Already Done
 
 ### ✅ Phase 0: Type Guards
+
 ```typescript
 // packages/b_declarations/src/utils/type-guards.ts
 export function isUniversalFunction(node: csstree.CssNode): boolean {
@@ -123,6 +131,7 @@ export function isCssValue(value: unknown): value is CssValue {
 ```
 
 ### ✅ Phase 1: Declaration Layer Injection
+
 ```typescript
 // packages/b_declarations/src/utils/create-multi-value-parser.ts:140-150
 // Declaration layer intercepts universal functions
@@ -132,6 +141,7 @@ if (isUniversalFunction(firstNode)) {
 ```
 
 ### ⏳ Phase 2: Schema Updates (Type System)
+
 ```typescript
 // packages/b_declarations/src/properties/background-clip/types.ts
 // Schema allows EITHER concrete value OR CssValue (substitution)
@@ -147,20 +157,24 @@ const imageOrCssValueSchema = z.union([imageSchema, cssValueSchema]); // ← TOD
 ## 🔥 Why This Is The Right Design
 
 ### Separation of Concerns
+
 - **Parsers:** Domain experts (CSS spec for that property)
 - **Declaration:** Framework expert (CSS-wide features)
 
 ### Scalability
+
 - Add 50 properties → parsers stay pure
 - Universal features work automatically
 - Zero per-property boilerplate
 
 ### Testability
+
 - Test parsers with only concrete values
 - Test declaration layer with universal values
 - Clear boundaries
 
 ### Maintainability
+
 - Change how var() works? → One place (declaration layer)
 - Add new universal function? → One place (declaration layer)
 - Add new property? → Just write pure parser
@@ -170,6 +184,7 @@ const imageOrCssValueSchema = z.union([imageSchema, cssValueSchema]); // ← TOD
 ## 📈 What Remains
 
 ### 1. Schema Updates (Type-Level)
+
 ```typescript
 // background-image/types.ts (1 line)
 const imageOrCssValueSchema = z.union([imageSchema, cssValueSchema]);
@@ -179,11 +194,14 @@ const imageOrCssValueSchema = z.union([imageSchema, cssValueSchema]);
 ```
 
 ### 2. Single-Value Properties (if needed)
+
 Most properties use multi-value parser (already done).
 Check if any single-value properties need injection.
 
 ### 3. Generator Side
+
 Currently generators check `isCssValue()` inline:
+
 ```typescript
 if (isCssValue(value)) return cssValueToCss(value);
 ```
@@ -195,9 +213,11 @@ This is fine! Generators at declaration layer already know about substitution.
 ## ✅ Validation: Your Philosophy Matches Implementation
 
 **Your stated philosophy:**
+
 > "Parser/generate are pure. Declaration knows about substitute CSS values."
 
 **Current implementation:**
+
 - ✅ Parsers are pure (no var/calc knowledge)
 - ✅ Generators are pure (or know about CssValue at declaration layer)
 - ✅ Declaration layer handles substitution (multi-value parser injection)
@@ -212,6 +232,7 @@ This is fine! Generators at declaration layer already know about substitution.
 **DO NOT implement wrapper pattern** - it violates your philosophy by putting substitution knowledge in property files.
 
 **DO complete current approach:**
+
 1. Fix background-image schema (1 line)
 2. Verify single-value properties work (likely already do)
 3. Update integration tests

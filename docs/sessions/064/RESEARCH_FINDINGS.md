@@ -8,8 +8,9 @@
 ## 🔍 Key Discovery
 
 **Phase 1 injection is working!** Tests show:
+
 - ✅ background-clip with var() - PASSING
-- ✅ background-repeat with var() - PASSING  
+- ✅ background-repeat with var() - PASSING
 - ✅ background-size with var() - PASSING
 - ❌ background-image with var() - FAILING
 
@@ -22,6 +23,7 @@
 ### What's Already Working
 
 **Parser injection (Phase 1):**
+
 ```typescript
 // packages/b_declarations/src/utils/create-multi-value-parser.ts:140-150
 if (firstNode && isUniversalFunction(firstNode)) {
@@ -38,24 +40,30 @@ This code is **CORRECTLY** parsing var/calc/etc and returning CssValue IR.
 ### Schema Patterns
 
 **Pattern 1: Direct cssValueSchema (simplest)**
+
 ```typescript
 // background-clip/types.ts:13
 const backgroundClipValueSchema = cssValueSchema;
 ```
+
 ✅ Works because `cssValueSchema` includes all universal functions
 
 **Pattern 2: Union with concrete schema**
+
 ```typescript
 // background-repeat/types.ts:8
 const repeatStyleOrCssValueSchema = z.union([repeatStyleSchema, cssValueSchema]);
 ```
+
 ✅ Works because union allows EITHER structured type OR CssValue
 
 **Pattern 3: imageSchema (broken)**
+
 ```typescript
 // background-image/types.ts:29
 values: z.array(imageSchema).min(1),
 ```
+
 ❌ Fails because `imageSchema` only allows `{kind: "url"}` and `{kind: "gradient"}`
 
 ---
@@ -93,26 +101,32 @@ values: z.array(imageSchema).min(1),
 ### Changes Required
 
 **background-image:**
+
 - ✅ Parser injection: DONE (already working)
 - ⏳ Schema: Add `z.union([imageSchema, cssValueSchema])`
 
 **background-size:**
+
 - ✅ Parser injection: DONE (already working)
 - ✅ Schema: Already uses cssValueSchema in nested types (gradients)
 
 **background-repeat:**
+
 - ✅ Parser injection: DONE (already working)
 - ✅ Schema: Already done (line 8)
 
 **background-clip:**
+
 - ✅ Parser injection: DONE (already working)
 - ✅ Schema: Already done (direct cssValueSchema)
 
 **background-attachment:**
+
 - ⏳ Check schema
 - ✅ Parser injection: DONE (already working)
 
 **background-origin:**
+
 - ⏳ Check schema
 - ✅ Parser injection: DONE (already working)
 

@@ -1,6 +1,7 @@
 // b_path:: packages/b_declarations/src/properties/background-origin/generator.ts
 import { generateOk, type GenerateResult } from "@b/types";
 import * as Generators from "@b/generators";
+import { generateValue } from "../../utils";
 import type { BackgroundOriginIR } from "./types";
 
 /**
@@ -13,7 +14,7 @@ export function generateBackgroundOrigin(ir: BackgroundOriginIR): GenerateResult
 
   const layerStrings: string[] = [];
   for (const layer of ir.values) {
-    const result = Generators.Background.generateBackgroundOriginValue(layer);
+    const result = generateValue(layer, Generators.Background.generateBackgroundOriginValue);
     if (!result.ok) return result;
     layerStrings.push(result.value);
   }

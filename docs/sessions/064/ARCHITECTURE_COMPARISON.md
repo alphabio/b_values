@@ -7,6 +7,7 @@
 ## 🏗️ Architectural Principles
 
 ### Injection Pattern (Current)
+
 **Philosophy:** "Universal concerns belong at the framework layer"
 
 ```
@@ -28,11 +29,13 @@
 ```
 
 **Pros:**
+
 - ✅ Property code stays pure (no framework knowledge)
 - ✅ Zero per-property boilerplate
 - ✅ Universal features work automatically for new properties
 
 **Cons:**
+
 - ❌ Framework layer has more responsibility
 - ❌ Magic behavior (properties don't "know" they support var)
 - ❌ Harder to trace: "where does var() get handled?"
@@ -40,6 +43,7 @@
 ---
 
 ### Wrapper Pattern (Proposed)
+
 **Philosophy:** "Universal concerns are property features, wrapped explicitly"
 
 ```
@@ -64,12 +68,14 @@
 ```
 
 **Pros:**
+
 - ✅ Explicit: Each property declares var() support
 - ✅ Traceable: grep "parseValue" shows all wrapped properties
 - ✅ Property-level control: Can opt-out if needed
 - ✅ Framework stays thin
 
 **Cons:**
+
 - ❌ Boilerplate: Every property exports wrapper
 - ❌ Forgettable: New properties might not wrap
 - ❌ Repetitive: Same pattern 50+ times
@@ -81,6 +87,7 @@
 **Is var/calc/etc support a:**
 
 ### A) Framework Feature?
+
 "All properties automatically support universal CSS functions because the framework handles them"
 
 → **Injection pattern**
@@ -88,6 +95,7 @@
 → Framework intercepts and handles
 
 ### B) Property Feature?
+
 "Properties explicitly opt into universal CSS function support via wrappers"
 
 → **Wrapper pattern**
@@ -124,23 +132,26 @@ if (isCssWideKeyword(value)) {
 ## 📊 Spec Analysis
 
 ### CSS-wide Keywords
+
 - **Spec:** All properties MUST accept `inherit`, `initial`, `unset`, `revert`
 - **Universal:** Yes (no exceptions)
 - **Framework or Property?** Framework (no choice)
 
 ### Universal Functions
+
 - **Spec:** All properties SHOULD accept `var()`, `calc()`, etc. where type allows
 - **Universal:** Yes, but context-dependent
 - **Framework or Property?** 🤔 Unclear
 
 Example where it matters:
+
 ```css
 /* Makes sense */
 background-size: var(--size);
 background-size: calc(100% - 20px);
 
 /* Might not make sense? */
-background-attachment: calc(...)  /* No numeric context */
+background-attachment: calc(...); /* No numeric context */
 ```
 
 But CSS allows it anyway (runtime resolution).
@@ -150,6 +161,7 @@ But CSS allows it anyway (runtime resolution).
 ## 🎨 Design Philosophy Comparison
 
 ### Injection (Rails-style "Convention over Configuration")
+
 ```typescript
 // Property author experience:
 export function parseBackgroundClip(node) {
@@ -161,6 +173,7 @@ export function parseBackgroundClip(node) {
 **Mental model:** "Framework handles universal stuff, I handle my domain"
 
 ### Wrapper (Explicit is Better)
+
 ```typescript
 // Property author experience:
 export const parseBackgroundClipConcrete = (node) => {
@@ -200,16 +213,19 @@ Explicit: Properties declare support
 ## 🎯 Recommendation
 
 **If purity and explicitness matter most:** Wrapper pattern
+
 - More code, but clearer intent
 - Property files own their full API surface
 - Framework stays thin
 
 **If DRY and pragmatism matter most:** Injection pattern
+
 - Less code, same behavior
 - Framework owns universal concerns
 - Properties stay focused on domain
 
 **Question for you:**
+
 1. Should properties "know" they support var()?
 2. Is var() a framework concern or property concern?
 3. Do we need per-property control (opt-out)?

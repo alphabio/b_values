@@ -1,6 +1,7 @@
 // b_path:: packages/b_declarations/src/properties/background-attachment/generator.ts
 import { generateOk, type GenerateResult } from "@b/types";
 import * as Generators from "@b/generators";
+import { generateValue } from "../../utils";
 import type { BackgroundAttachmentIR } from "./types";
 
 /**
@@ -13,7 +14,7 @@ export function generateBackgroundAttachment(ir: BackgroundAttachmentIR): Genera
 
   const layerStrings: string[] = [];
   for (const layer of ir.values) {
-    const result = Generators.Background.generateBackgroundAttachmentValue(layer);
+    const result = generateValue(layer, Generators.Background.generateBackgroundAttachmentValue);
     if (!result.ok) return result;
     layerStrings.push(result.value);
   }

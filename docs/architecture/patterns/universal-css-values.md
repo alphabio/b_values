@@ -139,6 +139,7 @@ export function createMultiValueParser<TItem, TFinal>(
 ```
 
 **Responsibilities:**
+
 - Detect universal CSS functions (`var()`, `calc()`, `min()`, `max()`, `clamp()`, `attr()`)
 - Parse them using `parseNodeToCssValue()` from `@b/parsers`
 - Return `CssValue` IR
@@ -160,14 +161,12 @@ import * as Keywords from "@b/keywords";
 
 /**
  * Parse background-clip value.
- * 
+ *
  * PURE: Only handles concrete keywords (border-box, padding-box, etc.)
  * Does NOT handle var(), calc(), or any universal CSS functions.
  * Declaration layer intercepts those before calling this parser.
  */
-export function parseBackgroundClip(
-  node: csstree.Value
-): ParseResult<BackgroundClipValue> {
+export function parseBackgroundClip(node: csstree.Value): ParseResult<BackgroundClipValue> {
   if (node.children.size !== 1) {
     return parseErr("background-clip", "Expected single value");
   }
@@ -176,7 +175,7 @@ export function parseBackgroundClip(
 
   if (first.type === "Identifier") {
     const keyword = first.name.toLowerCase();
-    
+
     if (Keywords.backgroundClip.options.includes(keyword)) {
       return parseOk("background-clip", {
         kind: "keyword",
@@ -185,14 +184,12 @@ export function parseBackgroundClip(
     }
   }
 
-  return parseErr(
-    "background-clip",
-    "Expected border-box, padding-box, content-box, or text"
-  );
+  return parseErr("background-clip", "Expected border-box, padding-box, content-box, or text");
 }
 ```
 
 **Purity guarantees:**
+
 - ✅ NO `var()` handling
 - ✅ NO `calc()` handling
 - ✅ NO `CssValue` imports
@@ -216,13 +213,13 @@ import type { CssValue } from "@b/types";
  * These are handled at the declaration layer, not by property parsers.
  */
 const UNIVERSAL_FUNCTIONS = [
-  "var",     // CSS custom properties
-  "calc",    // Mathematical expressions
-  "min",     // Minimum value
-  "max",     // Maximum value
-  "clamp",   // Clamped value
-  "attr",    // Attribute references
-  "env",     // Environment variables
+  "var", // CSS custom properties
+  "calc", // Mathematical expressions
+  "min", // Minimum value
+  "max", // Maximum value
+  "clamp", // Clamped value
+  "attr", // Attribute references
+  "env", // Environment variables
 ] as const;
 
 /**
@@ -263,7 +260,7 @@ export function isUniversalFunction(node: csstree.CssNode): boolean {
 export function isCssValue(value: unknown): value is CssValue {
   if (typeof value !== "object" || value === null) return false;
   if (!("kind" in value)) return false;
-  
+
   const kind = (value as { kind: string }).kind;
   return (CSS_VALUE_KINDS as ReadonlyArray<string>).includes(kind);
 }
@@ -271,9 +268,7 @@ export function isCssValue(value: unknown): value is CssValue {
 /**
  * Type guard for consumers to narrow union types.
  */
-export function isConcreteValue<T>(
-  value: T | CssValue
-): value is T {
+export function isConcreteValue<T>(value: T | CssValue): value is T {
   return !isCssValue(value);
 }
 ```
@@ -371,18 +366,21 @@ cssValueToCss  generateClip
 ## 📝 Implementation Checklist
 
 ### ✅ Phase 0: Type Guards (COMPLETE)
+
 - [x] Implement `isUniversalFunction()`
 - [x] Implement `isCssValue()` with CssValue kind whitelist
 - [x] Implement `isConcreteValue()` helper
 - [x] 19 tests passing
 
 ### ✅ Phase 1: Declaration Layer Injection (COMPLETE)
+
 - [x] Inject universal function check in `createMultiValueParser`
 - [x] Parse universal functions using `parseNodeToCssValue`
 - [x] Cast result to `ParseResult<TItem>` (safe: union type)
 - [x] Existing tests passing (background-clip, background-repeat, background-size)
 
 ### ⏳ Phase 2: Schema Updates (IN PROGRESS)
+
 - [x] background-clip: Already uses `cssValueSchema` ✅
 - [x] background-repeat: Already uses union pattern ✅
 - [x] background-size: Already uses `cssValueSchema` in nested types ✅
@@ -391,12 +389,14 @@ cssValueToCss  generateClip
 - [ ] background-origin: Check schema
 
 ### ⏳ Phase 3: Integration Tests (TODO)
+
 - [ ] Fix test expectations for background-image
-- [ ] Verify all background-* properties with var()
+- [ ] Verify all background-\* properties with var()
 - [ ] Test mixed concrete + universal values
 - [ ] Test nested var() with fallbacks
 
 ### ⏳ Phase 4: Single-Value Properties (TODO)
+
 - [ ] Check if single-value properties need injection
 - [ ] Add injection to `parseDeclaration` if needed
 - [ ] Test single-value properties with var()
@@ -406,21 +406,25 @@ cssValueToCss  generateClip
 ## 📊 Benefits
 
 ### Separation of Concerns
+
 - **Parsers:** Expert in property-specific CSS spec
 - **Declaration:** Expert in CSS-wide features
 - Clear boundary: "Is this universal or property-specific?"
 
 ### Scalability
+
 - Add 50 properties → parsers stay pure
 - Universal features work automatically
 - Zero per-property boilerplate in parser/generator logic
 
 ### Testability
+
 - Test parsers with only concrete values (pure unit tests)
 - Test declaration layer with universal values (integration tests)
 - Clear test boundaries
 
 ### Maintainability
+
 - Change var() behavior? → One place (declaration layer)
 - Add new universal function (env())? → One place (type guards)
 - Add new property? → Just write pure parser + schema union

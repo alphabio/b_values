@@ -1,5 +1,4 @@
 // b_path:: packages/b_declarations/src/properties/background-image/parser.ts
-// packages/b_declarations/src/properties/background-image/parser.ts
 
 import { parseOk, type ParseResult } from "@b/types";
 import * as Parsers from "@b/parsers";

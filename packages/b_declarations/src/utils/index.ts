@@ -2,3 +2,5 @@
 export * from "./keywords";
 export * from "./split";
 export * from "./create-multi-value-parser";
+export * from "./generate-value";
+export * from "./type-guards";
