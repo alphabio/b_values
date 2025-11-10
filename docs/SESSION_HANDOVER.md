@@ -11,16 +11,19 @@
 ### What We Accomplished
 
 **GREEN FIELD THINKING:**
+
 - Rethought architecture from first principles
 - Eliminated all hacks and special cases
 - Established clean layer separation
 
 **Layer 1 (Concrete):**
+
 - `@b/types`: Added `"none"` to Image type (clean union)
 - `@b/parsers`: Parse `"none"` → return string
 - `@b/generators`: Generate `"none"` string → CSS
 
 **Layer 2 (Declaration):**
+
 - Created `generateValue()` wrapper utility
 - Updated 6 property generators to use wrapper
 - Fixed `background-clip` parser (returns strings, not CssValue objects)
@@ -32,7 +35,7 @@
 // Concrete layer: Property-specific logic
 parseBackgroundClipValue(ast) → "border-box" | "padding-box" | ...
 
-// Declaration layer: Universal function interception  
+// Declaration layer: Universal function interception
 if (isCssValue(value)) {
   return cssValueToCss(value);  // var(--x)
 }
@@ -92,6 +95,7 @@ packages/b_generators/src/background/
 ## 📚 Documentation
 
 **Created:**
+
 - `/tmp/b_greenfield_design.md` - Clean architecture from first principles ⭐
 - `/tmp/b_architecture_analysis.md` - Problem analysis
 - `/tmp/b_generator_solution.md` - Initial approach (superseded)
@@ -126,17 +130,19 @@ This shifted everything. Stopped hacking around edges, went back to first princi
 ### Architecture Principles
 
 **Layer separation:**
+
 ```
 @b/parsers, @b/generators  → Pure property logic
 @b/declarations            → Universal function interception
 ```
 
 **Type design:**
+
 ```typescript
 // ✅ Clean: "none" is part of Image
 type Image = { kind: "url", ... } | { kind: "gradient", ... } | "none"
 
-// ❌ Hack: "none" handled separately  
+// ❌ Hack: "none" handled separately
 type Image = ...
 type BackgroundImageValue = Image | { kind: "keyword", value: "none" }
 ```
@@ -163,3 +169,24 @@ type BackgroundImageValue = Image | { kind: "keyword", value: "none" }
 ---
 
 **Next:** Fix unit test type errors (~30 min) → Phase 5 automation
+
+---
+
+## 🎊 User Feedback
+
+**"This is so good"**
+
+Tested with complex nested structures:
+- ✅ `var(--bg-repeat, var(--fallback-repeat, no-repeat))` - Nested fallbacks work!
+- ✅ Mixed `background-image` with var(), url(), gradients
+- ✅ var() inside gradient color stops
+- ✅ Full composability achieved
+
+**Architecture delivers on the promise:**
+- Clean layer separation
+- No special cases
+- Scales to complex nesting
+
+---
+
+**Status:** User will fix unit test type errors. Phase 3 architecture validated in production! 🚀
