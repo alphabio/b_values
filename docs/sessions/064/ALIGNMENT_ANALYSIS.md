@@ -102,7 +102,7 @@ const backgroundClipValueSchema = cssValueSchema; // ← ONE LINE
 ```
 
 **Parser:** Unchanged (doesn't know about var)
-**Generator:** Unchanged (doesn't know about CssValue)  
+**Generator:** Unchanged (doesn't know about CssValue)
 **Schema:** ONE line change
 
 ### **background-repeat (working):**

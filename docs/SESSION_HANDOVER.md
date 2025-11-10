@@ -2,7 +2,7 @@
 
 **Date:** 2025-11-10  
 **Focus:** Fix var()/calc() support via declaration layer interception  
-**Status:** 🟢 DESIGN FINALIZED - Ready for Implementation
+**Status:** 🔴 TDD RED PHASE - Tests Written, Ready for GREEN
 
 ---
 
@@ -34,7 +34,7 @@ IR should reflect **authorship**, not CSS evaluation.
 { kind: "length", value: 100, unit: "px" }
 // NOT: { kind: "explicit", width: {...}, height: auto }
 
-// background-size: calc(100% - 20px)  
+// background-size: calc(100% - 20px)
 { kind: "calc", value: {...} }
 // NOT: { kind: "explicit", width: calc, height: auto }
 
@@ -88,22 +88,24 @@ IR should reflect **authorship**, not CSS evaluation.
 
 ```typescript
 // From:
-parseOk("border-box")
+parseOk("border-box");
 
 // To:
-parseOk({ kind: "keyword", value: "border-box" })
+parseOk({ kind: "keyword", value: "border-box" });
 ```
 
 **Files to update:**
+
 - `packages/b_parsers/src/background/clip.ts`
 - `packages/b_parsers/src/background/attachment.ts`
 - `packages/b_parsers/src/background/origin.ts`
 - Similar simple keyword properties
 
 **Generator update:**
+
 ```typescript
 // From:
-generateOk(value)
+generateOk(value);
 
 // To:
 if (value.kind === "keyword") {
@@ -120,6 +122,7 @@ if (value.kind === "keyword") {
 3. **var-support integration (3 tests):** Expect keyword objects not strings
 
 **Why tests were wrong:**
+
 - Expected structure expansion (calc → explicit with auto)
 - Expected strings instead of discriminated unions
 - Violated "parse authorship" principle
@@ -127,6 +130,7 @@ if (value.kind === "keyword") {
 ### Fix 3: Update Schemas
 
 **background-clip types:**
+
 ```typescript
 // From:
 type BackgroundClip = "border-box" | "padding-box" | ...
@@ -154,11 +158,16 @@ const backgroundClipValueSchema = z.union([
 ```typescript
 function manipulateValue(value: PropertyValue) {
   switch (value.kind) {
-    case "keyword": return value.value;
-    case "variable": return resolveVar(value.name);
-    case "calc": return evaluateCalc(value);
-    case "explicit": return interpolate(value.width, value.height);
-    case "length": return `${value.value}${value.unit}`;
+    case "keyword":
+      return value.value;
+    case "variable":
+      return resolveVar(value.name);
+    case "calc":
+      return evaluateCalc(value);
+    case "explicit":
+      return interpolate(value.width, value.height);
+    case "length":
+      return `${value.value}${value.unit}`;
   }
 }
 ```
@@ -175,6 +184,7 @@ function manipulateValue(value: PropertyValue) {
 ### For DX
 
 Developer sees IR, instantly understands:
+
 - One value? User wrote one value
 - Two values? User wrote two values
 - calc? User wrote calc (atomic, not expanded)
@@ -188,6 +198,7 @@ Developer sees IR, instantly understands:
 ### Changes Required
 
 **Parsers (wrap keywords):**
+
 - background-clip.ts
 - background-attachment.ts
 - background-origin.ts
@@ -195,9 +206,11 @@ Developer sees IR, instantly understands:
 - ~10 other keyword properties
 
 **Generators (unwrap keywords):**
+
 - Same properties - handle `{ kind: "keyword" }` case
 
 **Tests (update expectations):**
+
 - 8 failing tests → expect natural patterns
 - ~50 other tests → likely already correct
 
@@ -227,11 +240,13 @@ Developer sees IR, instantly understands:
 ## 📝 Session Files
 
 **Deep analysis:**
+
 - `/tmp/b_greenfield_rethink.md` - The breakthrough document ⭐
 - `/tmp/b_consumer_analysis.md` - Animation editor perspective
 - `/tmp/b_api_evaluation.md` - Trade-off analysis
 
 **Architecture proven:**
+
 - Green field design complete
 - All typecheck passes
 - 10/10 integration tests passing
@@ -241,24 +256,34 @@ Developer sees IR, instantly understands:
 
 ## 🚀 Next Session
 
-### Implementation Checklist
+### Implementation Plan (30-45 minutes) ⚡
 
-**Phase 1: Wrap Keywords (~1 hour)**
-1. Update concrete parsers (background-clip, etc.)
-2. Update concrete generators (handle keyword objects)
-3. Update type definitions
+**📖 Start Here:**
+- `docs/sessions/064/QUICK_START.md` - TL;DR (read this first!)
+- `docs/sessions/064/FINAL_IMPLEMENTATION_PLAN.md` - Complete details
 
-**Phase 2: Fix Tests (~1 hour)**
-1. Update 8 failing tests to expect natural patterns
-2. Verify all other tests still pass
-3. Document test expectations
+**🎯 The Work:**
 
-**Phase 3: Validate (~30 min)**
-1. Run `just check` - should be fully green
-2. Test complex examples (nested var, calc, etc.)
-3. Verify consumer API works as expected
+**Step 1: Update 3 Parsers** (1 line each)
+- `packages/b_parsers/src/background/clip.ts:28`
+- `packages/b_parsers/src/background/attachment.ts:26`
+- `packages/b_parsers/src/background/origin.ts:26`
 
-**Phase 4: Document (~30 min)**
+Change: `return parseOk(val as Type);`  
+To: `return parseOk({ kind: "keyword", value: val as Type });`
+
+**Step 2: Update Schemas** (check if needed)
+- `packages/b_declarations/src/properties/background-clip/types.ts`
+- Ensure keyword schema wraps in object (may already be correct)
+
+**Step 3: Validate**
+```bash
+just test    # Expect: 2396 passing (8 newly fixed)
+just check   # Expect: All green
+```
+
+**Step 4: Document (~30 min)**
+
 1. Update architecture docs with "parse authorship" principle
 2. Add API examples for consumers
 3. Create migration guide if needed
@@ -270,6 +295,7 @@ Developer sees IR, instantly understands:
 **User:** "calc is a type right? Did we lose that?"
 
 This question revealed:
+
 - calc IS properly typed (discriminated union)
 - Question wasn't "did we lose it"
 - Question was "should we wrap it"
@@ -299,6 +325,7 @@ This principle applies to ALL properties.
 ## 🎯 Success Criteria
 
 **After next session:**
+
 1. ✅ All tests passing (`just test`)
 2. ✅ All checks green (`just check`)
 3. ✅ Keywords wrapped in discriminated unions
@@ -321,3 +348,24 @@ This principle applies to ALL properties.
 Green field thinking + user perspective + deep introspection = Natural, scalable architecture.
 
 **This is production-ready design.** ✨
+
+---
+
+## 🧪 TDD Status
+
+**Phase:** 🔴 RED (Tests written, implementation pending)
+
+**Test files created:**
+- `packages/b_parsers/src/background/clip.test.ts` - 12 tests
+- `packages/b_parsers/src/background/attachment.test.ts` - 5 tests
+- `packages/b_parsers/src/background/origin.test.ts` - 5 tests
+
+**Test results:**
+```
+Parser tests:    18 failing | 4 passing  (22 total)
+Declaration tests: 8 failing | 0 passing  (8 total)
+Total NEW tests:  26 RED ✅ (expected - capturing correct behavior)
+```
+
+**See:** `docs/sessions/064/TDD_APPROACH.md` for complete test strategy
+
