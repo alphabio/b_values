@@ -40,14 +40,17 @@
 ## 📁 Key Files
 
 **Read first:**
+
 - `docs/sessions/064/QUICK_START.md` ⭐
 - `docs/sessions/064/SESSION_SUMMARY.md`
 
 **Reference:**
+
 - `docs/sessions/064/FINAL_IMPLEMENTATION_PLAN.md`
 - `docs/sessions/064/TDD_APPROACH.md`
 
 **Test files (26 tests RED):**
+
 - `packages/b_parsers/src/background/clip.test.ts`
 - `packages/b_parsers/src/background/attachment.test.ts`
 - `packages/b_parsers/src/background/origin.test.ts`
@@ -57,6 +60,7 @@
 ## 🎯 Success Criteria
 
 **Tests:**
+
 ```bash
 just test
 # Before: 2388 passing, 26 failing
@@ -64,12 +68,14 @@ just test
 ```
 
 **Typecheck:**
+
 ```bash
 just typecheck
 # All 9 packages green ✅
 ```
 
 **Quality:**
+
 ```bash
 just check
 # Format ✅ Lint ✅ Typecheck ✅
@@ -91,6 +97,7 @@ just check
 ## 📊 Test Status
 
 **Current:**
+
 ```
 🔴 Parser tests:     18 failing | 4 passing  (22 total)
 🔴 Declaration tests: 8 failing | 0 passing  (8 total)
@@ -98,6 +105,7 @@ just check
 ```
 
 **After implementation:**
+
 ```
 🟢 Parser tests:     22 passing | 0 failing  (22 total)
 🟢 Declaration tests: 8 passing | 0 failing  (8 total)
@@ -110,15 +118,18 @@ just check
 ## 💡 If Issues Arise
 
 **Type errors:**
+
 - Check parser return types match schema
 - Verify `KeywordValue` type imported
 
 **Test failures:**
+
 - Compare with `bg-size.ts` (reference implementation)
 - Check generator handles `{ kind: "keyword" }`
 - Verify schemas accept union types
 
 **Need help:**
+
 - Read `FINAL_IMPLEMENTATION_PLAN.md` Edge Cases section
 - All generators already handle keyword objects ✅
 - Schemas already correct or need minor fix ✅
@@ -128,16 +139,19 @@ just check
 ## 🎓 Context
 
 **Why this change:**
+
 - Consistency: Matches bg-size pattern
 - DX: Uniform consumer API (switch on .kind)
 - Type safety: Honest signatures
 
 **Architecture:**
+
 - Universal functions: Handled at declaration layer ✅
 - Keywords: Should be discriminated unions ✅
 - Generators: Already support both ✅
 
 **Tests validate:**
+
 - Returns `{ kind: "keyword", value }`
 - Not bare strings
 - Architecture alignment

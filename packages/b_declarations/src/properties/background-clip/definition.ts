@@ -3,6 +3,7 @@ import { defineProperty } from "../../core";
 import { parseBackgroundClip } from "./parser";
 import { generateBackgroundClip } from "./generator";
 import type { BackgroundClipIR } from "./types";
+import { BACKGROUND_CLIP } from "@b/keywords";
 
 /**
  * background-clip property definition.
@@ -10,6 +11,7 @@ import type { BackgroundClipIR } from "./types";
 export const backgroundClip = defineProperty<BackgroundClipIR>({
   name: "background-clip",
   syntax: "<box>#",
+  allowedKeywords: BACKGROUND_CLIP,
   parser: parseBackgroundClip,
   multiValue: true,
   generator: generateBackgroundClip,

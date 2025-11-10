@@ -1,13 +1,13 @@
 // b_path:: packages/b_declarations/src/properties/background-position/parser.ts
 
-import type { ParseResult } from "@b/types";
+import type { ParseResult, Position2D } from "@b/types";
 import * as Parsers from "@b/parsers";
 import { createMultiValueParser } from "../../utils";
 import type { BackgroundPositionIR } from "./types";
 import type * as csstree from "@eslint/css-tree";
 
-export const parseBackgroundPosition = createMultiValueParser<any, BackgroundPositionIR>({
-  itemParser(valueNode: csstree.Value): ParseResult<any> {
+export const parseBackgroundPosition = createMultiValueParser<Position2D, BackgroundPositionIR>({
+  itemParser(valueNode: csstree.Value): ParseResult<Position2D> {
     const nodes = Array.from(valueNode.children);
     const result = Parsers.Position.parsePosition2D(nodes, 0);
     if (result.ok) {
@@ -18,10 +18,10 @@ export const parseBackgroundPosition = createMultiValueParser<any, BackgroundPos
         issues: result.issues,
       };
     }
-    return result as ParseResult<any>;
+    return result as ParseResult<Position2D>;
   },
 
-  aggregator(values: any[]): BackgroundPositionIR {
+  aggregator(values: Position2D[]): BackgroundPositionIR {
     return { kind: "list", values };
   },
 });

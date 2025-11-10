@@ -85,11 +85,45 @@ export function parseDeclaration(input: string | CSSDeclaration): ParseResult<De
     return parseErr("declaration", createError("invalid-value", `Unknown CSS property: ${property}`));
   }
 
-  // Step 2: Parse based on property type
+  // Step 2: Pre-validate keywords if allowedKeywords is defined
+  const preValidationIssues: Issue[] = [];
+
+  if (definition.allowedKeywords && !isCustomProperty(property)) {
+    const trimmedValue = value.trim().toLowerCase();
+
+    // For multi-value properties, validate each comma-separated value
+    if (definition.multiValue) {
+      const values = trimmedValue.split(/\s*,\s*/);
+      for (const val of values) {
+        if (val && !definition.allowedKeywords.includes(val)) {
+          preValidationIssues.push(
+            createError(
+              "invalid-value",
+              `Invalid keyword '${val}' for ${property}. Expected one of: ${definition.allowedKeywords.join(", ")}`,
+            ),
+          );
+        }
+      }
+    } else {
+      // Single-value keyword property
+      if (!definition.allowedKeywords.includes(trimmedValue)) {
+        preValidationIssues.push(
+          createError(
+            "invalid-value",
+            `Invalid keyword '${trimmedValue}' for ${property}. Expected one of: ${definition.allowedKeywords.join(", ")}`,
+          ),
+        );
+      }
+    }
+  }
+
+  // Step 3: Parse based on property type
   let parseResult: ParseResult<unknown>;
 
-  // Special case: Custom properties (--*) receive raw string to preserve formatting
-  if (isCustomProperty(property)) {
+  // Dispatch to appropriate parser based on property definition
+  if (definition.rawValue) {
+    // Raw value properties: Pass string directly without AST parsing
+    // Examples: custom properties (--*), intentionally opaque values
     parseResult = unsafeCallParser(definition.parser, value);
   } else if (definition.multiValue) {
     // Multi-value property: Pass raw string to parser (will split on commas)
@@ -112,10 +146,10 @@ export function parseDeclaration(input: string | CSSDeclaration): ParseResult<De
     parseResult = unsafeCallParser(definition.parser, valueAst);
   }
 
-  // Step 3: Collect all issues
-  const allIssues: Issue[] = [...parseResult.issues];
+  // Step 4: Collect all issues
+  const allIssues: Issue[] = [...preValidationIssues, ...parseResult.issues];
 
-  // Step 4: Try generation to get semantic warnings (even if parse failed but has partial IR)
+  // Step 5: Try generation to get semantic warnings (even if parse failed but has partial IR)
   if (parseResult.value) {
     try {
       const genResult = unsafeGenerateDeclaration(property, parseResult.value);
@@ -131,13 +165,13 @@ export function parseDeclaration(input: string | CSSDeclaration): ParseResult<De
     }
   }
 
-  // Step 5: Enrich all issues with property context
+  // Step 6: Enrich all issues with property context
   const enrichedIssues = allIssues.map((issue) => ({
     ...issue,
     property,
   }));
 
-  // Step 6: Return result
+  // Step 7: Return result
   if (!parseResult.ok) {
     const partialDeclaration =
       parseResult.value !== undefined

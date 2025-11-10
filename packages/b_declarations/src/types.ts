@@ -100,7 +100,8 @@ type RawValueDefinition<T> = {
  * - syntax string (for docs),
  * - parser configuration (single, multi, or raw),
  * - optional generator for IR → CSS,
- * - inheritance and initial/computed values.
+ * - inheritance and initial/computed values,
+ * - optional validation constraints.
  */
 export type PropertyDefinition<T = unknown> = {
   /** CSS property name, e.g. "background-image" or "--*" */
@@ -115,4 +116,13 @@ export type PropertyDefinition<T = unknown> = {
   computed?: string;
   /** Optional IR → CSS value generator for this property */
   generator?: PropertyGenerator<T>;
+  /**
+   * Optional validation: allowed keyword values for this property.
+   * When provided, the core parser will pre-validate keywords before
+   * delegating to the property parser, enabling early error detection.
+   *
+   * @example
+   * allowedKeywords: ['scroll', 'fixed', 'local']
+   */
+  allowedKeywords?: readonly string[];
 } & (SingleValueDefinition<T> | MultiValueDefinition<T> | RawValueDefinition<T>);

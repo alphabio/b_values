@@ -3,6 +3,7 @@ import { defineProperty } from "../../core";
 import { parseBackgroundOrigin } from "./parser";
 import { generateBackgroundOrigin } from "./generator";
 import type { BackgroundOriginIR } from "./types";
+import { BACKGROUND_ORIGIN } from "@b/keywords";
 
 /**
  * background-origin property definition.
@@ -10,6 +11,7 @@ import type { BackgroundOriginIR } from "./types";
 export const backgroundOrigin = defineProperty<BackgroundOriginIR>({
   name: "background-origin",
   syntax: "<box>#",
+  allowedKeywords: BACKGROUND_ORIGIN,
   parser: parseBackgroundOrigin,
   multiValue: true,
   generator: generateBackgroundOrigin,

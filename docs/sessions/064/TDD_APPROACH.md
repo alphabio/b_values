@@ -10,22 +10,25 @@
 ### Phase 1: RED ✅ (Complete)
 
 **Created test files capturing expected behavior:**
+
 - `packages/b_parsers/src/background/clip.test.ts` - 12 tests
-- `packages/b_parsers/src/background/attachment.test.ts` - 5 tests  
+- `packages/b_parsers/src/background/attachment.test.ts` - 5 tests
 - `packages/b_parsers/src/background/origin.test.ts` - 5 tests
 
 **Test Results:**
+
 ```
 Test Files  3 failed (3)
       Tests  18 failed | 4 passed (22)
 ```
 
 **Existing declaration tests also failing:**
+
 ```
 packages/b_declarations/src/properties/background-clip/parser.test.ts
   - 5 tests expecting { kind: "keyword", value } ❌
-  
-packages/b_declarations/src/__tests__/var-support.integration.test.ts  
+
+packages/b_declarations/src/__tests__/var-support.integration.test.ts
   - 3 tests expecting keyword objects ❌
 ```
 
@@ -36,6 +39,7 @@ packages/b_declarations/src/__tests__/var-support.integration.test.ts
 ### Phase 2: GREEN 🟢 (Next)
 
 **Implementation:**
+
 1. Update 3 parser files (1 line each)
 2. Update type schemas (validate)
 3. Run tests → expect 2414 passing (26 newly fixed)
@@ -47,6 +51,7 @@ packages/b_declarations/src/__tests__/var-support.integration.test.ts
 ### Parser-Level Tests (New)
 
 **clip.test.ts** - Comprehensive coverage:
+
 - ✅ Valid keywords (border-box, padding-box, content-box, text)
 - ✅ Case insensitivity
 - ✅ Invalid values
@@ -55,23 +60,27 @@ packages/b_declarations/src/__tests__/var-support.integration.test.ts
 - ✅ Parse authorship principle
 
 **attachment.test.ts** - Core coverage:
+
 - ✅ Valid keywords (scroll, fixed, local)
 - ✅ Invalid values
 - ✅ Architecture alignment
 
 **origin.test.ts** - Core coverage:
+
 - ✅ Valid keywords (border-box, padding-box, content-box)
-- ✅ Invalid values  
+- ✅ Invalid values
 - ✅ Architecture alignment
 
 ### Declaration-Level Tests (Existing)
 
 **background-clip/parser.test.ts:**
+
 - ✅ Single value parsing
 - ✅ Multiple values
 - ✅ Round-trip (parse → generate)
 
 **var-support.integration.test.ts:**
+
 - ✅ Regular keywords alongside var()
 - ✅ Mixed usage patterns
 
@@ -84,11 +93,13 @@ packages/b_declarations/src/__tests__/var-support.integration.test.ts
 **Principle: "Parse Authorship, Not Evaluation"**
 
 User writes:
+
 ```css
 background-clip: border-box;
 ```
 
 Parser returns:
+
 ```ts
 {
   kind: "keyword",
@@ -97,22 +108,28 @@ Parser returns:
 ```
 
 **NOT:**
+
 ```ts
-"border-box"  // ❌ Bare string - inconsistent
+"border-box"; // ❌ Bare string - inconsistent
 ```
 
 ### Why It Matters
 
 **Uniform Consumer API:**
+
 ```ts
 switch (value.kind) {
-  case "keyword": return value.value;
-  case "variable": return resolveVar(value.name);
-  case "calc": return evaluateCalc(value);
+  case "keyword":
+    return value.value;
+  case "variable":
+    return resolveVar(value.name);
+  case "calc":
+    return evaluateCalc(value);
 }
 ```
 
 **Consistency with bg-size:**
+
 ```ts
 // bg-size already does this
 { kind: "keyword", value: "cover" }
@@ -126,11 +143,13 @@ switch (value.kind) {
 ### RED (Expected to Pass After Implementation)
 
 **Parser tests:** 18 failing
+
 - clip.test.ts: 10/12 failing
 - attachment.test.ts: 4/5 failing
 - origin.test.ts: 4/5 failing
 
 **Declaration tests:** 8 failing
+
 - background-clip/parser.test.ts: 5 failing
 - var-support.integration.test.ts: 3 failing
 
@@ -139,9 +158,11 @@ switch (value.kind) {
 ### GREEN (Already Passing)
 
 **Parser tests:** 4 passing
+
 - Invalid value handling (parsers already do this correctly)
 
 **Existing tests:** 2388 passing
+
 - All other properties
 - All gradient tests
 - All color tests
@@ -167,6 +188,7 @@ When implementing (GREEN phase):
 ## 🎯 Success Criteria
 
 **After implementation:**
+
 - ✅ Parser tests: 22/22 passing
 - ✅ Declaration tests: 13/13 passing (5 newly fixed)
 - ✅ Integration tests: 12/12 passing (3 newly fixed)
@@ -189,6 +211,7 @@ When implementing (GREEN phase):
 ## 📝 Running Tests
 
 **Individual parser tests:**
+
 ```bash
 pnpm test clip.test.ts
 pnpm test attachment.test.ts
@@ -196,12 +219,14 @@ pnpm test origin.test.ts
 ```
 
 **Declaration tests:**
+
 ```bash
 pnpm test background-clip/parser.test.ts
 pnpm test var-support.integration.test.ts
 ```
 
 **Full suite:**
+
 ```bash
 just test
 ```
@@ -213,13 +238,15 @@ just test
 **The existing declaration tests were RIGHT all along.**
 
 They expected:
+
 ```ts
 { kind: "keyword", value: "border-box" }
 ```
 
 Parsers were returning:
+
 ```ts
-"border-box"
+"border-box";
 ```
 
 **Tests weren't wrong - parsers were inconsistent with the architecture.**

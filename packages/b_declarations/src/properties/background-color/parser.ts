@@ -2,11 +2,23 @@
 
 import type { ParseResult } from "@b/types";
 import * as Parsers from "@b/parsers";
+import type * as csstree from "@eslint/css-tree";
 import type { BackgroundColorIR } from "./types";
 
-export function parseBackgroundColor(value: string): ParseResult<BackgroundColorIR> {
-  const colorResult = Parsers.Color.parse(value);
-  
+export function parseBackgroundColor(ast: csstree.Value): ParseResult<BackgroundColorIR> {
+  const firstNode = ast.children.first;
+
+  if (!firstNode) {
+    return {
+      ok: false,
+      property: "background-color",
+      value: undefined,
+      issues: [{ code: "missing-value", severity: "error", message: "Empty value for background-color" }],
+    };
+  }
+
+  const colorResult = Parsers.Color.parseNode(firstNode);
+
   if (colorResult.ok) {
     return {
       ok: true,

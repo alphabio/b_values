@@ -17,6 +17,7 @@ Make 3 parsers return `{ kind: "keyword", value: "..." }` instead of bare string
 ## 🎯 The Changes
 
 ### 1. background-clip
+
 ```bash
 vim packages/b_parsers/src/background/clip.ts
 # Line 28: Add wrapper
@@ -24,6 +25,7 @@ return parseOk({ kind: "keyword", value: val as BackgroundClip });
 ```
 
 ### 2. background-attachment
+
 ```bash
 vim packages/b_parsers/src/background/attachment.ts
 # Line 26: Add wrapper
@@ -31,6 +33,7 @@ return parseOk({ kind: "keyword", value: val as BackgroundAttachment });
 ```
 
 ### 3. background-origin
+
 ```bash
 vim packages/b_parsers/src/background/origin.ts
 # Line 26: Add wrapper

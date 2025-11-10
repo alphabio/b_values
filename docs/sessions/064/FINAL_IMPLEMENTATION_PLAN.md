@@ -18,7 +18,8 @@ Make all parsers return discriminated unions with `.kind` field for uniform cons
 ## 📊 Current State
 
 **Typecheck:** ✅ All green (9/9 packages)  
-**Tests:** 🟡 8 failing (expect correct pattern - will pass after fix)  
+**Tests:** 🟡 8 failing (expect correct pattern - will pass after fix)
+
 - 5x `background-clip/parser.test.ts`
 - 3x `var-support.integration.test.ts`
 
@@ -29,18 +30,21 @@ Make all parsers return discriminated unions with `.kind` field for uniform cons
 ## 🔍 The Issue
 
 **Three parsers return bare strings:**
+
 - `packages/b_parsers/src/background/clip.ts` line 28
 - `packages/b_parsers/src/background/attachment.ts` line 26
 - `packages/b_parsers/src/background/origin.ts` line 26
 
 **Tests expect (correctly):**
+
 ```ts
 { kind: "keyword", value: "border-box" }
 ```
 
 **Parsers return (incorrectly):**
+
 ```ts
-"border-box"
+"border-box";
 ```
 
 ---
@@ -52,16 +56,19 @@ Make all parsers return discriminated unions with `.kind` field for uniform cons
 #### File 1: `packages/b_parsers/src/background/clip.ts`
 
 **Line 28 - Change:**
+
 ```typescript
 return parseOk(val as BackgroundClip);
 ```
 
 **To:**
+
 ```typescript
 return parseOk({ kind: "keyword", value: val as BackgroundClip });
 ```
 
 **Full context (lines 24-30):**
+
 ```typescript
 const val = node.name.toLowerCase();
 if (BACKGROUND_CLIP.includes(val as BackgroundClip)) {
@@ -76,16 +83,19 @@ return parseErr(
 #### File 2: `packages/b_parsers/src/background/attachment.ts`
 
 **Line 26 - Change:**
+
 ```typescript
 return parseOk(val as BackgroundAttachment);
 ```
 
 **To:**
+
 ```typescript
 return parseOk({ kind: "keyword", value: val as BackgroundAttachment });
 ```
 
 **Full context (lines 22-28):**
+
 ```typescript
 const val = node.name.toLowerCase();
 if (BACKGROUND_ATTACHMENT.includes(val as BackgroundAttachment)) {
@@ -100,16 +110,19 @@ return parseErr(
 #### File 3: `packages/b_parsers/src/background/origin.ts`
 
 **Line 26 - Change:**
+
 ```typescript
 return parseOk(val as BackgroundOrigin);
 ```
 
 **To:**
+
 ```typescript
 return parseOk({ kind: "keyword", value: val as BackgroundOrigin });
 ```
 
 **Full context (lines 22-28):**
+
 ```typescript
 const val = node.name.toLowerCase();
 if (BACKGROUND_ORIGIN.includes(val as BackgroundOrigin)) {
@@ -128,6 +141,7 @@ These files already have the correct schema structure, but we need to ensure the
 #### File 1: `packages/b_declarations/src/properties/background-clip/types.ts`
 
 **Check line 16 - Should already be:**
+
 ```typescript
 const backgroundClipValueSchema = z.union([backgroundClipSchema, cssValueSchema]);
 ```
@@ -137,16 +151,20 @@ const backgroundClipValueSchema = z.union([backgroundClipSchema, cssValueSchema]
 **But `backgroundClipSchema` (line 11) needs wrapping:**
 
 **Change:**
+
 ```typescript
 const backgroundClipSchema = Keywords.backgroundClip;
 ```
 
 **To:**
+
 ```typescript
-const backgroundClipKeywordSchema = z.object({
-  kind: z.literal("keyword"),
-  value: Keywords.backgroundClip,
-}).strict();
+const backgroundClipKeywordSchema = z
+  .object({
+    kind: z.literal("keyword"),
+    value: Keywords.backgroundClip,
+  })
+  .strict();
 
 const backgroundClipValueSchema = z.union([backgroundClipKeywordSchema, cssValueSchema]);
 ```
@@ -158,6 +176,7 @@ const backgroundClipValueSchema = z.union([backgroundClipKeywordSchema, cssValue
 #### File 2: `packages/b_declarations/src/properties/background-attachment/types.ts`
 
 Check if this file exists:
+
 ```bash
 ls packages/b_declarations/src/properties/background-attachment/types.ts
 ```
@@ -179,6 +198,7 @@ Same as attachment - check existence and apply pattern.
 **File:** `packages/b_declarations/src/utils/generate-value.ts`
 
 **Lines 42-44 already handle keyword objects:**
+
 ```typescript
 // Handle string literals (e.g., "border-box", "padding-box")
 if (typeof value === "string") {
@@ -187,6 +207,7 @@ if (typeof value === "string") {
 ```
 
 **Line 24-26 in `packages/b_utils/src/generate/css-value.ts` also handles:**
+
 ```typescript
 case "keyword": {
   return value.value;
@@ -200,30 +221,36 @@ case "keyword": {
 ### Phase 4: Validation
 
 #### Step 1: Run Tests
+
 ```bash
 just test
 ```
 
 **Expected:**
+
 - ✅ All 2396 tests pass
 - ✅ 8 previously failing tests now pass
 - ✅ No regressions
 
 #### Step 2: Run Typecheck
+
 ```bash
 just typecheck
 ```
 
 **Expected:**
+
 - ✅ All 9 packages green
 - ✅ No type errors
 
 #### Step 3: Run Full Quality Check
+
 ```bash
 just check
 ```
 
 **Expected:**
+
 - ✅ Format: green
 - ✅ Lint: green
 - ✅ Typecheck: green
@@ -287,6 +314,7 @@ Refs: Session 064
 ### Case 1: Type Errors in Schemas
 
 If schema updates cause type errors, the issue is likely:
+
 - Parser return type doesn't match schema
 - Need to update type annotations in parser files
 
@@ -295,6 +323,7 @@ If schema updates cause type errors, the issue is likely:
 ### Case 2: Tests Still Fail
 
 If tests still fail after parser changes:
+
 - Check test expectations match new IR shape
 - Verify generators handle keyword objects
 - Check createMultiValueParser injection (line 144-152)
@@ -302,6 +331,7 @@ If tests still fail after parser changes:
 ### Case 3: Generator Fails
 
 If generators break:
+
 - Verify `generateValue()` handles both strings AND objects
 - Check `cssValueToCss()` has keyword case
 - Both should already be correct (verified above)
@@ -311,16 +341,19 @@ If generators break:
 ## 📚 Reference Files
 
 **Parsers to modify:**
+
 - `packages/b_parsers/src/background/clip.ts:28`
 - `packages/b_parsers/src/background/attachment.ts:26`
 - `packages/b_parsers/src/background/origin.ts:26`
 
 **Schemas to update:**
+
 - `packages/b_declarations/src/properties/background-clip/types.ts:11-16`
 - `packages/b_declarations/src/properties/background-attachment/types.ts` (if exists)
 - `packages/b_declarations/src/properties/background-origin/types.ts` (if exists)
 
 **Reference implementations (already correct):**
+
 - `packages/b_parsers/src/background/size.ts:34` (wraps keywords)
 - `packages/b_types/src/bg-size.ts:13-27` (discriminated union schema)
 - `packages/b_utils/src/generate/css-value.ts:24-26` (handles keyword objects)

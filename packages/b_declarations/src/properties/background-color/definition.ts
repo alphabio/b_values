@@ -9,7 +9,6 @@ export const backgroundColor = defineProperty<BackgroundColorIR>({
   name: "background-color",
   syntax: "<color>",
   parser: parseBackgroundColor,
-  rawValue: true,
   generator: generateBackgroundColor,
   inherited: false,
   initial: "transparent",

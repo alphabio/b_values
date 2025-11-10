@@ -6,8 +6,10 @@
 import type {
   BackgroundAttachmentIR,
   BackgroundClipIR,
+  BackgroundColorIR,
   BackgroundImageIR,
   BackgroundOriginIR,
+  BackgroundPositionIR,
   BackgroundRepeatIR,
   BackgroundSizeIR,
   CustomPropertyIR,
@@ -20,8 +22,10 @@ import type {
 export interface PropertyIRMap {
   "background-attachment": BackgroundAttachmentIR;
   "background-clip": BackgroundClipIR;
+  "background-color": BackgroundColorIR;
   "background-image": BackgroundImageIR;
   "background-origin": BackgroundOriginIR;
+  "background-position": BackgroundPositionIR;
   "background-repeat": BackgroundRepeatIR;
   "background-size": BackgroundSizeIR;
   [key: `--${string}`]: CustomPropertyIR;

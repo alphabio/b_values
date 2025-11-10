@@ -259,12 +259,14 @@ Developer sees IR, instantly understands:
 ### Implementation Plan (30-45 minutes) ⚡
 
 **📖 Start Here:**
+
 - `docs/sessions/064/QUICK_START.md` - TL;DR (read this first!)
 - `docs/sessions/064/FINAL_IMPLEMENTATION_PLAN.md` - Complete details
 
 **🎯 The Work:**
 
 **Step 1: Update 3 Parsers** (1 line each)
+
 - `packages/b_parsers/src/background/clip.ts:28`
 - `packages/b_parsers/src/background/attachment.ts:26`
 - `packages/b_parsers/src/background/origin.ts:26`
@@ -273,10 +275,12 @@ Change: `return parseOk(val as Type);`
 To: `return parseOk({ kind: "keyword", value: val as Type });`
 
 **Step 2: Update Schemas** (check if needed)
+
 - `packages/b_declarations/src/properties/background-clip/types.ts`
 - Ensure keyword schema wraps in object (may already be correct)
 
 **Step 3: Validate**
+
 ```bash
 just test    # Expect: 2396 passing (8 newly fixed)
 just check   # Expect: All green
@@ -356,11 +360,13 @@ Green field thinking + user perspective + deep introspection = Natural, scalable
 **Phase:** 🔴 RED (Tests written, implementation pending)
 
 **Test files created:**
+
 - `packages/b_parsers/src/background/clip.test.ts` - 12 tests
 - `packages/b_parsers/src/background/attachment.test.ts` - 5 tests
 - `packages/b_parsers/src/background/origin.test.ts` - 5 tests
 
 **Test results:**
+
 ```
 Parser tests:    18 failing | 4 passing  (22 total)
 Declaration tests: 8 failing | 0 passing  (8 total)
@@ -368,4 +374,3 @@ Total NEW tests:  26 RED ✅ (expected - capturing correct behavior)
 ```
 
 **See:** `docs/sessions/064/TDD_APPROACH.md` for complete test strategy
-

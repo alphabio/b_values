@@ -3,6 +3,7 @@ import { defineProperty } from "../../core";
 import { parseBackgroundAttachment } from "./parser";
 import { generateBackgroundAttachment } from "./generator";
 import type { BackgroundAttachmentIR } from "./types";
+import { BACKGROUND_ATTACHMENT } from "@b/keywords";
 
 /**
  * background-attachment property definition.
@@ -10,6 +11,7 @@ import type { BackgroundAttachmentIR } from "./types";
 export const backgroundAttachment = defineProperty<BackgroundAttachmentIR>({
   name: "background-attachment",
   syntax: "<attachment>#",
+  allowedKeywords: BACKGROUND_ATTACHMENT,
   parser: parseBackgroundAttachment,
   multiValue: true,
   generator: generateBackgroundAttachment,
