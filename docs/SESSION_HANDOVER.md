@@ -1,36 +1,44 @@
-# Session 060: Initial Setup
+# Session 061: Test Organization Cleanup
 
-**Date:** 2025-11-08
-**Focus:** Initial setup and project understanding
+**Date:** 2025-11-10
+**Focus:** Organize integration tests into dedicated directory
 
 ---
 
 ## ✅ Accomplished
 
-- Archived previous session (059)
-- Created new SESSION_HANDOVER.md
+- Archived session 060
+- Created session 061 structure
+- Created `packages/b_declarations/src/__tests__/` directory
+- Moved `important-flag.integration.test.ts` to `__tests__/`
+- Moved `var-support.integration.test.ts` to `__tests__/`
+- Verified all tests still pass after reorganization
 
 ---
 
 ## 📊 Current State
 
 **Working:**
-
-- Project structure understood
-- Session protocol followed
+- All tests passing (verified after move)
+- Integration tests organized in `__tests__/` directory
+- Git tracking file moves correctly (shown as renames)
 
 **Not working:**
-
-- No specific tasks identified yet
+- None
 
 ---
 
 ## 🎯 Next Steps
 
-1. Read SESSION_HANDOVER.md for current state and tasks.
+1. Ready for next task
+2. Consider adding more integration tests for other cross-cutting features
 
 ---
 
 ## 💡 Key Decisions
 
-- None yet
+- **Chose `__tests__/` pattern** for integration tests
+  - Separates feature-specific integration tests from API-level unit tests
+  - Standard Vitest/Jest convention
+  - Keeps root directory clean
+  - Easy to expand with more integration tests
