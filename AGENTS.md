@@ -26,5 +26,13 @@ If something looks off, point it out and propose a minimal fix
 
 ---
 
-Read all for full documentation **[docs/README.md](./docs/README.md)**
-Follow instructions and execute
+## 🎯 Session Startup Protocol
+
+When starting a new session:
+
+1. **Read the architecture overview**: `docs/README.md`
+2. **Understand the project structure**: Review package relationships and dependencies
+3. **Check recent changes**: Run `git --no-pager log --oneline -10` to see latest commits
+4. **Identify the working context**: Ask the user what they need help with
+
+Then proceed with the task, applying the rules above.
