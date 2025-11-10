@@ -9,9 +9,9 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { parseDeclaration } from "./parser";
-import { generateDeclaration } from "./generator";
-import { parseBackgroundSize } from "./properties";
+import { parseDeclaration } from "../parser";
+import { generateDeclaration } from "../generator";
+import { parseBackgroundSize } from "../properties";
 import type { BackgroundSizeIR } from "@b/declarations";
 
 describe("!important flag integration", () => {

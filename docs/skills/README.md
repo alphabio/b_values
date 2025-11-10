@@ -7,6 +7,7 @@
 ## What is a Skill?
 
 A skill is a markdown file that defines:
+
 - **Command:** What user says to trigger it
 - **Purpose:** What problem it solves
 - **Protocol:** Step-by-step instructions for agent
@@ -29,6 +30,7 @@ A skill is a markdown file that defines:
 ```
 
 **Examples:**
+
 - `session.continue.md` - Continue a session
 - `session.init.md` - Initialize new session
 - `code.refactor.md` - Refactor code (future)
@@ -40,13 +42,13 @@ A skill is a markdown file that defines:
 
 **Required for session management:**
 
-| Skill | Command | Purpose |
-|-------|---------|---------|
+| Skill                 | Command            | Purpose                               |
+| --------------------- | ------------------ | ------------------------------------- |
 | `session.continue.md` | `continue session` | Resume IN-PROGRESS work (most common) |
-| `session.status.md` | `check session` | View current state |
-| `session.update.md` | `update session` | Record progress |
-| `session.end.md` | `end session` | Mark complete or pause |
-| `session.init.md` | `new session` | Archive & start fresh |
+| `session.status.md`   | `check session`    | View current state                    |
+| `session.update.md`   | `update session`   | Record progress                       |
+| `session.end.md`      | `end session`      | Mark complete or pause                |
+| `session.init.md`     | `new session`      | Archive & start fresh                 |
 
 ---
 

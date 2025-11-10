@@ -47,6 +47,7 @@ parseDeclarationList(`
 ### Revised Solution (APPROVED)
 
 **Wrapper pattern at property level:**
+
 - Parser wrapper: `parseValue(node, parseClipConcrete)`
 - Generator wrapper: `withUniversalSupport(generateClipConcrete)`
 - Schema wrapper: `substitutable(concreteSchema)`
@@ -57,23 +58,27 @@ parseDeclarationList(`
 ## 🎯 Next Steps
 
 ### Phase 0: Type Guards ⭐ CRITICAL
+
 1. Implement `isCssValue()` with CssValue kind whitelist
 2. Implement `isUniversalFunction()` for AST nodes
 3. Comprehensive tests (distinguishes CssValue from property IR)
 
 ### Phase 1-3: Wrappers
+
 1. Parser wrapper (`parseValue`)
 2. Generator wrapper (`withUniversalSupport` - curried)
 3. Schema wrapper (`substitutable`)
 
 ### Phase 4: Proof of Concept
+
 1. Refactor `background-clip` using wrapper pattern
 2. Validate no changes needed elsewhere
 3. Test user's failing case
 
 ### Phase 5+: Roll Out
+
 1. Integration tests
-2. Apply to all background-* properties
+2. Apply to all background-\* properties
 3. Documentation + migration guide (v2.0.0)
 
 ---
@@ -83,10 +88,12 @@ parseDeclarationList(`
 ### Architectural Pattern (Session 057 + 064)
 
 **Universal concerns at declaration layer:**
+
 - ✅ CSS-wide keywords (`inherit`, `initial`, etc.) - Session 057
 - ✅ Universal CSS functions (`var()`, `calc()`, etc.) - Session 064
 
 **Implementation:**
+
 - CSS-wide keywords: Pre-check in `parseDeclaration` (entire value)
 - Universal functions: Wrapper at property level (mixed with concrete values)
 

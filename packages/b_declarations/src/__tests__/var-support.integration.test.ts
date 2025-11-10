@@ -5,7 +5,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { parseDeclaration, generateDeclaration } from ".";
+import { parseDeclaration, generateDeclaration } from "..";
 import type { BackgroundSizeIR, BackgroundClipIR, BackgroundRepeatIR } from "@b/declarations";
 
 describe("var() and CSS function support", () => {

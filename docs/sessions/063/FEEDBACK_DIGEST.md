@@ -130,17 +130,18 @@
 
 ### Priority Matrix
 
-| Automation | Priority | Effort | ROI | Source |
-|------------|----------|--------|-----|--------|
-| PropertyIRMap codegen | 🔥 CRITICAL | 2-4h | ⭐⭐⭐⭐⭐ | All |
-| Property scaffolding CLI | 🔥 CRITICAL | 4-6h | ⭐⭐⭐⭐⭐ | F02, F03, F04 |
-| Export index generator | 🟢 HIGH | 1-2h | ⭐⭐⭐ | F03 |
-| Test generator | 🟢 HIGH | 6-8h | ⭐⭐⭐⭐ | F03, F04 |
-| Alignment validator | 🟡 MEDIUM | 3-4h | ⭐⭐⭐ | F04 |
+| Automation               | Priority    | Effort | ROI        | Source        |
+| ------------------------ | ----------- | ------ | ---------- | ------------- |
+| PropertyIRMap codegen    | 🔥 CRITICAL | 2-4h   | ⭐⭐⭐⭐⭐ | All           |
+| Property scaffolding CLI | 🔥 CRITICAL | 4-6h   | ⭐⭐⭐⭐⭐ | F02, F03, F04 |
+| Export index generator   | 🟢 HIGH     | 1-2h   | ⭐⭐⭐     | F03           |
+| Test generator           | 🟢 HIGH     | 6-8h   | ⭐⭐⭐⭐   | F03, F04      |
+| Alignment validator      | 🟡 MEDIUM   | 3-4h   | ⭐⭐⭐     | F04           |
 
 ### Implementation Status
 
 **PropertyIRMap Codegen:**
+
 - Approach detailed in F03, F04
 - Uses `ts-morph` or `babel` to parse `defineProperty`
 - Scans `properties/**/definition.ts`
@@ -148,6 +149,7 @@
 - Generates type map
 
 **Property Scaffolding CLI:**
+
 - F04 provides FULL IMPLEMENTATION (250+ lines)
 - Command: `pnpm b:new-prop <name> [flags]`
 - Modes: single, multi, raw, keyword-list
@@ -157,6 +159,7 @@
 - Rails-like DX
 
 **Test Framework (TDD):**
+
 - F04 provides comprehensive strategy
 - 3 standard tests per property: parse, generate, roundtrip
 - Template provided
@@ -170,6 +173,7 @@
 ### Organizational Recommendations
 
 **Property Grouping (at 50+ properties):**
+
 ```
 properties/
   ├── background/
@@ -177,15 +181,18 @@ properties/
   ├── box-model/
   └── typography/
 ```
+
 - Benefits: easier navigation, logical grouping, feature ownership
 - Source: FEEDBACK_03
 
 **Reusable Component Library:**
+
 - Extract shared value types: `boxValueSchema`, `lengthPercentageSchema`
 - Reduce duplication across properties
 - Source: FEEDBACK_03
 
 **Property Definition Meta-Schema:**
+
 - Zod validation for definition structure
 - Runtime checks for consistency
 - Source: FEEDBACK_03
@@ -195,6 +202,7 @@ properties/
 ## Phase 5: Priority Order
 
 ### Week 1: Critical Fixes
+
 1. ✅ Fix `createMultiValueParser` issue propagation
 2. ✅ Fix CSS-wide keyword handling for custom properties
 3. ✅ Fix `rawValue` flag usage
@@ -202,12 +210,14 @@ properties/
 5. ✅ Fix OKLCH validation
 
 ### Week 2: Automation Foundation
+
 1. ✅ Implement PropertyIRMap codegen
 2. ✅ Implement property scaffolding CLI
 3. ✅ Add `--from` flag
 4. ✅ Create test templates
 
 ### Week 3-4: Validation & Polish
+
 1. ⚠️ Refactor `parseBackgroundImage`
 2. ⚠️ Standardize definition files
 3. ⚠️ Add export index generator
@@ -215,6 +225,7 @@ properties/
 5. ⚠️ Document contracts
 
 ### Month 2+: Scale
+
 1. ⚠️ Add 5 properties using new tools (validate)
 2. ⚠️ Generate remaining properties (in batches)
 3. ⚠️ Consider property grouping
