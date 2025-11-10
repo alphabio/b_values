@@ -38,12 +38,12 @@ export function generateValue<T>(
   if (isCssValue(value)) {
     return generateOk(cssValueToCss(value));
   }
-  
+
   // Handle string literals (e.g., "border-box", "padding-box")
   if (typeof value === "string") {
     return generateOk(value);
   }
-  
+
   // Handle concrete IR types
   return concreteGenerator(value as T);
 }

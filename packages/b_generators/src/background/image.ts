@@ -7,12 +7,10 @@ import * as Generators from "@b/generators";
  * Generate a single image layer.
  */
 export function generateImageValue(layer: Image, parentPath: (string | number)[]): GenerateResult {
-  // Handle "none" keyword
-  if (layer === "none") {
-    return generateOk("none");
-  }
-
   switch (layer.kind) {
+    case "none":
+      return generateOk("none");
+
     case "url":
       return generateOk(`url(${layer.url})`);
 

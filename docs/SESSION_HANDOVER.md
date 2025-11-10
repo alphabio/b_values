@@ -177,12 +177,14 @@ type BackgroundImageValue = Image | { kind: "keyword", value: "none" }
 **"This is so good"**
 
 Tested with complex nested structures:
+
 - ✅ `var(--bg-repeat, var(--fallback-repeat, no-repeat))` - Nested fallbacks work!
 - ✅ Mixed `background-image` with var(), url(), gradients
 - ✅ var() inside gradient color stops
 - ✅ Full composability achieved
 
 **Architecture delivers on the promise:**
+
 - Clean layer separation
 - No special cases
 - Scales to complex nesting

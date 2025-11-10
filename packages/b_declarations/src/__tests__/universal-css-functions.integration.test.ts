@@ -31,7 +31,9 @@ describe("Universal CSS Functions Integration", () => {
             kind: "url",
             url: "img.png",
           });
-          expect(ir.values[2]).toBe("none");
+          expect(ir.values[2]).toMatchObject({
+            kind: "none",
+          });
         }
       }
     });
@@ -86,9 +88,7 @@ describe("Universal CSS Functions Integration", () => {
         const ir = result.value.ir as BackgroundImageIR;
         if (ir.kind === "list") {
           const firstLayer = ir.values[0];
-          if (typeof firstLayer !== "string") {
-            expect(firstLayer.kind).toBe("url");
-          }
+          expect(firstLayer.kind).toBe("url");
         }
       }
     });
@@ -116,12 +116,9 @@ describe("Universal CSS Functions Integration", () => {
         const ir = result.value.ir as BackgroundImageIR;
         if (ir.kind === "list") {
           expect(ir.values).toHaveLength(3);
-          const val0 = ir.values[0];
-          const val1 = ir.values[1];
-          const val2 = ir.values[2];
-          if (typeof val0 !== "string") expect(val0.kind).toBe("variable");
-          if (typeof val1 !== "string") expect(val1.kind).toBe("url");
-          expect(val2).toBe("none");
+          expect(ir.values[0].kind).toBe("variable");
+          expect(ir.values[1].kind).toBe("url");
+          expect(ir.values[2].kind).toBe("none");
         }
       }
     });

@@ -22,22 +22,24 @@ import type { Gradient } from "./gradient";
  * @see https://www.w3.org/TR/css-images-3/#image-values
  * @see https://developer.mozilla.org/en-US/docs/Web/CSS/image
  */
-export const imageSchema = z.union([
-  z.discriminatedUnion("kind", [
-    z
-      .object({
-        kind: z.literal("url"),
-        url: z.string(),
-      })
-      .strict(),
-    z
-      .object({
-        kind: z.literal("gradient"),
-        gradient: z.lazy(() => z.any()) as z.ZodType<Gradient>,
-      })
-      .strict(),
-  ]),
-  z.literal("none"),
+export const imageSchema = z.discriminatedUnion("kind", [
+  z
+    .object({
+      kind: z.literal("url"),
+      url: z.string(),
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal("gradient"),
+      gradient: z.lazy(() => z.any()) as z.ZodType<Gradient>,
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal("none"),
+    })
+    .strict(),
 ]);
 
 export type Image = z.infer<typeof imageSchema>;

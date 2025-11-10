@@ -21,7 +21,7 @@ export function parseImageValue(valueNode: csstree.Value): ParseResult<Image> {
 
   // Handle "none" keyword
   if (Ast.isIdentifier(firstNode) && firstNode.name.toLowerCase() === "none") {
-    return parseOk("none");
+    return parseOk({ kind: "none" });
   }
 
   // Handle Url node (css-tree parses url() as Url type, not Function)
