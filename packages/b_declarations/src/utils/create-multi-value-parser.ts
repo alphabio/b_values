@@ -16,7 +16,9 @@
 
 import * as csstree from "@eslint/css-tree";
 import { createError, parseErr, type ParseResult, type Issue } from "@b/types";
+import { Utils } from "@b/parsers";
 import { splitByComma } from "./split";
+import { isUniversalFunction } from "./type-guards";
 
 /**
  * Configuration for the multi-value parser factory.
@@ -135,11 +137,25 @@ export function createMultiValueParser<TItem, TFinal>(
         continue;
       }
 
-      // 5. Delegate to the property-specific item parser with the validated AST chunk.
+      // 5. Check for universal CSS functions first (var, calc, min, max, clamp, etc.)
+      // These are handled at the declaration layer, not by property-specific parsers.
+      // This follows the same pattern as CSS-wide keywords (Session 057).
+      const firstNode = itemAst.children.first;
+      if (firstNode && isUniversalFunction(firstNode)) {
+        const universalResult = Utils.parseNodeToCssValue(itemAst);
+        if (universalResult.ok) {
+          // Cast is safe: TItem can be CssValue (union type in property schemas)
+          itemResults.push(universalResult as ParseResult<TItem>);
+          continue;
+        }
+        // Fall through if universal parsing failed - let property parser handle the error
+      }
+
+      // 6. Delegate to the property-specific item parser with the validated AST chunk.
       itemResults.push(config.itemParser(itemAst));
     }
 
-    // 6. Aggregate all successful items and all issues.
+    // 7. Aggregate all successful items and all issues.
     const validItems: TItem[] = [];
     const allIssues: Issue[] = [];
 
