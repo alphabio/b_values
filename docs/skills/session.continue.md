@@ -11,6 +11,7 @@
 **Scenario:** Token limit approaching, need to switch to fresh CLI instance.
 
 **Flow:**
+
 1. Old agent: User says "end session" → marks IN-PROGRESS
 2. New agent (fresh CLI): User says "continue session" → picks up where left off
 
@@ -31,6 +32,7 @@ cat docs/SESSION_HANDOVER.md
 **Expected status:** 🟡 IN-PROGRESS
 
 **If status is:**
+
 - **🟡 IN-PROGRESS** → Perfect, continue to Step 3
 - **🟢 COMPLETE** → Report: "Session already complete. Use 'new session' to start fresh."
 - **🔴 BLOCKED** → Report blocker details, ask user for guidance
@@ -41,6 +43,7 @@ cat docs/SESSION_HANDOVER.md
 ### Step 3: Load Context
 
 **Parse and internalize:**
+
 - Session number and focus
 - What's been accomplished
 - Current state (working/blocked)
@@ -73,6 +76,7 @@ Ready to continue. What would you like me to work on?
 ### Step 5: Wait for Direction
 
 User will either:
+
 - Continue with next steps as planned
 - Pivot to different priority
 - Ask questions about current state

@@ -1,76 +1,118 @@
-# Session 062: Session Protocol Refinement
+# Session 064: Universal CSS Functions Support
 
 **Date:** 2025-11-10
-**Focus:** Add completion gating to session archiving
-**Status:** 🟢 COMPLETE
+**Focus:** Fix var()/calc() support via wrapper pattern
+**Status:** 🟡 IN-PROGRESS
 
 ---
 
 ## ✅ Accomplished
 
-- Archived session 061
-- Created session 062 structure
-- Created `docs/skills/` directory
-- Created 5 session skill files:
-  - `session.status.md` - check current state
-  - `session.continue.md` - resume IN-PROGRESS session (most common)
-  - `session.init.md` - start new session with status gating
-  - `session.update.md` - record progress
-  - `session.end.md` - mark complete/in-progress
-- Updated `docs/README.md` with skills-based protocol
-- Added status marker to session handover template
-- Documented token-limit use case flow
+- Created session 064
+- Archived session 063 (Feedback Consolidation & Validation)
+- **Investigated var() failure** in `background-image`
+- **Validated architectural reasoning** with user
+- **Received critical feedback** on wrapper implementation
+- **Created revised master plan** incorporating feedback
 
 ---
 
 ## 📊 Current State
 
-**Working:**
-- Skills-based session protocol implemented
-- Status gating prevents premature archiving
-- User controls when sessions start/end/update
-- Five session commands: status, continue, init, update, end
-- Token-limit use case handled with `continue session`
+### Issue Discovered
 
-**Not working:**
-- None - ready for real-world use
+```typescript
+// FAILS:
+parseDeclarationList(`
+  background-image: var(--gradient), url("pattern.svg"), none;
+`);
+// Error: "Unsupported background-image value"
+```
+
+### Root Cause
+
+`background-image` parser only checks for `url()` and gradients - rejects `var()`, `calc()`, etc.
+
+### Initial Analysis (WRONG)
+
+❌ Thought: Add `var()/calc()` handling at declaration layer (like CSS-wide keywords)  
+❌ Would require: Changes to `createMultiValueParser` and `parseDeclaration`
+
+### User's Insight (CORRECT)
+
+✅ "Every property needs this - isn't this boilerplate?"  
+✅ "Parser/generate are clean honest reps of CSS spec"  
+✅ "Declaration layer understands wider CSS spec for all props"
+
+### Revised Solution (APPROVED)
+
+**Wrapper pattern at property level:**
+- Parser wrapper: `parseValue(node, parseClipConcrete)`
+- Generator wrapper: `withUniversalSupport(generateClipConcrete)`
+- Schema wrapper: `substitutable(concreteSchema)`
+- **Zero changes** to `parseDeclaration` or `createMultiValueParser`
 
 ---
 
 ## 🎯 Next Steps
 
-1. **Feedback Consolidation Session** (HIGH PRIORITY)
-   - Capture all feedback from session 061 in original format
-   - Create running summary doc for each feedback file
-   - Identify overlaps and convergent themes
-   - Extract best ideas/suggestions
-   - Mark what's valuable vs not valuable
-   - **DO NOT validate against current state yet** - just capture
-   
-2. **Feedback Validation** (After capture complete)
-   - Validate current state against feedback
-   - Identify what's already resolved
-   - Prioritize actionable items
-   - Create implementation plan
+### Phase 0: Type Guards ⭐ CRITICAL
+1. Implement `isCssValue()` with CssValue kind whitelist
+2. Implement `isUniversalFunction()` for AST nodes
+3. Comprehensive tests (distinguishes CssValue from property IR)
 
-3. Test new session skills protocol with real workflow
-4. Update AGENTS.md to reference skills system
+### Phase 1-3: Wrappers
+1. Parser wrapper (`parseValue`)
+2. Generator wrapper (`withUniversalSupport` - curried)
+3. Schema wrapper (`substitutable`)
+
+### Phase 4: Proof of Concept
+1. Refactor `background-clip` using wrapper pattern
+2. Validate no changes needed elsewhere
+3. Test user's failing case
+
+### Phase 5+: Roll Out
+1. Integration tests
+2. Apply to all background-* properties
+3. Documentation + migration guide (v2.0.0)
 
 ---
 
 ## 💡 Key Decisions
 
-- **Skills-based protocol**: User explicitly commands session actions
-- **Status marker**: 🟢 COMPLETE | 🟡 IN-PROGRESS | 🔴 BLOCKED
-- **No auto-archiving**: Agent only archives when status = COMPLETE
-- **Bootstrap minimal**: Agent reads README + CODE_QUALITY, then waits
-- **Skills on-demand**: Agent loads skill file when user commands
-- **Most common case**: `continue session` for token-limit fresh CLI
-- **Token-limit flow**: end (mark IN-PROGRESS) → new CLI → continue (resume)
-- **Five skills**: status (check), continue (resume), init (new), update (progress), end (finish)
+### Architectural Pattern (Session 057 + 064)
 
-**Next Session Focus:**
-- Primary task: Feedback consolidation (session 061 has 7 feedback docs)
-- Approach: Capture → Summarize → Analyze overlap → Extract value
-- Two-phase: (1) Capture without validation, (2) Validate against current state
-- Goal: Identify best actionable ideas from extensive code reviews
+**Universal concerns at declaration layer:**
+- ✅ CSS-wide keywords (`inherit`, `initial`, etc.) - Session 057
+- ✅ Universal CSS functions (`var()`, `calc()`, etc.) - Session 064
+
+**Implementation:**
+- CSS-wide keywords: Pre-check in `parseDeclaration` (entire value)
+- Universal functions: Wrapper at property level (mixed with concrete values)
+
+### Critical Feedback Incorporated
+
+1. **Type guard MUST use whitelist** - Both CssValue and property IR have `kind`
+2. **Apply Substitutable at leaf values only** - Not top-level containers
+3. **Use currying for generators** - Cleaner call sites
+4. **No parseDeclaration changes needed** - Wrapper pattern handles it
+
+---
+
+## 📁 Session Artifacts
+
+1. `MASTER_PLAN.md` - Original 603-line plan (injection approach)
+2. `FEEDBACK_RESPONSE.md` - Analysis of critical feedback
+3. `REVISED_MASTER_PLAN.md` - Approved wrapper pattern approach
+
+---
+
+## 🔗 Related Sessions
+
+- **Session 057:** CSS-wide keywords (established universal concern pattern)
+- **Session 030:** Added var()/calc() to gradients (partial implementation)
+- **Session 063:** Feedback consolidation (identified this gap)
+
+---
+
+**Ready to implement Phase 0 (type guards) when user confirms.**

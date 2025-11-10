@@ -42,6 +42,7 @@ On every agent start:
 **Skills are executable protocols stored in `docs/skills/`.**
 
 **How it works:**
+
 1. User issues command (e.g., "continue session")
 2. Agent maps command → skill file (e.g., `session.continue.md`)
 3. Agent reads skill → executes protocol
@@ -53,11 +54,13 @@ ls docs/skills/
 ```
 
 Each skill file defines:
+
 - Command trigger
 - Purpose
 - Step-by-step protocol
 
 **Common skill naming:**
+
 - `session.*` - Session management
 - `code.*` - Code operations (future)
 - `docs.*` - Documentation (future)
@@ -79,22 +82,27 @@ Every `SESSION_HANDOVER.md` must include:
 These are hardcoded and always available:
 
 **`continue session`** ⭐ Most common
+
 - Resume IN-PROGRESS session (fresh CLI)
 - Skill: `@docs/skills/session.continue.md`
 
 **`check session`**
+
 - View current state (read-only)
 - Skill: `@docs/skills/session.status.md`
 
 **`update session`**
+
 - Record progress during work
 - Skill: `@docs/skills/session.update.md`
 
 **`end session`**
+
 - Mark COMPLETE or IN-PROGRESS
 - Skill: `@docs/skills/session.end.md`
 
 **`new session`**
+
 - Archive if COMPLETE, start fresh
 - Skill: `@docs/skills/session.init.md`
 
@@ -107,6 +115,7 @@ ls docs/skills/
 ```
 
 **New skills can be added without updating README.** Agent discovers by:
+
 1. User mentions skill name
 2. Agent looks for `docs/skills/{name}.md`
 3. Reads and executes if exists
@@ -230,6 +239,7 @@ See `CODE_QUALITY.md` for full standards. Key points:
 3. **Wait for user command** - user controls session flow
 
 **Most common flow (token limit):**
+
 1. Old agent: `end session` → marks IN-PROGRESS
 2. New agent: `continue session` → picks up work
 
