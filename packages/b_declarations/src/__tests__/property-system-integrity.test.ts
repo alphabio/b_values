@@ -154,8 +154,13 @@ describe("Property System Integrity", () => {
               violations.push(`${propName}: Generator output starts with property name: "${value.slice(0, 50)}..."`);
             }
           }
-        } catch (_error) {
-          // Silently ignore errors - property may not have generator
+          // If result.ok is false, that's fine - our test IR might be invalid
+          // We're only checking format when generation succeeds
+        } catch (error) {
+          // Generator threw an exception - this is unexpected
+          violations.push(
+            `${propName}: Generator threw exception with test IR: ${error instanceof Error ? error.message : String(error)}`,
+          );
         }
       }
 
