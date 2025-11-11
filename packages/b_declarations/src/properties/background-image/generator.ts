@@ -6,13 +6,13 @@ import type { BackgroundImageIR } from "./types";
 
 /**
  * Generate a background-image CSS value from its IR representation.
+ * Returns value-only (no property prefix).
  */
 export function generateBackgroundImage(ir: BackgroundImageIR): GenerateResult {
   if (ir.kind === "keyword") {
     return {
       ok: true,
       value: ir.value,
-      property: "background-image",
       issues: [],
     };
   }
@@ -33,7 +33,6 @@ export function generateBackgroundImage(ir: BackgroundImageIR): GenerateResult {
   return {
     ok: true,
     value: layerStrings.join(", "),
-    property: "background-image",
     issues: allIssues,
   };
 }

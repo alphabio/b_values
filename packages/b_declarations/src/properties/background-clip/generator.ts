@@ -6,10 +6,11 @@ import type { BackgroundClipIR } from "./types";
 
 /**
  * Generate CSS for background-clip property.
+ * Returns value-only (no property prefix).
  */
 export function generateBackgroundClip(ir: BackgroundClipIR): GenerateResult {
   if (ir.kind === "keyword") {
-    return generateOk(ir.value, "background-clip");
+    return generateOk(ir.value);
   }
 
   const layerStrings: string[] = [];
@@ -19,5 +20,5 @@ export function generateBackgroundClip(ir: BackgroundClipIR): GenerateResult {
     layerStrings.push(result.value);
   }
 
-  return generateOk(layerStrings.join(", "), "background-clip");
+  return generateOk(layerStrings.join(", "));
 }

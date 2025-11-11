@@ -8,7 +8,7 @@ Architecture is solid and ready to scale to 50+ properties. Key wins:
 
 - Clean layer separation (@b/types, @b/parsers, @b/generators, @b/declarations)
 - PropertyRegistry + PropertyIRMap auto-generation
-- Type-level contracts (_AssertMultiValueContract)
+- Type-level contracts (\_AssertMultiValueContract)
 - Result/issues model is production-grade
 - Universal functions + CssValue handling
 - Contract test harness (runPropertyTests)
@@ -30,12 +30,14 @@ Architecture is solid and ready to scale to 50+ properties. Key wins:
 ### 2. PropertyIRMap Type Safety 🔴 CRITICAL
 
 **Problem:** No compile-time guarantee that:
+
 - `defineProperty` calls match PropertyIRMap keys
 - IR type `T` matches PropertyIRMap[name]
 
 **Current:** Convention + auto-generation script
 
 **Risk:** With 50+ properties, easy to:
+
 - Forget to regenerate PropertyIRMap
 - Mis-type property name
 - Use wrong IR type
@@ -55,15 +57,18 @@ export function defineProperty<K extends keyof PropertyIRMap>(
 ```
 
 **Pros:**
+
 - Compile-time check that name exists in PropertyIRMap
 - Type inference from `name` ensures IR matches
 - No manual type parameters needed
 
 **Cons:**
+
 - Must regenerate PropertyIRMap before adding property
 - Chicken-egg: can't define property until it's in map
 
 **Mitigation:**
+
 - Add to PropertyIRMap manually first, use `unknown` temporarily
 - Re-run generator after implementing types
 
@@ -71,7 +76,7 @@ export function defineProperty<K extends keyof PropertyIRMap>(
 
 ```typescript
 // In core/registry.ts
-if (process.env.NODE_ENV === 'development') {
+if (process.env.NODE_ENV === "development") {
   // Validate IR against schema if available
   const schema = getSchemaFor(definition.name);
   if (schema && definition.generator) {
@@ -81,10 +86,12 @@ if (process.env.NODE_ENV === 'development') {
 ```
 
 **Pros:**
+
 - No type gymnastics
 - Catches mismatches at runtime
 
 **Cons:**
+
 - Only in dev mode
 - Adds runtime cost
 
@@ -109,11 +116,12 @@ it("all registered properties exist in PropertyIRMap", () => {
 **Problem:** Three-variant union is powerful but error-prone to narrow.
 
 **Current:**
+
 ```typescript
 type ParseResult<T> =
   | { ok: true; value: T; issues: Issue[]; property?: string }
-  | { ok: false; value: T; issues: Issue[]; property: string }  // Partial
-  | { ok: false; value?: never; issues: Issue[]; property: string }  // Total
+  | { ok: false; value: T; issues: Issue[]; property: string } // Partial
+  | { ok: false; value?: never; issues: Issue[]; property: string }; // Total
 ```
 
 **Issue:** Callers must check `ok` then `value !== undefined` for partial.
@@ -121,13 +129,15 @@ type ParseResult<T> =
 **Solutions:**
 
 #### Option A: Helper Predicates
+
 ```typescript
-export function isSuccess<T>(r: ParseResult<T>): r is SuccessResult<T>
-export function isPartialFailure<T>(r: ParseResult<T>): r is PartialResult<T>
-export function isTotalFailure<T>(r: ParseResult<T>): r is FailureResult<T>
+export function isSuccess<T>(r: ParseResult<T>): r is SuccessResult<T>;
+export function isPartialFailure<T>(r: ParseResult<T>): r is PartialResult<T>;
+export function isTotalFailure<T>(r: ParseResult<T>): r is FailureResult<T>;
 ```
 
 #### Option B: Add `kind` Field
+
 ```typescript
 type ParseResult<T> =
   | { kind: "success"; ok: true; value: T; ... }
@@ -148,6 +158,7 @@ type ParseResult<T> =
 **Risk:** Drift if they disagree.
 
 **Solutions:**
+
 - Remove `allowedKeywords` validation from parser.ts (single source)
 - OR: Generate property parsers from `allowedKeywords` (DRY)
 - OR: Document as "pre-pass hint only"
@@ -227,6 +238,7 @@ Once Phase 1 complete:
 ## Phase 3: Scale to 50+
 
 With template and contract enforcement, onboard:
+
 - Font properties
 - Border properties
 - Flex/Grid properties
@@ -255,17 +267,20 @@ With template and contract enforcement, onboard:
 ## Success Criteria
 
 **Phase 1 Complete When:**
+
 - [ ] Meta-test validates PropertyIRMap alignment
 - [ ] ParseResult helpers added
 - [ ] allowedKeywords behavior documented
 - [ ] All 2414+ tests still passing
 
 **Phase 2 Complete When:**
+
 - [ ] `new-property` script works
 - [ ] Generated properties follow all contracts
 - [ ] PropertyIRMap auto-updates
 
 **Phase 3 Complete When:**
+
 - [ ] 50+ properties implemented
 - [ ] No architectural drift
 - [ ] Type safety enforced at scale

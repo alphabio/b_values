@@ -6,10 +6,11 @@ import type { BackgroundOriginIR } from "./types";
 
 /**
  * Generate CSS for background-origin property.
+ * Returns value-only (no property prefix).
  */
 export function generateBackgroundOrigin(ir: BackgroundOriginIR): GenerateResult {
   if (ir.kind === "keyword") {
-    return generateOk(ir.value, "background-origin");
+    return generateOk(ir.value);
   }
 
   const layerStrings: string[] = [];
@@ -19,5 +20,5 @@ export function generateBackgroundOrigin(ir: BackgroundOriginIR): GenerateResult
     layerStrings.push(result.value);
   }
 
-  return generateOk(layerStrings.join(", "), "background-origin");
+  return generateOk(layerStrings.join(", "));
 }

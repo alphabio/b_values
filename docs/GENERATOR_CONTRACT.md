@@ -5,22 +5,26 @@
 ### Property-Level Generators
 
 **MUST:**
+
 - Return only the CSS value string (e.g., `"10px"`, `"red"`, `"url(...)"`)
 - Return `GenerateResult<string>` with `ok` and `value`
 - Include `issues` array (empty if successful)
 
 **MUST NOT:**
+
 - Prepend property name (e.g., NOT `"color: red"`)
 - Add `!important` flag
 - Set `property` field in issues (declaration layer handles this)
 
 **MAY:**
+
 - Include contextual information in issue messages
 - Return partial values on error with issues
 
 ### Declaration-Level Generator (`generateDeclaration`)
 
 **Responsibilities:**
+
 - Call property-level generator
 - Wrap result as `"property: value"`
 - Append `!important` if requested
@@ -51,11 +55,13 @@ const result = generateDeclaration({ property: "background-color", ir });
 ## Current Status
 
 All generators follow this contract except:
+
 - `background-image/generator.ts` - Sets `property` field in issues (legacy, safe to keep)
 
 ## Enforcement
 
 Contract enforced by:
+
 1. `runPropertyTests()` - Validates parse/generate roundtrip
 2. Type signatures - `GenerateResult` doesn't expose `property` at this layer
 3. Documentation - This file

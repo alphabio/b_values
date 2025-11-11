@@ -5,9 +5,13 @@ import * as Generators from "@b/generators";
 import { generateValue } from "../../utils";
 import type { BackgroundSizeIR } from "./types";
 
+/**
+ * Generate CSS for background-size property.
+ * Returns value-only (no property prefix).
+ */
 export function generateBackgroundSize(ir: BackgroundSizeIR): GenerateResult {
   if (ir.kind === "keyword") {
-    return generateOk(ir.value, "background-size");
+    return generateOk(ir.value);
   }
 
   const valueStrings: string[] = [];
@@ -18,5 +22,5 @@ export function generateBackgroundSize(ir: BackgroundSizeIR): GenerateResult {
     valueStrings.push(result.value);
   }
 
-  return generateOk(valueStrings.join(", "), "background-size");
+  return generateOk(valueStrings.join(", "));
 }

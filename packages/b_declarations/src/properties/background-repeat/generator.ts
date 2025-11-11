@@ -6,10 +6,11 @@ import type { BackgroundRepeatIR } from "./types";
 
 /**
  * Generate CSS for background-repeat property.
+ * Returns value-only (no property prefix).
  */
 export function generateBackgroundRepeat(ir: BackgroundRepeatIR): GenerateResult {
   if (ir.kind === "keyword") {
-    return generateOk(ir.value, "background-repeat");
+    return generateOk(ir.value);
   }
 
   const layerStrings: string[] = [];
@@ -19,5 +20,5 @@ export function generateBackgroundRepeat(ir: BackgroundRepeatIR): GenerateResult
     layerStrings.push(result.value);
   }
 
-  return generateOk(layerStrings.join(", "), "background-repeat");
+  return generateOk(layerStrings.join(", "));
 }

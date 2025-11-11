@@ -6,10 +6,11 @@ import type { BackgroundAttachmentIR } from "./types";
 
 /**
  * Generate CSS for background-attachment property.
+ * Returns value-only (no property prefix).
  */
 export function generateBackgroundAttachment(ir: BackgroundAttachmentIR): GenerateResult {
   if (ir.kind === "keyword") {
-    return generateOk(ir.value, "background-attachment");
+    return generateOk(ir.value);
   }
 
   const layerStrings: string[] = [];
@@ -19,5 +20,5 @@ export function generateBackgroundAttachment(ir: BackgroundAttachmentIR): Genera
     layerStrings.push(result.value);
   }
 
-  return generateOk(layerStrings.join(", "), "background-attachment");
+  return generateOk(layerStrings.join(", "));
 }
