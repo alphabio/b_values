@@ -26,9 +26,11 @@ describe("Property Contract Meta-Tests", () => {
 
       // Required fields
       expect(def.name).toBe(name);
-      expect(def.syntax).toBeDefined(); // Some properties may have empty syntax string
+      expect(def.syntax).toBeDefined();
       expect(typeof def.inherited).toBe("boolean");
-      expect(def.initial).toBeDefined();
+      
+      // initial can be empty string (e.g., custom properties have initial: "")
+      expect(typeof def.initial).toBe("string");
 
       // Parser must exist (either single-value, multi-value, or raw)
       expect(def.parser).toBeTypeOf("function");
