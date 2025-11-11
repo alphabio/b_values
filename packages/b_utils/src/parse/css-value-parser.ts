@@ -4,14 +4,23 @@ import { createError, forwardParseErr, parseErr, parseOk, type ParseResult } fro
 import type { CssValue } from "@b/types";
 
 /**
- * Parse a CSS node into a CssValue.
- * Handles numbers, dimensions, percentages, keywords, and var() functions.
- */
-
-/**
- * Parse a CSS node into a CssValue.
- * Handles numbers, dimensions, percentages, keywords, var(),
- * string literals, and falls back to generic function calls for all others.
+ * Generic CSS value parser (NO complex function support).
+ * 
+ * ⚠️ **IMPORTANT**: Property parsers should use `@b/parsers/parseNodeToCssValue` instead.
+ * 
+ * This low-level parser does NOT handle complex CSS functions:
+ * - Gradients: linear-gradient(), radial-gradient(), conic-gradient()
+ * - Colors: rgb(), hsl(), lab(), lch(), oklch(), oklab(), color()
+ * - Math: calc(), min(), max(), clamp()
+ * 
+ * It only handles:
+ * - Basic values: numbers, dimensions, percentages, keywords
+ * - var() with fallback parsing
+ * - String literals
+ * - Hex colors
+ * - Generic function calls (as opaque CssValue)
+ * 
+ * @internal Use via @b/parsers for property parsing
  */
 export function parseCssValueNode(node: csstree.CssNode): ParseResult<CssValue> {
   switch (node.type) {
@@ -149,11 +158,12 @@ export function parseCssValueNode(node: csstree.CssNode): ParseResult<CssValue> 
       return parseOk({ kind: "function", name: node.name, args: args });
     }
 
-    // Hash nodes (#RRGGBB) are typically handled by Color.parseNode, but if CssValue
-    // is called on a standalone hash, treat it as a keyword for now
+    // Hash nodes (#RRGGBB) represent hex colors
+    // Property-specific color parsers handle full Color IR;
+    // this handles generic hex color values
     case "Hash": {
       const value = node.value.toLowerCase();
-      return parseOk({ kind: "keyword", value: `#${value}` });
+      return parseOk({ kind: "hex-color", value: `#${value}` });
     }
 
     default: {

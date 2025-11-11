@@ -2,21 +2,15 @@
 
 // This module defines the core types for the @b/declarations package.
 //
-// - PropertyIRMap is auto-generated in ./types.map.ts
+// - PropertyIRMap is now derived from PROPERTY_DEFINITIONS (see types.derived.ts)
 // - RegisteredProperty is the union of all known property names
 // - PropertyDefinition describes how each property integrates into the registry
 // - Parser / generator function signatures used by property implementations
 
 import type { ParseResult, GenerateResult } from "@b/types";
-import type { PropertyIRMap } from "./types.map";
+import type { PropertyIRMap } from "./types.derived";
 
-export type { PropertyIRMap } from "./types.map";
-
-/**
- * Union type of all registered property names.
- * Backed by the auto-generated PropertyIRMap.
- */
-export type RegisteredProperty = keyof PropertyIRMap;
+export type { PropertyIRMap, RegisteredProperty } from "./types.derived";
 
 /**
  * Basic CSS declaration input structure.
@@ -137,14 +131,18 @@ export type PropertyDefinition<T = unknown> = {
  * This enforces the architectural invariant that properties using
  * createMultiValueParser (multiValue: true) must have IR with kind: "list".
  *
+ * NOW ENFORCED: Checks actual PropertyDefinitions, not generic types.
+ * 
  * If this type check fails, it means a property is registered as multiValue
  * but its IR in PropertyIRMap doesn't have a list variant.
  */
 
-// Extract names of all multiValue properties
+import type { PropertyDefinitions } from "./properties/definitions";
+
+// Extract names of all multiValue properties from ACTUAL definitions
 type MultiValuePropertyNames = {
-  [K in keyof PropertyIRMap]: PropertyDefinition<PropertyIRMap[K]> extends { multiValue: true } ? K : never;
-}[keyof PropertyIRMap];
+  [K in keyof PropertyDefinitions]: PropertyDefinitions[K]["multiValue"] extends true ? K : never;
+}[keyof PropertyDefinitions];
 
 // For each multiValue property, verify IR has kind: "list"
 type MultiValueIRsHaveListVariant = {
@@ -152,6 +150,6 @@ type MultiValueIRsHaveListVariant = {
 }[MultiValuePropertyNames];
 
 // Compile-time assertion: all multiValue IRs must have list variant
-// If any property violates this, TypeScript will error here
+// If any property violates this, TypeScript will error here showing the property name
 // @ts-expect-error - Type-level contract check, intentionally unused
 type _AssertMultiValueContract = MultiValueIRsHaveListVariant extends true ? true : never;

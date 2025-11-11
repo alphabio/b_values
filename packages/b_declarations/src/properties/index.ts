@@ -1,5 +1,8 @@
 // b_path:: packages/b_declarations/src/properties/index.ts
 
+// Central definitions export (single source of truth)
+export * from "./definitions";
+
 // Import before other properties that might depend on it
 export * from "./custom-property";
 
