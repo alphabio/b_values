@@ -1,3 +1,7 @@
+Excluding patterns: 
+Documentation for LLMs
+Excluding patterns: 
+Excluding patterns: -not -path */__pycache__/* -not -path */__tests__/* -not -path */.git/* -not -path */.idea/* -not -path */.next/* -not -path */.venv/* -not -path */.vscode/* -not -path */*.spec.py -not -path */*.spec.ts -not -path */*.spec.tsx -not -path */*.test.py -not -path */*.test.ts -not -path */*.test.tsx -not -path */*test.py -not -path */*test.ts -not -path */*test.tsx -not -path */build/* -not -path */dist/* -not -path */me.ts -not -path */node_modules/* -not -path */test_*.py -not -path */test.ts -not -path */test.ts -not -path */tests/* -not -path */venv/*
 === File: packages/b_declarations/src/core/index.ts ===
 // b_path:: packages/b_declarations/src/core/index.ts
 export * from "./registry";
@@ -732,10 +736,11 @@ import type { BackgroundAttachmentIR } from "./types";
 
 /**
  * Generate CSS for background-attachment property.
+ * Returns value-only (no property prefix).
  */
 export function generateBackgroundAttachment(ir: BackgroundAttachmentIR): GenerateResult {
   if (ir.kind === "keyword") {
-    return generateOk(ir.value, "background-attachment");
+    return generateOk(ir.value);
   }
 
   const layerStrings: string[] = [];
@@ -745,7 +750,7 @@ export function generateBackgroundAttachment(ir: BackgroundAttachmentIR): Genera
     layerStrings.push(result.value);
   }
 
-  return generateOk(layerStrings.join(", "), "background-attachment");
+  return generateOk(layerStrings.join(", "));
 }
 
 
@@ -850,10 +855,11 @@ import type { BackgroundClipIR } from "./types";
 
 /**
  * Generate CSS for background-clip property.
+ * Returns value-only (no property prefix).
  */
 export function generateBackgroundClip(ir: BackgroundClipIR): GenerateResult {
   if (ir.kind === "keyword") {
-    return generateOk(ir.value, "background-clip");
+    return generateOk(ir.value);
   }
 
   const layerStrings: string[] = [];
@@ -863,7 +869,7 @@ export function generateBackgroundClip(ir: BackgroundClipIR): GenerateResult {
     layerStrings.push(result.value);
   }
 
-  return generateOk(layerStrings.join(", "), "background-clip");
+  return generateOk(layerStrings.join(", "));
 }
 
 
@@ -1072,13 +1078,13 @@ import type { BackgroundImageIR } from "./types";
 
 /**
  * Generate a background-image CSS value from its IR representation.
+ * Returns value-only (no property prefix).
  */
 export function generateBackgroundImage(ir: BackgroundImageIR): GenerateResult {
   if (ir.kind === "keyword") {
     return {
       ok: true,
       value: ir.value,
-      property: "background-image",
       issues: [],
     };
   }
@@ -1099,7 +1105,6 @@ export function generateBackgroundImage(ir: BackgroundImageIR): GenerateResult {
   return {
     ok: true,
     value: layerStrings.join(", "),
-    property: "background-image",
     issues: allIssues,
   };
 }
@@ -1207,10 +1212,11 @@ import type { BackgroundOriginIR } from "./types";
 
 /**
  * Generate CSS for background-origin property.
+ * Returns value-only (no property prefix).
  */
 export function generateBackgroundOrigin(ir: BackgroundOriginIR): GenerateResult {
   if (ir.kind === "keyword") {
-    return generateOk(ir.value, "background-origin");
+    return generateOk(ir.value);
   }
 
   const layerStrings: string[] = [];
@@ -1220,7 +1226,7 @@ export function generateBackgroundOrigin(ir: BackgroundOriginIR): GenerateResult
     layerStrings.push(result.value);
   }
 
-  return generateOk(layerStrings.join(", "), "background-origin");
+  return generateOk(layerStrings.join(", "));
 }
 
 
@@ -1433,10 +1439,11 @@ import type { BackgroundRepeatIR } from "./types";
 
 /**
  * Generate CSS for background-repeat property.
+ * Returns value-only (no property prefix).
  */
 export function generateBackgroundRepeat(ir: BackgroundRepeatIR): GenerateResult {
   if (ir.kind === "keyword") {
-    return generateOk(ir.value, "background-repeat");
+    return generateOk(ir.value);
   }
 
   const layerStrings: string[] = [];
@@ -1446,7 +1453,7 @@ export function generateBackgroundRepeat(ir: BackgroundRepeatIR): GenerateResult
     layerStrings.push(result.value);
   }
 
-  return generateOk(layerStrings.join(", "), "background-repeat");
+  return generateOk(layerStrings.join(", "));
 }
 
 
@@ -1549,9 +1556,13 @@ import * as Generators from "@b/generators";
 import { generateValue } from "../../utils";
 import type { BackgroundSizeIR } from "./types";
 
+/**
+ * Generate CSS for background-size property.
+ * Returns value-only (no property prefix).
+ */
 export function generateBackgroundSize(ir: BackgroundSizeIR): GenerateResult {
   if (ir.kind === "keyword") {
-    return generateOk(ir.value, "background-size");
+    return generateOk(ir.value);
   }
 
   const valueStrings: string[] = [];
@@ -1562,7 +1573,7 @@ export function generateBackgroundSize(ir: BackgroundSizeIR): GenerateResult {
     valueStrings.push(result.value);
   }
 
-  return generateOk(valueStrings.join(", "), "background-size");
+  return generateOk(valueStrings.join(", "));
 }
 
 
@@ -11258,3 +11269,5 @@ export default defineConfig({
     },
   },
 });
+
+
