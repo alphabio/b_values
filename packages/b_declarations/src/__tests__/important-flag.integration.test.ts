@@ -1,4 +1,4 @@
-// b_path:: packages/b_declarations/src/important-flag.integration.test.ts
+// b_path:: packages/b_declarations/src/__tests__/important-flag.integration.test.ts
 /**
  * Integration tests for !important flag handling across the declarations API.
  *

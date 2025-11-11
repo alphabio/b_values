@@ -1,4 +1,6 @@
 // b_path:: packages/b_declarations/src/parser.ts
+import * as csstree from "@eslint/css-tree";
+import * as Keywords from "@b/keywords";
 import {
   createError,
   parseErr,
@@ -8,11 +10,9 @@ import {
   type Issue,
   type GenerateResult,
 } from "@b/types";
-import * as Keywords from "@b/keywords";
 import { getPropertyDefinition, isCustomProperty } from "./core";
 import type { CSSDeclaration, DeclarationResult } from "./types";
 import { generateDeclaration } from "./generator";
-import * as csstree from "@eslint/css-tree";
 
 /**
  * Parse a CSS declaration string or object into its IR representation.
@@ -95,7 +95,8 @@ export function parseDeclaration(input: string | CSSDeclaration): ParseResult<De
     if (definition.multiValue) {
       const values = trimmedValue.split(/\s*,\s*/);
       for (const val of values) {
-        if (val && !definition.allowedKeywords.includes(val)) {
+        // Only validate bare identifiers - skip CSS functions (var, calc, etc)
+        if (val && /^[a-z-]+$/i.test(val) && !definition.allowedKeywords.includes(val)) {
           preValidationIssues.push(
             createError(
               "invalid-value",
@@ -105,8 +106,8 @@ export function parseDeclaration(input: string | CSSDeclaration): ParseResult<De
         }
       }
     } else {
-      // Single-value keyword property
-      if (!definition.allowedKeywords.includes(trimmedValue)) {
+      // Single-value keyword property - only validate bare identifiers
+      if (/^[a-z-]+$/i.test(trimmedValue) && !definition.allowedKeywords.includes(trimmedValue)) {
         preValidationIssues.push(
           createError(
             "invalid-value",

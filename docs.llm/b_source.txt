@@ -1,7 +1,3 @@
-Excluding patterns: 
-Documentation for LLMs
-Excluding patterns: 
-Excluding patterns: -not -path */__pycache__/* -not -path */__tests__/* -not -path */.git/* -not -path */.idea/* -not -path */.next/* -not -path */.venv/* -not -path */.vscode/* -not -path */*.spec.py -not -path */*.spec.ts -not -path */*.spec.tsx -not -path */*.test.py -not -path */*.test.ts -not -path */*.test.tsx -not -path */*test.py -not -path */*test.ts -not -path */*test.tsx -not -path */build/* -not -path */dist/* -not -path */me.ts -not -path */node_modules/* -not -path */test_*.py -not -path */test.ts -not -path */test.ts -not -path */tests/* -not -path */venv/*
 === File: packages/b_declarations/src/core/index.ts ===
 // b_path:: packages/b_declarations/src/core/index.ts
 export * from "./registry";
@@ -201,7 +197,7 @@ export function parseDeclarationList(css: string): ParseResult<DeclarationResult
   } catch (e: unknown) {
     const error = e as Error;
     return parseErr(
-      "InvalidSyntax",
+      "declaration-list",
       createError("invalid-syntax", `Failed to parse declaration list: ${error.message}`),
     );
   }
@@ -290,6 +286,7 @@ import type { PropertyIRMap, RegisteredProperty, PropertyGenerator } from "./typ
 export interface GenerateDeclarationInput<TProperty extends RegisteredProperty> {
   property: TProperty;
   ir: PropertyIRMap[TProperty];
+  important?: boolean;
 }
 
 /**
@@ -314,7 +311,7 @@ export interface GenerateDeclarationInput<TProperty extends RegisteredProperty> 
 export function generateDeclaration<TProperty extends RegisteredProperty>(
   input: GenerateDeclarationInput<TProperty>,
 ): GenerateResult {
-  const { property, ir } = input;
+  const { property, ir, important } = input;
 
   // Look up property definition (with custom property fallback)
   const definition = getPropertyDefinition(property);
@@ -352,7 +349,8 @@ export function generateDeclaration<TProperty extends RegisteredProperty>(
   }
 
   // Format as CSS declaration: "property: value"
-  const declaration = `${property}: ${result.value}`;
+  // Append !important if specified
+  const declaration = important ? `${property}: ${result.value} !important` : `${property}: ${result.value}`;
 
   return {
     ...generateOk(declaration, property),
@@ -400,6 +398,8 @@ export * from "./declaration-list-generator";
 
 === File: packages/b_declarations/src/parser.ts ===
 // b_path:: packages/b_declarations/src/parser.ts
+import * as csstree from "@eslint/css-tree";
+import * as Keywords from "@b/keywords";
 import {
   createError,
   parseErr,
@@ -409,11 +409,9 @@ import {
   type Issue,
   type GenerateResult,
 } from "@b/types";
-import * as Keywords from "@b/keywords";
 import { getPropertyDefinition, isCustomProperty } from "./core";
 import type { CSSDeclaration, DeclarationResult } from "./types";
 import { generateDeclaration } from "./generator";
-import * as csstree from "@eslint/css-tree";
 
 /**
  * Parse a CSS declaration string or object into its IR representation.
@@ -483,14 +481,48 @@ export function parseDeclaration(input: string | CSSDeclaration): ParseResult<De
   const definition = getPropertyDefinition(property);
 
   if (!definition) {
-    return parseErr("InvalidValue", createError("invalid-value", `Unknown CSS property: ${property}`));
+    return parseErr("declaration", createError("invalid-value", `Unknown CSS property: ${property}`));
   }
 
-  // Step 2: Parse based on property type
+  // Step 2: Pre-validate keywords if allowedKeywords is defined
+  const preValidationIssues: Issue[] = [];
+
+  if (definition.allowedKeywords && !isCustomProperty(property)) {
+    const trimmedValue = value.trim().toLowerCase();
+
+    // For multi-value properties, validate each comma-separated value
+    if (definition.multiValue) {
+      const values = trimmedValue.split(/\s*,\s*/);
+      for (const val of values) {
+        if (val && !definition.allowedKeywords.includes(val)) {
+          preValidationIssues.push(
+            createError(
+              "invalid-value",
+              `Invalid keyword '${val}' for ${property}. Expected one of: ${definition.allowedKeywords.join(", ")}`,
+            ),
+          );
+        }
+      }
+    } else {
+      // Single-value keyword property
+      if (!definition.allowedKeywords.includes(trimmedValue)) {
+        preValidationIssues.push(
+          createError(
+            "invalid-value",
+            `Invalid keyword '${trimmedValue}' for ${property}. Expected one of: ${definition.allowedKeywords.join(", ")}`,
+          ),
+        );
+      }
+    }
+  }
+
+  // Step 3: Parse based on property type
   let parseResult: ParseResult<unknown>;
 
-  // Special case: Custom properties (--*) receive raw string to preserve formatting
-  if (isCustomProperty(property)) {
+  // Dispatch to appropriate parser based on property definition
+  if (definition.rawValue) {
+    // Raw value properties: Pass string directly without AST parsing
+    // Examples: custom properties (--*), intentionally opaque values
     parseResult = unsafeCallParser(definition.parser, value);
   } else if (definition.multiValue) {
     // Multi-value property: Pass raw string to parser (will split on commas)
@@ -506,17 +538,17 @@ export function parseDeclaration(input: string | CSSDeclaration): ParseResult<De
     } catch (e: unknown) {
       // Fatal syntax error for single-value property
       const error = e as Error;
-      return parseErr("InvalidSyntax", createError("invalid-syntax", error.message));
+      return parseErr("declaration", createError("invalid-syntax", error.message));
     }
 
     // Pass validated AST to parser
     parseResult = unsafeCallParser(definition.parser, valueAst);
   }
 
-  // Step 3: Collect all issues
-  const allIssues: Issue[] = [...parseResult.issues];
+  // Step 4: Collect all issues
+  const allIssues: Issue[] = [...preValidationIssues, ...parseResult.issues];
 
-  // Step 4: Try generation to get semantic warnings (even if parse failed but has partial IR)
+  // Step 5: Try generation to get semantic warnings (even if parse failed but has partial IR)
   if (parseResult.value) {
     try {
       const genResult = unsafeGenerateDeclaration(property, parseResult.value);
@@ -532,13 +564,13 @@ export function parseDeclaration(input: string | CSSDeclaration): ParseResult<De
     }
   }
 
-  // Step 5: Enrich all issues with property context
+  // Step 6: Enrich all issues with property context
   const enrichedIssues = allIssues.map((issue) => ({
     ...issue,
     property,
   }));
 
-  // Step 6: Return result
+  // Step 7: Return result
   if (!parseResult.ok) {
     const partialDeclaration =
       parseResult.value !== undefined
@@ -576,7 +608,7 @@ function parseDeclarationString(input: string): ParseResult<CSSDeclaration> {
 
   if (colonIndex === -1) {
     return parseErr(
-      "InvalidSyntax",
+      "declaration",
       createError("invalid-syntax", `Invalid CSS declaration: missing colon in "${input}"`),
     );
   }
@@ -586,13 +618,13 @@ function parseDeclarationString(input: string): ParseResult<CSSDeclaration> {
 
   if (!property) {
     return parseErr(
-      "MissingValue",
+      "declaration",
       createError("missing-value", `Invalid CSS declaration: empty property in "${input}"`),
     );
   }
 
   if (!value) {
-    return parseErr("MissingValue", createError("missing-value", `Invalid CSS declaration: empty value in "${input}"`));
+    return parseErr("declaration", createError("missing-value", `Invalid CSS declaration: empty value in "${input}"`));
   }
 
   const importantPattern = /\s*!important$/i;
@@ -604,7 +636,7 @@ function parseDeclarationString(input: string): ParseResult<CSSDeclaration> {
   }
 
   if (!value) {
-    return parseErr("MissingValue", createError("missing-value", `Invalid CSS declaration: empty value in "${input}"`));
+    return parseErr("declaration", createError("missing-value", `Invalid CSS declaration: empty value in "${input}"`));
   }
 
   return parseOk({ property, value, important });
@@ -671,6 +703,7 @@ import { defineProperty } from "../../core";
 import { parseBackgroundAttachment } from "./parser";
 import { generateBackgroundAttachment } from "./generator";
 import type { BackgroundAttachmentIR } from "./types";
+import { BACKGROUND_ATTACHMENT } from "@b/keywords";
 
 /**
  * background-attachment property definition.
@@ -678,6 +711,7 @@ import type { BackgroundAttachmentIR } from "./types";
 export const backgroundAttachment = defineProperty<BackgroundAttachmentIR>({
   name: "background-attachment",
   syntax: "<attachment>#",
+  allowedKeywords: BACKGROUND_ATTACHMENT,
   parser: parseBackgroundAttachment,
   multiValue: true,
   generator: generateBackgroundAttachment,
@@ -690,6 +724,7 @@ export const backgroundAttachment = defineProperty<BackgroundAttachmentIR>({
 // b_path:: packages/b_declarations/src/properties/background-attachment/generator.ts
 import { generateOk, type GenerateResult } from "@b/types";
 import * as Generators from "@b/generators";
+import { generateValue } from "../../utils";
 import type { BackgroundAttachmentIR } from "./types";
 
 /**
@@ -702,7 +737,7 @@ export function generateBackgroundAttachment(ir: BackgroundAttachmentIR): Genera
 
   const layerStrings: string[] = [];
   for (const layer of ir.values) {
-    const result = Generators.Background.generateBackgroundAttachmentValue(layer);
+    const result = generateValue(layer, Generators.Background.generateBackgroundAttachmentValue);
     if (!result.ok) return result;
     layerStrings.push(result.value);
   }
@@ -742,14 +777,21 @@ export const parseBackgroundAttachment = createMultiValueParser<AttachmentValue,
 // b_path:: packages/b_declarations/src/properties/background-attachment/types.ts
 import { z } from "zod";
 import * as Keywords from "@b/keywords";
+import { cssValueSchema } from "@b/types";
 
 /**
- * Single attachment value. This is the component type.
- * Here, it's just a simple keyword from our vocabulary.
+ * Concrete background-attachment values per CSS spec.
  * @see https://developer.mozilla.org/en-US/docs/Web/CSS/background-attachment
  */
-const attachmentValueSchema = Keywords.backgroundAttachment;
-export type AttachmentValue = z.infer<typeof attachmentValueSchema>;
+const backgroundAttachmentSchema = Keywords.backgroundAttachment;
+
+/**
+ * background-attachment value with universal CSS function support.
+ * Can be a concrete keyword OR a CssValue (var(), calc(), etc.)
+ */
+const backgroundAttachmentValueSchema = z.union([backgroundAttachmentSchema, cssValueSchema]);
+
+export type AttachmentValue = z.infer<typeof backgroundAttachmentValueSchema>;
 
 /**
  * The final IR schema for the entire `background-attachment` property.
@@ -766,7 +808,7 @@ export const backgroundAttachmentIRSchema = z.discriminatedUnion("kind", [
   // OPTION B: The entire property is a list of <attachment> values.
   z.object({
     kind: z.literal("list"),
-    values: z.array(attachmentValueSchema).min(1),
+    values: z.array(backgroundAttachmentValueSchema).min(1),
   }),
 ]);
 
@@ -779,6 +821,7 @@ import { defineProperty } from "../../core";
 import { parseBackgroundClip } from "./parser";
 import { generateBackgroundClip } from "./generator";
 import type { BackgroundClipIR } from "./types";
+import { BACKGROUND_CLIP } from "@b/keywords";
 
 /**
  * background-clip property definition.
@@ -786,6 +829,7 @@ import type { BackgroundClipIR } from "./types";
 export const backgroundClip = defineProperty<BackgroundClipIR>({
   name: "background-clip",
   syntax: "<box>#",
+  allowedKeywords: BACKGROUND_CLIP,
   parser: parseBackgroundClip,
   multiValue: true,
   generator: generateBackgroundClip,
@@ -798,6 +842,7 @@ export const backgroundClip = defineProperty<BackgroundClipIR>({
 // b_path:: packages/b_declarations/src/properties/background-clip/generator.ts
 import { generateOk, type GenerateResult } from "@b/types";
 import * as Generators from "@b/generators";
+import { generateValue } from "../../utils";
 import type { BackgroundClipIR } from "./types";
 
 /**
@@ -810,7 +855,7 @@ export function generateBackgroundClip(ir: BackgroundClipIR): GenerateResult {
 
   const layerStrings: string[] = [];
   for (const layer of ir.values) {
-    const result = Generators.Background.generateBackgroundClipValue(layer);
+    const result = generateValue(layer, Generators.Background.generateBackgroundClipValue);
     if (!result.ok) return result;
     layerStrings.push(result.value);
   }
@@ -831,17 +876,17 @@ export * from "./definition";
 // b_path:: packages/b_declarations/src/properties/background-clip/parser.ts
 import type * as csstree from "@eslint/css-tree";
 import type { ParseResult } from "@b/types";
+import type { BackgroundClip } from "@b/keywords";
 import * as Parsers from "@b/parsers";
-import type * as Keywords from "@b/keywords";
 import { createMultiValueParser } from "../../utils";
 import type { BackgroundClipIR } from "./types";
 
-export const parseBackgroundClip = createMultiValueParser<Keywords.BackgroundClip, BackgroundClipIR>({
-  itemParser(valueNode: csstree.Value): ParseResult<Keywords.BackgroundClip> {
+export const parseBackgroundClip = createMultiValueParser<BackgroundClip, BackgroundClipIR>({
+  itemParser(valueNode: csstree.Value): ParseResult<BackgroundClip> {
     return Parsers.Background.parseBackgroundClipValue(valueNode);
   },
 
-  aggregator(layers: Keywords.BackgroundClip[]): BackgroundClipIR {
+  aggregator(layers: BackgroundClip[]): BackgroundClipIR {
     return { kind: "list", values: layers };
   },
 });
@@ -852,13 +897,19 @@ export const parseBackgroundClip = createMultiValueParser<Keywords.BackgroundCli
 
 import { z } from "zod";
 import * as Keywords from "@b/keywords";
+import { cssValueSchema } from "@b/types";
 
 /**
- * Single background-clip value. This is the component type, <box>.
- * It's a keyword from our vocabulary.
+ * Concrete background-clip values per CSS spec.
  * @see https://developer.mozilla.org/en-US/docs/Web/CSS/background-clip
  */
-const backgroundClipValueSchema = Keywords.backgroundClip;
+const backgroundClipSchema = Keywords.backgroundClip;
+
+/**
+ * background-clip value with universal CSS function support.
+ * Can be a concrete keyword OR a CssValue (var(), calc(), etc.)
+ */
+const backgroundClipValueSchema = z.union([backgroundClipSchema, cssValueSchema]);
 
 /**
  * The final IR schema for the entire `background-clip` property.
@@ -883,6 +934,109 @@ export const backgroundClipIRSchema = z.discriminatedUnion("kind", [
  * inferred directly from the schema.
  */
 export type BackgroundClipIR = z.infer<typeof backgroundClipIRSchema>;
+
+
+=== File: packages/b_declarations/src/properties/background-color/definition.ts ===
+// b_path:: packages/b_declarations/src/properties/background-color/definition.ts
+
+import { defineProperty } from "../../core";
+import { parseBackgroundColor } from "./parser";
+import { generateBackgroundColor } from "./generator";
+import type { BackgroundColorIR } from "./types";
+
+export const backgroundColor = defineProperty<BackgroundColorIR>({
+  name: "background-color",
+  syntax: "<color>",
+  parser: parseBackgroundColor,
+  generator: generateBackgroundColor,
+  inherited: false,
+  initial: "transparent",
+});
+
+
+=== File: packages/b_declarations/src/properties/background-color/generator.ts ===
+// b_path:: packages/b_declarations/src/properties/background-color/generator.ts
+
+import { generateOk, type GenerateResult } from "@b/types";
+import * as Generators from "@b/generators";
+import type { BackgroundColorIR } from "./types";
+
+export function generateBackgroundColor(ir: BackgroundColorIR): GenerateResult {
+  if (ir.kind === "keyword") {
+    return generateOk(ir.value);
+  }
+
+  const result = Generators.Color.generate(ir.value);
+  return result;
+}
+
+
+=== File: packages/b_declarations/src/properties/background-color/index.ts ===
+// b_path:: packages/b_declarations/src/properties/background-color/index.ts
+
+export * from "./types";
+export * from "./parser";
+export * from "./generator";
+export * from "./definition";
+
+
+=== File: packages/b_declarations/src/properties/background-color/parser.ts ===
+// b_path:: packages/b_declarations/src/properties/background-color/parser.ts
+
+import type { ParseResult } from "@b/types";
+import * as Parsers from "@b/parsers";
+import type * as csstree from "@eslint/css-tree";
+import type { BackgroundColorIR } from "./types";
+
+export function parseBackgroundColor(ast: csstree.Value): ParseResult<BackgroundColorIR> {
+  const firstNode = ast.children.first;
+
+  if (!firstNode) {
+    return {
+      ok: false,
+      property: "background-color",
+      value: undefined,
+      issues: [{ code: "missing-value", severity: "error", message: "Empty value for background-color" }],
+    };
+  }
+
+  const colorResult = Parsers.Color.parseNode(firstNode);
+
+  if (colorResult.ok) {
+    return {
+      ok: true,
+      property: "background-color",
+      value: { kind: "value", value: colorResult.value },
+      issues: colorResult.issues,
+    };
+  }
+
+  return colorResult as ParseResult<BackgroundColorIR>;
+}
+
+
+=== File: packages/b_declarations/src/properties/background-color/types.ts ===
+// b_path:: packages/b_declarations/src/properties/background-color/types.ts
+
+import { z } from "zod";
+import { colorSchema } from "@b/types";
+import * as Keywords from "@b/keywords";
+
+/**
+ * The final IR for the entire `background-color` property.
+ */
+export const backgroundColorIRSchema = z.discriminatedUnion("kind", [
+  z.object({
+    kind: z.literal("keyword"),
+    value: Keywords.cssWide,
+  }),
+  z.object({
+    kind: z.literal("value"),
+    value: colorSchema,
+  }),
+]);
+
+export type BackgroundColorIR = z.infer<typeof backgroundColorIRSchema>;
 
 
 === File: packages/b_declarations/src/properties/background-image/definition.ts ===
@@ -910,13 +1064,11 @@ export const backgroundImage = defineProperty<BackgroundImageIR>({
 // b_path:: packages/b_declarations/src/properties/background-image/generator.ts
 import type { Issue, GenerateResult } from "@b/types";
 import * as Generators from "@b/generators";
+import { generateValue } from "../../utils";
 import type { BackgroundImageIR } from "./types";
 
 /**
  * Generate a background-image CSS value from its IR representation.
- *
- * @param ir - Background image IR
- * @returns GenerateResult with CSS string or issues
  */
 export function generateBackgroundImage(ir: BackgroundImageIR): GenerateResult {
   if (ir.kind === "keyword") {
@@ -928,20 +1080,12 @@ export function generateBackgroundImage(ir: BackgroundImageIR): GenerateResult {
     };
   }
 
-  // Generate each layer
   const layerStrings: string[] = [];
   const allIssues: Issue[] = [];
 
   for (let i = 0; i < ir.values.length; i++) {
     const layer = ir.values[i];
-
-    // Handle string keywords directly
-    if (typeof layer === "string") {
-      layerStrings.push(layer);
-      continue;
-    }
-
-    const layerResult = Generators.Background.generateImageValue(layer, ["list", i]);
+    const layerResult = generateValue(layer, (l) => Generators.Background.generateImageValue(l, ["list", i]));
     if (!layerResult.ok) {
       return layerResult;
     }
@@ -949,7 +1093,6 @@ export function generateBackgroundImage(ir: BackgroundImageIR): GenerateResult {
     allIssues.push(...layerResult.issues);
   }
 
-  // Join with comma and space
   return {
     ok: true,
     value: layerStrings.join(", "),
@@ -969,7 +1112,6 @@ export * from "./types";
 
 === File: packages/b_declarations/src/properties/background-image/parser.ts ===
 // b_path:: packages/b_declarations/src/properties/background-image/parser.ts
-// packages/b_declarations/src/properties/background-image/parser.ts
 
 import { parseOk, type ParseResult } from "@b/types";
 import * as Parsers from "@b/parsers";
@@ -998,34 +1140,32 @@ export const parseBackgroundImage = createMultiValueParser<Image, BackgroundImag
 
 === File: packages/b_declarations/src/properties/background-image/types.ts ===
 // b_path:: packages/b_declarations/src/properties/background-image/types.ts
-import { imageSchema } from "@b/types";
+import { imageSchema, cssValueSchema } from "@b/types";
 import { z } from "zod";
 import * as Keywords from "@b/keywords";
 
 /**
- * @see https://www.w3.org/TR/css-backgrounds-3/#background-image
+ * Concrete background-image values per CSS spec.
+ * Image type now includes "none" at the concrete layer.
  */
-// export type BackgroundImageIR = BackgroundImageList;
+const backgroundImageSchema = imageSchema;
 
 /**
- * Single image layer for background-image property.
+ * background-image value with universal CSS function support.
  */
-// export type ImageLayer = Image;
+const backgroundImageValueSchema = z.union([backgroundImageSchema, cssValueSchema]);
 
 /**
  * The final IR for the entire `background-image` property.
- * Supports CSS-wide keywords or a list of <image> values.
  */
 export const backgroundImageIR = z.discriminatedUnion("kind", [
-  // For global keywords like 'inherit', 'unset', etc.
   z.object({
     kind: z.literal("keyword"),
     value: z.union([Keywords.cssWide, Keywords.none]),
   }),
-  // For one or more <image> values
   z.object({
     kind: z.literal("list"),
-    values: z.array(imageSchema).min(1),
+    values: z.array(backgroundImageValueSchema).min(1),
   }),
 ]);
 
@@ -1038,6 +1178,7 @@ import { defineProperty } from "../../core";
 import { parseBackgroundOrigin } from "./parser";
 import { generateBackgroundOrigin } from "./generator";
 import type { BackgroundOriginIR } from "./types";
+import { BACKGROUND_ORIGIN } from "@b/keywords";
 
 /**
  * background-origin property definition.
@@ -1045,6 +1186,7 @@ import type { BackgroundOriginIR } from "./types";
 export const backgroundOrigin = defineProperty<BackgroundOriginIR>({
   name: "background-origin",
   syntax: "<box>#",
+  allowedKeywords: BACKGROUND_ORIGIN,
   parser: parseBackgroundOrigin,
   multiValue: true,
   generator: generateBackgroundOrigin,
@@ -1057,6 +1199,7 @@ export const backgroundOrigin = defineProperty<BackgroundOriginIR>({
 // b_path:: packages/b_declarations/src/properties/background-origin/generator.ts
 import { generateOk, type GenerateResult } from "@b/types";
 import * as Generators from "@b/generators";
+import { generateValue } from "../../utils";
 import type { BackgroundOriginIR } from "./types";
 
 /**
@@ -1069,7 +1212,7 @@ export function generateBackgroundOrigin(ir: BackgroundOriginIR): GenerateResult
 
   const layerStrings: string[] = [];
   for (const layer of ir.values) {
-    const result = Generators.Background.generateBackgroundOriginValue(layer);
+    const result = generateValue(layer, Generators.Background.generateBackgroundOriginValue);
     if (!result.ok) return result;
     layerStrings.push(result.value);
   }
@@ -1111,14 +1254,19 @@ export const parseBackgroundOrigin = createMultiValueParser<Keywords.BackgroundO
 
 import { z } from "zod";
 import * as Keywords from "@b/keywords";
+import { cssValueSchema } from "@b/types";
 
 /**
- * Single background-origin value. Sets the background's origin: from the border start,
- * inside the border, or inside the padding.
- * It's a keyword from our vocabulary.
+ * Concrete background-origin values per CSS spec.
  * @see https://developer.mozilla.org/en-US/docs/Web/CSS/background-origin
  */
-const backgroundOriginValue = Keywords.backgroundOrigin;
+const backgroundOriginSchema = Keywords.backgroundOrigin;
+
+/**
+ * background-origin value with universal CSS function support.
+ * Can be a concrete keyword OR a CssValue (var(), calc(), etc.)
+ */
+const backgroundOriginValueSchema = z.union([backgroundOriginSchema, cssValueSchema]);
 
 /**
  * The final IR schema for the entire `background-origin` property.
@@ -1134,11 +1282,122 @@ export const backgroundOriginIR = z.discriminatedUnion("kind", [
   // OPTION B: The entire property is a list of <background-origin> values.
   z.object({
     kind: z.literal("list"),
-    values: z.array(backgroundOriginValue).min(1),
+    values: z.array(backgroundOriginValueSchema).min(1),
   }),
 ]);
 
 export type BackgroundOriginIR = z.infer<typeof backgroundOriginIR>;
+
+
+=== File: packages/b_declarations/src/properties/background-position/definition.ts ===
+// b_path:: packages/b_declarations/src/properties/background-position/definition.ts
+
+import { defineProperty } from "../../core";
+import { parseBackgroundPosition } from "./parser";
+import { generateBackgroundPosition } from "./generator";
+import type { BackgroundPositionIR } from "./types";
+
+export const backgroundPosition = defineProperty<BackgroundPositionIR>({
+  name: "background-position",
+  syntax: "<bg-position>#",
+  parser: parseBackgroundPosition,
+  multiValue: true,
+  generator: generateBackgroundPosition,
+  inherited: false,
+  initial: "0% 0%",
+});
+
+
+=== File: packages/b_declarations/src/properties/background-position/generator.ts ===
+// b_path:: packages/b_declarations/src/properties/background-position/generator.ts
+
+import { generateOk, type GenerateResult } from "@b/types";
+import * as Generators from "@b/generators";
+import { generateValue } from "../../utils";
+import type { BackgroundPositionIR } from "./types";
+
+export function generateBackgroundPosition(ir: BackgroundPositionIR): GenerateResult {
+  if (ir.kind === "keyword") {
+    return generateOk(ir.value);
+  }
+
+  const layerStrings: string[] = [];
+  for (const value of ir.values) {
+    const result = generateValue(value, Generators.Position.generate);
+    if (!result.ok) return result;
+    layerStrings.push(result.value);
+  }
+
+  return generateOk(layerStrings.join(", "));
+}
+
+
+=== File: packages/b_declarations/src/properties/background-position/index.ts ===
+// b_path:: packages/b_declarations/src/properties/background-position/index.ts
+
+export * from "./types";
+export * from "./parser";
+export * from "./generator";
+export * from "./definition";
+
+
+=== File: packages/b_declarations/src/properties/background-position/parser.ts ===
+// b_path:: packages/b_declarations/src/properties/background-position/parser.ts
+
+import type { ParseResult, Position2D } from "@b/types";
+import * as Parsers from "@b/parsers";
+import { createMultiValueParser } from "../../utils";
+import type { BackgroundPositionIR } from "./types";
+import type * as csstree from "@eslint/css-tree";
+
+export const parseBackgroundPosition = createMultiValueParser<Position2D, BackgroundPositionIR>({
+  itemParser(valueNode: csstree.Value): ParseResult<Position2D> {
+    const nodes = Array.from(valueNode.children);
+    const result = Parsers.Position.parsePosition2D(nodes, 0);
+    if (result.ok) {
+      return {
+        ok: true,
+        property: "background-position",
+        value: result.value.position,
+        issues: result.issues,
+      };
+    }
+    return result as ParseResult<Position2D>;
+  },
+
+  aggregator(values: Position2D[]): BackgroundPositionIR {
+    return { kind: "list", values };
+  },
+});
+
+
+=== File: packages/b_declarations/src/properties/background-position/types.ts ===
+// b_path:: packages/b_declarations/src/properties/background-position/types.ts
+
+import { z } from "zod";
+import { position2DSchema, cssValueSchema } from "@b/types";
+import * as Keywords from "@b/keywords";
+
+/**
+ * background-position value with universal CSS function support.
+ */
+const backgroundPositionValueSchema = z.union([position2DSchema, cssValueSchema]);
+
+/**
+ * The final IR for the entire `background-position` property.
+ */
+export const backgroundPositionIRSchema = z.discriminatedUnion("kind", [
+  z.object({
+    kind: z.literal("keyword"),
+    value: Keywords.cssWide,
+  }),
+  z.object({
+    kind: z.literal("list"),
+    values: z.array(backgroundPositionValueSchema).min(1),
+  }),
+]);
+
+export type BackgroundPositionIR = z.infer<typeof backgroundPositionIRSchema>;
 
 
 === File: packages/b_declarations/src/properties/background-repeat/definition.ts ===
@@ -1166,6 +1425,7 @@ export const backgroundRepeat = defineProperty<BackgroundRepeatIR>({
 // b_path:: packages/b_declarations/src/properties/background-repeat/generator.ts
 import { generateOk, type GenerateResult } from "@b/types";
 import * as Generators from "@b/generators";
+import { generateValue } from "../../utils";
 import type { BackgroundRepeatIR } from "./types";
 
 /**
@@ -1178,7 +1438,7 @@ export function generateBackgroundRepeat(ir: BackgroundRepeatIR): GenerateResult
 
   const layerStrings: string[] = [];
   for (const layer of ir.values) {
-    const result = Generators.Background.generateBackgroundRepeatValue(layer);
+    const result = generateValue(layer, Generators.Background.generateBackgroundRepeatValue);
     if (!result.ok) return result;
     layerStrings.push(result.value);
   }
@@ -1197,18 +1457,18 @@ export * from "./definition";
 
 === File: packages/b_declarations/src/properties/background-repeat/parser.ts ===
 // b_path:: packages/b_declarations/src/properties/background-repeat/parser.ts
-import type { ParseResult, RepeatStyle } from "@b/types";
+import type { ParseResult, RepeatStyle, CssValue } from "@b/types";
 import * as Parsers from "@b/parsers";
 import { createMultiValueParser } from "../../utils";
-import type { BackgroundRepeatIR } from "./types";
+import type { BackgroundRepeatIR, RepeatStyleValue } from "./types";
 import type * as csstree from "@eslint/css-tree";
 
-export const parseBackgroundRepeat = createMultiValueParser<RepeatStyle, BackgroundRepeatIR>({
-  itemParser(valueNode: csstree.Value): ParseResult<RepeatStyle> {
+export const parseBackgroundRepeat = createMultiValueParser<RepeatStyleValue, BackgroundRepeatIR>({
+  itemParser(valueNode: csstree.Value): ParseResult<RepeatStyle | CssValue> {
     return Parsers.Background.parseBackgroundRepeatValue(valueNode);
   },
 
-  aggregator(layers: RepeatStyle[]): BackgroundRepeatIR {
+  aggregator(layers: RepeatStyleValue[]): BackgroundRepeatIR {
     return { kind: "list", values: layers };
   },
 });
@@ -1218,11 +1478,21 @@ export const parseBackgroundRepeat = createMultiValueParser<RepeatStyle, Backgro
 // b_path:: packages/b_declarations/src/properties/background-repeat/types.ts
 
 import { z } from "zod";
-import { repeatStyleSchema } from "@b/types"; // <-- Import the component SCHEMA
+import { repeatStyleSchema, cssValueSchema } from "@b/types";
 import * as Keywords from "@b/keywords";
 
-// The component schema is imported directly. We can infer the component type if needed.
-export type RepeatStyleValue = z.infer<typeof repeatStyleSchema>;
+/**
+ * Concrete background-repeat values per CSS spec.
+ */
+const backgroundRepeatSchema = repeatStyleSchema;
+
+/**
+ * background-repeat value with universal CSS function support.
+ * Can be a concrete repeat-style OR a CssValue (var(), calc(), etc.)
+ */
+const backgroundRepeatValueSchema = z.union([backgroundRepeatSchema, cssValueSchema]);
+
+export type RepeatStyleValue = z.infer<typeof backgroundRepeatValueSchema>;
 
 /**
  * The final IR schema for the entire `background-repeat` property.
@@ -1237,7 +1507,7 @@ export const backgroundRepeatIRSchema = z.discriminatedUnion("kind", [
   // OPTION B: The entire property is a list of <repeat-style> values.
   z.object({
     kind: z.literal("list"),
-    values: z.array(repeatStyleSchema).min(1),
+    values: z.array(backgroundRepeatValueSchema).min(1),
   }),
 ]);
 
@@ -1273,6 +1543,7 @@ export const backgroundSize = defineProperty<BackgroundSizeIR>({
 
 import { generateOk, type GenerateResult } from "@b/types";
 import * as Generators from "@b/generators";
+import { generateValue } from "../../utils";
 import type { BackgroundSizeIR } from "./types";
 
 export function generateBackgroundSize(ir: BackgroundSizeIR): GenerateResult {
@@ -1283,7 +1554,7 @@ export function generateBackgroundSize(ir: BackgroundSizeIR): GenerateResult {
   const valueStrings: string[] = [];
 
   for (let i = 0; i < ir.values.length; i++) {
-    const result = Generators.Background.generateBackgroundSizeValue(ir.values[i]);
+    const result = generateValue(ir.values[i], Generators.Background.generateBackgroundSizeValue);
     if (!result.ok) return result;
     valueStrings.push(result.value);
   }
@@ -1324,24 +1595,36 @@ export const parseBackgroundSize = createMultiValueParser<BgSize, BackgroundSize
 === File: packages/b_declarations/src/properties/background-size/types.ts ===
 // b_path:: packages/b_declarations/src/properties/background-size/types.ts
 import { z } from "zod";
-import { bgSizeSchema } from "@b/types"; // <-- Import the reusable component type!
+import { bgSizeSchema, cssValueSchema } from "@b/types";
 import * as Keywords from "@b/keywords";
+
+/**
+ * Concrete background-size values per CSS spec.
+ */
+const backgroundSizeSchema = bgSizeSchema;
+
+/**
+ * background-size value with universal CSS function support.
+ * Can be a concrete bg-size (cover, contain, explicit dimensions)
+ * OR a CssValue (var(), calc(), etc.)
+ */
+const backgroundSizeValueSchema = z.union([backgroundSizeSchema, cssValueSchema]);
 
 /**
  * The final IR for the entire `background-size` property.
  */
-export const backgroundSizeIRS = z.discriminatedUnion("kind", [
+export const backgroundSizeIR = z.discriminatedUnion("kind", [
   z.object({
     kind: z.literal("keyword"),
     value: Keywords.cssWide,
   }),
   z.object({
     kind: z.literal("list"),
-    values: z.array(bgSizeSchema).min(1),
+    values: z.array(backgroundSizeValueSchema).min(1),
   }),
 ]);
 
-export type BackgroundSizeIR = z.infer<typeof backgroundSizeIRS>;
+export type BackgroundSizeIR = z.infer<typeof backgroundSizeIR>;
 
 
 === File: packages/b_declarations/src/properties/custom-property/definition.ts ===
@@ -1405,7 +1688,7 @@ import type { CustomPropertyIR } from "./types";
 export function parseCustomProperty(value: string): ParseResult<CustomPropertyIR> {
   const trimmed = value.trim();
   if (trimmed === "") {
-    return parseErr("MissingValue", createError("missing-value", "Custom property value cannot be empty"));
+    return parseErr("custom-property", createError("missing-value", "Custom property value cannot be empty"));
   }
 
   return parseOk({ kind: "raw", value: trimmed });
@@ -1432,8 +1715,10 @@ export * from "./custom-property";
 
 export * from "./background-attachment";
 export * from "./background-clip";
+export * from "./background-color";
 export * from "./background-image";
 export * from "./background-origin";
+export * from "./background-position";
 export * from "./background-repeat";
 export * from "./background-size";
 
@@ -1447,8 +1732,10 @@ export * from "./background-size";
 import type {
   BackgroundAttachmentIR,
   BackgroundClipIR,
+  BackgroundColorIR,
   BackgroundImageIR,
   BackgroundOriginIR,
+  BackgroundPositionIR,
   BackgroundRepeatIR,
   BackgroundSizeIR,
   CustomPropertyIR,
@@ -1461,8 +1748,10 @@ import type {
 export interface PropertyIRMap {
   "background-attachment": BackgroundAttachmentIR;
   "background-clip": BackgroundClipIR;
+  "background-color": BackgroundColorIR;
   "background-image": BackgroundImageIR;
   "background-origin": BackgroundOriginIR;
+  "background-position": BackgroundPositionIR;
   "background-repeat": BackgroundRepeatIR;
   "background-size": BackgroundSizeIR;
   [key: `--${string}`]: CustomPropertyIR;
@@ -1572,7 +1861,8 @@ type RawValueDefinition<T> = {
  * - syntax string (for docs),
  * - parser configuration (single, multi, or raw),
  * - optional generator for IR → CSS,
- * - inheritance and initial/computed values.
+ * - inheritance and initial/computed values,
+ * - optional validation constraints.
  */
 export type PropertyDefinition<T = unknown> = {
   /** CSS property name, e.g. "background-image" or "--*" */
@@ -1587,6 +1877,15 @@ export type PropertyDefinition<T = unknown> = {
   computed?: string;
   /** Optional IR → CSS value generator for this property */
   generator?: PropertyGenerator<T>;
+  /**
+   * Optional validation: allowed keyword values for this property.
+   * When provided, the core parser will pre-validate keywords before
+   * delegating to the property parser, enabling early error detection.
+   *
+   * @example
+   * allowedKeywords: ['scroll', 'fixed', 'local']
+   */
+  allowedKeywords?: readonly string[];
 } & (SingleValueDefinition<T> | MultiValueDefinition<T> | RawValueDefinition<T>);
 
 
@@ -1609,7 +1908,9 @@ export type PropertyDefinition<T = unknown> = {
 
 import * as csstree from "@eslint/css-tree";
 import { createError, parseErr, type ParseResult, type Issue } from "@b/types";
+import { Utils } from "@b/parsers";
 import { splitByComma } from "./split";
+import { isUniversalFunction } from "./type-guards";
 
 /**
  * Configuration for the multi-value parser factory.
@@ -1706,23 +2007,47 @@ export function createMultiValueParser<TItem, TFinal>(
             "invalid-syntax",
             `Unexpected content after a valid value, likely a missing comma. Unparsed: "${preview}"`,
           );
-          itemResults.push(parseErr("InvalidSyntax", issue));
+          itemResults.push(parseErr("multi-value", issue));
           continue;
         }
       } catch (e) {
-        const issue = createError(
-          "invalid-syntax",
-          `Invalid syntax in list item: ${e instanceof Error ? e.message : String(e)}`,
-        );
-        itemResults.push(parseErr("InvalidSyntax", issue));
+        const errorMessage = e instanceof Error ? e.message : String(e);
+
+        // Detect common mistakes and provide helpful messages
+        let improvedMessage = `Invalid syntax in list item: ${errorMessage}`;
+
+        if (trimmedItemStr.includes("!important")) {
+          improvedMessage = `Found '!important' in value. Use parseDeclaration() for declarations with !important, not property parsers directly.`;
+        } else if (/\s+!/.test(trimmedItemStr)) {
+          improvedMessage = `Invalid syntax: '!' character found. Did you mean to use parseDeclaration() with !important?`;
+        } else if (errorMessage.toLowerCase().includes("unexpected")) {
+          improvedMessage = `Invalid syntax in list item: ${errorMessage}. Check for typos, missing quotes, or invalid tokens.`;
+        }
+
+        const issue = createError("invalid-syntax", improvedMessage);
+        itemResults.push(parseErr("multi-value", issue));
         continue;
       }
 
-      // 5. Delegate to the property-specific item parser with the validated AST chunk.
+      // 5. Check for universal CSS functions first (var, calc, min, max, clamp, etc.)
+      // These are handled at the declaration layer, not by property-specific parsers.
+      // This follows the same pattern as CSS-wide keywords (Session 057).
+      const firstNode = itemAst.children.first;
+      if (firstNode && isUniversalFunction(firstNode)) {
+        const universalResult = Utils.parseNodeToCssValue(firstNode);
+        if (universalResult.ok) {
+          // Cast is safe: TItem can be CssValue (union type in property schemas)
+          itemResults.push(universalResult as ParseResult<TItem>);
+          continue;
+        }
+        // Fall through if universal parsing failed - let property parser handle the error
+      }
+
+      // 6. Delegate to the property-specific item parser with the validated AST chunk.
       itemResults.push(config.itemParser(itemAst));
     }
 
-    // 6. Aggregate all successful items and all issues.
+    // 7. Aggregate all successful items and all issues.
     const validItems: TItem[] = [];
     const allIssues: Issue[] = [];
 
@@ -1737,6 +2062,7 @@ export function createMultiValueParser<TItem, TFinal>(
     if (validItems.length === 0) {
       return {
         ok: false,
+        property: "multi-value",
         value: undefined,
         issues: allIssues.length > 0 ? allIssues : [createError("invalid-value", "No valid list items found")],
       };
@@ -1751,6 +2077,7 @@ export function createMultiValueParser<TItem, TFinal>(
     if (hasErrors) {
       return {
         ok: false,
+        property: "multi-value",
         value: finalIR,
         issues: allIssues,
       };
@@ -1758,10 +2085,63 @@ export function createMultiValueParser<TItem, TFinal>(
 
     return {
       ok: true,
+      property: "multi-value",
       value: finalIR,
       issues: allIssues,
     };
   };
+}
+
+
+=== File: packages/b_declarations/src/utils/generate-value.ts ===
+// b_path:: packages/b_declarations/src/utils/generate-value.ts
+
+import { generateOk, type CssValue, type GenerateResult } from "@b/types";
+import { cssValueToCss } from "@b/utils";
+import { isCssValue } from "./type-guards";
+
+/**
+ * Generate CSS from a value that may be concrete or a CssValue.
+ *
+ * This wrapper bridges the declaration layer (which accepts T | CssValue)
+ * and the concrete generator layer (which expects only T).
+ *
+ * Architecture:
+ * - Declaration schemas validate: T | CssValue
+ * - Concrete generators expect: T
+ * - This function: checks and delegates appropriately
+ *
+ * @param value - Either a concrete value (T) or a CssValue (var, calc, etc.)
+ * @param concreteGenerator - Generator function that handles concrete values
+ * @returns GenerateResult with CSS string
+ *
+ * @example
+ * ```typescript
+ * // Before:
+ * const result = Generators.Background.generateBackgroundSizeValue(ir.values[i]);
+ * // ❌ Type error: ir.values[i] is BgSize | CssValue
+ *
+ * // After:
+ * const result = generateValue(ir.values[i], Generators.Background.generateBackgroundSizeValue);
+ * // ✅ Type-safe: wrapper handles both cases
+ * ```
+ */
+export function generateValue<T>(
+  value: T | CssValue | string,
+  concreteGenerator: (value: T) => GenerateResult,
+): GenerateResult {
+  // Handle CssValue (var, calc, etc.)
+  if (isCssValue(value)) {
+    return generateOk(cssValueToCss(value));
+  }
+
+  // Handle string literals (e.g., "border-box", "padding-box")
+  if (typeof value === "string") {
+    return generateOk(value);
+  }
+
+  // Handle concrete IR types
+  return concreteGenerator(value as T);
 }
 
 
@@ -1770,6 +2150,8 @@ export function createMultiValueParser<TItem, TFinal>(
 export * from "./keywords";
 export * from "./split";
 export * from "./create-multi-value-parser";
+export * from "./generate-value";
+export * from "./type-guards";
 
 
 === File: packages/b_declarations/src/utils/keywords.ts ===
@@ -1844,6 +2226,124 @@ export function splitByComma(value: string): string[] {
 }
 
 
+=== File: packages/b_declarations/src/utils/type-guards.ts ===
+// b_path:: packages/b_declarations/src/utils/type-guards.ts
+
+import type { CssValue } from "@b/types";
+import type * as csstree from "@eslint/css-tree";
+
+/**
+ * Exhaustive list of CssValue kinds.
+ * Used to distinguish CssValue from property-specific IR structures.
+ *
+ * CRITICAL: Both CssValue and property IR may have a "kind" field.
+ * This whitelist prevents false positives when checking generators.
+ */
+const CSS_VALUE_KINDS: ReadonlyArray<CssValue["kind"]> = [
+  "literal",
+  "keyword",
+  "variable",
+  "list",
+  "calc",
+  "calc-operation",
+  "min",
+  "max",
+  "clamp",
+  "url",
+  "attr",
+  "function",
+  "string",
+  "hex-color",
+] as const;
+
+/**
+ * Type guard to check if a value is a CssValue (not a property-specific IR).
+ *
+ * This is critical for generators to distinguish between:
+ * - CssValue: { kind: "calc", value: ... }
+ * - Property IR: { kind: "explicit", horizontal: ..., vertical: ... }
+ *
+ * Both may have a "kind" field, so we use a whitelist of CssValue kinds.
+ *
+ * @param value - Value to check
+ * @returns true if value is a CssValue
+ *
+ * @example
+ * ```typescript
+ * if (isCssValue(value)) {
+ *   // It's var(), calc(), etc.
+ *   return cssValueToCss(value);
+ * } else {
+ *   // It's property-specific IR
+ *   return generateConcrete(value);
+ * }
+ * ```
+ */
+export function isCssValue(value: unknown): value is CssValue {
+  if (typeof value !== "object" || value === null) return false;
+  if (!("kind" in value)) return false;
+
+  const kind = (value as { kind: string }).kind;
+  return CSS_VALUE_KINDS.includes(kind as CssValue["kind"]);
+}
+
+/**
+ * Universal CSS functions that apply to all properties.
+ * These are handled by the declaration layer, not property parsers.
+ */
+const UNIVERSAL_FUNCTIONS = [
+  "var", // CSS Variables
+  "calc", // Math
+  "min", // Math
+  "max", // Math
+  "clamp", // Math
+  "attr", // Attribute references
+  "env", // Environment variables
+] as const;
+
+/**
+ * Check if a CSS AST node is a universal function.
+ *
+ * Universal functions (var, calc, etc.) apply to ALL properties and
+ * should be handled by wrappers, not individual property parsers.
+ *
+ * @param node - CSS AST node
+ * @returns true if the node is a universal function (var, calc, etc.)
+ *
+ * @example
+ * ```typescript
+ * if (isUniversalFunction(node)) {
+ *   return parseNodeToCssValue(node);
+ * }
+ * // Not universal - delegate to property parser
+ * ```
+ */
+export function isUniversalFunction(node: csstree.CssNode): boolean {
+  if (node.type !== "Function") return false;
+  const funcName = (node as csstree.FunctionNode).name.toLowerCase();
+  return (UNIVERSAL_FUNCTIONS as ReadonlyArray<string>).includes(funcName);
+}
+
+/**
+ * Check if a value is a concrete property value (not a CssValue).
+ * Useful for downstream consumers who need to narrow types.
+ *
+ * @param value - Value to check
+ * @returns true if value is concrete (not CssValue)
+ *
+ * @example
+ * ```typescript
+ * if (isConcreteValue(value)) {
+ *   // TypeScript knows value is T, not CssValue
+ *   console.log(value.specificField);
+ * }
+ * ```
+ */
+export function isConcreteValue<T>(value: T | CssValue): value is T {
+  return !isCssValue(value);
+}
+
+
 === File: packages/b_declarations/tsup.config.ts ===
 // b_path:: packages/b_declarations/tsup.config.ts
 import { defineConfig } from "tsup";
@@ -1907,19 +2407,19 @@ export function generateBackgroundAttachmentValue(value: BackgroundAttachment): 
 === File: packages/b_generators/src/background/clip.ts ===
 // b_path:: packages/b_generators/src/background/clip.ts
 
-import { generateOk, type GenerateResult } from "@b/types";
-import type { BackgroundClip } from "@b/keywords";
+import { generateOk, type GenerateResult, type CssValue } from "@b/types";
+import { cssValueToCss } from "@b/utils";
 
 /**
  * Generate CSS string for a single background-clip value.
  *
- * Syntax: border-box | padding-box | content-box | text
+ * Syntax: border-box | padding-box | content-box | text | var() | calc()
  *
- * @param value - The box value
+ * @param value - The CssValue (keyword, var(), calc(), etc.)
  * @returns GenerateResult with CSS string
  */
-export function generateBackgroundClipValue(value: BackgroundClip): GenerateResult {
-  return generateOk(value);
+export function generateBackgroundClipValue(value: CssValue): GenerateResult {
+  return generateOk(cssValueToCss(value));
 }
 
 
@@ -1934,8 +2434,10 @@ import * as Generators from "@b/generators";
  */
 export function generateImageValue(layer: Image, parentPath: (string | number)[]): GenerateResult {
   switch (layer.kind) {
+    case "none":
+      return generateOk("none");
+
     case "url":
-      // Generate url() function
       return generateOk(`url(${layer.url})`);
 
     case "gradient": {
@@ -1983,7 +2485,8 @@ export function generateBackgroundOriginValue(value: BackgroundOrigin): Generate
 === File: packages/b_generators/src/background/repeat.ts ===
 // b_path:: packages/b_generators/src/background/repeat.ts
 
-import { generateOk, type GenerateResult } from "@b/types";
+import { generateOk, type GenerateResult, type CssValue } from "@b/types";
+import { cssValueToCss } from "@b/utils";
 
 type RepetitionValue = "repeat" | "space" | "round" | "no-repeat";
 
@@ -1994,21 +2497,29 @@ type RepeatStyle =
 /**
  * Generate CSS string for a single background-repeat value.
  *
- * Syntax: repeat-x | repeat-y | [ repeat | space | round | no-repeat ]{1,2}
+ * Syntax: repeat-x | repeat-y | [ repeat | space | round | no-repeat ]{1,2} | var() | calc()
  *
- * @param style - The repeat style
+ * @param style - The repeat style or CssValue
  * @returns GenerateResult with CSS string
  */
-export function generateBackgroundRepeatValue(style: RepeatStyle): GenerateResult {
-  if (style.kind === "shorthand") {
-    return generateOk(style.value);
+export function generateBackgroundRepeatValue(style: RepeatStyle | CssValue): GenerateResult {
+  // Handle CssValue types (var(), calc(), etc.)
+  if ("kind" in style) {
+    if (style.kind === "shorthand") {
+      return generateOk(style.value);
+    }
+    if (style.kind === "explicit") {
+      if (style.horizontal === style.vertical) {
+        return generateOk(style.horizontal);
+      }
+      return generateOk(`${style.horizontal} ${style.vertical}`);
+    }
+    // Any other kind is a CssValue
+    return generateOk(cssValueToCss(style));
   }
 
-  if (style.horizontal === style.vertical) {
-    return generateOk(style.horizontal);
-  }
-
-  return generateOk(`${style.horizontal} ${style.vertical}`);
+  // Fallback (shouldn't reach here with proper types)
+  return generateOk(cssValueToCss(style as CssValue));
 }
 
 
@@ -3885,8 +4396,10 @@ import * as Ast from "@b/utils";
  *
  * Syntax: border-box | padding-box | content-box | text
  *
+ * Note: Universal functions (var, calc, etc.) are handled at the declaration layer.
+ *
  * @param valueNode - The Value node containing the box value
- * @returns ParseResult with BackgroundClip
+ * @returns ParseResult with BackgroundClip string
  */
 export function parseBackgroundClipValue(valueNode: csstree.Value): ParseResult<BackgroundClip> {
   const nodes = Ast.nodeListToArray(valueNode.children);
@@ -3932,6 +4445,11 @@ export function parseImageValue(valueNode: csstree.Value): ParseResult<Image> {
   }
 
   const firstNode = children[0];
+
+  // Handle "none" keyword
+  if (Ast.isIdentifier(firstNode) && firstNode.name.toLowerCase() === "none") {
+    return parseOk({ kind: "none" });
+  }
 
   // Handle Url node (css-tree parses url() as Url type, not Function)
   if (firstNode.type === "Url") {
@@ -4034,8 +4552,9 @@ export function parseBackgroundOriginValue(valueNode: csstree.Value): ParseResul
 // b_path:: packages/b_parsers/src/background/repeat.ts
 
 import type * as csstree from "@eslint/css-tree";
-import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
+import { createError, parseErr, parseOk, type ParseResult, type CssValue } from "@b/types";
 import * as Ast from "@b/utils";
+import { parseNodeToCssValue } from "../utils/css-value-parser";
 
 const REPETITION_VALUES = ["repeat", "space", "round", "no-repeat"] as const;
 type RepetitionValue = (typeof REPETITION_VALUES)[number];
@@ -4047,12 +4566,12 @@ type RepeatStyle =
 /**
  * Parse a single background-repeat value from a CSS AST node.
  *
- * Syntax: repeat-x | repeat-y | [ repeat | space | round | no-repeat ]{1,2}
+ * Syntax: repeat-x | repeat-y | [ repeat | space | round | no-repeat ]{1,2} | var() | calc()
  *
  * @param valueNode - The Value node containing the repeat value
- * @returns ParseResult with RepeatStyle
+ * @returns ParseResult with RepeatStyle or CssValue
  */
-export function parseBackgroundRepeatValue(valueNode: csstree.Value): ParseResult<RepeatStyle> {
+export function parseBackgroundRepeatValue(valueNode: csstree.Value): ParseResult<RepeatStyle | CssValue> {
   const allNodes = Ast.nodeListToArray(valueNode.children);
   const nodes = allNodes.filter((node) => node.type !== "WhiteSpace");
 
@@ -4060,12 +4579,21 @@ export function parseBackgroundRepeatValue(valueNode: csstree.Value): ParseResul
     return parseErr("background-repeat", createError("invalid-syntax", "Expected repeat value"));
   }
 
+  const firstNode = nodes[0];
+  if (!firstNode) {
+    return parseErr("background-repeat", createError("invalid-syntax", "Expected repeat value"));
+  }
+
+  // Handle var(), calc(), and other CSS functions
+  if (Ast.isFunctionNode(firstNode)) {
+    return parseNodeToCssValue(firstNode);
+  }
+
   if (nodes.length > 2) {
     return parseErr("background-repeat", createError("invalid-syntax", "Too many values for repeat style (max 2)"));
   }
 
-  const firstNode = nodes[0];
-  if (!firstNode || !Ast.isIdentifier(firstNode)) {
+  if (!Ast.isIdentifier(firstNode)) {
     return parseErr("background-repeat", createError("invalid-syntax", "Expected repeat value"));
   }
 
@@ -4085,7 +4613,7 @@ export function parseBackgroundRepeatValue(valueNode: csstree.Value): ParseResul
       "background-repeat",
       createError(
         "invalid-value",
-        `Invalid repeat value: '${firstValue}'. Expected: repeat, space, round, no-repeat, repeat-x, or repeat-y`,
+        `Invalid repeat value: '${firstValue}'. Expected: repeat, space, round, no-repeat, repeat-x, repeat-y, or a CSS function like var()`,
       ),
     );
   }
@@ -4230,7 +4758,7 @@ import * as Keywords from "@b/keywords";
  */
 export function parseColorFunction(node: csstree.FunctionNode): ParseResult<ColorFunction> {
   if (node.name !== "color") {
-    return parseErr("color", createError("invalid-syntax", "Expected color() function"));
+    return parseErr("color-function", createError("invalid-syntax", "Expected color() function"));
   }
 
   const values = getValues(getChildren(node));
@@ -4256,7 +4784,7 @@ export function parseColorFunction(node: csstree.FunctionNode): ParseResult<Colo
 
   const colorSpaceResult = Keywords.colorFunctionSpace.safeParse(colorSpaceNode.name);
   if (!colorSpaceResult.success) {
-    return parseErr("color", createError("invalid-syntax", `Invalid color space: ${colorSpaceNode.name}`));
+    return parseErr("color-function", createError("invalid-syntax", `Invalid color space: ${colorSpaceNode.name}`));
   }
 
   // Parse the three channel values
@@ -5986,12 +6514,12 @@ export function parseLengthPercentageNode(node: csstree.CssNode): ParseResult<Ty
  */
 export function parseNumberNode(node: csstree.CssNode): ParseResult<number> {
   if (node.type !== "Number") {
-    return parseErr("number", createError("invalid-syntax", `Expected number, but got node type ${node.type}`));
+    return parseErr("length", createError("invalid-syntax", `Expected number, but got node type ${node.type}`));
   }
 
   const value = Number.parseFloat(node.value);
   if (Number.isNaN(value)) {
-    return parseErr("number", createError("invalid-value", "Invalid number value: not a number"));
+    return parseErr("length", createError("invalid-value", "Invalid number value: not a number"));
   }
 
   return parseOk(value);
@@ -6699,13 +7227,16 @@ export function findFunctionNode(
     });
 
     if (!foundNode) {
-      return parseErr("Function", createError("missing-value", `No function found with name(s): ${names.join(", ")}`));
+      return parseErr(
+        "function-node",
+        createError("missing-value", `No function found with name(s): ${names.join(", ")}`),
+      );
     }
 
     return parseOk(foundNode);
   } catch (e) {
     return parseErr(
-      "InvalidSyntax",
+      "css-ast",
       createError("invalid-syntax", `Failed to search AST: ${e instanceof Error ? e.message : String(e)}`),
     );
   }
@@ -6732,7 +7263,7 @@ export function parseCssString(css: string, context: "value" | "declaration" = "
     return parseOk(ast);
   } catch (e) {
     return parseErr(
-      "InvalidSyntax",
+      "css-ast",
       createError("invalid-syntax", `Failed to parse CSS: ${e instanceof Error ? e.message : String(e)}`),
     );
   }
@@ -7759,20 +8290,18 @@ import type { Gradient } from "./gradient";
 /**
  * Represents a CSS <image> value.
  *
- * CSS Spec: <image> = <url> | <gradient> | <image()> | <image-set()> | <cross-fade()> | <element()>
+ * CSS Spec: <image> = <url> | <gradient> | <image()> | <image-set()> | <cross-fade()> | <element()> | none
  *
  * Currently supported:
  * - <url> - url() function
  * - <gradient> - All gradient types (linear, radial, conic, repeating)
+ * - "none" - No image (valid per CSS spec for background-image)
  *
  * Not yet supported (future):
  * - <image()> - image() function with fallbacks
  * - <image-set()> - Responsive images
  * - <cross-fade()> - Image blending
  * - <element()> - Reference to DOM element
- *
- * Note: The "none" keyword is property-specific (e.g., background-image: none)
- * and NOT part of the <image> production. Properties should handle "none" separately.
  *
  * @see https://www.w3.org/TR/css-images-3/#image-values
  * @see https://developer.mozilla.org/en-US/docs/Web/CSS/image
@@ -7787,7 +8316,12 @@ export const imageSchema = z.discriminatedUnion("kind", [
   z
     .object({
       kind: z.literal("gradient"),
-      gradient: z.lazy(() => z.any()) as z.ZodType<Gradient>, // Lazy to avoid circular dependency
+      gradient: z.lazy(() => z.any()) as z.ZodType<Gradient>,
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal("none"),
     })
     .strict(),
 ]);
@@ -9856,7 +10390,7 @@ export function parseCssValueNode(node: csstree.CssNode): ParseResult<CssValue> 
     case "Number": {
       const value = Number.parseFloat(node.value);
       if (Number.isNaN(value)) {
-        return parseErr("Number", createError("invalid-value", "Invalid number value"));
+        return parseErr("number", createError("invalid-value", "Invalid number value"));
       }
       return parseOk({ kind: "literal", value });
     }
@@ -9864,7 +10398,7 @@ export function parseCssValueNode(node: csstree.CssNode): ParseResult<CssValue> 
     case "Percentage": {
       const value = Number.parseFloat(node.value);
       if (Number.isNaN(value)) {
-        return parseErr("Percentage", createError("invalid-value", "Invalid percentage value"));
+        return parseErr("percentage", createError("invalid-value", "Invalid percentage value"));
       }
       return parseOk({ kind: "literal", value, unit: "%" });
     }
@@ -9872,7 +10406,7 @@ export function parseCssValueNode(node: csstree.CssNode): ParseResult<CssValue> 
     case "Dimension": {
       const value = Number.parseFloat(node.value);
       if (Number.isNaN(value)) {
-        return parseErr("dimension", createError("invalid-value", "Invalid dimension value"));
+        return parseErr("length", createError("invalid-value", "Invalid dimension value"));
       }
       return parseOk({ kind: "literal", value, unit: node.unit });
     }
@@ -9898,14 +10432,14 @@ export function parseCssValueNode(node: csstree.CssNode): ParseResult<CssValue> 
 
         if (!varNameNode) {
           return parseErr(
-            "Function",
+            "var()",
             createError("invalid-syntax", "Invalid var() function: missing custom property name"),
           );
         }
 
         if (varNameNode.type !== "Identifier" || !varNameNode.name.startsWith("--")) {
           return parseErr(
-            "Function",
+            "var()",
             createError(
               "invalid-syntax",
               `Invalid var() function: expected a custom property name (--*), got ${varNameNode.type}`,
@@ -9923,7 +10457,7 @@ export function parseCssValueNode(node: csstree.CssNode): ParseResult<CssValue> 
 
           if (fallbackNodes.length === 0) {
             return parseErr(
-              "Function",
+              "var()",
               createError("invalid-syntax", "Invalid var() function: missing fallback value after comma"),
             );
           }
@@ -9946,7 +10480,7 @@ export function parseCssValueNode(node: csstree.CssNode): ParseResult<CssValue> 
             } catch {
               // If parsing fails, treat as invalid
               return parseErr(
-                "Function",
+                "var()",
                 createError("invalid-syntax", `Invalid var() fallback value: ${firstNode.value}`),
               );
             }
@@ -9995,7 +10529,7 @@ export function parseCssValueNode(node: csstree.CssNode): ParseResult<CssValue> 
     }
 
     default: {
-      return parseErr("Unsupported", createError("unsupported-kind", `Unsupported node type: ${node.type}`));
+      return parseErr("css-value", createError("unsupported-kind", `Unsupported node type: ${node.type}`));
     }
   }
 }
@@ -10432,6 +10966,56 @@ export * as Generate from "@b/generators";
 export * as Declarations from "@b/declarations";
 
 
+=== File: packages/b_values/src/test-bg-image-var.ts ===
+// b_path:: packages/b_values/src/test-bg-image-var.ts
+import * as decl from "@b/declarations";
+
+console.log(
+  JSON.stringify(
+    decl.parseDeclarationList(`
+    background-image: var(--gradient-overlay), url("pattern.svg"), none;
+  `),
+    null,
+    2,
+  ),
+);
+
+
+=== File: packages/b_values/src/test-original.ts ===
+// b_path:: packages/b_values/src/test-original.ts
+import * as decl from "@b/declarations";
+
+console.log(
+  JSON.stringify(
+    decl.parseDeclarationList(`
+    --brand-color: #0066cc;
+    --default-size: 100px;
+    --bg-repeat-val: no-repeat;
+
+    background-size: var(--special-size, 50%);
+    background-clip: var(--clip-type, border-box);
+    background-repeat: var(--bg-repeat-val, var(--fallback-repeat, repeat));
+  `),
+    null,
+    2,
+  ),
+);
+
+
+=== File: packages/b_values/src/test-var-comparison.ts ===
+// b_path:: packages/b_values/src/test-var-comparison.ts
+import * as decl from "@b/declarations";
+
+console.log("=== background-size (works) ===");
+console.log(JSON.stringify(decl.parseDeclaration("background-size: var(--size)"), null, 2));
+
+console.log("\n=== background-clip (fails) ===");
+console.log(JSON.stringify(decl.parseDeclaration("background-clip: var(--clip)"), null, 2));
+
+console.log("\n=== background-repeat (fails) ===");
+console.log(JSON.stringify(decl.parseDeclaration("background-repeat: var(--repeat)"), null, 2));
+
+
 === File: packages/b_values/tsup.config.ts ===
 // b_path:: packages/b_values/tsup.config.ts
 import { defineConfig } from "tsup";
@@ -10463,5 +11047,3 @@ export default defineConfig({
     },
   },
 });
-
-

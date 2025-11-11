@@ -30,12 +30,14 @@ export function generateDeclarationList(declarations: DeclarationResult[]): Gene
 
   // Generate each declaration
   for (const decl of declarations) {
+    // Note: Don't pass important flag here to avoid double appending
     const result = generateDeclaration({
       property: decl.property as never,
       ir: decl.ir as never,
     });
 
     if (result.ok) {
+      // Append !important based on DeclarationResult flag
       const cssText = decl.important ? `${result.value} !important` : result.value;
       results.push(cssText);
     }

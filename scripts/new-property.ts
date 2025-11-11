@@ -1,4 +1,5 @@
 #!/usr/bin/env tsx
+// b_path:: scripts/new-property.ts
 /** biome-ignore-all lint/suspicious/noConsole: not a code file */
 
 // b_path:: scripts/new-property.ts

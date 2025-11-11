@@ -1,3 +1,4 @@
+// b_path:: packages/b_values/src/test-bg-image-var.ts
 import * as decl from "@b/declarations";
 
 console.log(

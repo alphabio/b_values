@@ -1,13 +1,7 @@
 # Session 065: Validation Architecture + Critical Bug Fix
 
-**Date:** 2025-11-10  
-**Focus:** Add allowedKeywords validation architecture + fix background-color charCodeAt bug  
-**Status:** 🟢 COMPLETE
-
-# Session 065: Validation Architecture + Critical Bug Fix
-
-**Date:** 2025-11-10  
-**Focus:** Add allowedKeywords validation architecture + fix background-color charCodeAt bug  
+**Date:** 2025-11-10
+**Focus:** Add allowedKeywords validation architecture + fix background-color charCodeAt bug
 **Status:** 🟢 COMPLETE
 
 ---
@@ -15,14 +9,17 @@
 ## 🎯 Mission Accomplished
 
 ### Critical Bug Fixed
+
 **Original Issue:** Parsing `background-color: content-box` threw `"testStr.charCodeAt is not a function"` error
 
 **Root Cause Analysis:**
+
 1. `background-color` definition had `rawValue: true` (incorrect - only for custom properties)
 2. `rawValue` flag existed in type system but was **never checked** in parser dispatch
 3. Parser passed AST to color parser, but parser expected string
 
 **The Fix (3-part surgical strike):**
+
 1. ✅ Made `rawValue` flag **functional** - added runtime check in parser.ts dispatch logic
 2. ✅ Removed incorrect `rawValue: true` from `background-color` definition
 3. ✅ Updated `background-color` parser to accept AST (with null safety)
@@ -32,9 +29,11 @@
 ## 🏛️ Validation Architecture Built
 
 ### The Vision
-User said: *"This `definition.ts` file should be the single source of truth for everything the system knows about the property. By adding validation rules here, you make your entire system more intelligent."*
+
+User said: _"This `definition.ts` file should be the single source of truth for everything the system knows about the property. By adding validation rules here, you make your entire system more intelligent."_
 
 ### What We Built
+
 **Declarative keyword validation at property definition level:**
 
 ```typescript
@@ -49,19 +48,23 @@ export const backgroundAttachment = defineProperty<BackgroundAttachmentIR>({
 ```
 
 **Core parser pre-validation:**
+
 - Checks `allowedKeywords` before delegating to property parser
 - Validates each comma-separated value for multi-value properties
 - Case-insensitive matching
 - Clear error messages listing valid options
 
 **Example error:**
+
 ```
-Invalid keyword 'invalid-value' for background-attachment. 
+Invalid keyword 'invalid-value' for background-attachment.
 Expected one of: scroll, fixed, local
 ```
 
 ### Implementation
+
 **Files modified:**
+
 - `packages/b_declarations/src/types.ts` - Added `allowedKeywords?: readonly string[]` to `PropertyDefinition`
 - `packages/b_declarations/src/parser.ts` - Added pre-validation step (28 lines)
 - `packages/b_declarations/src/properties/background-attachment/definition.ts` - Added `allowedKeywords`
@@ -69,6 +72,7 @@ Expected one of: scroll, fixed, local
 - `packages/b_declarations/src/properties/background-origin/definition.ts` - Added `allowedKeywords`
 
 **Tests added:**
+
 - `packages/b_declarations/src/parser-validation.test.ts` - 15 comprehensive tests (all ✅ passing)
 
 ---
@@ -76,6 +80,7 @@ Expected one of: scroll, fixed, local
 ## ✅ Accomplished
 
 ### Code Changes
+
 1. ✅ Fixed `rawValue` dispatch - now properly checks `definition.rawValue` flag
 2. ✅ Fixed `background-color` parser - accepts AST, handles null safety
 3. ✅ Removed `rawValue: true` from `background-color` definition
@@ -86,6 +91,7 @@ Expected one of: scroll, fixed, local
 8. ✅ Created 15 validation tests (100% passing)
 
 ### Quality Gates
+
 - ✅ `just check` - ZERO warnings, ZERO errors
 - ✅ `just build` - Production build successful
 - ✅ All type checks pass
@@ -93,11 +99,13 @@ Expected one of: scroll, fixed, local
 - ✅ No lint violations
 
 ### Test Results
-**Baseline (main branch):** 10 failing tests  
-**With validation:** 8 failing tests  
+
+**Baseline (main branch):** 10 failing tests
+**With validation:** 8 failing tests
 **Net improvement:** +2 tests now passing ✅
 
 **The 8 failing tests:**
+
 - All from Session 064 (TDD RED phase)
 - Expecting keyword wrapping: `{ kind: "keyword", value: "..." }`
 - Legitimate tests awaiting implementation
@@ -108,6 +116,7 @@ Expected one of: scroll, fixed, local
 ## 📊 Current State
 
 ### What's Working ✅
+
 1. **Critical bug fixed** - `background-color: content-box` no longer throws error
 2. **Validation architecture** - Fully functional, production-ready
 3. **`rawValue` dispatch** - Now works correctly for custom properties
@@ -116,13 +125,16 @@ Expected one of: scroll, fixed, local
 6. **Code quality** - All checks green
 
 ### What's NOT Working (Session 064 TDD - Expected) 🟡
+
 **8 failing tests expecting keyword wrapping:**
+
 - `background-clip/parser.test.ts` - 5 tests expect `{ kind: "keyword" }`
 - `var-support.integration.test.ts` - 3 tests expect discriminated unions
 
 **These are INTENTIONAL** (Session 064 RED phase). Next session will implement keyword wrapping.
 
 ### Architecture Proven ✅
+
 ```typescript
 // Pre-validation catches invalid keywords BEFORE parser execution
 parseDeclaration("background-attachment: invalid-value");
@@ -131,7 +143,7 @@ parseDeclaration("background-attachment: invalid-value");
   "ok": false,
   "issues": [{
     "code": "invalid-value",
-    "severity": "error", 
+    "severity": "error",
     "message": "Invalid keyword 'invalid-value' for background-attachment. Expected one of: scroll, fixed, local",
     "property": "background-attachment"
   }]
@@ -145,21 +157,27 @@ parseDeclaration("background-attachment: invalid-value");
 ## 💡 Key Decisions
 
 ### Decision 1: Keep `rawValue` Flag (Make It Functional)
+
 **Options considered:**
+
 - A) Remove `rawValue` entirely (custom properties are special-cased anyway)
 - B) Keep `rawValue` and make it work
 
 **Chose B because:**
+
 - Type system makes parser signatures explicit
 - Self-documenting: `rawValue: true` clearly signals "this parser wants a string"
 - Future-proof for `@property` support (registered custom properties with syntax descriptors)
 - Minimal change (just add runtime check)
 
 ### Decision 2: Declarative Validation at Definition Level
+
 **Philosophy:**
+
 > "This `definition.ts` file should be the **single source of truth** for everything the system knows about the property."
 
 **Why this is brilliant:**
+
 - **Centralization:** All rules in one place
 - **Declarative:** Describe what's valid, don't write validation logic
 - **Enabling:** Core engine can pre-validate before delegation
@@ -167,7 +185,9 @@ parseDeclaration("background-attachment: invalid-value");
 - **Consumer-friendly:** Errors include valid options
 
 ### Decision 3: Keep Validation Optional
+
 **`allowedKeywords` is optional:**
+
 - Properties without it skip pre-validation
 - Complex properties (colors, images, etc.) handled by parsers
 - Simple keyword properties get free validation
@@ -177,9 +197,11 @@ parseDeclaration("background-attachment: invalid-value");
 ## 🎯 Next Steps
 
 ### For Session 064 (TDD GREEN Phase)
+
 **File:** `docs/sessions/064/FINAL_IMPLEMENTATION_PLAN.md`
 
 **The work (30-45 minutes):**
+
 1. Update 3 parsers to wrap keywords: `{ kind: "keyword", value: "..." }`
 2. Update generators to unwrap keywords
 3. Update schemas (may already be correct)
@@ -188,7 +210,9 @@ parseDeclaration("background-attachment: invalid-value");
 **Our validation work is orthogonal** - won't conflict with keyword wrapping.
 
 ### For This Session (Optional Extensions)
+
 **If expanding validation architecture:**
+
 1. Add `allowedKeywords` to more properties:
    - `background-repeat` (keyword case only)
    - Other simple keyword properties
@@ -200,18 +224,21 @@ parseDeclaration("background-attachment: invalid-value");
 ## 📈 Impact Summary
 
 ### Immediate Impact
+
 - ✅ **Critical bug fixed** - charCodeAt error resolved
 - ✅ **2 tests fixed** - net improvement from baseline
 - ✅ **15 new tests** - validation coverage added
 - ✅ **Zero code quality issues** - pristine codebase
 
 ### Architectural Impact
+
 - ✅ **Validation pattern established** - scalable to 50+ properties
 - ✅ **`rawValue` semantics clarified** - type system + runtime aligned
 - ✅ **Declarative gatekeeping** - early error detection with clear messages
 - ✅ **Consumer DX improved** - errors tell users what's valid
 
 ### Long-term Value
+
 - **Maintainability:** Single source of truth per property
 - **Extensibility:** Just add `allowedKeywords` array
 - **Quality:** Pre-validation catches errors before parser execution
@@ -222,27 +249,30 @@ parseDeclaration("background-attachment: invalid-value");
 ## 🔑 Key Insights
 
 ### The `rawValue` Architecture Alignment
-**Before:** Type system said `rawValue: true`, runtime ignored it  
+
+**Before:** Type system said `rawValue: true`, runtime ignored it
 **After:** Type system + runtime aligned, semantics clear
 
 **Rule:**
+
 - `rawValue: true` → Parser receives **string** (custom properties only)
 - `multiValue: true` → Parser receives **string** (will split on commas)
 - Default → Parser receives **AST** (validated by css-tree)
 
 ### The Power of Declarative Validation
+
 User's vision was spot-on:
 
 ```typescript
 // ONE place to define ALL property knowledge
 export const backgroundAttachment = defineProperty({
   name: "background-attachment",
-  syntax: "<attachment>#",           // What it looks like
-  allowedKeywords: ["scroll", "fixed", "local"],  // What's valid
+  syntax: "<attachment>#", // What it looks like
+  allowedKeywords: ["scroll", "fixed", "local"], // What's valid
   parser: parseBackgroundAttachment, // How to parse
   generator: generateBackgroundAttachment, // How to generate
-  inherited: false,                  // CSS inheritance
-  initial: "scroll",                 // Default value
+  inherited: false, // CSS inheritance
+  initial: "scroll", // Default value
 });
 ```
 
@@ -252,15 +282,17 @@ export const backgroundAttachment = defineProperty({
 
 ## 🚀 Commit Summary
 
-**Commit:** `02e2a4a`  
+**Commit:** `02e2a4a`
 **Message:** `feat(declarations): add validation architecture with allowedKeywords`
 
 **Changes:**
+
 - 16 files changed
 - 328 insertions, 36 deletions
 - 1 new file (parser-validation.test.ts)
 
 **Quality:**
+
 - ✅ All checks pass
 - ✅ No warnings
 - ✅ Net test improvement (+2)
@@ -270,23 +302,29 @@ export const backgroundAttachment = defineProperty({
 ## 📝 Notes for Next Agent
 
 ### Session 064 vs Session 065
+
 **Session 064 (IN-PROGRESS):**
+
 - TDD approach for keyword wrapping
 - 8 failing tests (RED phase)
 - Awaiting implementation
 
 **Session 065 (THIS SESSION - COMPLETE):**
+
 - Validation architecture
 - Critical bug fix
 - Independent from Session 064
 - Production-ready
 
 ### The Tests Are Fine
-**Don't "fix" the 8 failing tests** - they're correctly capturing desired behavior.  
+
+**Don't "fix" the 8 failing tests** - they're correctly capturing desired behavior.
 **Do implement** keyword wrapping as per Session 064 plan.
 
 ### The Architecture Is Extensible
+
 **Adding validation to a property:**
+
 ```typescript
 import { PROPERTY_KEYWORDS } from "@b/keywords";
 
@@ -303,12 +341,13 @@ export const myProperty = defineProperty({
 
 ## 💚 Session End
 
-**Status:** 🟢 COMPLETE  
-**Quality:** Production-ready  
-**Tests:** Net improvement (+2)  
+**Status:** 🟢 COMPLETE
+**Quality:** Production-ready
+**Tests:** Net improvement (+2)
 **Commit:** `02e2a4a` (merged to main)
 
 **This session delivered:**
+
 1. Critical bug fix (charCodeAt error)
 2. Validation architecture (declarative, scalable)
 3. Code quality perfection (no any, all checks pass)
@@ -332,7 +371,7 @@ export const myProperty = defineProperty({
 background-size: calc(100% - 20px);
 ```
 
-User wrote **ONE value** (calc), not two (calc + auto).  
+User wrote **ONE value** (calc), not two (calc + auto).
 IR should reflect **authorship**, not CSS evaluation.
 
 ---
@@ -583,7 +622,7 @@ Developer sees IR, instantly understands:
 - `packages/b_parsers/src/background/attachment.ts:26`
 - `packages/b_parsers/src/background/origin.ts:26`
 
-Change: `return parseOk(val as Type);`  
+Change: `return parseOk(val as Type);`
 To: `return parseOk({ kind: "keyword", value: val as Type });`
 
 **Step 2: Update Schemas** (check if needed)
@@ -618,7 +657,7 @@ This question revealed:
 
 **Answer:** NO - parse what was authored.
 
-If user writes `calc(...)` → IR is calc.  
+If user writes `calc(...)` → IR is calc.
 If user writes `calc(...) auto` → IR is explicit with calc and auto.
 
 **Structure reflects authorship.**
@@ -629,11 +668,11 @@ This principle applies to ALL properties.
 
 ## 📈 Quality Status
 
-✅ **Architecture:** Green field, clean layers, scales  
-✅ **Type Safety:** Full discriminated unions, no `any`  
-✅ **Integration Tests:** 10/10 passing  
-✅ **Typecheck:** All packages green  
-🟡 **Unit Tests:** 8 failing (expect wrong patterns - will fix)  
+✅ **Architecture:** Green field, clean layers, scales
+✅ **Type Safety:** Full discriminated unions, no `any`
+✅ **Integration Tests:** 10/10 passing
+✅ **Typecheck:** All packages green
+🟡 **Unit Tests:** 8 failing (expect wrong patterns - will fix)
 🟡 **API:** Keywords need wrapping for uniformity
 
 ---
@@ -651,8 +690,8 @@ This principle applies to ALL properties.
 
 ---
 
-**Session 064 Status:** 🟢 DESIGN FINALIZED  
-**Next:** Implementation (3 hours estimated)  
+**Session 064 Status:** 🟢 DESIGN FINALIZED
+**Next:** Implementation (3 hours estimated)
 **User:** "Write it up .. let's pick this up in the next session"
 
 ---

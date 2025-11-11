@@ -1,5 +1,5 @@
 // b_path:: packages/b_declarations/src/properties/custom-property/definition.ts
-import { defineProperty } from "../../core/registry";
+import { defineProperty } from "../../core";
 import { generateCustomProperty } from "./generator";
 import { parseCustomProperty } from "./parser";
 import type { CustomPropertyIR } from "./types";
