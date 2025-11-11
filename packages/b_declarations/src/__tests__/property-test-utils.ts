@@ -93,7 +93,7 @@ export function runPropertyTests<TIR>(opts: RunPropertyTestsOptions<TIR>): void 
 
   if (opts.parse) {
     describe(`${property} :: parse`, () => {
-      for (const testCase of opts.parse) {
+      for (const testCase of opts.parse!) {
         it(testCase.css, () => {
           const result = parseDeclaration(testCase.css);
 
@@ -123,7 +123,7 @@ export function runPropertyTests<TIR>(opts: RunPropertyTestsOptions<TIR>): void 
 
   if (opts.generate) {
     describe(`${property} :: generate`, () => {
-      for (const testCase of opts.generate) {
+      for (const testCase of opts.generate!) {
         const label = JSON.stringify(testCase.ir).substring(0, 60);
         it(label, () => {
           const result = generateDeclaration({
@@ -148,7 +148,7 @@ export function runPropertyTests<TIR>(opts: RunPropertyTestsOptions<TIR>): void 
 
   if (opts.roundtrip) {
     describe(`${property} :: roundtrip`, () => {
-      for (const testCase of opts.roundtrip) {
+      for (const testCase of opts.roundtrip!) {
         it(testCase.css, () => {
           // Parse
           const parseResult = parseDeclaration(testCase.css);
