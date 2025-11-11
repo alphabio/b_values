@@ -14,7 +14,7 @@
     "@b/values": "workspace:*",
     "@tanstack/react-router": "catalog:",
     "@tanstack/react-router-devtools": "catalog:",
-    "framer-motion": "^12.23.24",
+    "framer-motion": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:"
   },
@@ -22,5 +22,7 @@
     "@b/typescript-config": "workspace:*",
     "@tailwindcss/vite": "catalog:",
     "tailwindcss": "catalog:"
-  }
+  },
+  "peerDependencies": {},
+  "optionalDependencies": {}
 }
