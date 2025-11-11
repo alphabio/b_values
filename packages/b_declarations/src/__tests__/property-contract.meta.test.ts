@@ -28,7 +28,7 @@ describe("Property Contract Meta-Tests", () => {
       expect(def.name).toBe(name);
       expect(def.syntax).toBeDefined();
       expect(typeof def.inherited).toBe("boolean");
-      
+
       // initial can be empty string (e.g., custom properties have initial: "")
       expect(typeof def.initial).toBe("string");
 
@@ -61,7 +61,7 @@ describe("Property Contract Meta-Tests", () => {
     // Just verify registry has some properties
     const names = propertyRegistry.getPropertyNames();
     expect(names.length).toBeGreaterThan(0);
-    
+
     // Verify at least one background property exists as sanity check
     const bgClip = propertyRegistry.get("background-clip");
     expect(bgClip).toBeDefined();

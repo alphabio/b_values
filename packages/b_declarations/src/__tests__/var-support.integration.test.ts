@@ -137,11 +137,7 @@ describe("var() and CSS function support", () => {
       expect(parsed.ok).toBe(true);
       expect(parsed.value?.ir).toMatchObject({
         kind: "list",
-        values: [
-          { kind: "variable", name: "--clip1" },
-          "border-box",
-          { kind: "variable", name: "--clip2" },
-        ],
+        values: [{ kind: "variable", name: "--clip1" }, "border-box", { kind: "variable", name: "--clip2" }],
       });
     });
   });

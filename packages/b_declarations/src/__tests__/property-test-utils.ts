@@ -1,4 +1,4 @@
-// b_path:: packages/b_declarations/src/test/property-test-utils.ts
+// b_path:: packages/b_declarations/src/__tests__/property-test-utils.ts
 
 import { describe, it, expect } from "vitest";
 import { parseDeclaration } from "../parser";
