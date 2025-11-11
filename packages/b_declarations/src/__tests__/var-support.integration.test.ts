@@ -1,4 +1,4 @@
-// b_path:: packages/b_declarations/src/var-support.integration.test.ts
+// b_path:: packages/b_declarations/src/__tests__/var-support.integration.test.ts
 /**
  * Integration tests demonstrating var() and CSS function support
  * across background-* properties.
@@ -31,15 +31,12 @@ describe("var() and CSS function support", () => {
         kind: "list",
         values: [
           {
-            kind: "explicit",
-            width: {
-              kind: "calc",
-              value: {
-                kind: "calc-operation",
-                operator: "*",
-                left: { kind: "variable", name: "--base" },
-                right: { kind: "literal", value: 2 },
-              },
+            kind: "calc",
+            value: {
+              kind: "calc-operation",
+              operator: "*",
+              left: { kind: "variable", name: "--base" },
+              right: { kind: "literal", value: 2 },
             },
           },
         ],
@@ -82,10 +79,7 @@ describe("var() and CSS function support", () => {
       expect(parsed.ok).toBe(true);
       expect(parsed.value?.ir).toMatchObject({
         kind: "list",
-        values: [
-          { kind: "keyword", value: "padding-box" },
-          { kind: "keyword", value: "content-box" },
-        ],
+        values: ["padding-box", "content-box"],
       });
     });
   });
@@ -145,7 +139,7 @@ describe("var() and CSS function support", () => {
         kind: "list",
         values: [
           { kind: "variable", name: "--clip1" },
-          { kind: "keyword", value: "border-box" },
+          "border-box",
           { kind: "variable", name: "--clip2" },
         ],
       });

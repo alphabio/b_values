@@ -120,12 +120,14 @@ export function generateDeclarationList(declarations: DeclarationResult[]): Gene
 
   // Generate each declaration
   for (const decl of declarations) {
+    // Note: Don't pass important flag here to avoid double appending
     const result = generateDeclaration({
       property: decl.property as never,
       ir: decl.ir as never,
     });
 
     if (result.ok) {
+      // Append !important based on DeclarationResult flag
       const cssText = decl.important ? `${result.value} !important` : result.value;
       results.push(cssText);
     }
@@ -494,7 +496,8 @@ export function parseDeclaration(input: string | CSSDeclaration): ParseResult<De
     if (definition.multiValue) {
       const values = trimmedValue.split(/\s*,\s*/);
       for (const val of values) {
-        if (val && !definition.allowedKeywords.includes(val)) {
+        // Only validate bare identifiers - skip CSS functions (var, calc, etc)
+        if (val && /^[a-z-]+$/i.test(val) && !definition.allowedKeywords.includes(val)) {
           preValidationIssues.push(
             createError(
               "invalid-value",
@@ -504,8 +507,8 @@ export function parseDeclaration(input: string | CSSDeclaration): ParseResult<De
         }
       }
     } else {
-      // Single-value keyword property
-      if (!definition.allowedKeywords.includes(trimmedValue)) {
+      // Single-value keyword property - only validate bare identifiers
+      if (/^[a-z-]+$/i.test(trimmedValue) && !definition.allowedKeywords.includes(trimmedValue)) {
         preValidationIssues.push(
           createError(
             "invalid-value",
@@ -1629,7 +1632,7 @@ export type BackgroundSizeIR = z.infer<typeof backgroundSizeIR>;
 
 === File: packages/b_declarations/src/properties/custom-property/definition.ts ===
 // b_path:: packages/b_declarations/src/properties/custom-property/definition.ts
-import { defineProperty } from "../../core/registry";
+import { defineProperty } from "../../core";
 import { generateCustomProperty } from "./generator";
 import { parseCustomProperty } from "./parser";
 import type { CustomPropertyIR } from "./types";
