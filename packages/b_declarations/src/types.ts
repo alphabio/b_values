@@ -132,7 +132,7 @@ export type PropertyDefinition<T = unknown> = {
  * createMultiValueParser (multiValue: true) must have IR with kind: "list".
  *
  * NOW ENFORCED: Checks actual PropertyDefinitions, not generic types.
- * 
+ *
  * If this type check fails, it means a property is registered as multiValue
  * but its IR in PropertyIRMap doesn't have a list variant.
  */

@@ -6,28 +6,28 @@ import { parseComplexFunction } from "./function-dispatcher";
 
 /**
  * CSS value parser with full complex function support.
- * 
+ *
  * ✅ **USE THIS** for property parsing.
- * 
+ *
  * This is the correct entry point for parsing CSS values in property parsers.
  * It handles all CSS functions including:
  * - Gradients: linear-gradient(), radial-gradient(), conic-gradient()
  * - Colors: rgb(), hsl(), lab(), lch(), oklch(), oklab(), color()
  * - Math: calc(), min(), max(), clamp()
  * - Plus all basic values: numbers, dimensions, percentages, keywords, var()
- * 
+ *
  * Implementation:
  * - Function nodes → Try complex function dispatcher first
  * - Fallback → Basic parser from @b/utils for primitives
- * 
+ *
  * @param node - CSS AST node to parse
  * @returns ParseResult with CssValue (may include complex function IRs)
- * 
+ *
  * @example
  * ```typescript
  * // In property parser:
  * import { parseNodeToCssValue } from "@b/parsers";
- * 
+ *
  * const result = parseNodeToCssValue(node);
  * if (result.ok && result.value.kind === "gradient") {
  *   // Gradient IR available

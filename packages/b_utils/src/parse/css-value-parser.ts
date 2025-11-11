@@ -5,21 +5,21 @@ import type { CssValue } from "@b/types";
 
 /**
  * Generic CSS value parser (NO complex function support).
- * 
+ *
  * ⚠️ **IMPORTANT**: Property parsers should use `@b/parsers/parseNodeToCssValue` instead.
- * 
+ *
  * This low-level parser does NOT handle complex CSS functions:
  * - Gradients: linear-gradient(), radial-gradient(), conic-gradient()
  * - Colors: rgb(), hsl(), lab(), lch(), oklch(), oklab(), color()
  * - Math: calc(), min(), max(), clamp()
- * 
+ *
  * It only handles:
  * - Basic values: numbers, dimensions, percentages, keywords
  * - var() with fallback parsing
  * - String literals
  * - Hex colors
  * - Generic function calls (as opaque CssValue)
- * 
+ *
  * @internal Use via @b/parsers for property parsing
  */
 export function parseCssValueNode(node: csstree.CssNode): ParseResult<CssValue> {

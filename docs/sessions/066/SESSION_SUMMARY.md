@@ -20,27 +20,32 @@ Implement architectural integrity tests to catch contract violations that TypeSc
 **10 comprehensive tests covering:**
 
 #### Gap #2: IR Type Naming Convention
+
 - ✅ All IR types follow `{PropertyName}IR` pattern (e.g., `BackgroundColorIR`)
 - ✅ Property `types.ts` files export exactly one primary IR type
 - **Prevents:** Silent failures when codegen can't find IR type
 
 #### Gap #3: Cross-Package Wiring Validation
+
 - ✅ Parser wrappers exist and import from correct packages (`@b/parsers`)
 - ✅ Generator wrappers exist and import from correct packages (`@b/generators`)
 - ✅ Definition files wire correct parser/generator functions
 - **Prevents:** Scaffold accidents, broken wiring at scale
 
 #### Gap #4: allowedKeywords Validation
+
 - ✅ Properties with `allowedKeywords` have non-empty lists
 - ✅ Keywords are valid CSS identifiers (no spaces, proper format)
 - **Prevents:** DRY violations, validation drift
 
 #### Gap #5: Generator Contract Enforcement
+
 - ✅ Generators return value-only (no `"property: value"` prefix)
 - ✅ Generators do not add `property` field to result
 - **Prevents:** Inconsistent output format across properties
 
 #### Bonus: Property Structure Completeness
+
 - ✅ All property directories have required files (`types.ts`, `parser.ts`, `definition.ts`, `index.ts`)
 
 ---
@@ -57,6 +62,7 @@ Implement architectural integrity tests to catch contract violations that TypeSc
 - `background-size/generator.ts`
 
 **Change:**
+
 ```typescript
 // ❌ Before: Inconsistent - some added property field
 return generateOk(layerStrings.join(", "), "background-attachment");
@@ -66,6 +72,7 @@ return generateOk(layerStrings.join(", "));
 ```
 
 **Reasoning:**
+
 - `generateDeclaration` adds property field via `ensureProperty()`
 - Generator layer responsibility: return CSS value only
 - Consistent with `background-color` (which was already correct)
@@ -97,6 +104,7 @@ return generateOk(layerStrings.join(", "));
 **User decision:** "Strike #1 off the list"
 
 **Reasoning:**
+
 - Auto-generation via `pnpm generate:property-ir-map` is correct-by-construction
 - Source-driven codegen: scans `definition.ts` + `types.ts` → generates `PropertyIRMap`
 - Manual sync test would be redundant with existing build process
@@ -109,6 +117,7 @@ return generateOk(layerStrings.join(", "));
 ### 1. TypeScript Cannot Validate Everything
 
 These runtime tests catch violations that TypeScript's type system cannot:
+
 - File structure conventions
 - Cross-package wiring correctness
 - Naming conventions
@@ -117,11 +126,13 @@ These runtime tests catch violations that TypeScript's type system cannot:
 ### 2. Generator Architecture is Now Explicit
 
 **Before:** Implicit/inconsistent
+
 - Some generators added `property` field
 - Some didn't
 - Both worked due to `ensureProperty()` fallback
 
 **After:** Explicit contract enforced by tests
+
 - Generators MUST return value-only
 - `generateDeclaration` adds property field
 - Clear separation of responsibilities
@@ -129,6 +140,7 @@ These runtime tests catch violations that TypeScript's type system cannot:
 ### 3. Integrity Tests Scale Well
 
 **Single test file validates:**
+
 - 9 properties × 4-5 checks each
 - Will automatically cover 50+ properties with zero changes
 - Violations are caught immediately, not at user-facing runtime
@@ -176,6 +188,7 @@ docs/GENERATOR_CONTRACT.md                                                [FORMA
 **Developer experience:** Clear error messages guide correct implementation
 
 **Example violation message:**
+
 ```
 Generator contract violations (must return value-only, no property prefix):
 background-attachment: Generator returned value with property prefix: "..."
