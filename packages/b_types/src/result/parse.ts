@@ -15,12 +15,17 @@ import type { Issue } from "./issue";
  * 2. **Total failure**: `ok: false`, `value` is `undefined`, parsing failed early (fail-fast)
  * 3. **Partial success**: `ok: false`, `value` contains partial data (type T), some items parsed (multi-error)
  *
- * When `ok: false`:
+ * ⚠️ **CRITICAL**: Always check BOTH `ok` flag AND `value` field:
+ * - When `ok: false`, `value` MAY still contain partial/recovered data
+ * - When `ok: true`, always inspect `issues` array for warnings
+ * - Never assume `ok: false` means `value` is undefined
+ *
+ * **When `ok: false`:**
  * - `issues` contains at least one error
  * - `value` is `undefined` for fail-fast parsers (e.g., single value parsing)
  * - `value` contains partial result for multi-error parsers (e.g., list parsing where some items succeeded)
  *
- * Issues array allows warnings even on success. Parsers can succeed with warnings.
+ * **Issues array** allows warnings even on success. Parsers can succeed with warnings.
  *
  * @example Fail-fast parser (single angle)
  * ```typescript
@@ -40,6 +45,21 @@ import type { Issue } from "./issue";
  * const result = parseColor("rgb(300 100 50)");
  * // { ok: true, value: rgbIR, issues: [warning] }
  * // Valid RGB syntax, but value out of range (warning)
+ * ```
+ *
+ * @example Handling partial success correctly
+ * ```typescript
+ * const result = parseDeclaration(...);
+ * if (result.ok) {
+ *   // Full success - use value
+ *   applyStyles(result.value);
+ * } else if (result.value) {
+ *   // Partial success - some data recovered despite errors
+ *   applyStylesWithWarning(result.value, result.issues);
+ * } else {
+ *   // Total failure - no recoverable data
+ *   handleError(result.issues);
+ * }
  * ```
  *
  * @public

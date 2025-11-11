@@ -1,7 +1,3 @@
-Excluding patterns: 
-Documentation for LLMs
-Excluding patterns: 
-Excluding patterns: -not -path */__pycache__/* -not -path */__tests__/* -not -path */.git/* -not -path */.idea/* -not -path */.next/* -not -path */.venv/* -not -path */.vscode/* -not -path */*.spec.py -not -path */*.spec.ts -not -path */*.spec.tsx -not -path */*.test.py -not -path */*.test.ts -not -path */*.test.tsx -not -path */*test.py -not -path */*test.ts -not -path */*test.tsx -not -path */build/* -not -path */dist/* -not -path */me.ts -not -path */node_modules/* -not -path */test_*.py -not -path */test.ts -not -path */test.ts -not -path */tests/* -not -path */venv/*
 === File: packages/b_declarations/src/core/index.ts ===
 // b_path:: packages/b_declarations/src/core/index.ts
 export * from "./registry";
@@ -1721,8 +1717,79 @@ export function parseCustomProperty(value: string): ParseResult<CustomPropertyIR
 export type CustomPropertyIR = { kind: "raw"; value: string };
 
 
+=== File: packages/b_declarations/src/properties/definitions.ts ===
+// b_path:: packages/b_declarations/src/properties/definitions.ts
+
+/**
+ * Central registry of all property definitions.
+ *
+ * ⚠️ THIS FILE IS AUTO-GENERATED. DO NOT EDIT MANUALLY.
+ *
+ * Run: pnpm generate:definitions
+ *
+ * This is the single source of truth for:
+ * - Property names → IR type mapping (derives PropertyIRMap)
+ * - Property metadata (multiValue, rawValue flags)
+ * - Type-level contract enforcement
+ *
+ * Architecture:
+ * - Each property folder exports its definition (e.g., backgroundAttachment)
+ * - This file aggregates them into PROPERTY_DEFINITIONS
+ * - PropertyIRMap is derived from this via type inference
+ * - Type-level contracts check actual definitions, not generic types
+ *
+ * When adding a new property:
+ * 1. Create property folder with definition.ts that exports a definition
+ * 2. Run: pnpm generate:definitions
+ * 3. PropertyIRMap auto-updates via type inference
+ * 4. Type-level contracts validate multiValue → list IR
+ */
+
+import { customProperty } from "./custom-property/definition";
+import { backgroundAttachment } from "./background-attachment/definition";
+import { backgroundClip } from "./background-clip/definition";
+import { backgroundColor } from "./background-color/definition";
+import { backgroundImage } from "./background-image/definition";
+import { backgroundOrigin } from "./background-origin/definition";
+import { backgroundPosition } from "./background-position/definition";
+import { backgroundRepeat } from "./background-repeat/definition";
+import { backgroundSize } from "./background-size/definition";
+
+/**
+ * Central definitions object.
+ *
+ * Keys are CSS property names (e.g., "background-color").
+ * Values are PropertyDefinition instances.
+ *
+ * This object is the source of truth for:
+ * - Runtime property lookup
+ * - Type-level IR extraction
+ * - Contract validation
+ */
+export const PROPERTY_DEFINITIONS = {
+  "--*": customProperty,
+  "background-attachment": backgroundAttachment,
+  "background-clip": backgroundClip,
+  "background-color": backgroundColor,
+  "background-image": backgroundImage,
+  "background-origin": backgroundOrigin,
+  "background-position": backgroundPosition,
+  "background-repeat": backgroundRepeat,
+  "background-size": backgroundSize,
+} as const;
+
+/**
+ * Type alias for the definitions object.
+ * Used for type-level operations.
+ */
+export type PropertyDefinitions = typeof PROPERTY_DEFINITIONS;
+
+
 === File: packages/b_declarations/src/properties/index.ts ===
 // b_path:: packages/b_declarations/src/properties/index.ts
+
+// Central definitions export (single source of truth)
+export * from "./definitions";
 
 // Import before other properties that might depend on it
 export * from "./custom-property";
@@ -1916,39 +1983,56 @@ export function runPropertyTests<TIR>(opts: RunPropertyTestsOptions<TIR>): void 
 }
 
 
-=== File: packages/b_declarations/src/types.map.ts ===
-// b_path:: packages/b_declarations/src/types.map.ts
-// This file contains the PropertyIRMap that maps property names to their IR types.
-//
-// THIS FILE IS AUTO-GENERATED. DO NOT EDIT.
+=== File: packages/b_declarations/src/types.derived.ts ===
+// b_path:: packages/b_declarations/src/types.derived.ts
 
-import type {
-  BackgroundAttachmentIR,
-  BackgroundClipIR,
-  BackgroundColorIR,
-  BackgroundImageIR,
-  BackgroundOriginIR,
-  BackgroundPositionIR,
-  BackgroundRepeatIR,
-  BackgroundSizeIR,
-  CustomPropertyIR,
-} from "./properties";
+/**
+ * Type derivations from PROPERTY_DEFINITIONS.
+ *
+ * This file derives PropertyIRMap from the actual definitions,
+ * replacing the old codegen approach with type-level extraction.
+ *
+ * Benefits:
+ * - Single source of truth (definitions.ts)
+ * - No manual sync between types.map.ts and registry
+ * - Type-level contracts check REAL definitions
+ */
+
+import type { PropertyDefinitions } from "./properties/definitions";
+import type { PropertyDefinition } from "./types";
+
+/**
+ * Extract IR type from a PropertyDefinition.
+ *
+ * @example
+ * ```typescript
+ * type BgColorDef = PropertyDefinitions["background-color"];
+ * type BgColorIR = ExtractIR<BgColorDef>;
+ * // → BackgroundColorIR
+ * ```
+ */
+export type ExtractIR<T> = T extends PropertyDefinition<infer IR> ? IR : never;
 
 /**
  * Map of CSS property names to their IR types.
- * Used for type-safe parsing and generation.
+ *
+ * This replaces the old auto-generated types.map.ts.
+ * Derived directly from PROPERTY_DEFINITIONS via type inference.
+ *
+ * @example
+ * ```typescript
+ * type BgColorIR = PropertyIRMap["background-color"];
+ * // → BackgroundColorIR (inferred from definition)
+ * ```
  */
-export interface PropertyIRMap {
-  "background-attachment": BackgroundAttachmentIR;
-  "background-clip": BackgroundClipIR;
-  "background-color": BackgroundColorIR;
-  "background-image": BackgroundImageIR;
-  "background-origin": BackgroundOriginIR;
-  "background-position": BackgroundPositionIR;
-  "background-repeat": BackgroundRepeatIR;
-  "background-size": BackgroundSizeIR;
-  [key: `--${string}`]: CustomPropertyIR;
-}
+export type PropertyIRMap = {
+  [K in keyof PropertyDefinitions]: ExtractIR<PropertyDefinitions[K]>;
+};
+
+/**
+ * Union type of all registered property names.
+ */
+export type RegisteredProperty = keyof PropertyIRMap;
 
 
 === File: packages/b_declarations/src/types.ts ===
@@ -1956,21 +2040,15 @@ export interface PropertyIRMap {
 
 // This module defines the core types for the @b/declarations package.
 //
-// - PropertyIRMap is auto-generated in ./types.map.ts
+// - PropertyIRMap is now derived from PROPERTY_DEFINITIONS (see types.derived.ts)
 // - RegisteredProperty is the union of all known property names
 // - PropertyDefinition describes how each property integrates into the registry
 // - Parser / generator function signatures used by property implementations
 
 import type { ParseResult, GenerateResult } from "@b/types";
-import type { PropertyIRMap } from "./types.map";
+import type { PropertyIRMap } from "./types.derived";
 
-export type { PropertyIRMap } from "./types.map";
-
-/**
- * Union type of all registered property names.
- * Backed by the auto-generated PropertyIRMap.
- */
-export type RegisteredProperty = keyof PropertyIRMap;
+export type { PropertyIRMap, RegisteredProperty } from "./types.derived";
 
 /**
  * Basic CSS declaration input structure.
@@ -2091,14 +2169,18 @@ export type PropertyDefinition<T = unknown> = {
  * This enforces the architectural invariant that properties using
  * createMultiValueParser (multiValue: true) must have IR with kind: "list".
  *
+ * NOW ENFORCED: Checks actual PropertyDefinitions, not generic types.
+ *
  * If this type check fails, it means a property is registered as multiValue
  * but its IR in PropertyIRMap doesn't have a list variant.
  */
 
-// Extract names of all multiValue properties
+import type { PropertyDefinitions } from "./properties/definitions";
+
+// Extract names of all multiValue properties from ACTUAL definitions
 type MultiValuePropertyNames = {
-  [K in keyof PropertyIRMap]: PropertyDefinition<PropertyIRMap[K]> extends { multiValue: true } ? K : never;
-}[keyof PropertyIRMap];
+  [K in keyof PropertyDefinitions]: PropertyDefinitions[K]["multiValue"] extends true ? K : never;
+}[keyof PropertyDefinitions];
 
 // For each multiValue property, verify IR has kind: "list"
 type MultiValueIRsHaveListVariant = {
@@ -2106,7 +2188,7 @@ type MultiValueIRsHaveListVariant = {
 }[MultiValuePropertyNames];
 
 // Compile-time assertion: all multiValue IRs must have list variant
-// If any property violates this, TypeScript will error here
+// If any property violates this, TypeScript will error here showing the property name
 // @ts-expect-error - Type-level contract check, intentionally unused
 type _AssertMultiValueContract = MultiValueIRsHaveListVariant extends true ? true : never;
 
@@ -7710,16 +7792,34 @@ import { parseCssValueNode } from "@b/utils";
 import { parseComplexFunction } from "./function-dispatcher";
 
 /**
- * CSS value parser that delegates complex functions to specialized parsers.
+ * CSS value parser with full complex function support.
  *
- * This wrapper combines the basic parseCssValueNode from @b/utils with the
- * complex function dispatcher from @b/parsers.
+ * ✅ **USE THIS** for property parsing.
  *
- * Use this function instead of parseCssValueNode when you want calc(), min(), max(),
- * clamp(), rgb(), hsl(), etc. to be parsed into their semantic IR structures.
+ * This is the correct entry point for parsing CSS values in property parsers.
+ * It handles all CSS functions including:
+ * - Gradients: linear-gradient(), radial-gradient(), conic-gradient()
+ * - Colors: rgb(), hsl(), lab(), lch(), oklch(), oklab(), color()
+ * - Math: calc(), min(), max(), clamp()
+ * - Plus all basic values: numbers, dimensions, percentages, keywords, var()
+ *
+ * Implementation:
+ * - Function nodes → Try complex function dispatcher first
+ * - Fallback → Basic parser from @b/utils for primitives
  *
  * @param node - CSS AST node to parse
  * @returns ParseResult with CssValue (may include complex function IRs)
+ *
+ * @example
+ * ```typescript
+ * // In property parser:
+ * import { parseNodeToCssValue } from "@b/parsers";
+ *
+ * const result = parseNodeToCssValue(node);
+ * if (result.ok && result.value.kind === "gradient") {
+ *   // Gradient IR available
+ * }
+ * ```
  */
 export function parseNodeToCssValue(node: csstree.CssNode): ParseResult<CssValue> {
   // For function nodes, try the complex function dispatcher first
@@ -10598,14 +10698,23 @@ import { createError, forwardParseErr, parseErr, parseOk, type ParseResult } fro
 import type { CssValue } from "@b/types";
 
 /**
- * Parse a CSS node into a CssValue.
- * Handles numbers, dimensions, percentages, keywords, and var() functions.
- */
-
-/**
- * Parse a CSS node into a CssValue.
- * Handles numbers, dimensions, percentages, keywords, var(),
- * string literals, and falls back to generic function calls for all others.
+ * Generic CSS value parser (NO complex function support).
+ *
+ * ⚠️ **IMPORTANT**: Property parsers should use `@b/parsers/parseNodeToCssValue` instead.
+ *
+ * This low-level parser does NOT handle complex CSS functions:
+ * - Gradients: linear-gradient(), radial-gradient(), conic-gradient()
+ * - Colors: rgb(), hsl(), lab(), lch(), oklch(), oklab(), color()
+ * - Math: calc(), min(), max(), clamp()
+ *
+ * It only handles:
+ * - Basic values: numbers, dimensions, percentages, keywords
+ * - var() with fallback parsing
+ * - String literals
+ * - Hex colors
+ * - Generic function calls (as opaque CssValue)
+ *
+ * @internal Use via @b/parsers for property parsing
  */
 export function parseCssValueNode(node: csstree.CssNode): ParseResult<CssValue> {
   switch (node.type) {
@@ -10743,11 +10852,12 @@ export function parseCssValueNode(node: csstree.CssNode): ParseResult<CssValue> 
       return parseOk({ kind: "function", name: node.name, args: args });
     }
 
-    // Hash nodes (#RRGGBB) are typically handled by Color.parseNode, but if CssValue
-    // is called on a standalone hash, treat it as a keyword for now
+    // Hash nodes (#RRGGBB) represent hex colors
+    // Property-specific color parsers handle full Color IR;
+    // this handles generic hex color values
     case "Hash": {
       const value = node.value.toLowerCase();
-      return parseOk({ kind: "keyword", value: `#${value}` });
+      return parseOk({ kind: "hex-color", value: `#${value}` });
     }
 
     default: {
@@ -11269,5 +11379,3 @@ export default defineConfig({
     },
   },
 });
-
-

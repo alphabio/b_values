@@ -75,8 +75,7 @@ deps-add package:
 path_helper:
     b_path_helper --execute --relative
 
-llm_txt:
-    b_llm_txt packages --recursive > docs.llm/b_source.txt
+llm_txt *dirs="packages":
+    b_llm_txt {{dirs}} --recursive > docs.llm/b_source.txt
 
-
-llm: path_helper llm_txt
+llm *dirs="packages": path_helper (llm_txt dirs)

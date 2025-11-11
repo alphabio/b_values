@@ -14,3 +14,8 @@ export * from "./background-origin";
 export * from "./background-position";
 export * from "./background-repeat";
 export * from "./background-size";
+
+// Mark registry as initialized after all properties are loaded
+// This is a side-effect import that happens when this module is imported
+import { propertyRegistry } from "../core/registry";
+propertyRegistry.markInitialized();

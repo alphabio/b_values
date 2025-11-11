@@ -4,9 +4,30 @@ import type { PropertyDefinition } from "../types";
 /**
  * Property registry - maps CSS property names to their definitions.
  * This allows runtime lookup of property parsers and metadata.
+ *
+ * ⚠️ **Initialization Pattern**:
+ * The registry is populated via side-effect imports when property definition
+ * modules are loaded. Each property calls `defineProperty()` during module
+ * initialization, which automatically registers it with the global registry.
+ *
+ * The `@b/declarations` package ensures all properties are registered by
+ * importing them in `properties/index.ts`, which marks the registry as
+ * initialized after all definitions are loaded.
+ *
+ * **For library consumers**: Just import from `@b/declarations` and the
+ * registry will be ready. No manual initialization required.
+ *
+ * @example
+ * ```typescript
+ * import { getPropertyDefinition } from "@b/declarations";
+ *
+ * const def = getPropertyDefinition("background-color");
+ * // Registry is automatically populated via side-effect imports
+ * ```
  */
 class PropertyRegistry {
   private properties = new Map<string, PropertyDefinition>();
+  private initialized = false;
 
   /**
    * Register a property definition.
@@ -41,11 +62,40 @@ class PropertyRegistry {
    */
   clear(): void {
     this.properties.clear();
+    this.initialized = false;
+  }
+
+  /**
+   * Mark registry as initialized.
+   * Called by property definitions during module load.
+   * @internal
+   */
+  markInitialized(): void {
+    this.initialized = true;
+  }
+
+  /**
+   * Check if registry has been initialized.
+   * @internal
+   */
+  isInitialized(): boolean {
+    return this.initialized;
   }
 }
 
 /**
  * Global property registry instance.
+ *
+ * **Initialization**: The registry is populated via side-effect imports.
+ * Each property definition module calls `defineProperty()` during load,
+ * which registers it with this global instance. The `properties/index.ts`
+ * module imports all property definitions and marks initialization complete.
+ *
+ * This pattern ensures:
+ * - Zero-config usage for library consumers
+ * - Properties are registered once during module load
+ * - No circular dependency issues
+ * - Lazy evaluation only for dynamic imports
  */
 export const propertyRegistry = new PropertyRegistry();
 
@@ -65,7 +115,20 @@ export function isCustomProperty(name: string): boolean {
 }
 
 /**
- * Get property definition with custom property fallback
+ * Get property definition with custom property fallback.
+ *
+ * The registry is automatically populated when property definitions are imported.
+ * Property modules call `defineProperty()` during module initialization,
+ * which registers them with the global registry.
+ *
+ * @example
+ * ```typescript
+ * import { getPropertyDefinition } from "@b/declarations";
+ *
+ * const bgColor = getPropertyDefinition("background-color");
+ * const customProp = getPropertyDefinition("--my-color");
+ * // Properties are available after module import
+ * ```
  */
 export function getPropertyDefinition(name: string): PropertyDefinition | undefined {
   // First, try a direct lookup.

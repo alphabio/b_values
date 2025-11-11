@@ -4,23 +4,30 @@ import { createError, forwardParseErr, parseErr, parseOk, type ParseResult } fro
 import type { CssValue } from "@b/types";
 
 /**
+ * ⚠️ **LOW-LEVEL API - Internal Use Only**
+ *
  * Generic CSS value parser (NO complex function support).
  *
- * ⚠️ **IMPORTANT**: Property parsers should use `@b/parsers/parseNodeToCssValue` instead.
+ * **DO NOT import this directly in property parsers.**
+ * Use `@b/parsers/utils/parseNodeToCssValue` instead, which includes:
+ * - Complex CSS functions (gradients, colors, math)
+ * - Proper universal function handling (var, calc, etc.)
+ * - Type-aware parsing for property-specific values
  *
  * This low-level parser does NOT handle complex CSS functions:
- * - Gradients: linear-gradient(), radial-gradient(), conic-gradient()
- * - Colors: rgb(), hsl(), lab(), lch(), oklch(), oklab(), color()
- * - Math: calc(), min(), max(), clamp()
+ * - ❌ Gradients: linear-gradient(), radial-gradient(), conic-gradient()
+ * - ❌ Colors: rgb(), hsl(), lab(), lch(), oklch(), oklab(), color()
+ * - ❌ Math: calc(), min(), max(), clamp()
  *
  * It only handles:
- * - Basic values: numbers, dimensions, percentages, keywords
- * - var() with fallback parsing
- * - String literals
- * - Hex colors
- * - Generic function calls (as opaque CssValue)
+ * - ✅ Basic values: numbers, dimensions, percentages, keywords
+ * - ✅ var() with fallback parsing
+ * - ✅ String literals
+ * - ✅ Hex colors (basic #RRGGBB)
+ * - ✅ Generic function calls (as opaque CssValue, no semantic parsing)
  *
  * @internal Use via @b/parsers for property parsing
+ * @see {@link @b/parsers/utils/parseNodeToCssValue} for property parsing
  */
 export function parseCssValueNode(node: csstree.CssNode): ParseResult<CssValue> {
   switch (node.type) {

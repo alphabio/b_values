@@ -34,22 +34,32 @@ export interface GenerateContext {
  * - When `ok: true`, `value` is guaranteed to be present (CSS string)
  * - When `ok: false`, `value` is undefined
  *
- * Issues array allows warnings + success (generator can succeed with warnings).
+ * ⚠️ **IMPORTANT**: Unlike ParseResult, GenerateResult does NOT support partial success.
+ * - When `ok: false`, `value` is always undefined (no partial CSS strings)
+ * - Generation is all-or-nothing: either produces valid CSS or fails completely
+ * - Always check `issues` array for warnings even when `ok: true`
  *
- * @example
+ * **Issues array** allows warnings even on success. Generators can succeed with warnings
+ * (e.g., clamped values, deprecated syntax).
+ *
+ * @example Success with warnings
  * ```typescript
- * import { generateOk, generateErr } from "@b/types";
- *
- * // Success
- * const result = generateOk("#ff0000");
+ * const result = generateColor(rgbIR);
+ * // { ok: true, value: "rgb(255 100 50)", issues: [warning about clamped value] }
  * if (result.ok) {
- *   console.log(result.value); // "#ff0000"
+ *   console.log(result.value); // Use CSS string
+ *   if (result.issues.length > 0) {
+ *     logWarnings(result.issues); // Handle warnings
+ *   }
  * }
+ * ```
  *
- * // Error
- * const error = generateErr(createError("invalid-ir", "Missing required field"));
- * if (!error.ok) {
- *   console.log(error.issues[0].message);
+ * @example Total failure
+ * ```typescript
+ * const result = generateGradient(invalidIR);
+ * // { ok: false, value: undefined, issues: [error about missing field] }
+ * if (!result.ok) {
+ *   console.error(result.issues); // No partial CSS, must handle error
  * }
  * ```
  *
