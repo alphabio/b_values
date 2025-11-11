@@ -1,3 +1,7 @@
+Excluding patterns: 
+Documentation for LLMs
+Excluding patterns: 
+Excluding patterns: -not -path */__pycache__/* -not -path */__tests__/* -not -path */.git/* -not -path */.idea/* -not -path */.next/* -not -path */.venv/* -not -path */.vscode/* -not -path */*.spec.py -not -path */*.spec.ts -not -path */*.spec.tsx -not -path */*.test.py -not -path */*.test.ts -not -path */*.test.tsx -not -path */*test.py -not -path */*test.ts -not -path */*test.tsx -not -path */build/* -not -path */dist/* -not -path */me.ts -not -path */node_modules/* -not -path */test_*.py -not -path */test.ts -not -path */test.ts -not -path */tests/* -not -path */venv/*
 === File: packages/b_declarations/src/core/index.ts ===
 // b_path:: packages/b_declarations/src/core/index.ts
 export * from "./registry";
@@ -10,9 +14,30 @@ import type { PropertyDefinition } from "../types";
 /**
  * Property registry - maps CSS property names to their definitions.
  * This allows runtime lookup of property parsers and metadata.
+ *
+ * ⚠️ **Initialization Pattern**:
+ * The registry is populated via side-effect imports when property definition
+ * modules are loaded. Each property calls `defineProperty()` during module
+ * initialization, which automatically registers it with the global registry.
+ *
+ * The `@b/declarations` package ensures all properties are registered by
+ * importing them in `properties/index.ts`, which marks the registry as
+ * initialized after all definitions are loaded.
+ *
+ * **For library consumers**: Just import from `@b/declarations` and the
+ * registry will be ready. No manual initialization required.
+ *
+ * @example
+ * ```typescript
+ * import { getPropertyDefinition } from "@b/declarations";
+ *
+ * const def = getPropertyDefinition("background-color");
+ * // Registry is automatically populated via side-effect imports
+ * ```
  */
 class PropertyRegistry {
   private properties = new Map<string, PropertyDefinition>();
+  private initialized = false;
 
   /**
    * Register a property definition.
@@ -47,11 +72,40 @@ class PropertyRegistry {
    */
   clear(): void {
     this.properties.clear();
+    this.initialized = false;
+  }
+
+  /**
+   * Mark registry as initialized.
+   * Called by property definitions during module load.
+   * @internal
+   */
+  markInitialized(): void {
+    this.initialized = true;
+  }
+
+  /**
+   * Check if registry has been initialized.
+   * @internal
+   */
+  isInitialized(): boolean {
+    return this.initialized;
   }
 }
 
 /**
  * Global property registry instance.
+ *
+ * **Initialization**: The registry is populated via side-effect imports.
+ * Each property definition module calls `defineProperty()` during load,
+ * which registers it with this global instance. The `properties/index.ts`
+ * module imports all property definitions and marks initialization complete.
+ *
+ * This pattern ensures:
+ * - Zero-config usage for library consumers
+ * - Properties are registered once during module load
+ * - No circular dependency issues
+ * - Lazy evaluation only for dynamic imports
  */
 export const propertyRegistry = new PropertyRegistry();
 
@@ -71,7 +125,20 @@ export function isCustomProperty(name: string): boolean {
 }
 
 /**
- * Get property definition with custom property fallback
+ * Get property definition with custom property fallback.
+ *
+ * The registry is automatically populated when property definitions are imported.
+ * Property modules call `defineProperty()` during module initialization,
+ * which registers them with the global registry.
+ *
+ * @example
+ * ```typescript
+ * import { getPropertyDefinition } from "@b/declarations";
+ *
+ * const bgColor = getPropertyDefinition("background-color");
+ * const customProp = getPropertyDefinition("--my-color");
+ * // Properties are available after module import
+ * ```
  */
 export function getPropertyDefinition(name: string): PropertyDefinition | undefined {
   // First, try a direct lookup.
@@ -1802,6 +1869,11 @@ export * from "./background-origin";
 export * from "./background-position";
 export * from "./background-repeat";
 export * from "./background-size";
+
+// Mark registry as initialized after all properties are loaded
+// This is a side-effect import that happens when this module is imported
+import { propertyRegistry } from "../core/registry";
+propertyRegistry.markInitialized();
 
 
 === File: packages/b_declarations/src/test/property-contract.ts ===
@@ -9021,22 +9093,32 @@ export interface GenerateContext {
  * - When `ok: true`, `value` is guaranteed to be present (CSS string)
  * - When `ok: false`, `value` is undefined
  *
- * Issues array allows warnings + success (generator can succeed with warnings).
+ * ⚠️ **IMPORTANT**: Unlike ParseResult, GenerateResult does NOT support partial success.
+ * - When `ok: false`, `value` is always undefined (no partial CSS strings)
+ * - Generation is all-or-nothing: either produces valid CSS or fails completely
+ * - Always check `issues` array for warnings even when `ok: true`
  *
- * @example
+ * **Issues array** allows warnings even on success. Generators can succeed with warnings
+ * (e.g., clamped values, deprecated syntax).
+ *
+ * @example Success with warnings
  * ```typescript
- * import { generateOk, generateErr } from "@b/types";
- *
- * // Success
- * const result = generateOk("#ff0000");
+ * const result = generateColor(rgbIR);
+ * // { ok: true, value: "rgb(255 100 50)", issues: [warning about clamped value] }
  * if (result.ok) {
- *   console.log(result.value); // "#ff0000"
+ *   console.log(result.value); // Use CSS string
+ *   if (result.issues.length > 0) {
+ *     logWarnings(result.issues); // Handle warnings
+ *   }
  * }
+ * ```
  *
- * // Error
- * const error = generateErr(createError("invalid-ir", "Missing required field"));
- * if (!error.ok) {
- *   console.log(error.issues[0].message);
+ * @example Total failure
+ * ```typescript
+ * const result = generateGradient(invalidIR);
+ * // { ok: false, value: undefined, issues: [error about missing field] }
+ * if (!result.ok) {
+ *   console.error(result.issues); // No partial CSS, must handle error
  * }
  * ```
  *
@@ -9400,12 +9482,17 @@ import type { Issue } from "./issue";
  * 2. **Total failure**: `ok: false`, `value` is `undefined`, parsing failed early (fail-fast)
  * 3. **Partial success**: `ok: false`, `value` contains partial data (type T), some items parsed (multi-error)
  *
- * When `ok: false`:
+ * ⚠️ **CRITICAL**: Always check BOTH `ok` flag AND `value` field:
+ * - When `ok: false`, `value` MAY still contain partial/recovered data
+ * - When `ok: true`, always inspect `issues` array for warnings
+ * - Never assume `ok: false` means `value` is undefined
+ *
+ * **When `ok: false`:**
  * - `issues` contains at least one error
  * - `value` is `undefined` for fail-fast parsers (e.g., single value parsing)
  * - `value` contains partial result for multi-error parsers (e.g., list parsing where some items succeeded)
  *
- * Issues array allows warnings even on success. Parsers can succeed with warnings.
+ * **Issues array** allows warnings even on success. Parsers can succeed with warnings.
  *
  * @example Fail-fast parser (single angle)
  * ```typescript
@@ -9425,6 +9512,21 @@ import type { Issue } from "./issue";
  * const result = parseColor("rgb(300 100 50)");
  * // { ok: true, value: rgbIR, issues: [warning] }
  * // Valid RGB syntax, but value out of range (warning)
+ * ```
+ *
+ * @example Handling partial success correctly
+ * ```typescript
+ * const result = parseDeclaration(...);
+ * if (result.ok) {
+ *   // Full success - use value
+ *   applyStyles(result.value);
+ * } else if (result.value) {
+ *   // Partial success - some data recovered despite errors
+ *   applyStylesWithWarning(result.value, result.issues);
+ * } else {
+ *   // Total failure - no recoverable data
+ *   handleError(result.issues);
+ * }
  * ```
  *
  * @public
@@ -10698,23 +10800,30 @@ import { createError, forwardParseErr, parseErr, parseOk, type ParseResult } fro
 import type { CssValue } from "@b/types";
 
 /**
+ * ⚠️ **LOW-LEVEL API - Internal Use Only**
+ *
  * Generic CSS value parser (NO complex function support).
  *
- * ⚠️ **IMPORTANT**: Property parsers should use `@b/parsers/parseNodeToCssValue` instead.
+ * **DO NOT import this directly in property parsers.**
+ * Use `@b/parsers/utils/parseNodeToCssValue` instead, which includes:
+ * - Complex CSS functions (gradients, colors, math)
+ * - Proper universal function handling (var, calc, etc.)
+ * - Type-aware parsing for property-specific values
  *
  * This low-level parser does NOT handle complex CSS functions:
- * - Gradients: linear-gradient(), radial-gradient(), conic-gradient()
- * - Colors: rgb(), hsl(), lab(), lch(), oklch(), oklab(), color()
- * - Math: calc(), min(), max(), clamp()
+ * - ❌ Gradients: linear-gradient(), radial-gradient(), conic-gradient()
+ * - ❌ Colors: rgb(), hsl(), lab(), lch(), oklch(), oklab(), color()
+ * - ❌ Math: calc(), min(), max(), clamp()
  *
  * It only handles:
- * - Basic values: numbers, dimensions, percentages, keywords
- * - var() with fallback parsing
- * - String literals
- * - Hex colors
- * - Generic function calls (as opaque CssValue)
+ * - ✅ Basic values: numbers, dimensions, percentages, keywords
+ * - ✅ var() with fallback parsing
+ * - ✅ String literals
+ * - ✅ Hex colors (basic #RRGGBB)
+ * - ✅ Generic function calls (as opaque CssValue, no semantic parsing)
  *
  * @internal Use via @b/parsers for property parsing
+ * @see {@link @b/parsers/utils/parseNodeToCssValue} for property parsing
  */
 export function parseCssValueNode(node: csstree.CssNode): ParseResult<CssValue> {
   switch (node.type) {
@@ -11379,3 +11488,5 @@ export default defineConfig({
     },
   },
 });
+
+

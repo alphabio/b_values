@@ -67,6 +67,7 @@
     "Turborepo",
     "typechecks",
     "unittests",
+    "venv",
     "vercel",
     "vite",
     "wasn",

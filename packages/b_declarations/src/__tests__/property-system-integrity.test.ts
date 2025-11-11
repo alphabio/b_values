@@ -32,11 +32,10 @@ describe("Property System Integrity", () => {
       for (const propName of registryNames) {
         // Convert property name to expected IR type name
         // e.g., "background-color" → "BackgroundColorIR"
-        const expectedIRName =
-          propName
-            .split("-")
-            .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-            .join("") + "IR";
+        const expectedIRName = `${propName
+          .split("-")
+          .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+          .join("")}IR`;
 
         // Read the property's types.ts file
         const propDir = propName.replace(/_/g, "-");
@@ -83,11 +82,10 @@ describe("Property System Integrity", () => {
         } else if (irTypeCount > 1) {
           // Multiple IR types is OK (e.g., helper types), but we log it
           // The main IR should match the property name
-          const expectedIRName =
-            propName
-              .split("-")
-              .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-              .join("") + "IR";
+          const expectedIRName = `${propName
+            .split("-")
+            .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+            .join("")}IR`;
 
           const hasExpectedName = new RegExp(`export type ${expectedIRName}\\s*=`, "m").test(typesContent);
 
@@ -100,6 +98,7 @@ describe("Property System Integrity", () => {
       // This is a warning-level check, not a hard failure
       // Log warnings but don't fail the test
       if (warnings.length > 0) {
+        // biome-ignore lint/suspicious/noConsole: Test diagnostic output
         console.warn(`IR type export warnings:\n${warnings.join("\n")}`);
       }
 
@@ -155,7 +154,9 @@ describe("Property System Integrity", () => {
               violations.push(`${propName}: Generator output starts with property name: "${value.slice(0, 50)}..."`);
             }
           }
-        } catch (error) {}
+        } catch (_error) {
+          // Silently ignore errors - property may not have generator
+        }
       }
 
       if (violations.length > 0) {

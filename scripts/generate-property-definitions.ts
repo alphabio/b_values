@@ -1,5 +1,5 @@
-#!/usr/bin/env tsx
 // b_path:: scripts/generate-property-definitions.ts
+/** biome-ignore-all lint/suspicious/noConsole: we scriptin */
 
 /**
  * Generate the central PROPERTY_DEFINITIONS export.
@@ -91,22 +91,22 @@ async function main() {
 
 /**
  * Central registry of all property definitions.
- * 
+ *
  * ⚠️ THIS FILE IS AUTO-GENERATED. DO NOT EDIT MANUALLY.
- * 
+ *
  * Run: pnpm generate:definitions
- * 
+ *
  * This is the single source of truth for:
  * - Property names → IR type mapping (derives PropertyIRMap)
  * - Property metadata (multiValue, rawValue flags)
  * - Type-level contract enforcement
- * 
+ *
  * Architecture:
  * - Each property folder exports its definition (e.g., backgroundAttachment)
  * - This file aggregates them into PROPERTY_DEFINITIONS
  * - PropertyIRMap is derived from this via type inference
  * - Type-level contracts check actual definitions, not generic types
- * 
+ *
  * When adding a new property:
  * 1. Create property folder with definition.ts that exports a definition
  * 2. Run: pnpm generate:definitions
@@ -118,10 +118,10 @@ ${imports}
 
 /**
  * Central definitions object.
- * 
+ *
  * Keys are CSS property names (e.g., "background-color").
  * Values are PropertyDefinition instances.
- * 
+ *
  * This object is the source of truth for:
  * - Runtime property lookup
  * - Type-level IR extraction
