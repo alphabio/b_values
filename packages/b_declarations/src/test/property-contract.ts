@@ -1,14 +1,14 @@
-// b_path:: packages/b_declarations/src/__tests__/property-test-utils.ts
+// b_path:: packages/b_declarations/src/test/property-contract.ts
 
 import { describe, it, expect } from "vitest";
 import { parseDeclaration } from "../parser";
 import { generateDeclaration } from "../generator";
-import type { GenerateResult } from "@b/types";
+import type { ParseResult, GenerateResult } from "@b/types";
 
 /**
  * Normalize CSS string for comparison (whitespace, etc.)
  */
-function normalizeCss(css: string): string {
+function norm(css: string): string {
   return css.trim().replace(/\s+/g, " ");
 }
 
@@ -55,7 +55,7 @@ export interface RunPropertyTestsOptions<TIR> {
   /** CSS property name */
   property: string;
   /** Optional: Zod schema or validator for IR */
-  schema?: { parse: (ir: unknown) => TIR };
+  schema?: { parse: (input: unknown) => TIR };
   /** Parse test cases */
   parse?: ParseCase<TIR>[];
   /** Generate test cases */
@@ -77,8 +77,9 @@ export interface RunPropertyTestsOptions<TIR> {
  * ```typescript
  * runPropertyTests<BackgroundSizeIR>({
  *   property: "background-size",
+ *   schema: backgroundSizeIRSchema,
  *   parse: [
- *     { css: "background-size: auto", expectOk: true },
+ *     { css: "background-size: auto", expectOk: true, irContains: { kind: "list" } },
  *     { css: "background-size: invalid", expectOk: false },
  *   ],
  *   roundtrip: [
@@ -91,82 +92,83 @@ export interface RunPropertyTestsOptions<TIR> {
 export function runPropertyTests<TIR>(opts: RunPropertyTestsOptions<TIR>): void {
   const { property } = opts;
 
-  if (opts.parse) {
-    describe(`${property} :: parse`, () => {
-      for (const testCase of opts.parse!) {
-        it(testCase.css, () => {
-          const result = parseDeclaration(testCase.css);
+  if (opts.parse?.length) {
+    describe(`${property} :: parseDeclaration`, () => {
+      for (const c of opts.parse!) {
+        it(c.css, () => {
+          const res = parseDeclaration(c.css) as ParseResult<{ property: string; ir: TIR }>;
 
-          if (testCase.expectOk) {
-            expect(result.ok).toBe(true);
-            if (!result.ok) return;
+          if (c.expectOk) {
+            expect(res.ok).toBe(true);
+            if (!res.ok) return;
 
             // Verify property name is correct
-            expect(result.value.property).toBe(property);
+            expect(res.value.property).toBe(property);
 
-            // Optional: validate IR against schema
+            // Optional: validate IR against schema (throws if invalid)
             if (opts.schema) {
-              opts.schema.parse(result.value.ir);
+              opts.schema.parse(res.value.ir);
             }
 
             // Optional: verify IR contains expected shape
-            if (testCase.irContains) {
-              expect(result.value.ir).toMatchObject(testCase.irContains);
+            if (c.irContains) {
+              expect(res.value.ir).toMatchObject(c.irContains);
             }
           } else {
-            expect(result.ok).toBe(false);
+            expect(res.ok).toBe(false);
           }
         });
       }
     });
   }
 
-  if (opts.generate) {
-    describe(`${property} :: generate`, () => {
-      for (const testCase of opts.generate!) {
-        const label = JSON.stringify(testCase.ir).substring(0, 60);
+  if (opts.generate?.length) {
+    describe(`${property} :: generateDeclaration`, () => {
+      for (const c of opts.generate!) {
+        const label = JSON.stringify(c.ir).substring(0, 60);
         it(label, () => {
-          const result = generateDeclaration({
-            property: testCase.property as never,
-            ir: testCase.ir as never,
+          const res = generateDeclaration({
+            property: c.property as never,
+            ir: c.ir as never,
           }) as GenerateResult;
 
-          if (testCase.expectOk) {
-            expect(result.ok).toBe(true);
-            if (!result.ok) return;
+          if (c.expectOk) {
+            expect(res.ok).toBe(true);
+            if (!res.ok) return;
 
-            if (testCase.expectValue) {
-              expect(normalizeCss(result.value)).toBe(normalizeCss(testCase.expectValue));
+            if (c.expectValue) {
+              expect(norm(res.value)).toBe(norm(c.expectValue));
             }
           } else {
-            expect(result.ok).toBe(false);
+            expect(res.ok).toBe(false);
           }
         });
       }
     });
   }
 
-  if (opts.roundtrip) {
+  if (opts.roundtrip?.length) {
     describe(`${property} :: roundtrip`, () => {
-      for (const testCase of opts.roundtrip!) {
-        it(testCase.css, () => {
+      for (const c of opts.roundtrip!) {
+        it(c.css, () => {
           // Parse
-          const parseResult = parseDeclaration(testCase.css);
-          expect(parseResult.property ?? property).toBe(property);
-          expect(parseResult.ok).toBe(true);
-          if (!parseResult.ok) return;
+          const parsed = parseDeclaration(c.css) as ParseResult<{ property: string; ir: TIR }>;
+          expect(parsed.ok).toBe(true);
+          if (!parsed.ok) return;
+          expect(parsed.value.property).toBe(property);
 
           // Generate
-          const generateResult = generateDeclaration({
+          const gen = generateDeclaration({
             property: property as never,
-            ir: parseResult.value.ir as never,
-          });
-          expect(generateResult.ok).toBe(true);
-          if (!generateResult.ok) return;
+            ir: parsed.value.ir as never,
+          }) as GenerateResult;
+
+          expect(gen.ok).toBe(true);
+          if (!gen.ok) return;
 
           // Compare
-          const expected = testCase.expectCss ?? testCase.css;
-          expect(normalizeCss(generateResult.value)).toBe(normalizeCss(expected));
+          const expected = c.expectCss ?? c.css;
+          expect(norm(gen.value)).toBe(norm(expected));
         });
       }
     });

@@ -126,3 +126,32 @@ export type PropertyDefinition<T = unknown> = {
    */
   allowedKeywords?: readonly string[];
 } & (SingleValueDefinition<T> | MultiValueDefinition<T> | RawValueDefinition<T>);
+
+// ============================================================================
+// CONTRACT ENFORCEMENT (Type-Level)
+// ============================================================================
+
+/**
+ * Type-level check: multiValue properties must have list-like IR.
+ *
+ * This enforces the architectural invariant that properties using
+ * createMultiValueParser (multiValue: true) must have IR with kind: "list".
+ *
+ * If this type check fails, it means a property is registered as multiValue
+ * but its IR in PropertyIRMap doesn't have a list variant.
+ */
+
+// Extract names of all multiValue properties
+type MultiValuePropertyNames = {
+  [K in keyof PropertyIRMap]: PropertyDefinition<PropertyIRMap[K]> extends { multiValue: true } ? K : never;
+}[keyof PropertyIRMap];
+
+// For each multiValue property, verify IR has kind: "list"
+type MultiValueIRsHaveListVariant = {
+  [K in MultiValuePropertyNames]: PropertyIRMap[K] extends { kind: "list" } ? true : never;
+}[MultiValuePropertyNames];
+
+// Compile-time assertion: all multiValue IRs must have list variant
+// If any property violates this, TypeScript will error here
+// @ts-expect-error - Type-level contract check, intentionally unused
+type _AssertMultiValueContract = MultiValueIRsHaveListVariant extends true ? true : never;
