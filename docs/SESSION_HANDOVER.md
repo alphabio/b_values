@@ -215,23 +215,26 @@ See Session 068 section below for detailed property automation patterns and stra
 **Decision:** All bootstrap docs (AGENTS.md, README.md, CODE_QUALITY.md) must be stateless.
 
 **Rationale:**
+
 - Bootstrap docs read on EVERY session start
 - Outdated info causes confusion and wrong assumptions
 - Stateful content belongs in SESSION_HANDOVER.md
 - Discoverable patterns > hardcoded lists
 
-**Policy:** 
+**Policy:**
+
 - Generic patterns only in bootstrap docs
 - Current state → SESSION_HANDOVER.md
 - Discoverable data (ls packages/) > hardcoded lists
 
 ### Decision 2: Always Use Session Dir for Working Files
 
-**Context:** Conflicting instructions (README: "don't use /tmp/", CODE_QUALITY: "use /tmp/ with b_")
+**Context:** Conflicting instructions (README: "don't use /tmp/", CODE*QUALITY: "use /tmp/ with b*")
 
 **Decision:** Single clear policy: **ALWAYS session dir, NEVER /tmp/**
 
 **Rationale:**
+
 - All session artifacts in one location
 - Easy to audit and preserve valuable content
 - Session becomes self-contained unit
@@ -282,13 +285,16 @@ See Session 068 section below for detailed property automation patterns and stra
 ## 📚 Documentation Created
 
 **In TMP/ (should have been session dir):**
+
 - `SESSION_AUDIT_054-069.md` - Comprehensive 16-session audit
 
 **Updated (Commits):**
+
 - b2f3a3f: Session file location policy unified
 - 469b81a: Bootstrap docs made stateless and accurate
 
 **Preserved (Previous sessions):**
+
 - Session 069: CSS taxonomy migration (complete)
 - Session 068: 14 property automation pattern docs
 

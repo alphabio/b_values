@@ -3,6 +3,7 @@ export * from "./background-attachment";
 export * from "./background-clip";
 export * from "./background-origin";
 export * from "./bg-size";
+export * from "./blend-mode";
 export * from "./color-interpolation";
 export * from "./color-space";
 export * from "./common";

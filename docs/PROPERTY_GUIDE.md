@@ -10,13 +10,15 @@
 Every property is **exactly one** of these:
 
 ### Pattern A: Multi-Value List
+
 - **When:** Applies per background/mask layer
 - **Examples:** background-image, background-position, background-blend-mode
 - **IR:** `{ kind: "list", values: T[] }`
 - **Time:** 15-20 min
 
 ### Pattern B: Single Value
-- **When:** Applies to entire element  
+
+- **When:** Applies to entire element
 - **Examples:** background-color, opacity, mix-blend-mode
 - **IR:** `{ kind: "value", value: T }`
 - **Time:** 10-15 min
@@ -63,6 +65,7 @@ export type BlendMode = z.infer<typeof blendMode>;
 ```
 
 **Export:** Add to `packages/b_keywords/src/index.ts`:
+
 ```typescript
 export * from "./blend-mode";
 ```
@@ -95,6 +98,7 @@ export function parse(valueNode: csstree.Value): ParseResult<BlendMode> {
 ```
 
 **Export:** Add to `packages/b_parsers/src/index.ts`:
+
 ```typescript
 export * as BlendMode from "./blend-mode";
 ```
@@ -113,6 +117,7 @@ export function generate(value: BlendMode): GenerateResult {
 ```
 
 **Export:** Add to `packages/b_generators/src/index.ts`:
+
 ```typescript
 export * as BlendMode from "./blend-mode";
 ```
@@ -126,15 +131,13 @@ Create directory: `packages/b_declarations/src/properties/background-blend-mode/
 #### 3A. Types (`types.ts`)
 
 **Pattern A (Multi-Value):**
+
 ```typescript
 import { z } from "zod";
 import * as Keywords from "@b/keywords";
 import { cssValueSchema } from "@b/types";
 
-const backgroundBlendModeValueSchema = z.union([
-  Keywords.blendMode,
-  cssValueSchema,
-]);
+const backgroundBlendModeValueSchema = z.union([Keywords.blendMode, cssValueSchema]);
 
 export type BackgroundBlendModeValue = z.infer<typeof backgroundBlendModeValueSchema>;
 
@@ -153,17 +156,19 @@ export type BackgroundBlendModeIR = z.infer<typeof backgroundBlendModeIRSchema>;
 ```
 
 **Pattern B (Single Value):**
+
 ```typescript
 // Change "list" to "value" and use single value instead of array
 z.object({
   kind: z.literal("value"),
   value: backgroundBlendModeValueSchema,
-})
+});
 ```
 
 #### 3B. Parser (`parser.ts`)
 
 **Pattern A (Multi-Value):**
+
 ```typescript
 import type { ParseResult } from "@b/types";
 import * as Parsers from "@b/parsers";
@@ -171,10 +176,7 @@ import { createMultiValueParser } from "../../utils";
 import type { BackgroundBlendModeIR, BackgroundBlendModeValue } from "./types";
 import type * as csstree from "@eslint/css-tree";
 
-export const parseBackgroundBlendMode = createMultiValueParser<
-  BackgroundBlendModeValue,
-  BackgroundBlendModeIR
->({
+export const parseBackgroundBlendMode = createMultiValueParser<BackgroundBlendModeValue, BackgroundBlendModeIR>({
   propertyName: "background-blend-mode",
 
   itemParser(valueNode: csstree.Value): ParseResult<BackgroundBlendModeValue> {
@@ -188,6 +190,7 @@ export const parseBackgroundBlendMode = createMultiValueParser<
 ```
 
 **Pattern B (Single Value):**
+
 ```typescript
 import type { ParseResult } from "@b/types";
 import * as Parsers from "@b/parsers";
@@ -224,6 +227,7 @@ export function parseBackgroundBlendMode(ast: csstree.Value): ParseResult<Backgr
 #### 3C. Generator (`generator.ts`)
 
 **Pattern A (Multi-Value):**
+
 ```typescript
 import { generateOk, type GenerateResult } from "@b/types";
 import * as Generators from "@b/generators";
@@ -247,6 +251,7 @@ export function generateBackgroundBlendMode(ir: BackgroundBlendModeIR): Generate
 ```
 
 **Pattern B (Single Value):**
+
 ```typescript
 import { generateOk, type GenerateResult } from "@b/types";
 import * as Generators from "@b/generators";
@@ -274,7 +279,7 @@ export const backgroundBlendMode = defineProperty<BackgroundBlendModeIR>({
   name: "background-blend-mode",
   syntax: "<blend-mode>#",
   parser: parseBackgroundBlendMode,
-  multiValue: true,  // false for single value
+  multiValue: true, // false for single value
   generator: generateBackgroundBlendMode,
   inherited: false,
   initial: "normal",
@@ -293,6 +298,7 @@ export * from "./definition";
 #### 3F. Register
 
 Add to `packages/b_declarations/src/properties/index.ts`:
+
 ```typescript
 export * from "./background-blend-mode";
 ```
@@ -311,24 +317,25 @@ just check
 
 ## 🎯 Quick Reference: Which Pattern?
 
-| Property | Pattern | Why |
-|----------|---------|-----|
-| background-blend-mode | A (Multi) | Per layer |
-| background-image | A (Multi) | Per layer |
-| background-position | A (Multi) | Per layer |
-| background-color | B (Single) | Element-level |
-| mix-blend-mode | B (Single) | Element-level |
-| opacity | B (Single) | Element-level |
-| width | B (Single) | Element-level |
-| padding | B (Single) | Element-level* |
+| Property              | Pattern    | Why             |
+| --------------------- | ---------- | --------------- |
+| background-blend-mode | A (Multi)  | Per layer       |
+| background-image      | A (Multi)  | Per layer       |
+| background-position   | A (Multi)  | Per layer       |
+| background-color      | B (Single) | Element-level   |
+| mix-blend-mode        | B (Single) | Element-level   |
+| opacity               | B (Single) | Element-level   |
+| width                 | B (Single) | Element-level   |
+| padding               | B (Single) | Element-level\* |
 
-*Structural shorthands (padding, margin) still use single value pattern with composite types
+\*Structural shorthands (padding, margin) still use single value pattern with composite types
 
 ---
 
 ## 📦 Batch Strategy
 
 ### Phase 1: Keyword Properties (Day 1)
+
 - background-blend-mode ← **START HERE**
 - mix-blend-mode
 - isolation
@@ -338,6 +345,7 @@ just check
 **Dependencies:** 1 keyword enum → reused by 5+ properties
 
 ### Phase 2: Length Properties (Day 2)
+
 - width, height
 - min-width, max-width
 - top, right, bottom, left
@@ -345,12 +353,14 @@ just check
 **Dependencies:** Already exists (length-percentage)
 
 ### Phase 3: Box Model (Day 3)
+
 - padding-{top,right,bottom,left}
 - margin-{top,right,bottom,left}
 
 **Dependencies:** Already exists (length-percentage)
 
 ### Phase 4: Structural Shorthands (Day 4)
+
 - padding, margin (BoxSides4)
 - border-radius (BoxCorners4)
 
@@ -361,7 +371,7 @@ just check
 ## ✅ Success Criteria
 
 - [ ] Typecheck passes
-- [ ] Build succeeds  
+- [ ] Build succeeds
 - [ ] Pattern matches existing properties
 - [ ] No custom utilities in property dir
 - [ ] Exports added to index files

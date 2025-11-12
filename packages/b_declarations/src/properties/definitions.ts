@@ -27,6 +27,7 @@
 
 import { customProperty } from "./custom-property/definition";
 import { backgroundAttachment } from "./background-attachment/definition";
+import { backgroundBlendMode } from "./background-blend-mode/definition";
 import { backgroundClip } from "./background-clip/definition";
 import { backgroundColor } from "./background-color/definition";
 import { backgroundImage } from "./background-image/definition";
@@ -49,6 +50,7 @@ import { backgroundSize } from "./background-size/definition";
 export const PROPERTY_DEFINITIONS = {
   "--*": customProperty,
   "background-attachment": backgroundAttachment,
+  "background-blend-mode": backgroundBlendMode,
   "background-clip": backgroundClip,
   "background-color": backgroundColor,
   "background-image": backgroundImage,

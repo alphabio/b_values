@@ -7,6 +7,7 @@ export * from "./definitions";
 export * from "./custom-property";
 
 export * from "./background-attachment";
+export * from "./background-blend-mode";
 export * from "./background-clip";
 export * from "./background-color";
 export * from "./background-image";
