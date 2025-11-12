@@ -411,31 +411,27 @@ These rules have **zero exceptions:**
 
 ---
 
-## 📁 File Naming Conventions
+## 📁 Session Working Files
 
-### Temporary Files
-
-**All temp files in `/tmp/` must be prefixed with `b_`:**
+**All working files go in your session directory:**
 
 ```bash
-# ✅ Good - easy to identify agent-generated files
-/tmp/b_analysis.md
-/tmp/b_debug_script.sh
-/tmp/b_test_output.txt
-/tmp/b_working_notes.md
+# ✅ Good - session-scoped working files
+docs/sessions/070/analysis.md
+docs/sessions/070/debug-output.txt
+docs/sessions/070/working-notes.md
 
-# ❌ Bad - unclear origin
-/tmp/analysis.md
-/tmp/script.sh
-/tmp/output.txt
+# ❌ Bad - scattered in /tmp/
+/tmp/b_analysis.md
+/tmp/b_working_notes.md
 ```
 
 **Why this matters:**
 
-- User can quickly identify agent-generated files
-- Easy to review and capture valuable context
-- Distinguishes from system/other temp files
-- Simplifies cleanup
+- All session artifacts in one place
+- Easy to review and archive valuable content
+- Session becomes self-contained unit
+- No cleanup needed (session dir is the workspace)
 
 **Applies to:**
 
@@ -443,8 +439,8 @@ These rules have **zero exceptions:**
 - Ad-hoc scripts
 - Debug outputs
 - Working notes
-- Any file created in `/tmp/`
+- Any temporary file during session work
+
+**Reference:** Use `$SESSION_DIR` or `docs/sessions/NNN/` for session-scoped files during active work.
 
 ---
-
-**User may review `/tmp/b_*` files later** - they often contain valuable information worth preserving.
