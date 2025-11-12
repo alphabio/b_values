@@ -17,7 +17,7 @@ export function generateBackgroundSize(ir: BackgroundSizeIR): GenerateResult {
   const valueStrings: string[] = [];
 
   for (let i = 0; i < ir.values.length; i++) {
-    const result = generateValue(ir.values[i], Generators.Background.generateSize);
+    const result = generateValue(ir.values[i], Generators.Background.Size.generate);
     if (!result.ok) return result;
     valueStrings.push(result.value);
   }

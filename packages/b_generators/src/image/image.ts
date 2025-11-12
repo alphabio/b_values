@@ -15,7 +15,7 @@ export function generate(layer: Image): GenerateResult {
       return generateOk(`url(${layer.url})`);
 
     case "gradient": {
-      return Generators.Gradient.generate(layer.gradient);
+      return Generators.Gradient.generate(layer.gradient, { parentPath: ["gradient"] });
     }
 
     default:

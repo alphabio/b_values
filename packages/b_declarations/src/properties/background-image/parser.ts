@@ -18,7 +18,7 @@ export const parseBackgroundImage = createMultiValueParser<Image, BackgroundImag
   },
 
   itemParser(valueNode: csstree.Value): ParseResult<Image> {
-    return Parsers.Image.parseImageValue(valueNode);
+    return Parsers.Image.parse(valueNode);
   },
 
   aggregator(layers: Image[]): BackgroundImageIR {

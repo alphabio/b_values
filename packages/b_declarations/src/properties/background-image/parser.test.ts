@@ -261,7 +261,7 @@ describe("background-image property", () => {
       const result = parseBackgroundImageFromString("invalid-value");
       expect(result.ok).toBe(false);
       if (result.ok) return;
-      expect(result.issues[0]?.message).toContain("Unsupported background-image value");
+      expect(result.issues[0]?.message).toContain("Unsupported image value");
     });
 
     it("should collect multiple errors from multiple invalid layers", () => {

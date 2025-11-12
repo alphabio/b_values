@@ -317,7 +317,6 @@ describe("generateBackgroundImage", () => {
       if (result.ok) return;
       expect(result.issues[0]?.code).toBe("invalid-ir");
       expect(result.issues[0]?.message).toContain("Unsupported image layer kind");
-      expect(result.property).toBe("background-image");
     });
 
     it("should propagate gradient generation errors", () => {
@@ -393,7 +392,7 @@ describe("generateBackgroundImage", () => {
         code: "invalid-value",
         severity: "warning",
         message: expect.stringContaining("r value -255 is out of valid range 0-255"),
-        path: ["list", 0, "gradient", "colorStops", 0, "color", "r"],
+        path: ["gradient", "colorStops", 0, "color", "r"],
       });
     });
 

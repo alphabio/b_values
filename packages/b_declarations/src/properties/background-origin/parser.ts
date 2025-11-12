@@ -10,7 +10,7 @@ export const parseBackgroundOrigin = createMultiValueParser<Keywords.BackgroundO
   propertyName: "background-origin",
 
   itemParser(valueNode: csstree.Value): ParseResult<Keywords.BackgroundOrigin> {
-    return Parsers.Background.parseBackgroundOriginValue(valueNode);
+    return Parsers.Background.Origin.parse(valueNode);
   },
 
   aggregator(layers: Keywords.BackgroundOrigin[]): BackgroundOriginIR {

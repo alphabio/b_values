@@ -10,7 +10,7 @@ export const parseBackgroundSize = createMultiValueParser<BgSize, BackgroundSize
   propertyName: "background-size",
 
   itemParser(valueNode: csstree.Value): ParseResult<BgSize> {
-    return Parsers.Background.parseBackgroundSizeValue(valueNode);
+    return Parsers.Background.Size.parse(valueNode);
   },
 
   aggregator(values: BgSize[]): BackgroundSizeIR {

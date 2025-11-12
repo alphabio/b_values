@@ -9,7 +9,7 @@ export const parseBackgroundRepeat = createMultiValueParser<RepeatStyleValue, Ba
   propertyName: "background-repeat",
 
   itemParser(valueNode: csstree.Value): ParseResult<RepeatStyle | CssValue> {
-    return Parsers.Background.parseBackgroundRepeatValue(valueNode);
+    return Parsers.Background.Repeat.parse(valueNode);
   },
 
   aggregator(layers: RepeatStyleValue[]): BackgroundRepeatIR {

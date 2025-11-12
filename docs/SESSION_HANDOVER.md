@@ -23,57 +23,66 @@ This session completed a fundamental architectural refactor to align our namespa
 **Breaking Change:** Complete namespace restructuring to mirror CSS spec.
 
 **Image Type: Background → Top-Level**
+
 - Moved `@b/parsers/src/background/image.ts` → `src/image/`
 - Moved `@b/generators/src/background/image.ts` → `src/image/`
 - Rationale: Image is a composite type used by 4+ properties (background-image, border-image, list-style-image, mask-image)
 
 **Namespace Pattern: Nested for Property-Specific**
+
 - Background namespace now contains ONLY property-specific types
 - Changed exports from flat to nested: `export * as Attachment from "./attachment"`
-- Types: Attachment, Clip, Origin, Repeat, Size (all background-* only)
+- Types: Attachment, Clip, Origin, Repeat, Size (all background-\* only)
 
 **Function Names: Generic for Automation**
+
 - All functions use generic names: `parse()` and `generate()`
 - Old: `parseImageValue()`, `generateImage()`
 - New: `parse()`, `generate()`
 - Enables pattern recognition for manifest automation
 
 **API Changes:**
+
 ```typescript
 // Before
-Parsers.Image.parseImageValue()           // Wrong location
-Parsers.Background.generateImage()
+Parsers.Image.parseImageValue(); // Wrong location
+Parsers.Background.generateImage();
 
 // After
-Parsers.Image.parse()                     // Top-level composite
-Generators.Image.generate()
-Parsers.Background.Attachment.parse()     // Nested property-specific
-Generators.Background.Attachment.generate()
+Parsers.Image.parse(); // Top-level composite
+Generators.Image.generate();
+Parsers.Background.Attachment.parse(); // Nested property-specific
+Generators.Background.Attachment.generate();
 ```
 
 ### 2. 4-Tier Architecture Documentation
 
 **Tier 1: Universal Types** (Color, Length, Angle)
+
 - Top-level namespace
 - Used by 100+ properties
 - Examples: `Parsers.Color.parse()`
 
 **Tier 2: Composite Types** (Image, Position, Shadow)
+
 - Top-level namespace
 - Used by 2-10 properties
 - Examples: `Parsers.Image.parse()`
 
 **Tier 3: Property-Specific Types** (Attachment, Clip, Repeat)
+
 - Nested namespace
 - Used by 1 property family
 - Examples: `Parsers.Background.Attachment.parse()`
 
 **Tier 4: Property Parsers** (Composition)
+
 - Compose lower tiers
 - Handle property-specific keywords
 - Examples: `background-image/parser.ts`
 
 **Type Classification Rule:**
+
 - 100+ properties → Top-level (Universal)
 - 2-10 properties → Top-level (Composite)
 - 1 property family → Nested (Property-specific)
@@ -81,10 +90,12 @@ Generators.Background.Attachment.generate()
 ### 3. Script Cleanup (Commits 59726c6, 470a181)
 
 **Deleted:**
+
 - `generate-types-map.mts` - Obsolete prototype, missing dependencies
 - `refactor-generators.ts` - Ephemeral migration script (already executed)
 
 **Kept (Production):**
+
 - `generate-property-definitions.ts` - CI workflow
 - `audit-property.ts` - Diagnostic tool
 - `new-property.ts` - Scaffold generator
@@ -96,6 +107,7 @@ Generators.Background.Attachment.generate()
 ## 📊 Current State
 
 ### Working ✅
+
 - Architecture committed and documented
 - Image type successfully moved to top-level
 - Nested namespaces implemented for Background
@@ -104,6 +116,7 @@ Generators.Background.Attachment.generate()
 - Git history clean
 
 ### Not Working ❌
+
 - **TypeScript Errors:** 12 errors in `@b/declarations`
 - **Cause:** Call sites still use old flat naming
 - **Expected:** Breaking changes committed, call sites need updates
@@ -135,28 +148,29 @@ Generators.Background.Attachment.generate()
 **Update 12 files with new namespace pattern:**
 
 **Pattern for Image (top-level composite):**
+
 ```typescript
 // In background-image/parser.ts
-- Parsers.Image.parseImageValue(valueNode)
-+ Parsers.Image.parse(valueNode)
-
-// In background-image/generator.ts
-- Generators.Background.generateImage(layer, path)
-+ Generators.Image.generate(layer)
+-Parsers.Image.parseImageValue(valueNode) +
+  Parsers.Image.parse(valueNode) -
+  // In background-image/generator.ts
+  Generators.Background.generateImage(layer, path) +
+  Generators.Image.generate(layer);
 ```
 
 **Pattern for Property-Specific (nested):**
+
 ```typescript
 // In background-attachment/parser.ts
-- Parsers.Background.parseBackgroundAttachmentValue(valueNode)
-+ Parsers.Background.Attachment.parse(valueNode)
-
-// In background-attachment/generator.ts
-- Generators.Background.generateAttachment(value)
-+ Generators.Background.Attachment.generate(value)
+-Parsers.Background.parseBackgroundAttachmentValue(valueNode) +
+  Parsers.Background.Attachment.parse(valueNode) -
+  // In background-attachment/generator.ts
+  Generators.Background.generateAttachment(value) +
+  Generators.Background.Attachment.generate(value);
 ```
 
 **Files to update:**
+
 - background-image: parser.ts, generator.ts
 - background-attachment: parser.ts, generator.ts
 - background-clip: parser.ts, generator.ts
@@ -205,6 +219,7 @@ just build  # Production build succeeds
 **Decision:** Move to top-level as composite type.
 
 **Rationale:**
+
 - Used by: background-image, border-image, list-style-image, mask-image
 - CSS spec defines `<image>` as reusable value type
 - Top-level placement enables discovery and reuse
@@ -219,6 +234,7 @@ just build  # Production build succeeds
 **Decision:** Keep only property-specific types in Background namespace, export as nested.
 
 **Rationale:**
+
 - Clear separation: top-level = reusable, nested = property-specific
 - Namespace hierarchy mirrors CSS spec structure
 - Prevents name collisions (each module has own `parse()`/`generate()`)
@@ -233,6 +249,7 @@ just build  # Production build succeeds
 **Decision:** All modules export `parse()` and `generate()`.
 
 **Rationale:**
+
 - Pattern recognition for automation
 - Reduces cognitive load (same name everywhere)
 - Namespace provides context (Background.Attachment.parse)
@@ -247,6 +264,7 @@ just build  # Production build succeeds
 **Decision:** Delete one-time migration scripts after execution.
 
 **Rationale:**
+
 - Script is ephemeral (never runs again)
 - Git history preserves the code
 - Commit message documents what it did
@@ -288,11 +306,13 @@ just build  # Production build succeeds
 ## 📚 Documentation Created
 
 **In /tmp/ (session artifacts):**
+
 - `b_naming_audit.md` - Naming pattern analysis
 - `b_value_taxonomy.md` - CSS value type taxonomy education
 - `b_taxonomy_migration_complete.md` - Migration summary
 
 **Permanent Documentation Needed:**
+
 - Move taxonomy patterns to `docs/architecture/`
 - Document type classification rules
 - Add examples for future properties

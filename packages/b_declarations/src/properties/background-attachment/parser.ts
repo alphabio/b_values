@@ -9,7 +9,7 @@ export const parseBackgroundAttachment = createMultiValueParser<AttachmentValue,
   propertyName: "background-attachment",
 
   itemParser(valueNode: csstree.Value): ParseResult<AttachmentValue> {
-    return Parsers.Background.parseBackgroundAttachmentValue(valueNode);
+    return Parsers.Background.Attachment.parse(valueNode);
   },
 
   aggregator(layers: AttachmentValue[]): BackgroundAttachmentIR {

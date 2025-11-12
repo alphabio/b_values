@@ -22,7 +22,7 @@ export function generateBackgroundImage(ir: BackgroundImageIR): GenerateResult {
 
   for (let i = 0; i < ir.values.length; i++) {
     const layer = ir.values[i];
-    const layerResult = generateValue(layer, (l) => Generators.Background.generateImage(l, ["list", i]));
+    const layerResult = generateValue(layer, (l) => Generators.Image.generate(l));
     if (!layerResult.ok) {
       return layerResult;
     }

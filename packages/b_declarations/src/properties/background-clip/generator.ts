@@ -15,7 +15,7 @@ export function generateBackgroundClip(ir: BackgroundClipIR): GenerateResult {
 
   const layerStrings: string[] = [];
   for (const layer of ir.values) {
-    const result = generateValue(layer, Generators.Background.generateClip);
+    const result = generateValue(layer, Generators.Background.Clip.generate);
     if (!result.ok) return result;
     layerStrings.push(result.value);
   }

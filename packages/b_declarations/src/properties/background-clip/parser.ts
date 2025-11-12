@@ -10,7 +10,7 @@ export const parseBackgroundClip = createMultiValueParser<BackgroundClip, Backgr
   propertyName: "background-clip",
 
   itemParser(valueNode: csstree.Value): ParseResult<BackgroundClip> {
-    return Parsers.Background.parseBackgroundClipValue(valueNode);
+    return Parsers.Background.Clip.parse(valueNode);
   },
 
   aggregator(layers: BackgroundClip[]): BackgroundClipIR {
