@@ -1,0 +1,83 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Property Manifest Schema",
+  "description": "Declarative specification for CSS property scaffolding",
+  "type": "object",
+  "properties": {
+    "properties": {
+      "type": "object",
+      "patternProperties": {
+        "^[a-z-]+$": {
+          "$ref": "#/definitions/PropertySpec"
+        }
+      }
+    }
+  },
+  "required": ["properties"],
+  "definitions": {
+    "PropertySpec": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "CSS property name (e.g., 'background-color')"
+        },
+        "syntax": {
+          "type": "string",
+          "description": "CSS syntax from spec (e.g., '<color>', '<length-percentage>#')"
+        },
+        "inherited": {
+          "type": "boolean",
+          "description": "Whether property inherits from parent"
+        },
+        "initial": {
+          "type": "string",
+          "description": "Initial value (e.g., 'transparent', 'none', 'auto')"
+        },
+        "mode": {
+          "type": "string",
+          "enum": ["single", "multi", "raw"],
+          "description": "Parser mode: single value, comma-separated, or raw string"
+        },
+        "requirements": {
+          "$ref": "#/definitions/Requirements"
+        }
+      },
+      "required": ["name", "syntax", "inherited", "initial", "mode", "requirements"]
+    },
+    "Requirements": {
+      "type": "object",
+      "properties": {
+        "keywords": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Property-specific keywords (e.g., ['auto', 'none'])"
+        },
+        "types": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Required types from @b/types (e.g., ['color', 'length-percentage'])"
+        },
+        "parser": {
+          "type": "string",
+          "description": "Parser to use from @b/parsers (e.g., 'Color.parseNode')"
+        },
+        "generator": {
+          "type": "string",
+          "description": "Generator to use from @b/generators (e.g., 'Color.generate')"
+        },
+        "cssValues": {
+          "type": "string",
+          "enum": ["auto", "none", "explicit"],
+          "default": "auto",
+          "description": "CSS universal functions support: auto (include), none (exclude), explicit (manual)"
+        }
+      },
+      "required": ["types", "parser", "generator"]
+    }
+  }
+}

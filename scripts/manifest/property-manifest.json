@@ -1,0 +1,116 @@
+{
+  "$schema": "./schema.json",
+  "properties": {
+    "background-attachment": {
+      "name": "background-attachment",
+      "syntax": "<attachment>#",
+      "inherited": false,
+      "initial": "scroll",
+      "mode": "multi",
+      "requirements": {
+        "keywords": ["scroll", "fixed", "local"],
+        "types": ["background-attachment"],
+        "parser": "Background.parseBackgroundAttachmentValue",
+        "generator": "Background.generateBackgroundAttachment",
+        "cssValues": "auto"
+      }
+    },
+    "background-clip": {
+      "name": "background-clip",
+      "syntax": "<box>#",
+      "inherited": false,
+      "initial": "border-box",
+      "mode": "multi",
+      "requirements": {
+        "keywords": ["border-box", "padding-box", "content-box"],
+        "types": ["background-clip"],
+        "parser": "Background.parseBackgroundClipValue",
+        "generator": "Background.generateBackgroundClip",
+        "cssValues": "auto"
+      }
+    },
+    "background-color": {
+      "name": "background-color",
+      "syntax": "<color>",
+      "inherited": false,
+      "initial": "transparent",
+      "mode": "single",
+      "requirements": {
+        "types": ["color"],
+        "parser": "Color.parseNode",
+        "generator": "Color.generate",
+        "cssValues": "auto"
+      }
+    },
+    "background-image": {
+      "name": "background-image",
+      "syntax": "<bg-image>#",
+      "inherited": false,
+      "initial": "none",
+      "mode": "multi",
+      "requirements": {
+        "keywords": ["none"],
+        "types": ["image"],
+        "parser": "Background.parseImageValue",
+        "generator": "Background.generateImage",
+        "cssValues": "auto"
+      }
+    },
+    "background-origin": {
+      "name": "background-origin",
+      "syntax": "<box>#",
+      "inherited": false,
+      "initial": "padding-box",
+      "mode": "multi",
+      "requirements": {
+        "keywords": ["border-box", "padding-box", "content-box"],
+        "types": ["background-origin"],
+        "parser": "Background.parseBackgroundOriginValue",
+        "generator": "Background.generateBackgroundOrigin",
+        "cssValues": "auto"
+      }
+    },
+    "background-position": {
+      "name": "background-position",
+      "syntax": "<bg-position>#",
+      "inherited": false,
+      "initial": "0% 0%",
+      "mode": "multi",
+      "requirements": {
+        "keywords": ["top", "right", "bottom", "left", "center"],
+        "types": ["position"],
+        "parser": "Position.parsePosition2D",
+        "generator": "Position.generatePosition2D",
+        "cssValues": "auto"
+      }
+    },
+    "background-repeat": {
+      "name": "background-repeat",
+      "syntax": "<repeat-style>#",
+      "inherited": false,
+      "initial": "repeat",
+      "mode": "multi",
+      "requirements": {
+        "keywords": ["repeat", "repeat-x", "repeat-y", "no-repeat", "space", "round"],
+        "types": ["repeat-style"],
+        "parser": "Background.parseBackgroundRepeatValue",
+        "generator": "Background.generateBackgroundRepeat",
+        "cssValues": "auto"
+      }
+    },
+    "background-size": {
+      "name": "background-size",
+      "syntax": "<bg-size>#",
+      "inherited": false,
+      "initial": "auto",
+      "mode": "multi",
+      "requirements": {
+        "keywords": ["auto", "cover", "contain"],
+        "types": ["bg-size"],
+        "parser": "Background.parseBackgroundSizeValue",
+        "generator": "Background.generateBackgroundSize",
+        "cssValues": "auto"
+      }
+    }
+  }
+}
