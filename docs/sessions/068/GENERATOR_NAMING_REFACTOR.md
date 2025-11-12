@@ -222,13 +222,32 @@ If we DON'T refactor, manifest system must:
 
 **REFACTOR NOW. Break the inconsistency.**
 
+**WE NEVER WORKAROUND INCONSISTENCIES.**
+
 **Why:**
-- Aligns with value system
+- Aligns with core value system
 - Unblocks Phase 2 (scaffold generator)
 - Small blast radius (15 files)
 - 30 minutes investment
 - Prevents 40+ properties from perpetuating inconsistency
+- **No workarounds. No Band-Aids. No "temporary" solutions.**
 
 **The value system says: "we have no fear"**
 
 **Let's break it to fix it. 🔥**
+
+---
+
+## ❌ NO Alternative
+
+~~Option: Document as tech debt and work around it~~
+
+**REJECTED.** We do not compromise consistency for convenience.
+
+Workarounds are:
+- ❌ Technical debt in disguise
+- ❌ Complexity multipliers
+- ❌ Future maintenance nightmares
+- ❌ Violations of core values
+
+**If it's inconsistent, we stop and fix. Period.**
