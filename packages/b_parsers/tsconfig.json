@@ -3,6 +3,9 @@
   "extends": "@b/typescript-config/base.node.json",
   "include": [
     "vite.config.ts",
-    "src"
-, "../b_utils/src/parse/test-helpers.ts", "../b_utils/src/parse/helpers.test.ts", "../b_utils/src/parse/helpers.ts"  ]
+    "src",
+    "../b_utils/src/parse/test-helpers.ts",
+    "../b_utils/src/parse/helpers.test.ts",
+    "../b_utils/src/parse/helpers.ts"
+  ]
 }

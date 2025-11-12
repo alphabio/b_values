@@ -1,8 +1,5 @@
 {
   "$schema": "https://json.schemastore.org/tsconfig",
   "extends": "@b/typescript-config/base.node.json",
-  "include": [
-    "vite.config.ts",
-    "src"
-, "../b_utils/src/generate/validation.ts", "../b_keywords/src/utils"  ]
+  "include": ["vite.config.ts", "src", "../b_utils/src/generate/validation.ts", "../b_keywords/src/utils"]
 }

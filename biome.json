@@ -7,28 +7,28 @@
     "defaultBranch": "main"
   },
   "files": {
-    "ignore": ["scripts/**/*.ts"],
     "includes": [
-      "**/*.js",
-      "**/*.jsx",
-      "**/*.ts",
-      "**/*.tsx",
-      "**/*.scss",
-      "**/*.css",
-      "**/*.json",
-      "**/*.html",
-      "!**/node_modules",
-      "!biome.json",
+      "**",
       "!**/_generated",
-      "!**/TMP",
+      "!**/*.gen.*",
+      "!**/build",
       "!**/dist",
       "!**/docs",
+      "!**/gql/*.ts",
+      "!**/node_modules",
       "!**/out",
-      "!**/build",
       "!**/public",
+      "!**/TMP",
       "!**/tsconfig.*",
-      "!**/*.gen.*",
-      "!**/gql/*.ts"
+      "!biome.json",
+      "**/*.css",
+      "**/*.html",
+      "**/*.js",
+      "**/*.json",
+      "**/*.jsx",
+      "**/*.scss",
+      "**/*.ts",
+      "**/*.tsx"
     ]
   },
   "css": {

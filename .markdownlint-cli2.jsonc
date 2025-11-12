@@ -12,14 +12,6 @@
     "MD026": false,
     "MD034": false
   },
-  "globs": [
-    "**/*.md"
-  ],
-  "ignores": [
-    "**/node_modules/**",
-    "**/dist/**",
-    "**/build/**",
-    "**/.turbo/**",
-    "**/.changeset/**"
-  ]
+  "globs": ["**/*.md"],
+  "ignores": ["**/node_modules/**", "**/dist/**", "**/build/**", "**/.turbo/**", "**/.changeset/**"]
 }
