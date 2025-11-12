@@ -27,6 +27,14 @@ import { isUniversalFunction } from "./type-guards";
  */
 export interface MultiValueParserConfig<TItem, TFinal> {
   /**
+   * Optional: Property name for better error messages.
+   * If not provided, defaults to "multi-value".
+   *
+   * @example "background-image", "background-size"
+   */
+  propertyName?: string;
+
+  /**
    * A parser for a single item in the list. It receives a validated AST for one chunk.
    */
   itemParser: (node: csstree.Value) => ParseResult<TItem>;
@@ -76,6 +84,9 @@ export interface MultiValueParserConfig<TItem, TFinal> {
 export function createMultiValueParser<TItem, TFinal>(
   config: MultiValueParserConfig<TItem, TFinal>,
 ): (value: string) => ParseResult<TFinal> {
+  // Extract property name for error messages (default to "multi-value" for backward compatibility)
+  const propertyName = config.propertyName || "multi-value";
+
   // This is the returned parser that conforms to the MultiValueParser signature.
   return (value: string): ParseResult<TFinal> => {
     const trimmedValue = value.trim();
@@ -115,7 +126,7 @@ export function createMultiValueParser<TItem, TFinal>(
             "invalid-syntax",
             `Unexpected content after a valid value, likely a missing comma. Unparsed: "${preview}"`,
           );
-          itemResults.push(parseErr("multi-value", issue));
+          itemResults.push(parseErr(propertyName, issue));
           continue;
         }
       } catch (e) {
@@ -133,7 +144,7 @@ export function createMultiValueParser<TItem, TFinal>(
         }
 
         const issue = createError("invalid-syntax", improvedMessage);
-        itemResults.push(parseErr("multi-value", issue));
+        itemResults.push(parseErr(propertyName, issue));
         continue;
       }
 
@@ -170,7 +181,7 @@ export function createMultiValueParser<TItem, TFinal>(
     if (validItems.length === 0) {
       return {
         ok: false,
-        property: "multi-value",
+        property: propertyName,
         value: undefined,
         issues: allIssues.length > 0 ? allIssues : [createError("invalid-value", "No valid list items found")],
       };
@@ -185,7 +196,7 @@ export function createMultiValueParser<TItem, TFinal>(
     if (hasErrors) {
       return {
         ok: false,
-        property: "multi-value",
+        property: propertyName,
         value: finalIR,
         issues: allIssues,
       };
@@ -193,7 +204,7 @@ export function createMultiValueParser<TItem, TFinal>(
 
     return {
       ok: true,
-      property: "multi-value",
+      property: propertyName,
       value: finalIR,
       issues: allIssues,
     };

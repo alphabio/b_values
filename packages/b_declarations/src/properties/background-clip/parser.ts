@@ -7,6 +7,8 @@ import { createMultiValueParser } from "../../utils";
 import type { BackgroundClipIR } from "./types";
 
 export const parseBackgroundClip = createMultiValueParser<BackgroundClip, BackgroundClipIR>({
+  propertyName: "background-clip",
+
   itemParser(valueNode: csstree.Value): ParseResult<BackgroundClip> {
     return Parsers.Background.parseBackgroundClipValue(valueNode);
   },

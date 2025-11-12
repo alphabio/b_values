@@ -7,6 +7,8 @@ import type { BackgroundPositionIR } from "./types";
 import type * as csstree from "@eslint/css-tree";
 
 export const parseBackgroundPosition = createMultiValueParser<Position2D, BackgroundPositionIR>({
+  propertyName: "background-position",
+
   itemParser(valueNode: csstree.Value): ParseResult<Position2D> {
     const nodes = Array.from(valueNode.children);
     const result = Parsers.Position.parsePosition2D(nodes, 0);

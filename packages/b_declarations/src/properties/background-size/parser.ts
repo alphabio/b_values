@@ -7,6 +7,8 @@ import type * as csstree from "@eslint/css-tree";
 import type { BackgroundSizeIR } from "./types";
 
 export const parseBackgroundSize = createMultiValueParser<BgSize, BackgroundSizeIR>({
+  propertyName: "background-size",
+
   itemParser(valueNode: csstree.Value): ParseResult<BgSize> {
     return Parsers.Background.parseBackgroundSizeValue(valueNode);
   },

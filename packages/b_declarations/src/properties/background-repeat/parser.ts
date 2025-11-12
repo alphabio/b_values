@@ -6,6 +6,8 @@ import type { BackgroundRepeatIR, RepeatStyleValue } from "./types";
 import type * as csstree from "@eslint/css-tree";
 
 export const parseBackgroundRepeat = createMultiValueParser<RepeatStyleValue, BackgroundRepeatIR>({
+  propertyName: "background-repeat",
+
   itemParser(valueNode: csstree.Value): ParseResult<RepeatStyle | CssValue> {
     return Parsers.Background.parseBackgroundRepeatValue(valueNode);
   },

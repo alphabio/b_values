@@ -7,6 +7,8 @@ import type * as csstree from "@eslint/css-tree";
 import type * as Keywords from "@b/keywords";
 
 export const parseBackgroundOrigin = createMultiValueParser<Keywords.BackgroundOrigin, BackgroundOriginIR>({
+  propertyName: "background-origin",
+
   itemParser(valueNode: csstree.Value): ParseResult<Keywords.BackgroundOrigin> {
     return Parsers.Background.parseBackgroundOriginValue(valueNode);
   },

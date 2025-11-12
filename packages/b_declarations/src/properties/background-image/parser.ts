@@ -8,6 +8,8 @@ import type { Image } from "@b/types";
 import type * as csstree from "@eslint/css-tree";
 
 export const parseBackgroundImage = createMultiValueParser<Image, BackgroundImageIR>({
+  propertyName: "background-image",
+
   preParse: (value: string): ParseResult<BackgroundImageIR> | null => {
     if (value.trim().toLowerCase() === "none") {
       return parseOk({ kind: "keyword", value: "none" });

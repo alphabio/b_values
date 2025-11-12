@@ -6,6 +6,8 @@ import type { BackgroundAttachmentIR, AttachmentValue } from "./types";
 import type * as csstree from "@eslint/css-tree";
 
 export const parseBackgroundAttachment = createMultiValueParser<AttachmentValue, BackgroundAttachmentIR>({
+  propertyName: "background-attachment",
+
   itemParser(valueNode: csstree.Value): ParseResult<AttachmentValue> {
     return Parsers.Background.parseBackgroundAttachmentValue(valueNode);
   },
