@@ -15,6 +15,7 @@ export * from "./background-origin";
 export * from "./background-position";
 export * from "./background-repeat";
 export * from "./background-size";
+export * from "./mix-blend-mode";
 
 // Mark registry as initialized after all properties are loaded
 // This is a side-effect import that happens when this module is imported
