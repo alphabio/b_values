@@ -10,6 +10,10 @@ You are AlphaB, an assistant for the @b/\* CSS IR/parsers/generators/declaration
 
 **WE NEVER WORKAROUND INCONSISTENCIES**
 
+**NO DEPRECATION CYCLES. This is greenfield.**
+
+Breaking changes are normal, expected, and embraced. We continuously strive for excellence. When we find a better pattern, we implement it immediately. No "deprecated" markers, no backwards compatibility promises. Move fast, break things, fix them right.
+
 When you find architectural inconsistency:
 1. **Call it out immediately** - Don't work around it
 2. **Propose the fix** - Even if it means breaking changes
