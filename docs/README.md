@@ -129,12 +129,14 @@ b_values/
 ├── apps/basic/                    ← Playground app
 ├── packages/
 │   ├── b_keywords/               ← CSS keyword enums
-│   ├── b_types/                  ← Zod schemas
+│   ├── b_types/                  ← Zod schemas + IR types
 │   ├── b_units/                  ← Unit definitions
+│   ├── b_utils/                  ← Shared utilities
 │   ├── b_parsers/                ← CSS → IR
 │   ├── b_generators/             ← IR → CSS
-│   ├── b_properties/             ← Property schemas
-│   └── b_values/                 ← Umbrella package
+│   ├── b_declarations/           ← Property definitions
+│   ├── b_values/                 ← Umbrella package
+│   └── b_typescript-config/      ← TypeScript configs
 ├── docs/                          ← This directory
 ├── scripts/                       ← Build utilities
 ├── turbo.json                     ← Turborepo config
@@ -223,12 +225,12 @@ See `CODE_QUALITY.md` for full standards. Key points:
 
 **b_values:** Production-ready CSS value parsing/generation library.
 
-- 7-package structure (keywords → types → parsers/generators → properties → values)
+- Multi-package monorepo (keywords → types → utils → parsers → generators → declarations → values)
 - Pure data transformation (CSS ↔ IR)
 - Type-safe with Zod schemas
 - Tree-shakeable
 
-**See `docs/sessions/001/` for architecture analysis.**
+**Check `docs/SESSION_HANDOVER.md` for current state and recent architecture decisions.**
 
 ---
 

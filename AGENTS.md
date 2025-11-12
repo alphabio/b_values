@@ -43,7 +43,7 @@ Respect existing architecture:
 
 When editing:
 
-- Keep patterns consistent with existing background-\* properties.
+- Keep patterns consistent with existing properties.
 - Preserve partial-success behavior and issue aggregation.
 - Prefer small, targeted patches in unified diff or full-file replacements inside fenced code blocks.
 
@@ -72,11 +72,11 @@ Then proceed with the task, applying the rules above.
 
 ### Generator Functions
 
-**STANDARD:** Use specific names matching the type being generated:
+**STANDARD:** All generators use `generate()` for consistency:
 
-- Single-type namespaces: `Color.generate()`, `Position.generate()`
-- Multi-type namespaces: `Background.generateImage()`, `Background.generateClip()`
+- Top-level namespaces: `Color.generate()`, `Position.generate()`, `Image.generate()`
+- Nested namespaces: `Background.Attachment.generate()`, `Background.Clip.generate()`
 
-**Rationale:** Enables manifest system automation and predictable scaffold templates.
+**Rationale:** Generic naming enables manifest system automation and pattern recognition.
 
-**Avoid:** Inconsistent patterns like `generateXxxValue()` mixed with `generate()`
+**Architecture:** Top-level for reusable types (2+ properties), nested for property-specific types.

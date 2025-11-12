@@ -274,19 +274,10 @@ build:    Build system or tooling changes
 ci:       CI/CD pipeline changes
 chore:    Maintenance (deps, config, etc)
 
-# Scopes (monorepo - apps and packages)
-Apps:
-  basic              - The basic app
+# Scopes (monorepo - discover with `ls packages/` and `ls apps/`)
+# Use package/app name without @b/ prefix
 
-Packages:
-  b_components       - Shared React components
-  b_server           - Server-side utilities
-  b_store            - State management (Zustand)
-  ui                 - UI component library (Radix UI)
-  tailwind-config    - Shared Tailwind CSS config
-  typescript-config  - Shared TypeScript configs
-
-Common:
+Common scopes:
   docs               - Documentation changes
   deps               - Dependency updates
   build              - Build system changes
@@ -294,6 +285,11 @@ Common:
   test               - Test changes
   repo               - Repository-wide changes
   dx                 - Developer experience
+
+# Discover current packages/apps:
+#   ls packages/       -> b_keywords, b_types, b_parsers, etc.
+#   ls apps/           -> basic, etc.
+# Use as scope without @b/ prefix: (b_keywords), (basic)
 
 # Examples
 feat(basic): add login with email
