@@ -93,13 +93,13 @@ async function checkKeyword(keyword: string): Promise<boolean> {
 }
 
 async function checkType(typeName: string): Promise<boolean> {
-  // Direct file check
+  // 1. Check @b/types direct file
   const typeFile = path.join(TYPES_DIR, `${typeName}.ts`);
   if (await fileExists(typeFile)) {
     return true;
   }
 
-  // Check in subdirectories
+  // 2. Check @b/types subdirectories
   const dirs = await fs.readdir(TYPES_DIR, { withFileTypes: true });
   for (const dir of dirs) {
     if (dir.isDirectory()) {
@@ -108,6 +108,12 @@ async function checkType(typeName: string): Promise<boolean> {
         return true;
       }
     }
+  }
+
+  // 3. Check @b/keywords for keyword-only types
+  const keywordFile = path.join(KEYWORDS_DIR, `${typeName}.ts`);
+  if (await fileExists(keywordFile)) {
+    return true;
   }
 
   return false;
@@ -120,7 +126,13 @@ async function checkParser(parserPath: string): Promise<boolean> {
 
   // Check if category directory exists
   const categoryDir = path.join(PARSERS_DIR, categoryLower);
-  return await fileExists(categoryDir);
+  if (await fileExists(categoryDir)) {
+    return true;
+  }
+
+  // Check for root-level parser file (e.g., position.ts)
+  const rootFile = path.join(PARSERS_DIR, `${categoryLower}.ts`);
+  return await fileExists(rootFile);
 }
 
 async function checkGenerator(generatorPath: string): Promise<boolean> {
@@ -130,7 +142,13 @@ async function checkGenerator(generatorPath: string): Promise<boolean> {
 
   // Check if category directory exists
   const categoryDir = path.join(GENERATORS_DIR, categoryLower);
-  return await fileExists(categoryDir);
+  if (await fileExists(categoryDir)) {
+    return true;
+  }
+
+  // Check for root-level generator file (e.g., position.ts)
+  const rootFile = path.join(GENERATORS_DIR, `${categoryLower}.ts`);
+  return await fileExists(rootFile);
 }
 
 async function auditProperty(propertyName: string, spec: PropertySpec): Promise<AuditResult> {

@@ -8,7 +8,7 @@
       "initial": "scroll",
       "mode": "multi",
       "requirements": {
-        "keywords": ["scroll", "fixed", "local"],
+        "keywords": [],
         "types": ["background-attachment"],
         "parser": "Background.parseBackgroundAttachmentValue",
         "generator": "Background.generateBackgroundAttachment",
@@ -22,7 +22,7 @@
       "initial": "border-box",
       "mode": "multi",
       "requirements": {
-        "keywords": ["border-box", "padding-box", "content-box"],
+        "keywords": [],
         "types": ["background-clip"],
         "parser": "Background.parseBackgroundClipValue",
         "generator": "Background.generateBackgroundClip",
@@ -63,7 +63,7 @@
       "initial": "padding-box",
       "mode": "multi",
       "requirements": {
-        "keywords": ["border-box", "padding-box", "content-box"],
+        "keywords": [],
         "types": ["background-origin"],
         "parser": "Background.parseBackgroundOriginValue",
         "generator": "Background.generateBackgroundOrigin",
@@ -77,10 +77,10 @@
       "initial": "0% 0%",
       "mode": "multi",
       "requirements": {
-        "keywords": ["top", "right", "bottom", "left", "center"],
+        "keywords": [],
         "types": ["position"],
         "parser": "Position.parsePosition2D",
-        "generator": "Position.generatePosition2D",
+        "generator": "Position.generate",
         "cssValues": "auto"
       }
     },
@@ -91,7 +91,7 @@
       "initial": "repeat",
       "mode": "multi",
       "requirements": {
-        "keywords": ["repeat", "repeat-x", "repeat-y", "no-repeat", "space", "round"],
+        "keywords": [],
         "types": ["repeat-style"],
         "parser": "Background.parseBackgroundRepeatValue",
         "generator": "Background.generateBackgroundRepeat",
