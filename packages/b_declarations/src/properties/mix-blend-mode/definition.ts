@@ -6,11 +6,11 @@ import { generateMixBlendMode } from "./generator";
 import type { MixBlendModeIR } from "./types";
 
 export const mixBlendMode = defineProperty<MixBlendModeIR>({
-	name: "mix-blend-mode",
-	syntax: "<blend-mode>",
-	parser: parseMixBlendMode,
-	multiValue: false,
-	generator: generateMixBlendMode,
-	inherited: false,
-	initial: "normal",
+  name: "mix-blend-mode",
+  syntax: "<blend-mode>",
+  parser: parseMixBlendMode,
+  multiValue: false,
+  generator: generateMixBlendMode,
+  inherited: false,
+  initial: "normal",
 });

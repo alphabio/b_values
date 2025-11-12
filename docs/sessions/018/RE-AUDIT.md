@@ -9,6 +9,7 @@
 ## ✅ Background Family Complete (9/9)
 
 All background longhand properties fully implemented with parsers, generators, and tests:
+
 - background-attachment
 - background-blend-mode
 - background-clip
@@ -50,21 +51,21 @@ All background longhand properties fully implemented with parsers, generators, a
 
 ### ✅ Already Have
 
-| Type | Location | Status |
-|------|----------|--------|
-| Angle | `@b/types`, `@b/units` | ✅ Complete |
-| Length | `@b/types`, `@b/units` | ✅ Complete |
-| Percentage | `@b/types`, `@b/units` | ✅ Complete |
-| Color | `@b/types` + parsers/generators | ✅ Complete |
-| Multi-value pattern | All background-* properties | ✅ Proven |
+| Type                | Location                        | Status      |
+| ------------------- | ------------------------------- | ----------- |
+| Angle               | `@b/types`, `@b/units`          | ✅ Complete |
+| Length              | `@b/types`, `@b/units`          | ✅ Complete |
+| Percentage          | `@b/types`, `@b/units`          | ✅ Complete |
+| Color               | `@b/types` + parsers/generators | ✅ Complete |
+| Multi-value pattern | All background-\* properties    | ✅ Proven   |
 
 ### ❌ Missing for Transition
 
-| Type | Needed For | Complexity | Notes |
-|------|-----------|------------|-------|
-| **Time** | duration, delay | LOW | Similar to Length/Angle |
-| **Easing Functions** | timing-function | MEDIUM | Keyword + function parsing |
-| **Property Names** | transition-property | LOW | String validation |
+| Type                 | Needed For          | Complexity | Notes                      |
+| -------------------- | ------------------- | ---------- | -------------------------- |
+| **Time**             | duration, delay     | LOW        | Similar to Length/Angle    |
+| **Easing Functions** | timing-function     | MEDIUM     | Keyword + function parsing |
+| **Property Names**   | transition-property | LOW        | String validation          |
 
 ---
 
@@ -73,6 +74,7 @@ All background longhand properties fully implemented with parsers, generators, a
 ### 1. Time Type (HIGH PRIORITY)
 
 **Type Definition:**
+
 ```typescript
 // packages/b_types/src/time.ts
 export interface Time {
@@ -83,6 +85,7 @@ export interface Time {
 ```
 
 **Unit Definition:**
+
 ```typescript
 // packages/b_units/src/time.ts
 export const timeUnits = ["s", "ms"] as const;
@@ -93,15 +96,17 @@ export function isTimeUnit(u: string): u is TimeUnit {
 ```
 
 **Parser:**
+
 ```typescript
 // packages/b_parsers/src/time.ts
-export function parseTimeNode(node: csstree.CssNode): ParseResult<Time>
+export function parseTimeNode(node: csstree.CssNode): ParseResult<Time>;
 ```
 
 **Generator:**
+
 ```typescript
 // packages/b_generators/src/time.ts
-export function generate(time: Time): GenerateResult
+export function generate(time: Time): GenerateResult;
 ```
 
 **Similar to:** Angle, Length (proven pattern)
@@ -111,42 +116,44 @@ export function generate(time: Time): GenerateResult
 ### 2. Easing Function Type (MEDIUM PRIORITY)
 
 **Type Definition:**
+
 ```typescript
 // packages/b_types/src/easing-function.ts
-export type EasingFunction = 
+export type EasingFunction =
   | { kind: "keyword"; value: EasingKeyword }
   | { kind: "cubic-bezier"; x1: number; y1: number; x2: number; y2: number }
   | { kind: "steps"; steps: number; position?: "start" | "end" };
 
-export type EasingKeyword = 
-  | "linear" 
-  | "ease" 
-  | "ease-in" 
-  | "ease-out" 
-  | "ease-in-out" 
-  | "step-start" 
-  | "step-end";
+export type EasingKeyword = "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "step-start" | "step-end";
 ```
 
 **Keywords:**
+
 ```typescript
 // packages/b_keywords/src/easing.ts
 export const easingKeywords = [
-  "linear", "ease", "ease-in", "ease-out", "ease-in-out",
-  "step-start", "step-end"
+  "linear",
+  "ease",
+  "ease-in",
+  "ease-out",
+  "ease-in-out",
+  "step-start",
+  "step-end",
 ] as const;
 ```
 
 **Parser:**
+
 ```typescript
 // packages/b_parsers/src/easing-function.ts
-export function parseEasingFunction(node: csstree.CssNode): ParseResult<EasingFunction>
+export function parseEasingFunction(node: csstree.CssNode): ParseResult<EasingFunction>;
 ```
 
 **Generator:**
+
 ```typescript
 // packages/b_generators/src/easing-function.ts
-export function generate(easing: EasingFunction): GenerateResult
+export function generate(easing: EasingFunction): GenerateResult;
 ```
 
 **Similar to:** Gradient parsing (function + keywords)
@@ -156,23 +163,24 @@ export function generate(easing: EasingFunction): GenerateResult
 ### 3. Property Name Type (LOW PRIORITY)
 
 **Type Definition:**
+
 ```typescript
 // packages/b_types/src/property-name.ts
-export type PropertyName = 
-  | { kind: "keyword"; value: "none" | "all" }
-  | { kind: "custom"; value: string };
+export type PropertyName = { kind: "keyword"; value: "none" | "all" } | { kind: "custom"; value: string };
 ```
 
 **Parser:**
+
 ```typescript
 // packages/b_parsers/src/property-name.ts
-export function parsePropertyName(node: csstree.CssNode): ParseResult<PropertyName>
+export function parsePropertyName(node: csstree.CssNode): ParseResult<PropertyName>;
 ```
 
 **Generator:**
+
 ```typescript
 // packages/b_generators/src/property-name.ts
-export function generate(name: PropertyName): GenerateResult
+export function generate(name: PropertyName): GenerateResult;
 ```
 
 **Similar to:** Simple keyword/string union (easiest)
@@ -217,6 +225,7 @@ export function generate(name: PropertyName): GenerateResult
 ## 🎯 Recommended Approach
 
 ### Option A: Sequential (Safer)
+
 1. Session 019: Time type + transition-duration + transition-delay
 2. Session 020: Easing function + transition-timing-function
 3. Session 021: Property name + transition-property
@@ -225,6 +234,7 @@ export function generate(name: PropertyName): GenerateResult
 **Cons:** 3 sessions for 4 properties
 
 ### Option B: Batch Foundation (Faster)
+
 1. Session 019: Time + EasingFunction + PropertyName types (no properties yet)
 2. Session 020: All 4 transition properties at once
 
@@ -232,6 +242,7 @@ export function generate(name: PropertyName): GenerateResult
 **Cons:** Larger session scope, foundation without immediate use
 
 ### Option C: Vertical Slice (Recommended)
+
 1. Session 019: Time type + transition-duration + transition-delay (2 properties)
 2. Session 020: Easing + PropertyName + transition-timing-function + transition-property (2 properties)
 
@@ -243,29 +254,33 @@ export function generate(name: PropertyName): GenerateResult
 ## 🚨 Critical Questions Before Starting
 
 ### 1. Are we ready to leave background family?
+
 **Answer:** ✅ YES - All 9 background longhands complete with full test coverage
 
 ### 2. Should we add transition to property-manifest.json?
+
 **Answer:** 📝 YES - Add all 4 transition longhand properties to manifest for consistency
 
 ### 3. Do we need animation properties too?
+
 **Answer:** ⏳ NO - Transition first, animation later (they share Time/Easing dependencies)
 
 ### 4. What about transform properties?
+
 **Answer:** ⏳ LATER - Different complexity class, transition is more foundational
 
 ---
 
 ## 📈 Architecture Confidence
 
-| Area | Status | Evidence |
-|------|--------|----------|
-| ParseResult pattern | ✅ Proven | All 167 tests passing |
-| GenerateResult pattern | ✅ Proven | All background props generate |
-| Multi-value properties | ✅ Proven | background-image, background-size, etc. |
-| Keyword handling | ✅ Proven | blend-modes, attachment, clip, etc. |
-| Function parsing | ✅ Proven | Gradients, colors |
-| Type system consistency | ✅ Proven | Angle, Length, Percentage working |
+| Area                    | Status    | Evidence                                |
+| ----------------------- | --------- | --------------------------------------- |
+| ParseResult pattern     | ✅ Proven | All 167 tests passing                   |
+| GenerateResult pattern  | ✅ Proven | All background props generate           |
+| Multi-value properties  | ✅ Proven | background-image, background-size, etc. |
+| Keyword handling        | ✅ Proven | blend-modes, attachment, clip, etc.     |
+| Function parsing        | ✅ Proven | Gradients, colors                       |
+| Type system consistency | ✅ Proven | Angle, Length, Percentage working       |
 
 **Overall:** ✅ Architecture is solid for transition implementation
 
@@ -276,6 +291,7 @@ export function generate(name: PropertyName): GenerateResult
 **Goal:** Implement Time type + 2 transition properties
 
 **Scope:**
+
 1. Create Time type (similar to Angle/Length pattern)
 2. Implement `transition-duration`
 3. Implement `transition-delay`
@@ -287,6 +303,7 @@ export function generate(name: PropertyName): GenerateResult
 **Risk:** LOW (Time is simpler than Color/Gradient)
 
 **Success Criteria:**
+
 - ✅ Time parsing/generation works (s, ms units)
 - ✅ transition-duration property complete
 - ✅ transition-delay property complete (including negative values)

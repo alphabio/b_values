@@ -1,5 +1,6 @@
 #!/usr/bin/env tsx
 // b_path:: scripts/audit-property.ts
+/** biome-ignore-all lint/suspicious/noConsole: CLI script */
 
 /**
  * Audit a property's dependencies before scaffolding.

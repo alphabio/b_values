@@ -15,8 +15,6 @@
 // Temporary script for Session 071 testing only.
 // Will be replaced with manifest-driven scaffold-property.ts in Session 072.
 
-import fs from "node:fs";
-import path from "node:path";
 import process from "node:process";
 
 console.error("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");

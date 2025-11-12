@@ -35,6 +35,7 @@ import { backgroundOrigin } from "./background-origin/definition";
 import { backgroundPosition } from "./background-position/definition";
 import { backgroundRepeat } from "./background-repeat/definition";
 import { backgroundSize } from "./background-size/definition";
+import { mixBlendMode } from "./mix-blend-mode/definition";
 
 /**
  * Central definitions object.
@@ -58,6 +59,7 @@ export const PROPERTY_DEFINITIONS = {
   "background-position": backgroundPosition,
   "background-repeat": backgroundRepeat,
   "background-size": backgroundSize,
+  "mix-blend-mode": mixBlendMode,
 } as const;
 
 /**

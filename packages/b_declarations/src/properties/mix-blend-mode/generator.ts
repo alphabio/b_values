@@ -6,9 +6,9 @@ import { generateValue } from "../../utils";
 import type { MixBlendModeIR } from "./types";
 
 export function generateMixBlendMode(ir: MixBlendModeIR): GenerateResult {
-	if (ir.kind === "keyword") {
-		return generateOk(ir.value);
-	}
+  if (ir.kind === "keyword") {
+    return generateOk(ir.value);
+  }
 
-	return generateValue(ir.value, Generators.BlendMode.generate);
+  return generateValue(ir.value, Generators.BlendMode.generate);
 }

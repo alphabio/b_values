@@ -808,7 +808,7 @@ export function generateBackgroundAttachment(ir: BackgroundAttachmentIR): Genera
 
   const layerStrings: string[] = [];
   for (const layer of ir.values) {
-    const result = generateValue(layer, Generators.Background.generateBackgroundAttachmentValue);
+    const result = generateValue(layer, Generators.Background.Attachment.generate);
     if (!result.ok) return result;
     layerStrings.push(result.value);
   }
@@ -837,7 +837,7 @@ export const parseBackgroundAttachment = createMultiValueParser<AttachmentValue,
   propertyName: "background-attachment",
 
   itemParser(valueNode: csstree.Value): ParseResult<AttachmentValue> {
-    return Parsers.Background.parseBackgroundAttachmentValue(valueNode);
+    return Parsers.Background.Attachment.parse(valueNode);
   },
 
   aggregator(layers: AttachmentValue[]): BackgroundAttachmentIR {
@@ -888,6 +888,111 @@ export const backgroundAttachmentIRSchema = z.discriminatedUnion("kind", [
 export type BackgroundAttachmentIR = z.infer<typeof backgroundAttachmentIRSchema>;
 
 
+=== File: packages/b_declarations/src/properties/background-blend-mode/definition.ts ===
+// b_path:: packages/b_declarations/src/properties/background-blend-mode/definition.ts
+
+import { defineProperty } from "../../core";
+import { parseBackgroundBlendMode } from "./parser";
+import { generateBackgroundBlendMode } from "./generator";
+import type { BackgroundBlendModeIR } from "./types";
+
+export const backgroundBlendMode = defineProperty<BackgroundBlendModeIR>({
+  name: "background-blend-mode",
+  syntax: "<blend-mode>#",
+  parser: parseBackgroundBlendMode,
+  multiValue: true,
+  generator: generateBackgroundBlendMode,
+  inherited: false,
+  initial: "normal",
+});
+
+
+=== File: packages/b_declarations/src/properties/background-blend-mode/generator.ts ===
+// b_path:: packages/b_declarations/src/properties/background-blend-mode/generator.ts
+
+import { generateOk, type GenerateResult } from "@b/types";
+import * as Generators from "@b/generators";
+import { generateValue } from "../../utils";
+import type { BackgroundBlendModeIR } from "./types";
+
+export function generateBackgroundBlendMode(ir: BackgroundBlendModeIR): GenerateResult {
+  if (ir.kind === "keyword") {
+    return generateOk(ir.value);
+  }
+
+  const layerStrings: string[] = [];
+  for (const value of ir.values) {
+    const result = generateValue(value, Generators.BlendMode.generate);
+    if (!result.ok) return result;
+    layerStrings.push(result.value);
+  }
+
+  return generateOk(layerStrings.join(", "));
+}
+
+
+=== File: packages/b_declarations/src/properties/background-blend-mode/index.ts ===
+// b_path:: packages/b_declarations/src/properties/background-blend-mode/index.ts
+
+export * from "./types";
+export * from "./parser";
+export * from "./generator";
+export * from "./definition";
+
+
+=== File: packages/b_declarations/src/properties/background-blend-mode/parser.ts ===
+// b_path:: packages/b_declarations/src/properties/background-blend-mode/parser.ts
+
+import type { ParseResult } from "@b/types";
+import * as Parsers from "@b/parsers";
+import { createMultiValueParser } from "../../utils";
+import type { BackgroundBlendModeIR, BackgroundBlendModeValue } from "./types";
+import type * as csstree from "@eslint/css-tree";
+
+export const parseBackgroundBlendMode = createMultiValueParser<BackgroundBlendModeValue, BackgroundBlendModeIR>({
+  propertyName: "background-blend-mode",
+
+  itemParser(valueNode: csstree.Value): ParseResult<BackgroundBlendModeValue> {
+    return Parsers.BlendMode.parse(valueNode);
+  },
+
+  aggregator(values: BackgroundBlendModeValue[]): BackgroundBlendModeIR {
+    return { kind: "list", values };
+  },
+});
+
+
+=== File: packages/b_declarations/src/properties/background-blend-mode/types.ts ===
+// b_path:: packages/b_declarations/src/properties/background-blend-mode/types.ts
+
+import { z } from "zod";
+import * as Keywords from "@b/keywords";
+import { cssValueSchema } from "@b/types";
+
+/**
+ * background-blend-mode value with universal CSS function support.
+ */
+const backgroundBlendModeValueSchema = z.union([Keywords.blendMode, cssValueSchema]);
+
+export type BackgroundBlendModeValue = z.infer<typeof backgroundBlendModeValueSchema>;
+
+/**
+ * The final IR for the entire `background-blend-mode` property.
+ */
+export const backgroundBlendModeIRSchema = z.discriminatedUnion("kind", [
+  z.object({
+    kind: z.literal("keyword"),
+    value: Keywords.cssWide,
+  }),
+  z.object({
+    kind: z.literal("list"),
+    values: z.array(backgroundBlendModeValueSchema).min(1),
+  }),
+]);
+
+export type BackgroundBlendModeIR = z.infer<typeof backgroundBlendModeIRSchema>;
+
+
 === File: packages/b_declarations/src/properties/background-clip/definition.ts ===
 // b_path:: packages/b_declarations/src/properties/background-clip/definition.ts
 import { defineProperty } from "../../core";
@@ -929,7 +1034,7 @@ export function generateBackgroundClip(ir: BackgroundClipIR): GenerateResult {
 
   const layerStrings: string[] = [];
   for (const layer of ir.values) {
-    const result = generateValue(layer, Generators.Background.generateBackgroundClipValue);
+    const result = generateValue(layer, Generators.Background.Clip.generate);
     if (!result.ok) return result;
     layerStrings.push(result.value);
   }
@@ -959,7 +1064,7 @@ export const parseBackgroundClip = createMultiValueParser<BackgroundClip, Backgr
   propertyName: "background-clip",
 
   itemParser(valueNode: csstree.Value): ParseResult<BackgroundClip> {
-    return Parsers.Background.parseBackgroundClipValue(valueNode);
+    return Parsers.Background.Clip.parse(valueNode);
   },
 
   aggregator(layers: BackgroundClip[]): BackgroundClipIR {
@@ -1161,7 +1266,7 @@ export function generateBackgroundImage(ir: BackgroundImageIR): GenerateResult {
 
   for (let i = 0; i < ir.values.length; i++) {
     const layer = ir.values[i];
-    const layerResult = generateValue(layer, (l) => Generators.Background.generateImageValue(l, ["list", i]));
+    const layerResult = generateValue(layer, (l) => Generators.Image.generate(l));
     if (!layerResult.ok) {
       return layerResult;
     }
@@ -1206,7 +1311,7 @@ export const parseBackgroundImage = createMultiValueParser<Image, BackgroundImag
   },
 
   itemParser(valueNode: csstree.Value): ParseResult<Image> {
-    return Parsers.Image.parseImageValue(valueNode);
+    return Parsers.Image.parse(valueNode);
   },
 
   aggregator(layers: Image[]): BackgroundImageIR {
@@ -1290,7 +1395,7 @@ export function generateBackgroundOrigin(ir: BackgroundOriginIR): GenerateResult
 
   const layerStrings: string[] = [];
   for (const layer of ir.values) {
-    const result = generateValue(layer, Generators.Background.generateBackgroundOriginValue);
+    const result = generateValue(layer, Generators.Background.Origin.generate);
     if (!result.ok) return result;
     layerStrings.push(result.value);
   }
@@ -1320,7 +1425,7 @@ export const parseBackgroundOrigin = createMultiValueParser<Keywords.BackgroundO
   propertyName: "background-origin",
 
   itemParser(valueNode: csstree.Value): ParseResult<Keywords.BackgroundOrigin> {
-    return Parsers.Background.parseBackgroundOriginValue(valueNode);
+    return Parsers.Background.Origin.parse(valueNode);
   },
 
   aggregator(layers: Keywords.BackgroundOrigin[]): BackgroundOriginIR {
@@ -1521,7 +1626,7 @@ export function generateBackgroundRepeat(ir: BackgroundRepeatIR): GenerateResult
 
   const layerStrings: string[] = [];
   for (const layer of ir.values) {
-    const result = generateValue(layer, Generators.Background.generateBackgroundRepeatValue);
+    const result = generateValue(layer, Generators.Background.Repeat.generate);
     if (!result.ok) return result;
     layerStrings.push(result.value);
   }
@@ -1550,7 +1655,7 @@ export const parseBackgroundRepeat = createMultiValueParser<RepeatStyleValue, Ba
   propertyName: "background-repeat",
 
   itemParser(valueNode: csstree.Value): ParseResult<RepeatStyle | CssValue> {
-    return Parsers.Background.parseBackgroundRepeatValue(valueNode);
+    return Parsers.Background.Repeat.parse(valueNode);
   },
 
   aggregator(layers: RepeatStyleValue[]): BackgroundRepeatIR {
@@ -1643,7 +1748,7 @@ export function generateBackgroundSize(ir: BackgroundSizeIR): GenerateResult {
   const valueStrings: string[] = [];
 
   for (let i = 0; i < ir.values.length; i++) {
-    const result = generateValue(ir.values[i], Generators.Background.generateBackgroundSizeValue);
+    const result = generateValue(ir.values[i], Generators.Background.Size.generate);
     if (!result.ok) return result;
     valueStrings.push(result.value);
   }
@@ -1674,7 +1779,7 @@ export const parseBackgroundSize = createMultiValueParser<BgSize, BackgroundSize
   propertyName: "background-size",
 
   itemParser(valueNode: csstree.Value): ParseResult<BgSize> {
-    return Parsers.Background.parseBackgroundSizeValue(valueNode);
+    return Parsers.Background.Size.parse(valueNode);
   },
 
   aggregator(values: BgSize[]): BackgroundSizeIR {
@@ -1828,6 +1933,7 @@ export type CustomPropertyIR = { kind: "raw"; value: string };
 
 import { customProperty } from "./custom-property/definition";
 import { backgroundAttachment } from "./background-attachment/definition";
+import { backgroundBlendMode } from "./background-blend-mode/definition";
 import { backgroundClip } from "./background-clip/definition";
 import { backgroundColor } from "./background-color/definition";
 import { backgroundImage } from "./background-image/definition";
@@ -1835,6 +1941,7 @@ import { backgroundOrigin } from "./background-origin/definition";
 import { backgroundPosition } from "./background-position/definition";
 import { backgroundRepeat } from "./background-repeat/definition";
 import { backgroundSize } from "./background-size/definition";
+import { mixBlendMode } from "./mix-blend-mode/definition";
 
 /**
  * Central definitions object.
@@ -1850,6 +1957,7 @@ import { backgroundSize } from "./background-size/definition";
 export const PROPERTY_DEFINITIONS = {
   "--*": customProperty,
   "background-attachment": backgroundAttachment,
+  "background-blend-mode": backgroundBlendMode,
   "background-clip": backgroundClip,
   "background-color": backgroundColor,
   "background-image": backgroundImage,
@@ -1857,6 +1965,7 @@ export const PROPERTY_DEFINITIONS = {
   "background-position": backgroundPosition,
   "background-repeat": backgroundRepeat,
   "background-size": backgroundSize,
+  "mix-blend-mode": mixBlendMode,
 } as const;
 
 /**
@@ -1876,6 +1985,7 @@ export * from "./definitions";
 export * from "./custom-property";
 
 export * from "./background-attachment";
+export * from "./background-blend-mode";
 export * from "./background-clip";
 export * from "./background-color";
 export * from "./background-image";
@@ -1883,11 +1993,129 @@ export * from "./background-origin";
 export * from "./background-position";
 export * from "./background-repeat";
 export * from "./background-size";
+export * from "./mix-blend-mode";
 
 // Mark registry as initialized after all properties are loaded
 // This is a side-effect import that happens when this module is imported
 import { propertyRegistry } from "../core/registry";
 propertyRegistry.markInitialized();
+
+
+=== File: packages/b_declarations/src/properties/mix-blend-mode/definition.ts ===
+// b_path:: packages/b_declarations/src/properties/mix-blend-mode/definition.ts
+
+import { defineProperty } from "../../core";
+import { parseMixBlendMode } from "./parser";
+import { generateMixBlendMode } from "./generator";
+import type { MixBlendModeIR } from "./types";
+
+export const mixBlendMode = defineProperty<MixBlendModeIR>({
+  name: "mix-blend-mode",
+  syntax: "<blend-mode>",
+  parser: parseMixBlendMode,
+  multiValue: false,
+  generator: generateMixBlendMode,
+  inherited: false,
+  initial: "normal",
+});
+
+
+=== File: packages/b_declarations/src/properties/mix-blend-mode/generator.ts ===
+// b_path:: packages/b_declarations/src/properties/mix-blend-mode/generator.ts
+
+import { generateOk, type GenerateResult } from "@b/types";
+import * as Generators from "@b/generators";
+import { generateValue } from "../../utils";
+import type { MixBlendModeIR } from "./types";
+
+export function generateMixBlendMode(ir: MixBlendModeIR): GenerateResult {
+  if (ir.kind === "keyword") {
+    return generateOk(ir.value);
+  }
+
+  return generateValue(ir.value, Generators.BlendMode.generate);
+}
+
+
+=== File: packages/b_declarations/src/properties/mix-blend-mode/index.ts ===
+// b_path:: packages/b_declarations/src/properties/mix-blend-mode/index.ts
+
+export * from "./types";
+export * from "./parser";
+export * from "./generator";
+export * from "./definition";
+
+
+=== File: packages/b_declarations/src/properties/mix-blend-mode/parser.ts ===
+// b_path:: packages/b_declarations/src/properties/mix-blend-mode/parser.ts
+
+import type { ParseResult } from "@b/types";
+import * as Parsers from "@b/parsers";
+import type * as csstree from "@eslint/css-tree";
+import type { MixBlendModeIR } from "./types";
+
+export function parseMixBlendMode(ast: csstree.Value): ParseResult<MixBlendModeIR> {
+  const firstNode = ast.children.first;
+
+  if (!firstNode) {
+    return {
+      ok: false,
+      property: "mix-blend-mode",
+      value: undefined,
+      issues: [
+        {
+          code: "missing-value",
+          severity: "error",
+          message: "Empty value for mix-blend-mode",
+        },
+      ],
+    };
+  }
+
+  const result = Parsers.BlendMode.parse(ast);
+
+  if (result.ok) {
+    return {
+      ok: true,
+      property: "mix-blend-mode",
+      value: { kind: "value", value: result.value },
+      issues: result.issues,
+    };
+  }
+
+  return result as ParseResult<MixBlendModeIR>;
+}
+
+
+=== File: packages/b_declarations/src/properties/mix-blend-mode/types.ts ===
+// b_path:: packages/b_declarations/src/properties/mix-blend-mode/types.ts
+
+import { z } from "zod";
+import * as Keywords from "@b/keywords";
+import { cssValueSchema } from "@b/types";
+
+/**
+ * mix-blend-mode value with universal CSS function support.
+ */
+const mixBlendModeValueSchema = z.union([Keywords.blendMode, cssValueSchema]);
+
+export type MixBlendModeValue = z.infer<typeof mixBlendModeValueSchema>;
+
+/**
+ * The final IR for the entire `mix-blend-mode` property.
+ */
+export const mixBlendModeIRSchema = z.discriminatedUnion("kind", [
+  z.object({
+    kind: z.literal("keyword"),
+    value: Keywords.cssWide,
+  }),
+  z.object({
+    kind: z.literal("value"),
+    value: mixBlendModeValueSchema,
+  }),
+]);
+
+export type MixBlendModeIR = z.infer<typeof mixBlendModeIRSchema>;
 
 
 === File: packages/b_declarations/src/test/property-contract.ts ===
@@ -2519,11 +2747,11 @@ import { isCssValue } from "./type-guards";
  * @example
  * ```typescript
  * // Before:
- * const result = Generators.Background.generateBackgroundSizeValue(ir.values[i]);
+ * const result = Generators.Background.generateSize(ir.values[i]);
  * // ❌ Type error: ir.values[i] is BgSize | CssValue
  *
  * // After:
- * const result = generateValue(ir.values[i], Generators.Background.generateBackgroundSizeValue);
+ * const result = generateValue(ir.values[i], Generators.Background.generateSize);
  * // ✅ Type-safe: wrapper handles both cases
  * ```
  */
@@ -2800,7 +3028,7 @@ import type { BackgroundAttachment } from "@b/keywords";
  * @param value - The attachment value
  * @returns GenerateResult with CSS string
  */
-export function generateBackgroundAttachmentValue(value: BackgroundAttachment): GenerateResult {
+export function generate(value: BackgroundAttachment): GenerateResult {
   return generateOk(value);
 }
 
@@ -2819,49 +3047,19 @@ import { cssValueToCss } from "@b/utils";
  * @param value - The CssValue (keyword, var(), calc(), etc.)
  * @returns GenerateResult with CSS string
  */
-export function generateBackgroundClipValue(value: CssValue): GenerateResult {
+export function generate(value: CssValue): GenerateResult {
   return generateOk(cssValueToCss(value));
-}
-
-
-=== File: packages/b_generators/src/background/image.ts ===
-// b_path:: packages/b_generators/src/background/image.ts
-
-import { generateOk, generateErr, createError, type GenerateResult, type Image } from "@b/types";
-import * as Generators from "@b/generators";
-
-/**
- * Generate a single image layer.
- */
-export function generateImageValue(layer: Image, parentPath: (string | number)[]): GenerateResult {
-  switch (layer.kind) {
-    case "none":
-      return generateOk("none");
-
-    case "url":
-      return generateOk(`url(${layer.url})`);
-
-    case "gradient": {
-      return Generators.Gradient.generate(layer.gradient, {
-        parentPath: [...parentPath, "gradient"],
-      });
-    }
-
-    default:
-      return generateErr(createError("invalid-ir", "Unsupported image layer kind"), "background-image");
-  }
 }
 
 
 === File: packages/b_generators/src/background/index.ts ===
 // b_path:: packages/b_generators/src/background/index.ts
 
-export * from "./attachment";
-export * from "./clip";
-export * from "./image";
-export * from "./origin";
-export * from "./repeat";
-export * from "./size";
+export * as Attachment from "./attachment";
+export * as Clip from "./clip";
+export * as Origin from "./origin";
+export * as Repeat from "./repeat";
+export * as Size from "./size";
 
 
 === File: packages/b_generators/src/background/origin.ts ===
@@ -2878,7 +3076,7 @@ import type { BackgroundOrigin } from "@b/keywords";
  * @param value - The box value
  * @returns GenerateResult with CSS string
  */
-export function generateBackgroundOriginValue(value: BackgroundOrigin): GenerateResult {
+export function generate(value: BackgroundOrigin): GenerateResult {
   return generateOk(value);
 }
 
@@ -2903,7 +3101,7 @@ type RepeatStyle =
  * @param style - The repeat style or CssValue
  * @returns GenerateResult with CSS string
  */
-export function generateBackgroundRepeatValue(style: RepeatStyle | CssValue): GenerateResult {
+export function generate(style: RepeatStyle | CssValue): GenerateResult {
   // Handle CssValue types (var(), calc(), etc.)
   if ("kind" in style) {
     if (style.kind === "shorthand") {
@@ -2938,7 +3136,7 @@ import { cssValueToCss } from "@b/utils";
  * @param size - The BgSize IR
  * @returns GenerateResult with CSS string
  */
-export function generateBackgroundSizeValue(size: BgSize): GenerateResult {
+export function generate(size: BgSize): GenerateResult {
   if (size.kind === "keyword") {
     return generateOk(size.value);
   }
@@ -2959,6 +3157,20 @@ export function generateBackgroundSizeValue(size: BgSize): GenerateResult {
 
   // Different values - output both
   return generateOk(`${widthCss} ${heightCss}`);
+}
+
+
+=== File: packages/b_generators/src/blend-mode.ts ===
+// b_path:: packages/b_generators/src/blend-mode.ts
+
+import { generateOk, type GenerateResult } from "@b/types";
+import type { BlendMode } from "@b/keywords";
+
+/**
+ * Generate CSS <blend-mode> value
+ */
+export function generate(value: BlendMode): GenerateResult {
+  return generateOk(value);
 }
 
 
@@ -4121,12 +4333,46 @@ export function generate(ir: Type.RadialGradient, context?: GenerateContext): Ge
 }
 
 
+=== File: packages/b_generators/src/image/image.ts ===
+// b_path:: packages/b_generators/src/image/image.ts
+
+import { generateOk, generateErr, createError, type GenerateResult, type Image } from "@b/types";
+import * as Generators from "@b/generators";
+
+/**
+ * Generate a single image value.
+ */
+export function generate(layer: Image): GenerateResult {
+  switch (layer.kind) {
+    case "none":
+      return generateOk("none");
+
+    case "url":
+      return generateOk(`url(${layer.url})`);
+
+    case "gradient": {
+      return Generators.Gradient.generate(layer.gradient, { parentPath: ["gradient"] });
+    }
+
+    default:
+      return generateErr(createError("invalid-ir", "Unsupported image layer kind"));
+  }
+}
+
+
+=== File: packages/b_generators/src/image/index.ts ===
+// b_path:: packages/b_generators/src/image/index.ts
+export * from "./image";
+
+
 === File: packages/b_generators/src/index.ts ===
 // b_path:: packages/b_generators/src/index.ts
 export * as Angle from "./angle";
 export * as Background from "./background";
+export * as BlendMode from "./blend-mode";
 export * as Color from "./color";
 export * as Gradient from "./gradient";
+export * as Image from "./image";
 export * as Length from "./length";
 export * as Position from "./position";
 
@@ -4284,6 +4530,40 @@ export const BG_SIZE = getLiteralValues(bgSize);
 export type BgSize = z.infer<typeof bgSize>;
 
 
+=== File: packages/b_keywords/src/blend-mode.ts ===
+// b_path:: packages/b_keywords/src/blend-mode.ts
+
+import { getLiteralValues } from "./utils";
+import { z } from "zod";
+
+/**
+ * Blend mode keywords for compositing operations
+ * @see https://drafts.fxtf.org/compositing/#ltblendmodegt
+ */
+export const blendMode = z.union([
+  z.literal("normal"),
+  z.literal("multiply"),
+  z.literal("screen"),
+  z.literal("overlay"),
+  z.literal("darken"),
+  z.literal("lighten"),
+  z.literal("color-dodge"),
+  z.literal("color-burn"),
+  z.literal("hard-light"),
+  z.literal("soft-light"),
+  z.literal("difference"),
+  z.literal("exclusion"),
+  z.literal("hue"),
+  z.literal("saturation"),
+  z.literal("color"),
+  z.literal("luminosity"),
+  z.literal("plus-lighter"), // mix-blend-mode only
+]);
+
+export const BLEND_MODE = getLiteralValues(blendMode);
+export type BlendMode = z.infer<typeof blendMode>;
+
+
 === File: packages/b_keywords/src/color-interpolation.ts ===
 // b_path:: packages/b_keywords/src/color-interpolation.ts
 import { z } from "zod";
@@ -4396,6 +4676,7 @@ export * from "./background-attachment";
 export * from "./background-clip";
 export * from "./background-origin";
 export * from "./bg-size";
+export * from "./blend-mode";
 export * from "./color-interpolation";
 export * from "./color-space";
 export * from "./common";
@@ -4764,7 +5045,7 @@ import * as Ast from "@b/utils";
  * @param valueNode - The Value node containing the attachment value
  * @returns ParseResult with BackgroundAttachment
  */
-export function parseBackgroundAttachmentValue(valueNode: csstree.Value): ParseResult<BackgroundAttachment> {
+export function parse(valueNode: csstree.Value): ParseResult<BackgroundAttachment> {
   const nodes = Ast.nodeListToArray(valueNode.children);
   const node = nodes[0];
 
@@ -4802,7 +5083,7 @@ import * as Ast from "@b/utils";
  * @param valueNode - The Value node containing the box value
  * @returns ParseResult with BackgroundClip string
  */
-export function parseBackgroundClipValue(valueNode: csstree.Value): ParseResult<BackgroundClip> {
+export function parse(valueNode: csstree.Value): ParseResult<BackgroundClip> {
   const nodes = Ast.nodeListToArray(valueNode.children);
   const node = nodes[0];
 
@@ -4825,89 +5106,14 @@ export function parseBackgroundClipValue(valueNode: csstree.Value): ParseResult<
 }
 
 
-=== File: packages/b_parsers/src/background/image.ts ===
-// b_path:: packages/b_parsers/src/background/image.ts
-
-import type * as csstree from "@eslint/css-tree";
-import { createError, parseErr, parseOk, forwardParseErr, type ParseResult, type Image } from "@b/types";
-import * as Ast from "@b/utils";
-import * as Gradient from "../gradient";
-import * as Url from "../url";
-
-export function parseImageValue(valueNode: csstree.Value): ParseResult<Image> {
-  if (!valueNode || !valueNode.children) {
-    return parseErr("background-image", createError("invalid-value", "Invalid AST node: missing children"));
-  }
-
-  const children = Ast.nodeListToArray(valueNode.children);
-
-  if (children.length === 0) {
-    return parseErr("background-image", createError("missing-value", "Empty background layer"));
-  }
-
-  const firstNode = children[0];
-
-  // Handle "none" keyword
-  if (Ast.isIdentifier(firstNode) && firstNode.name.toLowerCase() === "none") {
-    return parseOk({ kind: "none" });
-  }
-
-  // Handle Url node (css-tree parses url() as Url type, not Function)
-  if (firstNode.type === "Url") {
-    return parseOk({
-      kind: "url",
-      url: firstNode.value,
-    });
-  }
-
-  // Handle url() function (for completeness)
-  if (Ast.isFunctionNode(firstNode, "url")) {
-    const urlResult = Url.parseUrlFromNode(firstNode);
-
-    if (urlResult.ok) {
-      return parseOk({
-        kind: "url",
-        url: urlResult.value.value,
-      });
-    }
-    return forwardParseErr<Image>(urlResult);
-  }
-
-  // Handle gradient functions
-  if (Ast.isFunctionNode(firstNode)) {
-    const funcName = (firstNode as csstree.FunctionNode).name.toLowerCase();
-
-    if (funcName.includes("gradient")) {
-      const gradientResult = Gradient.parseFromNode(firstNode);
-
-      if (gradientResult.ok) {
-        return parseOk({
-          kind: "gradient",
-          gradient: gradientResult.value,
-        });
-      }
-      return forwardParseErr<Image>(gradientResult);
-    }
-  }
-
-  return parseErr(
-    "background-image",
-    createError("invalid-value", "Unsupported background-image value", {
-      suggestion: "Use url(), gradient, or 'none'",
-    }),
-  );
-}
-
-
 === File: packages/b_parsers/src/background/index.ts ===
 // b_path:: packages/b_parsers/src/background/index.ts
 
-export * from "./attachment";
-export * from "./clip";
-export * from "./image";
-export * from "./origin";
-export * from "./repeat";
-export * from "./size";
+export * as Attachment from "./attachment";
+export * as Clip from "./clip";
+export * as Origin from "./origin";
+export * as Repeat from "./repeat";
+export * as Size from "./size";
 
 
 === File: packages/b_parsers/src/background/origin.ts ===
@@ -4926,7 +5132,7 @@ import * as Ast from "@b/utils";
  * @param valueNode - The Value node containing the box value
  * @returns ParseResult with BackgroundOrigin
  */
-export function parseBackgroundOriginValue(valueNode: csstree.Value): ParseResult<BackgroundOrigin> {
+export function parse(valueNode: csstree.Value): ParseResult<BackgroundOrigin> {
   const nodes = Ast.nodeListToArray(valueNode.children);
   const node = nodes[0];
 
@@ -4972,7 +5178,7 @@ type RepeatStyle =
  * @param valueNode - The Value node containing the repeat value
  * @returns ParseResult with RepeatStyle or CssValue
  */
-export function parseBackgroundRepeatValue(valueNode: csstree.Value): ParseResult<RepeatStyle | CssValue> {
+export function parse(valueNode: csstree.Value): ParseResult<RepeatStyle | CssValue> {
   const allNodes = Ast.nodeListToArray(valueNode.children);
   const nodes = allNodes.filter((node) => node.type !== "WhiteSpace");
 
@@ -5085,7 +5291,7 @@ import { parseNodeToCssValue } from "../utils/css-value-parser";
  * @param valueNode - The Value node containing the bg-size
  * @returns ParseResult with BgSize
  */
-export function parseBackgroundSizeValue(valueNode: csstree.Value): ParseResult<BgSize> {
+export function parse(valueNode: csstree.Value): ParseResult<BgSize> {
   const children = Ast.nodeListToArray(valueNode.children);
 
   // Handle keywords: auto, cover, contain
@@ -5140,6 +5346,35 @@ export function parseBackgroundSizeValue(valueNode: csstree.Value): ParseResult<
 function parseSizeComponent(node: csstree.CssNode): ParseResult<CssValue> {
   // Use the generic parser (handles keywords like 'auto', length, percentage, var(), calc(), etc.)
   return parseNodeToCssValue(node);
+}
+
+
+=== File: packages/b_parsers/src/blend-mode.ts ===
+// b_path:: packages/b_parsers/src/blend-mode.ts
+
+import type * as csstree from "@eslint/css-tree";
+import { BLEND_MODE, type BlendMode } from "@b/keywords";
+import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
+import * as Ast from "@b/utils";
+
+/**
+ * Parse CSS <blend-mode> value
+ * @see https://drafts.fxtf.org/compositing/#ltblendmodegt
+ */
+export function parse(valueNode: csstree.Value): ParseResult<BlendMode> {
+  const nodes = Ast.nodeListToArray(valueNode.children);
+  const node = nodes[0];
+
+  if (!node || !Ast.isIdentifier(node)) {
+    return parseErr("blend-mode", createError("invalid-syntax", "Expected blend-mode value"));
+  }
+
+  const val = node.name.toLowerCase();
+  if (BLEND_MODE.includes(val as BlendMode)) {
+    return parseOk(val as BlendMode);
+  }
+
+  return parseErr("blend-mode", createError("invalid-value", `Invalid blend-mode: '${val}'`));
 }
 
 
@@ -6811,13 +7046,93 @@ export function parse(css: string): ParseResult<Type.RadialGradient> {
 }
 
 
+=== File: packages/b_parsers/src/image/image.ts ===
+// b_path:: packages/b_parsers/src/image/image.ts
+
+import type * as csstree from "@eslint/css-tree";
+import { createError, parseErr, parseOk, forwardParseErr, type ParseResult, type Image } from "@b/types";
+import * as Ast from "@b/utils";
+import * as Gradient from "../gradient";
+import * as Url from "../url";
+
+export function parse(valueNode: csstree.Value): ParseResult<Image> {
+  if (!valueNode || !valueNode.children) {
+    return parseErr("image", createError("invalid-value", "Invalid AST node: missing children"));
+  }
+
+  const children = Ast.nodeListToArray(valueNode.children);
+
+  if (children.length === 0) {
+    return parseErr("image", createError("missing-value", "Empty image value"));
+  }
+
+  const firstNode = children[0];
+
+  // Handle "none" keyword
+  if (Ast.isIdentifier(firstNode) && firstNode.name.toLowerCase() === "none") {
+    return parseOk({ kind: "none" });
+  }
+
+  // Handle Url node (css-tree parses url() as Url type, not Function)
+  if (firstNode.type === "Url") {
+    return parseOk({
+      kind: "url",
+      url: firstNode.value,
+    });
+  }
+
+  // Handle url() function (for completeness)
+  if (Ast.isFunctionNode(firstNode, "url")) {
+    const urlResult = Url.parseUrlFromNode(firstNode);
+
+    if (urlResult.ok) {
+      return parseOk({
+        kind: "url",
+        url: urlResult.value.value,
+      });
+    }
+    return forwardParseErr<Image>(urlResult);
+  }
+
+  // Handle gradient functions
+  if (Ast.isFunctionNode(firstNode)) {
+    const funcName = (firstNode as csstree.FunctionNode).name.toLowerCase();
+
+    if (funcName.includes("gradient")) {
+      const gradientResult = Gradient.parseFromNode(firstNode);
+
+      if (gradientResult.ok) {
+        return parseOk({
+          kind: "gradient",
+          gradient: gradientResult.value,
+        });
+      }
+      return forwardParseErr<Image>(gradientResult);
+    }
+  }
+
+  return parseErr(
+    "image",
+    createError("invalid-value", "Unsupported image value", {
+      suggestion: "Use url(), gradient, or 'none'",
+    }),
+  );
+}
+
+
+=== File: packages/b_parsers/src/image/index.ts ===
+// b_path:: packages/b_parsers/src/image/index.ts
+export * from "./image";
+
+
 === File: packages/b_parsers/src/index.ts ===
 // b_path:: packages/b_parsers/src/index.ts
 export * as Angle from "./angle";
 export * as Background from "./background";
+export * as BlendMode from "./blend-mode";
 export * as Color from "./color";
 export * as Gradient from "./gradient";
-export * as Image from "./background/image";
+export * as Image from "./image";
 export * as Length from "./length";
 export * as Position from "./position";
 export * as Url from "./url";
