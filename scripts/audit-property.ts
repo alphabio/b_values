@@ -1,5 +1,5 @@
 #!/usr/bin/env tsx
-// b_path:: scripts/manifest/audit-property.ts
+// b_path:: scripts/audit-property.ts
 
 /**
  * Audit a property's dependencies before scaffolding.
@@ -15,7 +15,7 @@
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
 
-const MANIFEST_PATH = path.resolve(process.cwd(), "scripts/manifest/property-manifest.json");
+const MANIFEST_PATH = path.resolve(process.cwd(), "property-manifest.json");
 const KEYWORDS_DIR = path.resolve(process.cwd(), "packages/b_keywords/src");
 const TYPES_DIR = path.resolve(process.cwd(), "packages/b_types/src");
 const PARSERS_DIR = path.resolve(process.cwd(), "packages/b_parsers/src");

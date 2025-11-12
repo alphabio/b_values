@@ -1,5 +1,5 @@
 {
-  "$schema": "./schema.json",
+  "$schema": "./property-manifest.schema.json",
   "properties": {
     "background-attachment": {
       "name": "background-attachment",
