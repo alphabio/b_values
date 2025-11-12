@@ -1,4 +1,4 @@
-// b_path:: packages/b_parsers/src/background/image.ts
+// b_path:: packages/b_parsers/src/image/image.ts
 
 import type * as csstree from "@eslint/css-tree";
 import { createError, parseErr, parseOk, forwardParseErr, type ParseResult, type Image } from "@b/types";
@@ -6,15 +6,15 @@ import * as Ast from "@b/utils";
 import * as Gradient from "../gradient";
 import * as Url from "../url";
 
-export function parseImageValue(valueNode: csstree.Value): ParseResult<Image> {
+export function parse(valueNode: csstree.Value): ParseResult<Image> {
   if (!valueNode || !valueNode.children) {
-    return parseErr("background-image", createError("invalid-value", "Invalid AST node: missing children"));
+    return parseErr("image", createError("invalid-value", "Invalid AST node: missing children"));
   }
 
   const children = Ast.nodeListToArray(valueNode.children);
 
   if (children.length === 0) {
-    return parseErr("background-image", createError("missing-value", "Empty background layer"));
+    return parseErr("image", createError("missing-value", "Empty image value"));
   }
 
   const firstNode = children[0];
@@ -63,8 +63,8 @@ export function parseImageValue(valueNode: csstree.Value): ParseResult<Image> {
   }
 
   return parseErr(
-    "background-image",
-    createError("invalid-value", "Unsupported background-image value", {
+    "image",
+    createError("invalid-value", "Unsupported image value", {
       suggestion: "Use url(), gradient, or 'none'",
     }),
   );

@@ -13,7 +13,7 @@ import * as Ast from "@b/utils";
  * @param valueNode - The Value node containing the attachment value
  * @returns ParseResult with BackgroundAttachment
  */
-export function parseBackgroundAttachmentValue(valueNode: csstree.Value): ParseResult<BackgroundAttachment> {
+export function parse(valueNode: csstree.Value): ParseResult<BackgroundAttachment> {
   const nodes = Ast.nodeListToArray(valueNode.children);
   const node = nodes[0];
 

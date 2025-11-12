@@ -13,7 +13,7 @@ import * as Ast from "@b/utils";
  * @param valueNode - The Value node containing the box value
  * @returns ParseResult with BackgroundOrigin
  */
-export function parseBackgroundOriginValue(valueNode: csstree.Value): ParseResult<BackgroundOrigin> {
+export function parse(valueNode: csstree.Value): ParseResult<BackgroundOrigin> {
   const nodes = Ast.nodeListToArray(valueNode.children);
   const node = nodes[0];
 

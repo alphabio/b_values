@@ -20,7 +20,7 @@ type RepeatStyle =
  * @param valueNode - The Value node containing the repeat value
  * @returns ParseResult with RepeatStyle or CssValue
  */
-export function parseBackgroundRepeatValue(valueNode: csstree.Value): ParseResult<RepeatStyle | CssValue> {
+export function parse(valueNode: csstree.Value): ParseResult<RepeatStyle | CssValue> {
   const allNodes = Ast.nodeListToArray(valueNode.children);
   const nodes = allNodes.filter((node) => node.type !== "WhiteSpace");
 

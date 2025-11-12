@@ -11,6 +11,6 @@ import { cssValueToCss } from "@b/utils";
  * @param value - The CssValue (keyword, var(), calc(), etc.)
  * @returns GenerateResult with CSS string
  */
-export function generateClip(value: CssValue): GenerateResult {
+export function generate(value: CssValue): GenerateResult {
   return generateOk(cssValueToCss(value));
 }

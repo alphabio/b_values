@@ -1,8 +1,7 @@
 // b_path:: packages/b_parsers/src/background/index.ts
 
-export * from "./attachment";
-export * from "./clip";
-export * from "./image";
-export * from "./origin";
-export * from "./repeat";
-export * from "./size";
+export * as Attachment from "./attachment";
+export * as Clip from "./clip";
+export * as Origin from "./origin";
+export * as Repeat from "./repeat";
+export * as Size from "./size";

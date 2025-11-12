@@ -11,6 +11,6 @@ import type { BackgroundOrigin } from "@b/keywords";
  * @param value - The box value
  * @returns GenerateResult with CSS string
  */
-export function generateOrigin(value: BackgroundOrigin): GenerateResult {
+export function generate(value: BackgroundOrigin): GenerateResult {
   return generateOk(value);
 }

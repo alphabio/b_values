@@ -23,7 +23,7 @@ import { parseNodeToCssValue } from "../utils/css-value-parser";
  * @param valueNode - The Value node containing the bg-size
  * @returns ParseResult with BgSize
  */
-export function parseBackgroundSizeValue(valueNode: csstree.Value): ParseResult<BgSize> {
+export function parse(valueNode: csstree.Value): ParseResult<BgSize> {
   const children = Ast.nodeListToArray(valueNode.children);
 
   // Handle keywords: auto, cover, contain

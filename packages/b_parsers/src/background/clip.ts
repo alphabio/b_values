@@ -15,7 +15,7 @@ import * as Ast from "@b/utils";
  * @param valueNode - The Value node containing the box value
  * @returns ParseResult with BackgroundClip string
  */
-export function parseBackgroundClipValue(valueNode: csstree.Value): ParseResult<BackgroundClip> {
+export function parse(valueNode: csstree.Value): ParseResult<BackgroundClip> {
   const nodes = Ast.nodeListToArray(valueNode.children);
   const node = nodes[0];
 
