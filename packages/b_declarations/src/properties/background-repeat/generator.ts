@@ -15,7 +15,7 @@ export function generateBackgroundRepeat(ir: BackgroundRepeatIR): GenerateResult
 
   const layerStrings: string[] = [];
   for (const layer of ir.values) {
-    const result = generateValue(layer, Generators.Background.generateBackgroundRepeatValue);
+    const result = generateValue(layer, Generators.Background.generateRepeat);
     if (!result.ok) return result;
     layerStrings.push(result.value);
   }

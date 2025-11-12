@@ -25,6 +25,7 @@
 ### Pre-flight Checklist
 
 Before starting, verify:
+
 ```bash
 git status                    # Should be clean
 git log --oneline -1         # Should show architecture docs commit
@@ -39,15 +40,18 @@ Property: background-blend-mode
 Syntax: <blend-mode>#
 
 Extracted CSS value types:
+
 - <blend-mode>
 
 Classification:
+
 - Pure keywords? YES (normal, multiply, screen, overlay, darken, lighten, color-dodge, color-burn, hard-light, soft-light, difference, exclusion, hue, saturation, color, luminosity)
 - Used by multiple properties? YES (background-blend-mode, mix-blend-mode)
-→ Category: REUSABLE KEYWORDS
-→ Location: @b/keywords
+  → Category: REUSABLE KEYWORDS
+  → Location: @b/keywords
 
 Dependencies Needed:
+
 - @b/keywords/src/blend-mode.ts (keyword enum + BLEND_MODE array)
 - @b/parsers/src/blend-mode.ts (BlendMode.parse)
 - @b/generators/src/blend-mode.ts (BlendMode.generate)
@@ -121,15 +125,12 @@ import { BLEND_MODE, type BlendMode } from "@b/keywords";
  */
 export function parse(value: string): ParseResult<BlendMode> {
   const normalized = value.toLowerCase();
-  
+
   if (BLEND_MODE.includes(normalized as BlendMode)) {
     return parseOk(normalized as BlendMode);
   }
-  
-  return parseErr(
-    "blend-mode",
-    createError("invalid-value", `Invalid blend mode: ${value}`)
-  );
+
+  return parseErr("blend-mode", createError("invalid-value", `Invalid blend mode: ${value}`));
 }
 
 export const BlendMode = { parse };
@@ -176,6 +177,7 @@ pnpm typecheck
 Follow the exact structure from `PROPERTY_IMPLEMENTATION_PROTOCOL.md` Section 4:
 
 Files to create:
+
 1. `packages/b_declarations/src/properties/background-blend-mode/types.ts`
 2. `packages/b_declarations/src/properties/background-blend-mode/parser.ts`
 3. `packages/b_declarations/src/properties/background-blend-mode/generator.ts`
@@ -271,8 +273,8 @@ Property implementation:
 - Tests: Parser and generator tests covering valid/invalid cases
 
 Syntax: <blend-mode>#
-Values: normal | multiply | screen | overlay | darken | lighten | color-dodge | 
-        color-burn | hard-light | soft-light | difference | exclusion | 
+Values: normal | multiply | screen | overlay | darken | lighten | color-dodge |
+        color-burn | hard-light | soft-light | difference | exclusion |
         hue | saturation | color | luminosity
 
 Ref: Session 068
@@ -287,21 +289,25 @@ Once background-blend-mode is complete and committed:
 ### Immediate Next Property: mix-blend-mode
 
 **Why this is perfect next:**
+
 - Reuses the SAME blend-mode dependencies we just created ✅
 - Tests our "reusable pattern" approach ✅
 - Single-value pattern (simpler than multi-value) ✅
 
 **Pattern difference:**
+
 - background-blend-mode: Multi-value list `{ kind: "list", values: [] }`
 - mix-blend-mode: Single value `{ kind: "value", value: ... }`
 
 **Syntax difference:**
+
 ```
 background-blend-mode: <blend-mode>#              (list)
 mix-blend-mode: <blend-mode> | plus-lighter      (single, with one extra keyword)
 ```
 
 **Implementation:**
+
 - Add "plus-lighter" to blendMode enum in @b/keywords
 - Create mix-blend-mode property (single-value pattern)
 - Tests
@@ -313,14 +319,16 @@ mix-blend-mode: <blend-mode> | plus-lighter      (single, with one extra keyword
 ## 📊 Roadmap After First 2 Properties
 
 With background-blend-mode + mix-blend-mode complete, we'll have proven:
+
 1. ✅ Reusable keyword pattern works
 2. ✅ Multi-value list pattern works
 3. ✅ Single-value pattern works
 4. ✅ Dependency reuse works
 
 **Next batch (Layout properties):**
+
 - width, height (reuse existing length-percentage)
-- margin-*, padding-* (composite longhands, box model pattern)
+- margin-_, padding-_ (composite longhands, box model pattern)
 
 **This validates the entire protocol at scale.**
 

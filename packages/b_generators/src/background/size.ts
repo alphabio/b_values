@@ -11,7 +11,7 @@ import { cssValueToCss } from "@b/utils";
  * @param size - The BgSize IR
  * @returns GenerateResult with CSS string
  */
-export function generateBackgroundSizeValue(size: BgSize): GenerateResult {
+export function generateSize(size: BgSize): GenerateResult {
   if (size.kind === "keyword") {
     return generateOk(size.value);
   }

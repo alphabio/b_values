@@ -8,11 +8,13 @@
 ## 🎯 Architectural Boundaries
 
 ### Level 1: Parse/Generate (Property-Specific)
+
 - **Scope:** Property-specific value types ONLY
 - **Does NOT handle:** CSS-wide keywords (inherit, initial, etc.), !important
 - **Location:** `@b/declarations/src/properties/<name>/`
 
 ### Level 2: Declaration Parser (Universal)
+
 - **Scope:** CSS-wide keywords, !important, property lookup
 - **Location:** `@b/declarations/src/parser.ts`
 - **Handles:** inherit, initial, unset, revert, revert-layer
@@ -26,9 +28,11 @@
 Analyzed all 8 existing background properties:
 
 ### Pattern: Multi-Value Properties (Layer-Based)
+
 - `background-attachment`, `background-clip`, `background-image`, `background-origin`, `background-position`, `background-repeat`, `background-size`
 
 **Consistent Pattern:**
+
 1. ❌ **NO preParse** (except `background-image` for "none" - property-specific keyword)
 2. ✅ **ALL have keyword variant**: `{ kind: "keyword", value: Keywords.cssWide }`
 3. ✅ **ALL use createMultiValueParser**
@@ -39,6 +43,7 @@ Analyzed all 8 existing background properties:
 ## 🚨 STOP - Read This Before Implementing
 
 ### DO NOT:
+
 1. ❌ Add CSS-wide keyword handling in property parsers (`preParse` for inherit/initial/etc.)
 2. ❌ Test CSS-wide keywords in property parser tests
 3. ❌ Export namespace objects from implementation files (index.ts does this)
@@ -47,6 +52,7 @@ Analyzed all 8 existing background properties:
 6. ❌ Test property parsers expecting CSS-wide keywords to work
 
 ### DO:
+
 1. ✅ Define keyword variant as `{ kind: "keyword", value: Keywords.cssWide }`
 2. ✅ Use `parseOk`, `parseErr`, `createError` from `@b/types`
 3. ✅ Use `generateOk` (NOT `createGenerateSuccess`)
@@ -61,7 +67,10 @@ Analyzed all 8 existing background properties:
 
 ```typescript
 export const BLEND_MODES = [
-  "normal", "multiply", "screen", "overlay",
+  "normal",
+  "multiply",
+  "screen",
+  "overlay",
   // ... all 16 modes
 ] as const;
 
@@ -73,6 +82,7 @@ export function isBlendMode(value: string): value is BlendMode {
 ```
 
 **Update index.ts:**
+
 ```typescript
 export * from "./blend-mode";
 ```
@@ -94,6 +104,7 @@ export function isBlendMode(value: unknown): value is BlendMode {
 ```
 
 **Update index.ts:**
+
 ```typescript
 export * from "./blend-mode";
 ```
@@ -103,21 +114,22 @@ export * from "./blend-mode";
 ### Step 3: Parser (@b/parsers/src/<name>.ts)
 
 ```typescript
-import type * as csstree from "@eslint/css-tree";  // ✅ @eslint/css-tree
+import type * as csstree from "@eslint/css-tree"; // ✅ @eslint/css-tree
 import { BlendModeSchema, type BlendMode } from "@b/types";
 import type { ParseResult } from "@b/types";
-import { parseOk, parseErr, createError } from "@b/types";  // ✅ These functions
+import { parseOk, parseErr, createError } from "@b/types"; // ✅ These functions
 
-export function parse(node: csstree.CssNode): ParseResult<BlendMode> {  // ✅ Return proper type
+export function parse(node: csstree.CssNode): ParseResult<BlendMode> {
+  // ✅ Return proper type
   if (node.type !== "Identifier") {
     return parseErr("blend-mode", createError("invalid-syntax", `Expected keyword, got ${node.type}`));
   }
-  
+
   const result = BlendModeSchema.safeParse(node.name);
   if (!result.success) {
     return parseErr("blend-mode", createError("invalid-value", `Invalid: ${node.name}`));
   }
-  
+
   return parseOk(result.data);
 }
 
@@ -125,8 +137,9 @@ export function parse(node: csstree.CssNode): ParseResult<BlendMode> {  // ✅ R
 ```
 
 **Update index.ts:**
+
 ```typescript
-export * as BlendMode from "./blend-mode";  // ✅ Creates namespace
+export * as BlendMode from "./blend-mode"; // ✅ Creates namespace
 ```
 
 ---
@@ -135,17 +148,18 @@ export * as BlendMode from "./blend-mode";  // ✅ Creates namespace
 
 ```typescript
 import type { BlendMode } from "@b/types";
-import { generateOk } from "@b/types";  // ✅ generateOk, not createGenerateSuccess
+import { generateOk } from "@b/types"; // ✅ generateOk, not createGenerateSuccess
 import type { GenerateResult } from "@b/types";
 
 export function generate(value: BlendMode): GenerateResult {
-  return generateOk(value);  // ✅ Returns { ok, value, issues }
+  return generateOk(value); // ✅ Returns { ok, value, issues }
 }
 
 // ✅ NO namespace export
 ```
 
 **Update index.ts:**
+
 ```typescript
 export * as BlendMode from "./blend-mode";
 ```
@@ -164,7 +178,7 @@ const backgroundBlendModeValueSchema = z.union([BlendModeSchema, cssValueSchema]
 export const backgroundBlendModeIR = z.discriminatedUnion("kind", [
   z.object({
     kind: z.literal("keyword"),
-    value: Keywords.cssWide,  // ✅ ALWAYS Keywords.cssWide (not blend modes!)
+    value: Keywords.cssWide, // ✅ ALWAYS Keywords.cssWide (not blend modes!)
   }),
   z.object({
     kind: z.literal("list"),
@@ -190,9 +204,9 @@ import type * as csstree from "@eslint/css-tree";
 
 export const parseBackgroundBlendMode = createMultiValueParser<BlendMode, BackgroundBlendModeIR>({
   propertyName: "background-blend-mode",
-  
+
   // ❌ NO preParse for CSS-wide keywords - parseDeclaration handles this
-  
+
   itemParser(valueNode: csstree.Value): ParseResult<BlendMode> {
     const first = valueNode.children.first;
     if (!first) {
@@ -200,7 +214,7 @@ export const parseBackgroundBlendMode = createMultiValueParser<BlendMode, Backgr
     }
     return Parsers.BlendMode.parse(first);
   },
-  
+
   aggregator(modes: BlendMode[]): BackgroundBlendModeIR {
     return { kind: "list", values: modes };
   },
@@ -214,24 +228,24 @@ export const parseBackgroundBlendMode = createMultiValueParser<BlendMode, Backgr
 ```typescript
 import type { GenerateResult, Issue } from "@b/types";
 import * as Generators from "@b/generators";
-import { generateValue } from "../../utils";  // ✅ Handles CssValue unions
+import { generateValue } from "../../utils"; // ✅ Handles CssValue unions
 import type { BackgroundBlendModeIR } from "./types";
 
 export function generateBackgroundBlendMode(ir: BackgroundBlendModeIR): GenerateResult {
   if (ir.kind === "keyword") {
     return { ok: true, value: ir.value, issues: [] };
   }
-  
+
   const modeStrings: string[] = [];
   const allIssues: Issue[] = [];
-  
+
   for (const mode of ir.values) {
     const result = generateValue(mode, (m) => Generators.BlendMode.generate(m));
     if (!result.ok) return result;
     modeStrings.push(result.value);
     allIssues.push(...result.issues);
   }
-  
+
   return { ok: true, value: modeStrings.join(", "), issues: allIssues };
 }
 ```
@@ -250,7 +264,7 @@ export const backgroundBlendMode = defineProperty<BackgroundBlendModeIR>({
   name: "background-blend-mode",
   syntax: "<blend-mode>#",
   parser: parseBackgroundBlendMode,
-  multiValue: true,  // ✅ REQUIRED for multi-value
+  multiValue: true, // ✅ REQUIRED for multi-value
   generator: generateBackgroundBlendMode,
   inherited: false,
   initial: "normal",
@@ -262,11 +276,13 @@ export const backgroundBlendMode = defineProperty<BackgroundBlendModeIR>({
 ### Step 9: Registration
 
 **properties/index.ts:**
+
 ```typescript
 export * from "./background-blend-mode";
 ```
 
 **properties/definitions.ts:**
+
 ```typescript
 import { backgroundBlendMode } from "./background-blend-mode/definition";
 
@@ -282,17 +298,20 @@ export const PROPERTY_DEFINITIONS = {
 ## 🧪 Testing Guidelines
 
 ### Parser Tests
+
 - ✅ Test property-specific values
 - ❌ DO NOT test CSS-wide keywords (inherit, initial, etc.)
 - ✅ Test invalid values
 - ✅ Test multiple values (for multi-value properties)
 
 ### Definition Tests (Integration)
+
 - ✅ Round-trip tests
 - ❌ DO NOT test CSS-wide keywords HERE either
 - Test at declaration level instead
 
 ### Field Names
+
 - ✅ `ParseResult.value` (NOT `.ir`)
 - ✅ `GenerateResult.value` (NOT `.css`)
 - ✅ PropertyDefinition has `.parser()` and `.generator()` methods
@@ -301,23 +320,24 @@ export const PROPERTY_DEFINITIONS = {
 
 ## ⚠️ Common Errors & Fixes
 
-| Error | Wrong | Correct |
-|-------|-------|---------|
-| Import | `from "css-tree"` | `from "@eslint/css-tree"` |
-| Parser return | `createParseSuccess()` | `parseOk()` |
-| Generator return | `createGenerateSuccess()` | `generateOk()` |
-| Parse result field | `result.ir` | `result.value` |
-| Generate result field | `result.css` | `result.value` |
-| CSS-wide in parser | `preParse: cssWide check` | ❌ Don't add - handled by parseDeclaration |
-| Namespace export | `export const X = { fn }` | Export `fn` directly, index creates namespace |
+| Error                 | Wrong                     | Correct                                       |
+| --------------------- | ------------------------- | --------------------------------------------- |
+| Import                | `from "css-tree"`         | `from "@eslint/css-tree"`                     |
+| Parser return         | `createParseSuccess()`    | `parseOk()`                                   |
+| Generator return      | `createGenerateSuccess()` | `generateOk()`                                |
+| Parse result field    | `result.ir`               | `result.value`                                |
+| Generate result field | `result.css`              | `result.value`                                |
+| CSS-wide in parser    | `preParse: cssWide check` | ❌ Don't add - handled by parseDeclaration    |
+| Namespace export      | `export const X = { fn }` | Export `fn` directly, index creates namespace |
 
 ---
 
 ## 🎯 Validation Checklist
 
 Before committing:
+
 - [ ] `pnpm typecheck` passes
-- [ ] `pnpm test <property-name>` passes  
+- [ ] `pnpm test <property-name>` passes
 - [ ] `just check` (format + lint) passes
 - [ ] NO `preParse` for CSS-wide keywords
 - [ ] Keyword variant uses `Keywords.cssWide`

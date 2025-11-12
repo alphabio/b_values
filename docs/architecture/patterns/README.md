@@ -13,6 +13,7 @@
 **THE definitive 5-phase process for implementing any CSS property.**
 
 **Phases:**
+
 1. CSS Value Pattern Detection
 2. Dependency Audit
 3. Implement Missing Dependencies
@@ -28,6 +29,7 @@
 **How to identify reusable CSS value types vs property-specific patterns.**
 
 **Covers:**
+
 - Decision tree for pattern classification
 - Rules for package location (@b/keywords vs @b/types vs property dir)
 - Pure keyword enums vs complex types vs functions
@@ -47,6 +49,7 @@
 Deep dive into how properties are built based on `background-image` implementation.
 
 **Covers:**
+
 - Real imports and utilities used
 - Package breakdown with actual code
 - Key patterns (multi-value parser, namespace imports, type guards)
@@ -60,6 +63,7 @@ Deep dive into how properties are built based on `background-image` implementati
 Complete explanation of CSS value types and function handling.
 
 **Covers:**
+
 - Value categories (simple, functions, gradients)
 - Function anatomy and AST structure
 - Parsing patterns

@@ -22,11 +22,11 @@ import { isCssValue } from "./type-guards";
  * @example
  * ```typescript
  * // Before:
- * const result = Generators.Background.generateBackgroundSizeValue(ir.values[i]);
+ * const result = Generators.Background.generateSize(ir.values[i]);
  * // ❌ Type error: ir.values[i] is BgSize | CssValue
  *
  * // After:
- * const result = generateValue(ir.values[i], Generators.Background.generateBackgroundSizeValue);
+ * const result = generateValue(ir.values[i], Generators.Background.generateSize);
  * // ✅ Type-safe: wrapper handles both cases
  * ```
  */

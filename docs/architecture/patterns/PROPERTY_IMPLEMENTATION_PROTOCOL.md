@@ -95,11 +95,13 @@ grep -r "export const BlendMode" packages/b_generators/src/
 ## Dependency Audit Results
 
 ✅ READY (exists, no action needed):
+
 - Keywords.cssWide
 - Parsers.CssValue.parse
 - Generators.CssValue.generate
 
 ❌ MISSING (needs implementation):
+
 - Keywords.blendMode
 - BLEND_MODE array
 - Parsers.BlendMode.parse
@@ -160,15 +162,12 @@ import { BLEND_MODE, type BlendMode } from "@b/keywords";
 
 export function parse(value: string): ParseResult<BlendMode> {
   const normalized = value.toLowerCase();
-  
+
   if (BLEND_MODE.includes(normalized as BlendMode)) {
     return parseOk(normalized as BlendMode);
   }
-  
-  return parseErr(
-    "blend-mode",
-    createError("invalid-value", `Invalid blend mode: ${value}`)
-  );
+
+  return parseErr("blend-mode", createError("invalid-value", `Invalid blend mode: ${value}`));
 }
 
 // Export as namespace for consistency
@@ -213,6 +212,7 @@ export * as BlendMode from "./blend-mode";
 **Location:** `@b/types/src/<category>/<type>.ts`
 
 **Example:** See existing implementations like:
+
 - `@b/types/src/length/index.ts`
 - `@b/types/src/color/index.ts`
 - `@b/types/src/image/index.ts`
@@ -256,7 +256,7 @@ cd packages/b_declarations/src/properties/background-blend-mode
 
 #### 4B. Implement types.ts
 
-**Pattern:** Multi-value list property (background-* family)
+**Pattern:** Multi-value list property (background-\* family)
 
 ```typescript
 // packages/b_declarations/src/properties/background-blend-mode/types.ts
@@ -269,7 +269,7 @@ import { cssValueSchema } from "@b/types";
  * Can be a blend mode keyword OR a CssValue (var(), attr(), etc.)
  */
 const backgroundBlendModeValueSchema = z.union([
-  Keywords.blendMode,  // ← Reuse from @b/keywords
+  Keywords.blendMode, // ← Reuse from @b/keywords
   cssValueSchema,
 ]);
 
@@ -284,7 +284,7 @@ export const backgroundBlendModeIRSchema = z.discriminatedUnion("kind", [
     kind: z.literal("keyword"),
     value: Keywords.cssWide,
   }),
-  
+
   // List of blend mode values (comma-separated, one per layer)
   z.object({
     kind: z.literal("list"),
@@ -310,10 +310,7 @@ import type { BackgroundBlendModeIR, BackgroundBlendModeValue } from "./types";
  * Parse background-blend-mode property value.
  * Syntax: <blend-mode>#
  */
-export const parseBackgroundBlendMode = createMultiValueParser<
-  BackgroundBlendModeValue,
-  BackgroundBlendModeIR
->({
+export const parseBackgroundBlendMode = createMultiValueParser<BackgroundBlendModeValue, BackgroundBlendModeIR>({
   propertyName: "background-blend-mode",
 
   itemParser(valueNode: csstree.Value): ParseResult<BackgroundBlendModeValue> {
@@ -322,7 +319,7 @@ export const parseBackgroundBlendMode = createMultiValueParser<
 
     // Try to parse as blend mode keyword
     if (Ast.isIdentifier(node)) {
-      const result = Parsers.BlendMode.parse(node.name);  // ← Reuse parser
+      const result = Parsers.BlendMode.parse(node.name); // ← Reuse parser
       if (result.ok) return result;
     }
 
@@ -354,17 +351,17 @@ export function generateBackgroundBlendMode(ir: BackgroundBlendModeIR): Generate
   }
 
   const layerStrings: string[] = [];
-  
+
   for (const value of ir.values) {
     const result = generateValue(value, (v) => {
       // If string, it's a blend mode keyword
       if (typeof v === "string") {
-        return Generators.BlendMode.generate(v);  // ← Reuse generator
+        return Generators.BlendMode.generate(v); // ← Reuse generator
       }
       // Otherwise it's a CssValue
       return Generators.CssValue.generate(v);
     });
-    
+
     if (!result.ok) return result;
     layerStrings.push(result.value);
   }
@@ -547,14 +544,15 @@ pnpm build
 
 ## 🎯 Decision Matrix: Which Pattern?
 
-| Property Syntax | IR Pattern | Example |
-|----------------|------------|---------|
-| Single keyword or value | `{ kind: "keyword" \| "value" }` | `mix-blend-mode`, `opacity` |
-| List of values (comma-separated) | `{ kind: "keyword" \| "list", values: [] }` | `background-blend-mode`, `background-image` |
-| Special 2D structure | `{ kind: "keyword" \| "value", value: { x, y } }` | `background-position` |
-| Complex union | Custom discriminated union | Property-specific |
+| Property Syntax                  | IR Pattern                                        | Example                                     |
+| -------------------------------- | ------------------------------------------------- | ------------------------------------------- |
+| Single keyword or value          | `{ kind: "keyword" \| "value" }`                  | `mix-blend-mode`, `opacity`                 |
+| List of values (comma-separated) | `{ kind: "keyword" \| "list", values: [] }`       | `background-blend-mode`, `background-image` |
+| Special 2D structure             | `{ kind: "keyword" \| "value", value: { x, y } }` | `background-position`                       |
+| Complex union                    | Custom discriminated union                        | Property-specific                           |
 
 **Reference existing properties:**
+
 - Single value: `background-color`, `opacity`
 - Multi-value list: `background-image`, `background-size`
 - Composite longhand: `background-position`
@@ -577,12 +575,14 @@ packages/b_declarations/src/properties/<property-name>/
 ```
 
 **DO NOT create:**
+
 - ❌ Property-specific keyword files (use @b/keywords)
 - ❌ Property-specific parser utilities (use @b/parsers)
 - ❌ Property-specific generator utilities (use @b/generators)
 - ❌ Duplicate logic from existing properties
 
 **ONLY IF truly property-specific:**
+
 - ✅ Custom IR structures (rare, document why)
 - ✅ Complex parsing logic unique to this property (rare)
 

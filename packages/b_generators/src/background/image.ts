@@ -6,7 +6,7 @@ import * as Generators from "@b/generators";
 /**
  * Generate a single image layer.
  */
-export function generateImageValue(layer: Image, parentPath: (string | number)[]): GenerateResult {
+export function generateImage(layer: Image, parentPath: (string | number)[]): GenerateResult {
   switch (layer.kind) {
     case "none":
       return generateOk("none");

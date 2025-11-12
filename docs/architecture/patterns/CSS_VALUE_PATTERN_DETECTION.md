@@ -11,6 +11,7 @@
 **CSS VALUE PATTERNS ARE REUSABLE ACROSS PROPERTIES**
 
 When implementing a new property, we must identify if its values are:
+
 1. **Reusable CSS value types** → Implement in shared packages
 2. **Property-specific combinations** → Implement in property directory
 
@@ -47,12 +48,12 @@ width: auto | <length-percentage> | min-content | max-content
 
 ### Step 3: Classify the Pattern
 
-| Pattern Category | Location | Examples |
-|-----------------|----------|----------|
-| **REUSABLE Keywords** | `@b/keywords/src/<type>.ts` | `<blend-mode>`, `<display-outside>`, `<position-keyword>` |
-| **REUSABLE Types** | `@b/types/src/<category>/<type>.ts` | `<length>`, `<percentage>`, `<color>` |
-| **REUSABLE Functions** | `@b/types/src/<category>/function.ts` | `<transform-function>`, `<filter-function>` |
-| **Property-Specific** | `@b/declarations/src/properties/<prop>/types.ts` | Custom unions, specific combos |
+| Pattern Category       | Location                                         | Examples                                                  |
+| ---------------------- | ------------------------------------------------ | --------------------------------------------------------- |
+| **REUSABLE Keywords**  | `@b/keywords/src/<type>.ts`                      | `<blend-mode>`, `<display-outside>`, `<position-keyword>` |
+| **REUSABLE Types**     | `@b/types/src/<category>/<type>.ts`              | `<length>`, `<percentage>`, `<color>`                     |
+| **REUSABLE Functions** | `@b/types/src/<category>/function.ts`            | `<transform-function>`, `<filter-function>`               |
+| **Property-Specific**  | `@b/declarations/src/properties/<prop>/types.ts` | Custom unions, specific combos                            |
 
 ---
 
@@ -171,10 +172,10 @@ export const transformFunctionSchema = z.discriminatedUnion("type", [
 
 ```css
 /* background-position (composite longhand with special 2D/3D/4-value syntax) */
-<position> = 
+<position> =
   [ left | center | right | <length-percentage> ]
   [ top | center | bottom | <length-percentage> ]
-  
+
 /* This specific combination is ONLY for background-position */
 ```
 
@@ -229,35 +230,35 @@ For each <value-type>:
 
 ### Category 1: Reusable Keywords (Pure Enums)
 
-| CSS Value Type | Properties Using It | Location |
-|----------------|---------------------|----------|
-| `<blend-mode>` | `background-blend-mode`, `mix-blend-mode` | `@b/keywords/src/blend-mode.ts` |
-| `<repeat-style>` | `background-repeat`, `mask-repeat` | `@b/keywords/src/repeat-style.ts` |
-| `<attachment>` | `background-attachment` | `@b/keywords/src/attachment.ts` |
-| `<box>` | `background-clip`, `background-origin`, `mask-clip` | `@b/keywords/src/box.ts` |
+| CSS Value Type   | Properties Using It                                 | Location                          |
+| ---------------- | --------------------------------------------------- | --------------------------------- |
+| `<blend-mode>`   | `background-blend-mode`, `mix-blend-mode`           | `@b/keywords/src/blend-mode.ts`   |
+| `<repeat-style>` | `background-repeat`, `mask-repeat`                  | `@b/keywords/src/repeat-style.ts` |
+| `<attachment>`   | `background-attachment`                             | `@b/keywords/src/attachment.ts`   |
+| `<box>`          | `background-clip`, `background-origin`, `mask-clip` | `@b/keywords/src/box.ts`          |
 
 ### Category 2: Reusable Types
 
-| CSS Value Type | Properties Using It | Location |
-|----------------|---------------------|----------|
-| `<length-percentage>` | `width`, `height`, `margin-*`, `padding-*`, 50+ properties | `@b/types/src/length/percentage.ts` |
-| `<color>` | `background-color`, `color`, `border-color`, 30+ properties | `@b/types/src/color/index.ts` |
-| `<image>` | `background-image`, `list-style-image`, `mask-image` | `@b/types/src/image/index.ts` |
+| CSS Value Type        | Properties Using It                                         | Location                            |
+| --------------------- | ----------------------------------------------------------- | ----------------------------------- |
+| `<length-percentage>` | `width`, `height`, `margin-*`, `padding-*`, 50+ properties  | `@b/types/src/length/percentage.ts` |
+| `<color>`             | `background-color`, `color`, `border-color`, 30+ properties | `@b/types/src/color/index.ts`       |
+| `<image>`             | `background-image`, `list-style-image`, `mask-image`        | `@b/types/src/image/index.ts`       |
 
 ### Category 3: Reusable Functions
 
-| CSS Value Type | Properties Using It | Location |
-|----------------|---------------------|----------|
-| `<transform-function>` | `transform` | `@b/types/src/transform/function.ts` |
-| `<filter-function>` | `filter`, `backdrop-filter` | `@b/types/src/filter/function.ts` |
-| `<basic-shape>` | `clip-path`, `shape-outside` | `@b/types/src/shape/basic.ts` |
+| CSS Value Type         | Properties Using It          | Location                             |
+| ---------------------- | ---------------------------- | ------------------------------------ |
+| `<transform-function>` | `transform`                  | `@b/types/src/transform/function.ts` |
+| `<filter-function>`    | `filter`, `backdrop-filter`  | `@b/types/src/filter/function.ts`    |
+| `<basic-shape>`        | `clip-path`, `shape-outside` | `@b/types/src/shape/basic.ts`        |
 
 ### Category 4: Property-Specific
 
-| Property | Why Property-Specific | Location |
-|----------|------------------------|----------|
+| Property              | Why Property-Specific                                           | Location                                              |
+| --------------------- | --------------------------------------------------------------- | ----------------------------------------------------- |
 | `background-position` | Composite longhand with special 2D/3D/4-value positioning logic | `@b/declarations/src/properties/background-position/` |
-| `font` | Shorthand with complex ordering rules (rarely used in this lib) | N/A (shorthand rejected) |
+| `font`                | Shorthand with complex ordering rules (rarely used in this lib) | N/A (shorthand rejected)                              |
 
 ---
 
@@ -286,7 +287,7 @@ Properties using <blend-mode>:
 Values: normal | multiply | screen | overlay | darken | lighten | ...
         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         All keywords, no units, no functions
-        
+
 → Category: REUSABLE KEYWORDS
 → Location: @b/keywords
 ```
@@ -311,8 +312,8 @@ import { z } from "zod";
 import * as Keywords from "@b/keywords";
 
 const backgroundBlendModeValueSchema = z.union([
-  Keywords.blendMode,  // ← Reuse from @b/keywords
-  cssValueSchema,      // var(), attr(), etc.
+  Keywords.blendMode, // ← Reuse from @b/keywords
+  cssValueSchema, // var(), attr(), etc.
 ]);
 
 export const backgroundBlendModeIRSchema = z.discriminatedUnion("kind", [
@@ -328,9 +329,9 @@ import * as Parsers from "@b/parsers";
 export const parseBackgroundBlendMode = createMultiValueParser({
   itemParser(valueNode) {
     // Try blend mode
-    const result = Parsers.BlendMode.parse(node.name);  // ← Reuse parser
+    const result = Parsers.BlendMode.parse(node.name); // ← Reuse parser
     if (result.ok) return result;
-    
+
     // Fall back to CSS value
     return Parsers.CssValue.parse(node);
   },

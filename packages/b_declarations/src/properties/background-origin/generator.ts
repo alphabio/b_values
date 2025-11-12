@@ -15,7 +15,7 @@ export function generateBackgroundOrigin(ir: BackgroundOriginIR): GenerateResult
 
   const layerStrings: string[] = [];
   for (const layer of ir.values) {
-    const result = generateValue(layer, Generators.Background.generateBackgroundOriginValue);
+    const result = generateValue(layer, Generators.Background.generateOrigin);
     if (!result.ok) return result;
     layerStrings.push(result.value);
   }

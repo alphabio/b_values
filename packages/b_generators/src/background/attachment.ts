@@ -11,6 +11,6 @@ import type { BackgroundAttachment } from "@b/keywords";
  * @param value - The attachment value
  * @returns GenerateResult with CSS string
  */
-export function generateBackgroundAttachmentValue(value: BackgroundAttachment): GenerateResult {
+export function generateAttachment(value: BackgroundAttachment): GenerateResult {
   return generateOk(value);
 }

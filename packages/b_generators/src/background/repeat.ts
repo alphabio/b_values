@@ -17,7 +17,7 @@ type RepeatStyle =
  * @param style - The repeat style or CssValue
  * @returns GenerateResult with CSS string
  */
-export function generateBackgroundRepeatValue(style: RepeatStyle | CssValue): GenerateResult {
+export function generateRepeat(style: RepeatStyle | CssValue): GenerateResult {
   // Handle CssValue types (var(), calc(), etc.)
   if ("kind" in style) {
     if (style.kind === "shorthand") {
