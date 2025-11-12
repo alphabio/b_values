@@ -8,6 +8,7 @@
 ## 🎯 Current Inconsistency
 
 ### Consistent (Generic Pattern)
+
 - ✅ `Color.generate()`
 - ✅ `Gradient.generate()`
 - ✅ `Position.generate()`
@@ -15,6 +16,7 @@
 - ✅ `Angle.generate()`
 
 ### Inconsistent (Specific Pattern)
+
 - ❌ `Background.generateImageValue()`
 - ❌ `Background.generateBackgroundClipValue()`
 - ❌ `Background.generateBackgroundOriginValue()`
@@ -27,6 +29,7 @@
 ## ✅ Target State
 
 ### Normalized Pattern
+
 - ✅ `Background.generateImage()`
 - ✅ `Background.generateClip()`
 - ✅ `Background.generateOrigin()`
@@ -35,6 +38,7 @@
 - ✅ `Background.generateSize()`
 
 **Alternative (even better):**
+
 - ✅ `Background.Image.generate()`
 - ✅ `Background.Clip.generate()`
 - ✅ `Background.Origin.generate()`
@@ -119,12 +123,15 @@ pnpm check
 ### Files to Change
 
 **Generators (6 files):**
+
 - `packages/b_generators/src/background/*.ts` (6 files)
 
 **Property Generators (8 files):**
+
 - `packages/b_declarations/src/properties/background-*/generator.ts` (8 files)
 
 **Manifest (1 file):**
+
 - `scripts/manifest/property-manifest.json`
 
 **Total: 15 files**
@@ -155,9 +162,9 @@ pnpm check
 const generatorCall = `${namespace}.generate${CapitalizedType}(value)`;
 
 // Examples:
-"Color.generate()"
-"Background.generateImage()"
-"Position.generate()"
+("Color.generate()");
+("Background.generateImage()");
+("Position.generate()");
 ```
 
 ### Documentation Update
@@ -170,10 +177,12 @@ Add to `AGENTS.md`:
 **RULE:** Use specific generator names that match the type being generated.
 
 **Pattern:**
+
 - Single-type namespaces: `Color.generate()`, `Position.generate()`
 - Multi-type namespaces: `Background.generateImage()`, `Background.generateClip()`
 
 **Rationale:**
+
 - Enables manifest system automation
 - Predictable API for scaffold templates
 - Clear semantic meaning
@@ -225,6 +234,7 @@ If we DON'T refactor, manifest system must:
 **WE NEVER WORKAROUND INCONSISTENCIES.**
 
 **Why:**
+
 - Aligns with core value system
 - Unblocks Phase 2 (scaffold generator)
 - Small blast radius (15 files)
@@ -245,6 +255,7 @@ If we DON'T refactor, manifest system must:
 **REJECTED.** We do not compromise consistency for convenience.
 
 Workarounds are:
+
 - ❌ Technical debt in disguise
 - ❌ Complexity multipliers
 - ❌ Future maintenance nightmares

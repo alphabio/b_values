@@ -1,6 +1,6 @@
 # Shorthand Pattern: The DRY Dilemma
 
-**Date:** 2025-11-12  
+**Date:** 2025-11-12
 **Issue:** Should we keep shorthand pattern for repetition avoidance?
 
 ---
@@ -8,9 +8,11 @@
 ## 🎯 The Core Insight
 
 **User said:**
+
 > "I do think the pattern is OK though it's avoiding repetition"
 
 **The truth:**
+
 ```typescript
 // Shorthand (DRY):
 background-position: center top;
@@ -37,12 +39,14 @@ padding-left: 10px;
 **Principle:** Pure separation of concerns
 
 **Benefits:**
+
 - ✅ Clean architecture (expansion ≠ parsing)
 - ✅ @b/declarations stays simple
 - ✅ @b/short handles complexity
 - ✅ Clear boundaries
 
 **Cost:**
+
 - ❌ Verbose for common cases
 - ❌ Client must always expand
 - ❌ More integration complexity
@@ -52,12 +56,14 @@ padding-left: 10px;
 **Principle:** Avoid unnecessary repetition
 
 **Benefits:**
+
 - ✅ Concise property setting
 - ✅ Natural CSS patterns
 - ✅ Less boilerplate for clients
 - ✅ Better DX (developer experience)
 
 **Cost:**
+
 - ❌ Mixes concerns (expansion + parsing)
 - ❌ Blurs architectural boundaries
 - ❌ More complex internals
@@ -71,20 +77,22 @@ padding-left: 10px;
 ### What We Face:
 
 **Without shorthand pattern:**
+
 ```typescript
 // Set uniform padding
-parseDeclaration("padding-top: 10px")
-parseDeclaration("padding-right: 10px")
-parseDeclaration("padding-bottom: 10px")
-parseDeclaration("padding-left: 10px")
+parseDeclaration("padding-top: 10px");
+parseDeclaration("padding-right: 10px");
+parseDeclaration("padding-bottom: 10px");
+parseDeclaration("padding-left: 10px");
 
 // 4 calls for one logical operation
 ```
 
 **With shorthand pattern (if we allow it):**
+
 ```typescript
 // Set uniform padding
-parseDeclaration("padding: 10px")
+parseDeclaration("padding: 10px");
 // → Internally represents as 4 separate longhand IRs
 ```
 
@@ -97,9 +105,11 @@ parseDeclaration("padding: 10px")
 ### Redefine What "Longhand" Means
 
 **Current thinking:**
+
 - Longhand = does NOT expand to other properties
 
 **New thinking:**
+
 - Longhand = has ONE IR representation
 - May have structured value (Position2D, Padding4Sides)
 - Parsing may produce MULTIPLE component values
@@ -108,6 +118,7 @@ parseDeclaration("padding: 10px")
 ### Example: Padding as Composite Longhand
 
 **IR Design:**
+
 ```typescript
 type PaddingIR = {
   kind: "value";
@@ -115,31 +126,34 @@ type PaddingIR = {
   right: LengthPercentage;
   bottom: LengthPercentage;
   left: LengthPercentage;
-}
+};
 
 // OR alternative:
-type PaddingIR = {
-  kind: "uniform";
-  value: LengthPercentage;
-} | {
-  kind: "separate";
-  top: LengthPercentage;
-  right: LengthPercentage;
-  bottom: LengthPercentage;
-  left: LengthPercentage;
-}
+type PaddingIR =
+  | {
+      kind: "uniform";
+      value: LengthPercentage;
+    }
+  | {
+      kind: "separate";
+      top: LengthPercentage;
+      right: LengthPercentage;
+      bottom: LengthPercentage;
+      left: LengthPercentage;
+    };
 ```
 
 **Property definition:**
+
 ```typescript
 defineProperty({
   name: "padding",
   syntax: "<length-percentage>{1,4}",
-  parser: parsePadding,  // Parses 1-4 values
+  parser: parsePadding, // Parses 1-4 values
   generator: generatePadding,
   inherited: false,
-  initial: "0"
-})
+  initial: "0",
+});
 ```
 
 **Key insight:** We're not implementing `padding` shorthand. We're implementing `padding` composite longhand that happens to accept 1-4 values.
@@ -151,11 +165,13 @@ defineProperty({
 ### TRUE Shorthand (We DON'T implement):
 
 **`background` property:**
+
 ```css
 background: red url(img.png) no-repeat center;
 ```
 
 **Expands to DIFFERENT property names:**
+
 - background-color
 - background-image
 - background-repeat
@@ -164,6 +180,7 @@ background: red url(img.png) no-repeat center;
 **Each has SEPARATE IR type.**
 
 **Characteristics:**
+
 - ❌ Multiple property names
 - ❌ Multiple IR types
 - ❌ Requires cascade to OTHER properties
@@ -172,11 +189,13 @@ background: red url(img.png) no-repeat center;
 ### Composite Longhand (We COULD implement):
 
 **`padding` property:**
+
 ```css
 padding: 10px 20px;
 ```
 
 **Represents SINGLE logical concept with structured IR:**
+
 ```typescript
 {
   kind: "padding",
@@ -188,6 +207,7 @@ padding: 10px 20px;
 ```
 
 **Characteristics:**
+
 - ✅ Single property name
 - ✅ Single IR type (though structured)
 - ✅ No cascade to other properties
@@ -252,6 +272,7 @@ padding: 10px 20px;
 **Example:** `background`, `border`
 
 **Expands to:**
+
 - Multiple different property names
 - Multiple different IR types
 - Requires expansion across property boundaries
@@ -267,6 +288,7 @@ padding: 10px 20px;
 **We implement COMPOSITE LONGHANDS.**
 
 **Definition:**
+
 - Property with SINGLE name
 - Property with SINGLE IR type
 - May accept multiple values (1-4 for padding)
@@ -274,6 +296,7 @@ padding: 10px 20px;
 - Does NOT expand to OTHER property names
 
 **Examples we ACCEPT:**
+
 ```typescript
 ✅ padding (1-4 values → PaddingIR)
 ✅ margin (1-4 values → MarginIR)
@@ -282,6 +305,7 @@ padding: 10px 20px;
 ```
 
 **Examples we REJECT:**
+
 ```typescript
 ❌ background (expands to 8 different properties)
 ❌ border (expands to width, style, color)
@@ -301,9 +325,11 @@ If we accept `padding` as composite longhand, do we also implement `padding-top`
 ### Approach A: Composite Only (Minimal)
 
 **Implement:**
+
 - ✅ `padding` (composite, accepts 1-4 values)
 
 **Skip:**
+
 - ❌ `padding-top`, `padding-right`, etc.
 
 **Rationale:** `padding` covers all use cases.
@@ -313,6 +339,7 @@ If we accept `padding` as composite longhand, do we also implement `padding-top`
 ### Approach B: Both (Complete)
 
 **Implement:**
+
 - ✅ `padding` (composite, accepts 1-4 values)
 - ✅ `padding-top`, `padding-right`, `padding-bottom`, `padding-left` (individual)
 
@@ -323,9 +350,11 @@ If we accept `padding` as composite longhand, do we also implement `padding-top`
 ### Approach C: Individual Only (Pure Longhand)
 
 **Implement:**
+
 - ✅ `padding-top`, `padding-right`, `padding-bottom`, `padding-left`
 
 **Skip:**
+
 - ❌ `padding` composite
 
 **Rationale:** Pure longhand architecture.
@@ -343,20 +372,20 @@ If we accept `padding` as composite longhand, do we also implement `padding-top`
 ```typescript
 // Scenario 1: Set all sides at once (composite)
 defineRule({
-  padding: "10px"
-})
+  padding: "10px",
+});
 
 // Scenario 2: Override one side (individual)
 defineRule({
   padding: "10px",
-  "padding-top": "20px"  // Override
-})
+  "padding-top": "20px", // Override
+});
 
 // Scenario 3: Set only specific sides (individual)
 defineRule({
   "padding-left": "20px",
-  "padding-right": "20px"
-})
+  "padding-right": "20px",
+});
 ```
 
 **Both patterns are legitimate.**
@@ -364,6 +393,7 @@ defineRule({
 ### IR Representation:
 
 **Composite `padding`:**
+
 ```typescript
 {
   property: "padding",
@@ -378,6 +408,7 @@ defineRule({
 ```
 
 **Individual `padding-top`:**
+
 ```typescript
 {
   property: "padding-top",
@@ -397,16 +428,18 @@ defineRule({
 ### Phase 1: Composite Longhands
 
 **Implement 1-4 value syntax properties:**
+
 ```typescript
-defineProperty("padding")       // 1-4 values
-defineProperty("margin")        // 1-4 values
-defineProperty("border-width")  // 1-4 values
-defineProperty("border-style")  // 1-4 values
-defineProperty("border-color")  // 1-4 values
-defineProperty("border-radius") // 1-4 values
+defineProperty("padding"); // 1-4 values
+defineProperty("margin"); // 1-4 values
+defineProperty("border-width"); // 1-4 values
+defineProperty("border-style"); // 1-4 values
+defineProperty("border-color"); // 1-4 values
+defineProperty("border-radius"); // 1-4 values
 ```
 
 **Parser handles multiple values:**
+
 ```typescript
 // padding: 10px         → all 4 sides = 10px
 // padding: 10px 20px    → top/bottom=10px, left/right=20px
@@ -417,43 +450,45 @@ defineProperty("border-radius") // 1-4 values
 ### Phase 2: Individual Longhands
 
 **Implement side-specific properties:**
+
 ```typescript
-defineProperty("padding-top")
-defineProperty("padding-right")
-defineProperty("padding-bottom")
-defineProperty("padding-left")
+defineProperty("padding-top");
+defineProperty("padding-right");
+defineProperty("padding-bottom");
+defineProperty("padding-left");
 // ... same for margin, border-width, etc.
 ```
 
 ### Phase 3: Both Coexist
 
 **User chooses which pattern:**
+
 ```typescript
 // Composite (concise)
-parse("padding: 10px")
+parse("padding: 10px");
 
 // Individual (explicit)
-parse("padding-top: 10px")
-parse("padding-right: 10px")
-parse("padding-bottom: 10px")
-parse("padding-left: 10px")
+parse("padding-top: 10px");
+parse("padding-right: 10px");
+parse("padding-bottom: 10px");
+parse("padding-left: 10px");
 
 // Mixed (override pattern)
-parse("padding: 10px")
-parse("padding-top: 20px")
+parse("padding: 10px");
+parse("padding-top: 20px");
 ```
 
 ---
 
 ## 🏆 Final Classification
 
-| Property | Type | Implement? | Reason |
-|----------|------|------------|--------|
-| `background` | True shorthand | ❌ NO | Expands to 8 different properties |
-| `padding` | Composite longhand | ✅ YES | Single property, structured IR |
-| `padding-top` | Simple longhand | ✅ YES | Granular control |
-| `background-position` | Composite longhand | ✅ YES | Single property, Position2D IR |
-| `background-position-x` | Simple longhand | ✅ YES | Granular control |
+| Property                | Type               | Implement? | Reason                            |
+| ----------------------- | ------------------ | ---------- | --------------------------------- |
+| `background`            | True shorthand     | ❌ NO      | Expands to 8 different properties |
+| `padding`               | Composite longhand | ✅ YES     | Single property, structured IR    |
+| `padding-top`           | Simple longhand    | ✅ YES     | Granular control                  |
+| `background-position`   | Composite longhand | ✅ YES     | Single property, Position2D IR    |
+| `background-position-x` | Simple longhand    | ✅ YES     | Granular control                  |
 
 ---
 
@@ -490,6 +525,7 @@ parse("padding-top: 20px")
 3. **Multi-value longhands** - One property, array of values (layers)
 
 **We REJECT true shorthands:**
+
 - Properties that expand to DIFFERENT property names
 - Properties that cross property boundaries
 - Properties requiring expansion cascade

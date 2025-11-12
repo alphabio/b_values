@@ -1,6 +1,6 @@
 # Background-Position: Shorthand vs Longhand Analysis
 
-**Date:** 2025-11-12  
+**Date:** 2025-11-12
 **Issue:** Is `background-position` a shorthand? Does this violate "longhand-only" policy?
 
 ---
@@ -18,20 +18,24 @@
 ### What CSS Spec Says
 
 **Longhand properties:**
+
 - `background-position-x` (horizontal position only)
 - `background-position-y` (vertical position only)
 
 **"Shorthand" property:**
+
 - `background-position` (both horizontal and vertical)
 
 **TRUE shorthand property:**
-- `background` (all background-* properties combined)
+
+- `background` (all background-\* properties combined)
 
 ### Terminology Confusion
 
 The CSS spec calls `background-position` a "component" of the `background` shorthand.
 
 **But in our architecture:**
+
 - `background-position` is **NOT a shorthand**
 - It's a **longhand property** that happens to represent TWO values (x, y)
 - It does NOT expand into other properties
@@ -45,6 +49,7 @@ The CSS spec calls `background-position` a "component" of the `background` short
 **Definition:** Property that **expands into multiple other properties**
 
 **Example: `background`**
+
 ```css
 background: red url(img.png) no-repeat center;
 
@@ -57,6 +62,7 @@ background-position: center;
 ```
 
 **Characteristics:**
+
 - ✅ Sets multiple properties at once
 - ✅ Each component has its own property name
 - ✅ Can be set independently
@@ -66,6 +72,7 @@ background-position: center;
 **Definition:** Property with **structured value syntax** but NO expansion
 
 **Example: `background-position`**
+
 ```css
 background-position: center top;
 
@@ -74,6 +81,7 @@ background-position: center top;
 ```
 
 **Characteristics:**
+
 - ✅ Single property name
 - ❌ Does NOT set other properties
 - ✅ Components are inseparable in our IR
@@ -88,15 +96,14 @@ background-position: center top;
 **Property:** `background-position`
 
 **IR Structure:**
+
 ```typescript
 type Position2D = {
   horizontal: CssValue | PositionEdgeOffset;
   vertical: CssValue | PositionEdgeOffset;
-}
+};
 
-type BackgroundPositionIR = 
-  | { kind: "keyword", value: CssWide }
-  | { kind: "list", values: Position2D[] }
+type BackgroundPositionIR = { kind: "keyword"; value: CssWide } | { kind: "list"; values: Position2D[] };
 ```
 
 **Key Insight:** We parse into a **single IR** with structure, not multiple properties.
@@ -122,6 +129,7 @@ type BackgroundPositionIR =
 **Should we?** MAYBE (future)
 
 **Why not now?**
+
 - ✅ `background-position` covers 99% of use cases
 - ✅ Adding x/y creates expansion complexity
 - ⚠️ Would need shorthand expansion logic (`background-position` → x/y)
@@ -131,6 +139,7 @@ type BackgroundPositionIR =
 **Two approaches:**
 
 #### Approach A: True Separation (Complex)
+
 ```typescript
 // background-position becomes a shorthand
 background-position: center top;
@@ -140,23 +149,26 @@ background-position-y: top;
 ```
 
 **Implications:**
+
 - ❌ `background-position` becomes a shorthand
 - ❌ Need expansion logic
 - ❌ Violates "no shorthand" principle
 - ❌ Complexity explosion
 
 #### Approach B: Independent Longhands (Simple)
+
 ```typescript
 // background-position stays independent
-defineProperty("background-position")
-defineProperty("background-position-x")  
-defineProperty("background-position-y")
+defineProperty("background-position");
+defineProperty("background-position-x");
+defineProperty("background-position-y");
 
 // NO expansion between them
 // User sets what they want directly
 ```
 
 **Implications:**
+
 - ✅ All are longhands
 - ✅ No expansion logic
 - ✅ Simple, orthogonal
@@ -170,25 +182,27 @@ defineProperty("background-position-y")
 ### What This Means
 
 **WE SUPPORT:**
+
 - ✅ Properties that have **independent IR representations**
 - ✅ Properties with **structured value syntax** (like Position2D)
 - ✅ Properties that **don't expand into other properties**
 
 **WE AVOID:**
+
 - ❌ Properties that **expand into multiple properties**
 - ❌ Properties requiring **expansion logic**
 - ❌ Properties that are **purely sugar** over other properties
 
 ### Examples
 
-| Property | Status | Reason |
-|----------|--------|--------|
-| `background-position` | ✅ **Longhand** | Single property, structured value |
-| `background-color` | ✅ **Longhand** | Single property, single value |
-| `background` | ❌ **Shorthand** | Expands to 8 properties |
-| `padding` | ❌ **Shorthand** | Expands to padding-{top,right,bottom,left} |
-| `border` | ❌ **Shorthand** | Expands to border-{width,style,color} |
-| `margin` | ❌ **Shorthand** | Expands to margin-{top,right,bottom,left} |
+| Property              | Status           | Reason                                     |
+| --------------------- | ---------------- | ------------------------------------------ |
+| `background-position` | ✅ **Longhand**  | Single property, structured value          |
+| `background-color`    | ✅ **Longhand**  | Single property, single value              |
+| `background`          | ❌ **Shorthand** | Expands to 8 properties                    |
+| `padding`             | ❌ **Shorthand** | Expands to padding-{top,right,bottom,left} |
+| `border`              | ❌ **Shorthand** | Expands to border-{width,style,color}      |
+| `margin`              | ❌ **Shorthand** | Expands to margin-{top,right,bottom,left}  |
 
 ---
 
@@ -207,9 +221,9 @@ background-position: center top;
 ### Reason 2: Longhand Siblings Exist
 
 ```css
-background-position: center top;  /* "parent" */
-background-position-x: center;    /* "child" */
-background-position-y: top;       /* "child" */
+background-position: center top; /* "parent" */
+background-position-x: center; /* "child" */
+background-position-y: top; /* "child" */
 ```
 
 **But:** We don't implement the siblings. `background-position` is standalone in our system.
@@ -224,17 +238,17 @@ CSS spec sometimes calls these "sub-properties" which implies shorthand relation
 
 ## 🚀 Consistency Check: All Background Properties
 
-| Property | Expands? | Status | Notes |
-|----------|----------|--------|-------|
-| `background-color` | NO | ✅ Longhand | Simple value |
-| `background-image` | NO | ✅ Longhand | List of images |
-| `background-repeat` | NO | ✅ Longhand | List of repeat styles |
-| `background-position` | NO | ✅ Longhand | List of positions (structured) |
-| `background-size` | NO | ✅ Longhand | List of sizes (structured) |
-| `background-attachment` | NO | ✅ Longhand | List of keywords |
-| `background-clip` | NO | ✅ Longhand | List of keywords |
-| `background-origin` | NO | ✅ Longhand | List of keywords |
-| `background` | YES | ❌ **Shorthand** | **We don't implement this** |
+| Property                | Expands? | Status           | Notes                          |
+| ----------------------- | -------- | ---------------- | ------------------------------ |
+| `background-color`      | NO       | ✅ Longhand      | Simple value                   |
+| `background-image`      | NO       | ✅ Longhand      | List of images                 |
+| `background-repeat`     | NO       | ✅ Longhand      | List of repeat styles          |
+| `background-position`   | NO       | ✅ Longhand      | List of positions (structured) |
+| `background-size`       | NO       | ✅ Longhand      | List of sizes (structured)     |
+| `background-attachment` | NO       | ✅ Longhand      | List of keywords               |
+| `background-clip`       | NO       | ✅ Longhand      | List of keywords               |
+| `background-origin`     | NO       | ✅ Longhand      | List of keywords               |
+| `background`            | YES      | ❌ **Shorthand** | **We don't implement this**    |
 
 **Result:** All 8 properties we implement are **longhands**. ✅
 
@@ -252,11 +266,13 @@ CSS spec sometimes calls these "sub-properties" which implies shorthand relation
 4. **Parse to single IR instance** (not multiple property IRs)
 
 **Structured values are fine:**
+
 - ✅ `Position2D` with horizontal + vertical
-- ✅ `BgSize` with width + height  
+- ✅ `BgSize` with width + height
 - ✅ `RepeatStyle` with horizontal + vertical repetition
 
 **As long as:**
+
 - ✅ They stay within ONE property
 - ✅ They don't set OTHER properties
 - ✅ They have ONE IR type
@@ -269,7 +285,8 @@ CSS spec sometimes calls these "sub-properties" which implies shorthand relation
 
 **Status:** ✅ Longhand (even though syntax is generic)
 
-**Why:** 
+**Why:**
+
 - Single property (one custom property name)
 - No expansion
 - Direct value storage
@@ -290,17 +307,19 @@ CSS spec sometimes calls these "sub-properties" which implies shorthand relation
 
 **Add to architecture docs:**
 
-```markdown
+````markdown
 ## Property Classification
 
 ### Longhand Properties (What We Implement)
 
 Properties that:
+
 - Have independent IR representation
-- Do NOT expand into other properties  
+- Do NOT expand into other properties
 - Parse to single IR instance
 
 **Examples:**
+
 - `background-color` - Simple value
 - `background-position` - Structured value (Position2D)
 - `background-image` - List of values
@@ -308,11 +327,13 @@ Properties that:
 ### Shorthand Properties (What We Avoid)
 
 Properties that:
+
 - Expand into multiple other properties
 - Set multiple property names at once
 - Require expansion logic
 
 **Examples:**
+
 - `background` - Sets background-{color,image,repeat,position,...}
 - `padding` - Sets padding-{top,right,bottom,left}
 - `border` - Sets border-{width,style,color}
@@ -323,12 +344,15 @@ A property with structured value (multiple components) is NOT a shorthand
 if it stays within a single property name.
 
 **Example:**
+
 ```css
 background-position: center top;
 /* Structured value: { horizontal: center, vertical: top } */
 /* Still ONE property, not a shorthand */
 ```
-```
+````
+
+````
 
 ### Manifest System: NO CHANGES NEEDED
 
@@ -345,7 +369,7 @@ background-position: center top;
     }
   }
 }
-```
+````
 
 ---
 
@@ -362,6 +386,7 @@ background-position: center top;
 ### Are we consistent?
 
 **YES.** All 8 background properties follow the same pattern:
+
 - Longhand properties
 - No expansion
 - Single IR type per property
@@ -370,6 +395,7 @@ background-position: center top;
 ### What about background-position-x/y?
 
 **Future consideration.** If we add them:
+
 - Implement as independent longhands
 - NO expansion logic between them
 - Let user choose which to use
@@ -378,6 +404,7 @@ background-position: center top;
 ### Should we add them?
 
 **NOT YET.** Reasons:
+
 - `background-position` covers 99% of use cases
 - Adding x/y without expansion creates confusion
 - Adding x/y with expansion violates our principles

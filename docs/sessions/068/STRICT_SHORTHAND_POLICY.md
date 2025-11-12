@@ -1,6 +1,6 @@
 # Strict Shorthand Policy: CLARIFIED
 
-**Date:** 2025-11-12  
+**Date:** 2025-11-12
 **Issue:** Is `background-position` a shorthand? Should we implement it?
 
 ---
@@ -20,11 +20,13 @@
 A property that **EXPANDS into OTHER property names** when set.
 
 **Characteristics:**
+
 1. Sets MULTIPLE properties with different names
 2. Requires expansion/cascade logic
 3. Each expanded property can be set independently
 
 **Examples:**
+
 ```css
 /* SHORTHAND: background */
 background: red;
@@ -55,16 +57,19 @@ padding-left: 20px;
 A property that **DOES NOT expand** into other properties.
 
 **May have:**
+
 - ✅ Simple value (e.g., `color: red`)
 - ✅ Structured value (e.g., `background-position: center top`)
 - ✅ List of values (e.g., `background-image: url(a), url(b)`)
 
 **Does NOT:**
+
 - ❌ Set other property names
 - ❌ Require expansion logic
 - ❌ Cascade to other properties
 
 **Examples:**
+
 ```css
 /* LONGHAND: background-position */
 background-position: center top;
@@ -88,6 +93,7 @@ ONE property with simple value: 10px
 ### **Analysis:**
 
 **Does it expand into other properties?**
+
 ```css
 background-position: center top;
 /* Does this set background-position-x? NO */
@@ -113,10 +119,12 @@ background-position-y: top;     ❌ User must set them explicitly
 ```
 
 **Key distinction:**
+
 - **Shorthand expansion:** Automatic, built into CSS spec
 - **Optional siblings:** Alternative ways to express same concept
 
 **Example of TRUE expansion (padding):**
+
 ```css
 padding: 10px;
 
@@ -133,22 +141,22 @@ padding-left: 10px;   ✅ Automatic
 
 ### **Properties We Implement**
 
-| Property | Expands? | Classification | Implement? |
-|----------|----------|----------------|------------|
-| `background-color` | NO | Longhand (simple) | ✅ YES |
-| `background-position` | NO | Longhand (structured) | ✅ YES |
-| `padding-top` | NO | Longhand (simple) | ✅ YES |
-| `padding-right` | NO | Longhand (simple) | ✅ YES |
+| Property              | Expands? | Classification        | Implement? |
+| --------------------- | -------- | --------------------- | ---------- |
+| `background-color`    | NO       | Longhand (simple)     | ✅ YES     |
+| `background-position` | NO       | Longhand (structured) | ✅ YES     |
+| `padding-top`         | NO       | Longhand (simple)     | ✅ YES     |
+| `padding-right`       | NO       | Longhand (simple)     | ✅ YES     |
 
 ### **Properties We Skip**
 
-| Property | Expands? | Classification | Implement? |
-|----------|----------|----------------|------------|
-| `background` | YES → 8 properties | Shorthand | ❌ NO |
-| `padding` | YES → 4 properties | Shorthand | ❌ NO |
-| `border` | YES → 12 properties | Shorthand | ❌ NO |
-| `background-position-x` | NO | Redundant sibling | ❌ NO |
-| `background-position-y` | NO | Redundant sibling | ❌ NO |
+| Property                | Expands?            | Classification    | Implement? |
+| ----------------------- | ------------------- | ----------------- | ---------- |
+| `background`            | YES → 8 properties  | Shorthand         | ❌ NO      |
+| `padding`               | YES → 4 properties  | Shorthand         | ❌ NO      |
+| `border`                | YES → 12 properties | Shorthand         | ❌ NO      |
+| `background-position-x` | NO                  | Redundant sibling | ❌ NO      |
+| `background-position-y` | NO                  | Redundant sibling | ❌ NO      |
 
 ---
 
@@ -157,7 +165,7 @@ padding-left: 10px;   ✅ Automatic
 ### **The Question:**
 
 ```typescript
-parse("background-position-x: center")
+parse("background-position-x: center");
 ```
 
 **What should happen?**
@@ -183,11 +191,13 @@ parse("background-position-x: center")
 ```
 
 **Pros:**
+
 - ✅ Clear feedback to user
 - ✅ Guides to correct property
 - ✅ Prevents confusion
 
 **Cons:**
+
 - ⚠️ Might be too strict for some users
 
 #### **Option 2: Warning (Permissive)**
@@ -208,11 +218,13 @@ parse("background-position-x: center")
 ```
 
 **Pros:**
+
 - ✅ Doesn't block parsing
 - ✅ Still warns user
 - ✅ Can be used in linters
 
 **Cons:**
+
 - ⚠️ Unclear what to do with IR
 - ⚠️ Might encourage use of unsupported properties
 
@@ -233,10 +245,12 @@ parse("background-position-x: center")
 ```
 
 **Pros:**
+
 - ✅ Simple, consistent with other unknown properties
 - ✅ Clear rejection
 
 **Cons:**
+
 - ⚠️ Doesn't explain why it's not supported
 - ⚠️ Treats as "doesn't exist" rather than "exists but not supported"
 
@@ -253,30 +267,37 @@ Maintain a registry of **known but unsupported** properties:
 
 export const UNSUPPORTED_PROPERTIES = {
   // Shorthand properties
-  "background": {
+  background: {
     reason: "shorthand",
     suggestion: "Use individual properties: background-color, background-image, etc.",
-    expands: ["background-color", "background-image", "background-repeat", 
-              "background-position", "background-size", "background-attachment",
-              "background-clip", "background-origin"]
+    expands: [
+      "background-color",
+      "background-image",
+      "background-repeat",
+      "background-position",
+      "background-size",
+      "background-attachment",
+      "background-clip",
+      "background-origin",
+    ],
   },
-  "padding": {
+  padding: {
     reason: "shorthand",
     suggestion: "Use individual properties: padding-top, padding-right, etc.",
-    expands: ["padding-top", "padding-right", "padding-bottom", "padding-left"]
+    expands: ["padding-top", "padding-right", "padding-bottom", "padding-left"],
   },
-  
+
   // Redundant siblings
   "background-position-x": {
     reason: "redundant-sibling",
     suggestion: "Use 'background-position' instead",
-    alternativeTo: "background-position"
+    alternativeTo: "background-position",
   },
   "background-position-y": {
     reason: "redundant-sibling",
     suggestion: "Use 'background-position' instead",
-    alternativeTo: "background-position"
-  }
+    alternativeTo: "background-position",
+  },
 } as const;
 
 export function isUnsupportedProperty(property: string): boolean {
@@ -295,26 +316,26 @@ export function getUnsupportedPropertyInfo(property: string) {
 
 export function parseDeclaration(input: string | CSSDeclaration): ParseResult<DeclarationResult> {
   // ... existing parsing logic ...
-  
+
   // Check for unsupported properties BEFORE unknown check
   if (isUnsupportedProperty(property)) {
     const info = getUnsupportedPropertyInfo(property);
-    return parseErr("declaration", createError(
-      "unsupported-property",
-      `Property '${property}' is not supported (${info.reason}). ${info.suggestion}`
-    ));
+    return parseErr(
+      "declaration",
+      createError(
+        "unsupported-property",
+        `Property '${property}' is not supported (${info.reason}). ${info.suggestion}`
+      )
+    );
   }
-  
+
   // Look up property definition
   const definition = getPropertyDefinition(property);
-  
+
   if (!definition) {
-    return parseErr("declaration", createError(
-      "invalid-value",
-      `Unknown CSS property: ${property}`
-    ));
+    return parseErr("declaration", createError("invalid-value", `Unknown CSS property: ${property}`));
   }
-  
+
   // ... rest of parsing ...
 }
 ```
@@ -366,6 +387,7 @@ parse("made-up-property: value")
 ### **Step 1: Create Unsupported Registry**
 
 Create `packages/b_declarations/src/core/unsupported.ts`:
+
 - List of known-but-unsupported properties
 - Categorized by reason (shorthand, redundant-sibling)
 - Include helpful suggestions
@@ -373,6 +395,7 @@ Create `packages/b_declarations/src/core/unsupported.ts`:
 ### **Step 2: Update Parser**
 
 Update `packages/b_declarations/src/parser.ts`:
+
 - Check unsupported registry before unknown check
 - Provide context-specific error messages
 - Distinguish "not supported" from "doesn't exist"
@@ -380,12 +403,14 @@ Update `packages/b_declarations/src/parser.ts`:
 ### **Step 3: Add Issue Code**
 
 Update `@b/types/src/result/issue.ts`:
+
 - Add `"unsupported-property"` issue code
 - Document when it's used
 
 ### **Step 4: Document Policy**
 
 Update architecture docs:
+
 - Clarify shorthand vs longhand definitions
 - List unsupported properties and reasons
 - Provide migration guides
@@ -397,24 +422,28 @@ Update architecture docs:
 ### **Category 1: Implemented Longhands** ✅
 
 Properties we implement:
+
 - Independent longhands (padding-top, margin-left)
 - Composite longhands (background-position, background-size)
 
 ### **Category 2: Unsupported Shorthands** ❌
 
 Properties we recognize but don't implement:
+
 - background, padding, margin, border
 - Reason: Expand into multiple properties
 
 ### **Category 3: Unsupported Siblings** ❌
 
 Properties we recognize but don't implement:
+
 - background-position-x, background-position-y
 - Reason: Redundant with composite property
 
 ### **Category 4: Unknown Properties** ❓
 
 Properties we don't recognize:
+
 - User typos, experimental properties, vendor-specific
 - Reason: Not in our registry at all
 
@@ -441,6 +470,7 @@ Properties we don't recognize:
 ### **What happens when user tries to parse background-position-x?**
 
 **We reject it with a helpful error:**
+
 ```
 Error: Property 'background-position-x' is not supported (redundant-sibling).
 Use 'background-position' instead.

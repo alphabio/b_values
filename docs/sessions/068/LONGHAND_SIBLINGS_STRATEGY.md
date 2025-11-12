@@ -1,6 +1,6 @@
 # Longhand Siblings: Strategic Decision
 
-**Date:** 2025-11-12  
+**Date:** 2025-11-12
 **Issue:** Should we support `background-position-x/y` and similar sibling properties?
 
 ---
@@ -8,9 +8,11 @@
 ## 🔍 The Question
 
 **User insight:**
+
 > "We're going to run into the exact same values with box model props like padding/margin/border/radius"
 
 **Refined question:**
+
 > Should our "longhand-only" policy include ALL longhand properties, even if they feel redundant with composite properties?
 
 ---
@@ -20,11 +22,13 @@
 ### Pattern A: Composite Longhand (background-position)
 
 **Properties:**
+
 - `background-position: center top` ← IMPLEMENT ✅
 - `background-position-x: center` ← Optional sibling
 - `background-position-y: top` ← Optional sibling
 
 **Characteristics:**
+
 - Composite property has structured IR (`Position2D`)
 - Siblings are "views" into same data
 - NO expansion relationship
@@ -35,6 +39,7 @@
 ### Pattern B: True Longhands (box model sides)
 
 **Properties:**
+
 - `padding-top: 10px` ← True longhand ✅
 - `padding-right: 10px` ← True longhand ✅
 - `padding-bottom: 10px` ← True longhand ✅
@@ -42,6 +47,7 @@
 - `padding: 10px` ← Shorthand (expands to above) ❌
 
 **Characteristics:**
+
 - Each side is independent property
 - Each has simple value (not structured)
 - Shorthand expands to all 4
@@ -52,10 +58,12 @@
 ### Pattern C: Logical Properties (modern CSS)
 
 **Properties:**
+
 - `padding-block-start: 10px` ← Logical equivalent
 - `padding-inline-end: 10px` ← Logical equivalent
 
 **Characteristics:**
+
 - Alternative names for same concepts
 - Direction-aware (RTL, writing modes)
 - Maps to physical properties in some specs
@@ -69,6 +77,7 @@
 ### Scenario 1: Implement Everything (Maximalist)
 
 **What we'd implement:**
+
 ```typescript
 // Background position
 background-position ✅
@@ -89,11 +98,13 @@ padding-inline-end ✅
 ```
 
 **Pros:**
+
 - ✅ Complete coverage
 - ✅ User can use whichever property they prefer
 - ✅ Matches CSS spec fully
 
 **Cons:**
+
 - ❌ MASSIVE scope (100+ properties just for box model)
 - ❌ Redundancy (`padding-top` vs `padding: <top> 0 0 0`)
 - ❌ User confusion (which one should I use?)
@@ -102,6 +113,7 @@ padding-inline-end ✅
 ### Scenario 2: Longhands Only (Pragmatic)
 
 **What we'd implement:**
+
 ```typescript
 // Background position (composite)
 background-position ✅
@@ -119,18 +131,21 @@ padding-block-start ✅ (separate decision)
 ```
 
 **Pros:**
+
 - ✅ Clear, consistent policy
 - ✅ Covers 95% of use cases
 - ✅ Manageable scope
 - ✅ Each property has clear purpose
 
 **Cons:**
+
 - ⚠️ `background-position-x/y` users must use composite
 - ⚠️ Some "duplication" (could use siblings instead)
 
 ### Scenario 3: Composite Only (Minimalist)
 
 **What we'd implement:**
+
 ```typescript
 // Background position (composite)
 background-position ✅
@@ -142,10 +157,12 @@ padding: 10px 20px 30px 40px ✅  // Wait, this is a shorthand!
 ```
 
 **Pros:**
+
 - ✅ Minimal property count
 - ✅ Covers most use cases
 
 **Cons:**
+
 - ❌ Can't implement `padding` as composite (it's a shorthand!)
 - ❌ Forces users to set all 4 sides even if they want one
 - ❌ Doesn't work for box model pattern
@@ -157,6 +174,7 @@ padding: 10px 20px 30px 40px ✅  // Wait, this is a shorthand!
 ### background-position vs padding
 
 **background-position:**
+
 ```css
 background-position: center top;
 /* This is ONE property with TWO components */
@@ -165,6 +183,7 @@ background-position: center top;
 ```
 
 **padding:**
+
 ```css
 padding: 10px 20px;
 /* This EXPANDS to FOUR properties */
@@ -175,10 +194,12 @@ padding: 10px 20px;
 ```
 
 **Key insight:**
+
 - `background-position` components are **inseparable** (you always have x AND y)
 - `padding` sides are **independent** (you can set just padding-top)
 
 **Therefore:**
+
 - `background-position-x/y` are **redundant** (composite always has both)
 - `padding-top/right/bottom/left` are **essential** (independent values)
 
@@ -189,6 +210,7 @@ padding: 10px 20px;
 ### Rule 1: Implement Independent Longhands
 
 **YES to:**
+
 - `padding-top`, `padding-right`, `padding-bottom`, `padding-left`
 - `margin-top`, `margin-right`, `margin-bottom`, `margin-left`
 - `border-top-width`, `border-right-width`, etc.
@@ -199,11 +221,13 @@ padding: 10px 20px;
 ### Rule 2: Skip Redundant Siblings
 
 **NO to:**
+
 - `background-position-x`, `background-position-y`
 
 **Why:** `background-position` already provides both values. Siblings are **redundant views** into same data.
 
 **Rationale:**
+
 ```css
 /* If you want to set just X, you still need to specify Y */
 background-position-x: center;
@@ -216,6 +240,7 @@ background-position: center top;
 ### Rule 3: Skip ALL Shorthands
 
 **NO to:**
+
 - `padding` (expands to 4 properties)
 - `margin` (expands to 4 properties)
 - `border` (expands to width, style, color × 4 sides)
@@ -226,9 +251,11 @@ background-position: center top;
 ### Rule 4: Logical Properties (Future)
 
 **DEFER:**
+
 - `padding-block-start`, `padding-inline-end`, etc.
 
-**Why:** 
+**Why:**
+
 - Can be added later
 - Separate architectural decision
 - Not urgent for v1
@@ -237,13 +264,13 @@ background-position: center top;
 
 ## 🎯 Concrete Decision Matrix
 
-| Property Type | Example | Implement? | Reason |
-|---------------|---------|------------|--------|
-| Independent longhands | `padding-top` | ✅ YES | Essential, no redundancy |
-| Composite longhands | `background-position` | ✅ YES | Natural grouping |
-| Redundant siblings | `background-position-x` | ❌ NO | Composite covers it |
-| Shorthands | `padding` | ❌ NO | Expansion logic |
-| Logical properties | `padding-block-start` | 🟡 FUTURE | Separate decision |
+| Property Type         | Example                 | Implement? | Reason                   |
+| --------------------- | ----------------------- | ---------- | ------------------------ |
+| Independent longhands | `padding-top`           | ✅ YES     | Essential, no redundancy |
+| Composite longhands   | `background-position`   | ✅ YES     | Natural grouping         |
+| Redundant siblings    | `background-position-x` | ❌ NO      | Composite covers it      |
+| Shorthands            | `padding`               | ❌ NO      | Expansion logic          |
+| Logical properties    | `padding-block-start`   | 🟡 FUTURE  | Separate decision        |
 
 ---
 
@@ -252,35 +279,45 @@ background-position: center top;
 ### Phase 1: Individual Sides (40 properties)
 
 **Padding (4):**
+
 - `padding-top`, `padding-right`, `padding-bottom`, `padding-left`
 
 **Margin (4):**
+
 - `margin-top`, `margin-right`, `margin-bottom`, `margin-left`
 
 **Border Width (4):**
+
 - `border-top-width`, `border-right-width`, `border-bottom-width`, `border-left-width`
 
 **Border Style (4):**
+
 - `border-top-style`, `border-right-style`, `border-bottom-style`, `border-left-style`
 
 **Border Color (4):**
+
 - `border-top-color`, `border-right-color`, `border-bottom-color`, `border-left-color`
 
 **Border Radius (4):**
+
 - `border-top-left-radius`, `border-top-right-radius`, `border-bottom-right-radius`, `border-bottom-left-radius`
 
 **Width/Height (2):**
+
 - `width`, `height`
 
 **Min/Max (4):**
+
 - `min-width`, `max-width`, `min-height`, `max-height`
 
 **Others:**
+
 - `box-sizing`
 - `display`
 - ... etc
 
 **Characteristics:**
+
 - Each property: Simple value (length, percentage, keyword)
 - No composite structures
 - No expansion logic
@@ -289,12 +326,14 @@ background-position: center top;
 ### Phase 2: Composite Properties (As Needed)
 
 **Position/Size with structure:**
+
 - `background-position` (already done)
 - `background-size` (already done)
 - `transform-origin` (future: 2D/3D position)
 - `perspective-origin` (future: 2D position)
 
 **Characteristics:**
+
 - Composite values (Position2D, Size, etc.)
 - Single property with structure
 - NO redundant siblings
@@ -302,6 +341,7 @@ background-position: center top;
 ### Phase 3: Logical Properties (Future)
 
 **Only if user demand:**
+
 - `padding-block-start`, `padding-inline-end`, etc.
 - `margin-block-start`, `margin-inline-end`, etc.
 
@@ -326,6 +366,7 @@ background-position: center top;
 ```
 
 **Scaffold generates:**
+
 - Simple parser delegation
 - Simple generator delegation
 - Simple IR: `{ kind: "value", value: LengthPercentage }`
@@ -347,6 +388,7 @@ background-position: center top;
 ```
 
 **Scaffold generates:**
+
 - Structured parser delegation
 - Structured generator delegation
 - Structured IR: `{ kind: "list", values: Position2D[] }`
@@ -360,6 +402,7 @@ background-position: center top;
 ### If We Implement Siblings
 
 **background-position + siblings:**
+
 - `background-position` ✅
 - `background-position-x` ✅
 - `background-position-y` ✅
@@ -367,6 +410,7 @@ background-position: center top;
 **Total: 3 properties (1 composite + 2 siblings)**
 
 **Box model with siblings?**
+
 - `padding` ❌ (shorthand)
 - `padding-top`, `padding-right`, `padding-bottom`, `padding-left` ✅
 - `padding-block`, `padding-inline` ✅? (logical composites)
@@ -376,16 +420,19 @@ background-position: center top;
 **Total: 4 physical + 2 logical composites + 4 logical sides = 10 properties!**
 
 **Multiply by 4 (padding, margin, border-width, border-color):**
+
 - **40 properties → 100+ properties with siblings and logical variants**
 
 ### If We Skip Redundant Siblings
 
 **background-position only:**
+
 - `background-position` ✅
 
 **Total: 1 property**
 
 **Box model (physical only):**
+
 - 4 × padding, margin, border-width, border-style, border-color
 - 4 × border-radius
 - **Total: 24 properties**
@@ -448,6 +495,7 @@ background-position: center top;
 - **Logical properties** = future enhancement
 
 **Result:**
+
 - Clear, consistent policy
 - Manageable scope (24 box model properties vs 100+)
 - Covers 95%+ of use cases
@@ -462,18 +510,21 @@ background-position: center top;
 **CORRECT. We should NOT support them.**
 
 **Why:**
+
 - They're redundant with `background-position`
 - `background-position` always has both x and y values
 - Supporting siblings creates confusion without adding value
 - Scope management: skip redundancy
 
 **But we SHOULD support:**
+
 - `padding-top`, `padding-right`, `padding-bottom`, `padding-left` ✅
 - These are **independent** properties, not redundant siblings
 - Each can be set separately
 - No composite "padding with 4 values" alternative (that's a shorthand!)
 
 **The pattern:**
+
 - **Composite with inseparable values** → NO siblings
 - **Independent values** → YES, implement as separate properties
 
