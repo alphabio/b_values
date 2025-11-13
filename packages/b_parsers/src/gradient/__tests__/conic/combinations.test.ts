@@ -60,7 +60,7 @@ describe("Conic Gradient - Combinations", () => {
       if (pos && "kind" in pos.horizontal) {
         expect(pos.horizontal.kind).toBe("variable");
       }
-      if (result.value.colorStops[0]?.kind === "hint") throw new Error("Expected color stop, got hint");
+      if (!("color" in result.value.colorStops[0])) throw new Error("Expected color stop, got hint");
       expect(result.value.colorStops[0]?.color.kind).toBe("variable");
 
       const genResult = Generate.Gradient.Conic.generate(result.value);

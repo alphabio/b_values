@@ -18,11 +18,14 @@ export type ColorHint = z.infer<typeof colorHintSchema>;
 
 /**
  * Color stop in a gradient.
+ *
+ * Discriminated from ColorHint by presence of `color` field.
+ * ColorHint has `kind: "hint"`, ColorStop has `color`.
+ *
  * @see https://developer.mozilla.org/en-US/docs/Web/CSS/gradient/linear-gradient#color-stops
  */
 export const colorStopSchema = z
   .object({
-    kind: z.literal("stop").optional(), // Optional for backward compatibility
     color: colorSchema,
     position: z
       .union([

@@ -5,8 +5,10 @@
  *
  * Scans properties/star/definition.ts and generates:
  * 1. definitions.ts - Runtime registry (PROPERTY_DEFINITIONS)
- * 2. types.map.ts - TypeScript type map (PropertyIRMap)
- * 3. manifest.json - Property metadata for tooling
+ * 2. manifest.json - Property metadata for tooling
+ *
+ * Note: PropertyIRMap is derived via type inference in types.derived.ts,
+ * not generated. This eliminates sync issues and ensures single source of truth.
  *
  * Single source of truth. Single execution.
  *
@@ -18,7 +20,6 @@ import * as path from "node:path";
 
 const PROPERTIES_DIR = path.resolve(process.cwd(), "packages/b_declarations/src/properties");
 const DEFINITIONS_FILE = path.resolve(PROPERTIES_DIR, "definitions.ts");
-const TYPES_MAP_FILE = path.resolve(process.cwd(), "packages/b_declarations/src/types.map.ts");
 const MANIFEST_FILE = path.resolve(process.cwd(), "packages/b_declarations/src/manifest.json");
 
 interface PropertyInfo {
@@ -153,44 +154,6 @@ export type PropertyDefinitions = typeof PROPERTY_DEFINITIONS;
   console.log("✅ Generated definitions.ts");
 }
 
-async function generateTypesMapFile(properties: PropertyInfo[]): Promise<void> {
-  // Filter out custom properties for types.map
-  const standardProps = properties.filter((p) => p.propertyName !== "--*");
-
-  const imports = standardProps.map((p) => `  ${p.irTypeName},`).join("\n");
-  const mapEntries = standardProps.map((p) => `  "${p.propertyName}": ${p.irTypeName};`).join("\n");
-
-  const content = `// b_path:: packages/b_declarations/src/types.map.ts
-
-/**
- * Map of CSS property names to their IR types.
- *
- * ⚠️ THIS FILE IS AUTO-GENERATED. DO NOT EDIT MANUALLY.
- *
- * Run: pnpm generate:definitions
- *
- * Used for type-safe parsing and generation.
- */
-
-import type {
-${imports}
-  CustomPropertyIR
-} from "./properties";
-
-/**
- * Map of CSS property names to their IR types.
- * Used for type-safe parsing and generation.
- */
-export interface PropertyIRMap {
-${mapEntries}
-  [key: \`--\${string}\`]: CustomPropertyIR;
-}
-`;
-
-  await fs.writeFile(TYPES_MAP_FILE, content, "utf-8");
-  console.log("✅ Generated types.map.ts");
-}
-
 async function generateManifestFile(properties: PropertyInfo[]): Promise<void> {
   const manifest: Record<string, unknown> = {
     $schema: "./manifest.schema.json",
@@ -256,12 +219,12 @@ async function main() {
 
   console.log(`📦 Found ${properties.length} properties\n`);
 
-  // Generate all artifacts
+  // Generate artifacts
   await generateDefinitionsFile(properties);
-  await generateTypesMapFile(properties);
   await generateManifestFile(properties);
 
-  console.log("\n✨ Generation complete!\n");
+  console.log("\n✨ Generation complete!");
+  console.log("📝 PropertyIRMap derived via types.derived.ts (type-level)\n");
   console.log("Registered properties:");
   for (const p of properties) {
     console.log(`  • ${p.propertyName}`);

@@ -1,6 +1,6 @@
 {
   "$schema": "./manifest.schema.json",
-  "generated": "2025-11-13T05:44:23.609Z",
+  "generated": "2025-11-13T06:22:31.141Z",
   "properties": {
     "background-attachment": {
       "name": "background-attachment",

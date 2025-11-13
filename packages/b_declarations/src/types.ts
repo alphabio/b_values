@@ -59,8 +59,35 @@ export type MultiValueParser<T> = (value: string) => ParseResult<T>;
 
 /**
  * Parser for "raw" value properties.
- * Receives the raw value string without AST parsing.
- * Examples: custom properties, or intentionally opaque properties.
+ *
+ * Uses the raw CSS value string without AST parsing.
+ *
+ * **When to use:**
+ * - Custom properties (--*) - preserve exact user input
+ * - Properties where whitespace is semantically significant
+ * - Properties that shouldn't be interpreted/validated
+ * - Avoid AST parsing overhead for pass-through values
+ *
+ * **Benefits:**
+ * - Preserves exact whitespace and formatting
+ * - No parsing overhead (direct string pass-through)
+ * - Allows invalid CSS to be stored (for custom properties)
+ * - Defers validation to browser/runtime
+ *
+ * **Trade-offs:**
+ * - No structural validation at parse time
+ * - Can't extract typed metadata from value
+ * - Generator must handle raw strings
+ *
+ * @example Custom properties preserve exact formatting
+ * ```typescript
+ * // Input:  --my-color:   rgb(  255,  0,  0  )  ;
+ * // Stored: "  rgb(  255,  0,  0  )  " (exact)
+ * // Not:    "rgb(255, 0, 0)" (normalized)
+ * ```
+ *
+ * @see RawValueDefinition for usage in property definitions
+ * @see custom-property/definition.ts for reference implementation
  */
 export type RawValueParser<T> = (value: string) => ParseResult<T>;
 
@@ -82,6 +109,17 @@ type MultiValueDefinition<T> = {
 
 type RawValueDefinition<T> = {
   multiValue?: false;
+  /**
+   * When true, parser receives raw string without AST parsing.
+   *
+   * Use for properties that need exact preservation:
+   * - Custom properties (--*): Store user input verbatim
+   * - Properties with significant whitespace
+   * - Properties that are intentionally opaque
+   *
+   * The raw value includes everything between : and ; (or end of declaration),
+   * preserving all whitespace, comments, and formatting.
+   */
   rawValue: true;
   parser: RawValueParser<T>;
 };

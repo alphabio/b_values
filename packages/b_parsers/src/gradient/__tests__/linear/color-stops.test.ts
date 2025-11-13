@@ -120,9 +120,9 @@ describe("Linear Gradient Parser - Color Stops", () => {
 
       expect(result.ok).toBe(true);
       if (result.ok) {
-        if (result.value.colorStops[0]?.kind === "hint") throw new Error("Expected color stop, got hint");
-        if (result.value.colorStops[1]?.kind === "hint") throw new Error("Expected color stop, got hint");
-        if (result.value.colorStops[2]?.kind === "hint") throw new Error("Expected color stop, got hint");
+        if (!("color" in result.value.colorStops[0])) throw new Error("Expected color stop, got hint");
+        if (!("color" in result.value.colorStops[1])) throw new Error("Expected color stop, got hint");
+        if (!("color" in result.value.colorStops[2])) throw new Error("Expected color stop, got hint");
         expect(result.value.colorStops[0].color).toEqual({ kind: "named", name: "red" });
         expect(result.value.colorStops[1].color).toEqual({ kind: "named", name: "blue" });
         expect(result.value.colorStops[2].color).toEqual({ kind: "named", name: "green" });
@@ -135,8 +135,8 @@ describe("Linear Gradient Parser - Color Stops", () => {
 
       expect(result.ok).toBe(true);
       if (result.ok) {
-        if (result.value.colorStops[0]?.kind === "hint") throw new Error("Expected color stop, got hint");
-        if (result.value.colorStops[1]?.kind === "hint") throw new Error("Expected color stop, got hint");
+        if (!("color" in result.value.colorStops[0])) throw new Error("Expected color stop, got hint");
+        if (!("color" in result.value.colorStops[1])) throw new Error("Expected color stop, got hint");
         expect(result.value.colorStops[0].color.kind).toBe("hex");
         expect(result.value.colorStops[1].color.kind).toBe("hex");
       }
@@ -148,8 +148,8 @@ describe("Linear Gradient Parser - Color Stops", () => {
 
       expect(result.ok).toBe(true);
       if (result.ok) {
-        if (result.value.colorStops[0]?.kind === "hint") throw new Error("Expected color stop, got hint");
-        if (result.value.colorStops[1]?.kind === "hint") throw new Error("Expected color stop, got hint");
+        if (!("color" in result.value.colorStops[0])) throw new Error("Expected color stop, got hint");
+        if (!("color" in result.value.colorStops[1])) throw new Error("Expected color stop, got hint");
         expect(result.value.colorStops).toHaveLength(2);
         expect(result.value.colorStops[0].color.kind).toBe("rgb");
         expect(result.value.colorStops[1].color.kind).toBe("rgb");
@@ -162,8 +162,8 @@ describe("Linear Gradient Parser - Color Stops", () => {
 
       expect(result.ok).toBe(true);
       if (result.ok) {
-        if (result.value.colorStops[0]?.kind === "hint") throw new Error("Expected color stop, got hint");
-        if (result.value.colorStops[1]?.kind === "hint") throw new Error("Expected color stop, got hint");
+        if (!("color" in result.value.colorStops[0])) throw new Error("Expected color stop, got hint");
+        if (!("color" in result.value.colorStops[1])) throw new Error("Expected color stop, got hint");
         expect(result.value.colorStops).toHaveLength(2);
         expect(result.value.colorStops[0].color.kind).toBe("rgb");
         expect(result.value.colorStops[1].color.kind).toBe("rgb");
@@ -176,8 +176,8 @@ describe("Linear Gradient Parser - Color Stops", () => {
 
       expect(result.ok).toBe(true);
       if (result.ok) {
-        if (result.value.colorStops[0]?.kind === "hint") throw new Error("Expected color stop, got hint");
-        if (result.value.colorStops[1]?.kind === "hint") throw new Error("Expected color stop, got hint");
+        if (!("color" in result.value.colorStops[0])) throw new Error("Expected color stop, got hint");
+        if (!("color" in result.value.colorStops[1])) throw new Error("Expected color stop, got hint");
         expect(result.value.colorStops).toHaveLength(2);
         expect(result.value.colorStops[0].color.kind).toBe("hsl");
         expect(result.value.colorStops[1].color.kind).toBe("hsl");
@@ -190,8 +190,8 @@ describe("Linear Gradient Parser - Color Stops", () => {
 
       expect(result.ok).toBe(true);
       if (result.ok) {
-        if (result.value.colorStops[0]?.kind === "hint") throw new Error("Expected color stop, got hint");
-        if (result.value.colorStops[1]?.kind === "hint") throw new Error("Expected color stop, got hint");
+        if (!("color" in result.value.colorStops[0])) throw new Error("Expected color stop, got hint");
+        if (!("color" in result.value.colorStops[1])) throw new Error("Expected color stop, got hint");
         expect(result.value.colorStops).toHaveLength(2);
         expect(result.value.colorStops[0].color.kind).toBe("hsl");
         expect(result.value.colorStops[1].color.kind).toBe("hsl");
@@ -204,8 +204,8 @@ describe("Linear Gradient Parser - Color Stops", () => {
 
       expect(result.ok).toBe(true);
       if (result.ok) {
-        if (result.value.colorStops[0]?.kind === "hint") throw new Error("Expected color stop, got hint");
-        if (result.value.colorStops[1]?.kind === "hint") throw new Error("Expected color stop, got hint");
+        if (!("color" in result.value.colorStops[0])) throw new Error("Expected color stop, got hint");
+        if (!("color" in result.value.colorStops[1])) throw new Error("Expected color stop, got hint");
         expect(result.value.colorStops).toHaveLength(2);
         expect(result.value.colorStops[0].color).toEqual({ kind: "variable", name: "--color-1" });
         expect(result.value.colorStops[1].color).toEqual({ kind: "variable", name: "--color-2" });
@@ -218,9 +218,9 @@ describe("Linear Gradient Parser - Color Stops", () => {
 
       expect(result.ok).toBe(true);
       if (result.ok) {
-        if (result.value.colorStops[0]?.kind === "hint") throw new Error("Expected color stop, got hint");
-        if (result.value.colorStops[1]?.kind === "hint") throw new Error("Expected color stop, got hint");
-        if (result.value.colorStops[2]?.kind === "hint") throw new Error("Expected color stop, got hint");
+        if (!("color" in result.value.colorStops[0])) throw new Error("Expected color stop, got hint");
+        if (!("color" in result.value.colorStops[1])) throw new Error("Expected color stop, got hint");
+        if (!("color" in result.value.colorStops[2])) throw new Error("Expected color stop, got hint");
         expect(result.value.colorStops).toHaveLength(3);
         expect(result.value.colorStops[0].color.kind).toBe("named");
         expect(result.value.colorStops[1].color.kind).toBe("hex");
@@ -234,8 +234,8 @@ describe("Linear Gradient Parser - Color Stops", () => {
 
       expect(result.ok).toBe(true);
       if (result.ok) {
-        if (result.value.colorStops[0]?.kind === "hint") throw new Error("Expected color stop, got hint");
-        if (result.value.colorStops[1]?.kind === "hint") throw new Error("Expected color stop, got hint");
+        if (!("color" in result.value.colorStops[0])) throw new Error("Expected color stop, got hint");
+        if (!("color" in result.value.colorStops[1])) throw new Error("Expected color stop, got hint");
         expect(result.value.colorStops).toHaveLength(2);
         expect(result.value.colorStops[0].color.kind).toBe("rgb");
         expect(result.value.colorStops[0].position).toEqual({ kind: "literal", value: 0, unit: "%" });
