@@ -9,6 +9,7 @@
 ## ✅ Validation Complete
 
 ### Code Quality
+
 - ✅ `just check` - **ZERO warnings** (routeTree.gen.ts properly excluded)
 - ✅ `just test` - **167 test files, 2427 tests passing**
 - ✅ `just build` - **All packages build successfully**
@@ -16,6 +17,7 @@
 - ✅ Git - **Clean working tree**
 
 ### Session Handover Review
+
 - ✅ **Session 070** - Bootstrap audit complete
 - ✅ **Session 069** - CSS taxonomy migration deployed
 - ✅ **Session 068** - Manifest and scaffolding strategy documented
@@ -26,7 +28,9 @@
 ## 📊 Current Architecture Status
 
 ### Background Properties (9/9 Complete)
+
 All background longhand properties fully implemented:
+
 - ✅ background-attachment (with tests)
 - ✅ background-blend-mode (with tests)
 - ✅ background-clip (with tests)
@@ -38,8 +42,9 @@ All background longhand properties fully implemented:
 - ✅ background-size (with tests)
 
 ### Additional Properties
+
 - ✅ mix-blend-mode (with tests)
-- ✅ custom properties (--*, with tests)
+- ✅ custom properties (--\*, with tests)
 
 **Total Implemented:** 11 properties with full parse/generate/test coverage
 
@@ -52,12 +57,14 @@ All background longhand properties fully implemented:
 **Status:** ⚠️ BREAKING CHANGE REQUIRED (Documented, not blocking)
 
 #### 1. Generator Naming Refactor
+
 - **Current:** `Position.generatePosition2D()`
 - **Target:** `Position.generate()`
 - **Impact:** 1 call site in background-position generator
 - **Document:** `GENERATOR_NAMING_REFACTOR.md`
 
 #### 2. Background Properties Retrofit
+
 - **Issue:** 4 properties have inline types (blocking full automation)
 - **Affected:** background-position, background-attachment, background-clip, background-origin
 - **Solution:** Extract inline types to @b/types
@@ -92,12 +99,14 @@ From SESSION_HANDOVER.md handover checklist:
 ### Required for Transition Properties
 
 **Foundation Types Needed:**
+
 - ❌ **Time** type (for duration, delay)
 - ❌ **EasingFunction** type (for timing-function)
 - ❌ **PropertyName** type (for transition-property)
 
 **Pattern Validation:**
-- ✅ Multi-value properties (background-* proven)
+
+- ✅ Multi-value properties (background-\* proven)
 - ✅ Keyword handling (blend-modes, attachment, etc.)
 - ✅ Function parsing (gradients, colors)
 - ✅ Type system (Angle, Length, Percentage working)
@@ -116,6 +125,7 @@ All pending items from Session 070 are **automation optimizations**, not prerequ
 **Why:** Architecture is proven, no blockers exist, transition types follow established patterns.
 
 **Plan:**
+
 1. Create Time type (45-60 min) - follows Angle/Length pattern
 2. Implement transition-duration + transition-delay (30-45 min)
 3. Test and validate (15-30 min)
@@ -129,6 +139,7 @@ All pending items from Session 070 are **automation optimizations**, not prerequ
 **Why:** Optimize before scaling.
 
 **Plan:**
+
 1. Fix Position.generate() naming (15 min)
 2. Extract background inline types (60-90 min)
 3. Then proceed with transition
@@ -142,6 +153,7 @@ All pending items from Session 070 are **automation optimizations**, not prerequ
 **Proceed with Option A: Transition Properties**
 
 **Rationale:**
+
 1. No actual blockers exist
 2. Transition validates architecture at new complexity level
 3. Automation items can be done in parallel or after

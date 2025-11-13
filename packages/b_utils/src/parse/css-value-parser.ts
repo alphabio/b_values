@@ -29,7 +29,7 @@ import type { CssValue } from "@b/types";
  * @internal Use via @b/parsers for property parsing
  * @see {@link @b/parsers/utils/parseNodeToCssValue} for property parsing
  */
-export function parseCssValueNode(node: csstree.CssNode): ParseResult<CssValue> {
+export function parseCssValueNodeInternal(node: csstree.CssNode): ParseResult<CssValue> {
   switch (node.type) {
     case "Number": {
       const value = Number.parseFloat(node.value);
@@ -112,14 +112,15 @@ export function parseCssValueNode(node: csstree.CssNode): ParseResult<CssValue> 
             // Parse the raw string as a CSS value
             try {
               const rawAst = csstree.parse(firstNode.value.trim(), { context: "value" });
-              // biome-ignore lint/suspicious/noExplicitAny: css-tree List type not exposed in type definitions
-              const rawChildren = (rawAst as any).children?.toArray();
-              if (rawChildren && rawChildren.length > 0) {
-                const fallbackResult = parseCssValueNode(rawChildren[0]);
-                if (!fallbackResult.ok) {
-                  return fallbackResult;
+              if (rawAst.type === "Value" && rawAst.children) {
+                const rawChildren = rawAst.children.toArray();
+                if (rawChildren.length > 0) {
+                  const fallbackResult = parseCssValueNodeInternal(rawChildren[0]);
+                  if (!fallbackResult.ok) {
+                    return fallbackResult;
+                  }
+                  fallback = fallbackResult.value;
                 }
-                fallback = fallbackResult.value;
               }
             } catch {
               // If parsing fails, treat as invalid
@@ -130,7 +131,7 @@ export function parseCssValueNode(node: csstree.CssNode): ParseResult<CssValue> 
             }
           } else {
             // RECURSION: Parse the content of the fallback argument
-            const fallbackResult = parseCssValueNode(firstNode);
+            const fallbackResult = parseCssValueNodeInternal(firstNode);
             if (!fallbackResult.ok) {
               return fallbackResult;
             }
@@ -154,7 +155,7 @@ export function parseCssValueNode(node: csstree.CssNode): ParseResult<CssValue> 
 
       for (const child of argumentNodes) {
         // RECURSION: This handles the nested primitives or other functions inside
-        const argResult = parseCssValueNode(child);
+        const argResult = parseCssValueNodeInternal(child);
         if (argResult.ok) {
           args.push(argResult.value);
         } else {

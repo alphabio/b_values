@@ -1,7 +1,7 @@
 // b_path:: packages/b_parsers/src/utils/css-value-parser.ts
 import type * as csstree from "@eslint/css-tree";
 import { forwardParseErr, type ParseResult, type CssValue } from "@b/types";
-import { parseCssValueNode } from "@b/utils";
+import { parseCssValueNodeInternal } from "@b/utils";
 import { parseComplexFunction } from "./function-dispatcher";
 
 /**
@@ -48,5 +48,5 @@ export function parseNodeToCssValue(node: csstree.CssNode): ParseResult<CssValue
   }
 
   // Fall back to basic parser for primitives and unknown functions
-  return parseCssValueNode(node);
+  return parseCssValueNodeInternal(node);
 }

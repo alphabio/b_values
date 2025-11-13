@@ -1,7 +1,7 @@
 // b_path:: packages/b_utils/src/parse/css-value-parser.test.ts
 import { describe, expect, it } from "vitest";
 import * as csstree from "@eslint/css-tree";
-import { parseCssValueNode, getChildren, getValues } from "./css-value-parser";
+import { parseCssValueNodeInternal, getChildren, getValues } from "./css-value-parser";
 
 describe("parseCssValueNode", () => {
   it("should parse a Number node", () => {
@@ -17,7 +17,7 @@ describe("parseCssValueNode", () => {
       throw new Error("Unexpected non-Number node");
     }
     // 3. Pass the specific child node to your parsing function
-    const result = parseCssValueNode(childNode);
+    const result = parseCssValueNodeInternal(childNode);
 
     expect(result.ok).toBe(true);
     if (result.ok) {
@@ -37,7 +37,7 @@ describe("parseCssValueNode", () => {
     if (!childNode) {
       throw new Error("Unexpected node");
     }
-    const result = parseCssValueNode(childNode);
+    const result = parseCssValueNodeInternal(childNode);
     expect(result.ok).toBe(true);
     if (result.ok) {
       expect(result.value).toEqual({ kind: "literal", value: 50, unit: "%" });
@@ -55,7 +55,7 @@ describe("parseCssValueNode", () => {
     if (!childNode) {
       throw new Error("Unexpected node");
     }
-    const result = parseCssValueNode(childNode);
+    const result = parseCssValueNodeInternal(childNode);
     expect(result.ok).toBe(true);
     if (result.ok) {
       expect(result.value).toEqual({ kind: "literal", value: 10, unit: "px" });
@@ -73,7 +73,7 @@ describe("parseCssValueNode", () => {
     if (!childNode) {
       throw new Error("Unexpected node");
     }
-    const result = parseCssValueNode(childNode);
+    const result = parseCssValueNodeInternal(childNode);
     expect(result.ok).toBe(true);
     if (result.ok) {
       expect(result.value).toEqual({ kind: "keyword", value: "none" });
@@ -91,7 +91,7 @@ describe("parseCssValueNode", () => {
     if (!childNode) {
       throw new Error("Unexpected node");
     }
-    const result = parseCssValueNode(childNode);
+    const result = parseCssValueNodeInternal(childNode);
     expect(result.ok).toBe(true);
     if (result.ok) {
       expect(result.value).toEqual({ kind: "string", value: "string" });
@@ -109,7 +109,7 @@ describe("parseCssValueNode", () => {
     if (!childNode) {
       throw new Error("Unexpected node");
     }
-    const result = parseCssValueNode(childNode);
+    const result = parseCssValueNodeInternal(childNode);
     expect(result.ok).toBe(true);
     if (result.ok) {
       expect(result.value).toEqual({ kind: "variable", name: "--my-color" });
@@ -129,7 +129,7 @@ describe("parseCssValueNode", () => {
     if (!childNode) {
       throw new Error("Unexpected node");
     }
-    const result = parseCssValueNode(childNode);
+    const result = parseCssValueNodeInternal(childNode);
     expect(result.ok).toBe(true);
     if (result.ok) {
       expect(result.value).toEqual({ kind: "variable", name: "--my-color" });
@@ -165,7 +165,7 @@ describe("parseCssValueNode", () => {
       } as unknown as csstree.List<csstree.CssNode>,
     } as csstree.FunctionNode;
 
-    const result = parseCssValueNode(mockVarNode);
+    const result = parseCssValueNodeInternal(mockVarNode);
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(result.issues[0]?.message).toContain("expected a custom property name");
@@ -183,7 +183,7 @@ describe("parseCssValueNode", () => {
     if (!childNode) {
       throw new Error("Unexpected node");
     }
-    const result = parseCssValueNode(childNode);
+    const result = parseCssValueNodeInternal(childNode);
     expect(result.ok).toBe(true);
     if (result.ok) {
       expect(result.value.kind).toBe("function");
@@ -196,7 +196,7 @@ describe("parseCssValueNode", () => {
 
   it("should return error for invalid number", () => {
     const fakeNode = { type: "Number" as const, value: "not-a-number" };
-    const result = parseCssValueNode(fakeNode as csstree.CssNode);
+    const result = parseCssValueNodeInternal(fakeNode as csstree.CssNode);
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(result.issues[0]?.message).toContain("Invalid number value");
@@ -205,7 +205,7 @@ describe("parseCssValueNode", () => {
 
   it("should return error for invalid percentage", () => {
     const fakeNode = { type: "Percentage" as const, value: "not-a-number" };
-    const result = parseCssValueNode(fakeNode as csstree.CssNode);
+    const result = parseCssValueNodeInternal(fakeNode as csstree.CssNode);
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(result.issues[0]?.message).toContain("Invalid percentage value");
@@ -214,7 +214,7 @@ describe("parseCssValueNode", () => {
 
   it("should return error for invalid dimension", () => {
     const fakeNode = { type: "Dimension" as const, value: "not-a-number", unit: "px" };
-    const result = parseCssValueNode(fakeNode as csstree.CssNode);
+    const result = parseCssValueNodeInternal(fakeNode as csstree.CssNode);
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(result.issues[0]?.message).toContain("Invalid dimension value");
