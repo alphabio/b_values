@@ -1,6 +1,6 @@
 {
   "$schema": "./manifest.schema.json",
-  "generated": "2025-11-13T14:43:28.561Z",
+  "generated": "2025-11-13T15:58:49.841Z",
   "properties": {
     "background-attachment": {
       "name": "background-attachment",
@@ -82,6 +82,102 @@
       "mode": "multi",
       "irType": "BackgroundSizeIR"
     },
+    "border-bottom-left-radius": {
+      "name": "border-bottom-left-radius",
+      "syntax": "<length-percentage [0,∞]>{1,2}",
+      "inherited": false,
+      "initial": "0",
+      "mode": "single",
+      "irType": "BorderBottomLeftRadiusIR"
+    },
+    "border-bottom-right-radius": {
+      "name": "border-bottom-right-radius",
+      "syntax": "<length-percentage [0,∞]>{1,2}",
+      "inherited": false,
+      "initial": "0",
+      "mode": "single",
+      "irType": "BorderBottomRightRadiusIR"
+    },
+    "border-bottom-width": {
+      "name": "border-bottom-width",
+      "syntax": "<line-width>",
+      "inherited": false,
+      "initial": "medium",
+      "mode": "single",
+      "irType": "BorderBottomWidthIR"
+    },
+    "border-left-width": {
+      "name": "border-left-width",
+      "syntax": "<line-width>",
+      "inherited": false,
+      "initial": "medium",
+      "mode": "single",
+      "irType": "BorderLeftWidthIR"
+    },
+    "border-right-width": {
+      "name": "border-right-width",
+      "syntax": "<line-width>",
+      "inherited": false,
+      "initial": "medium",
+      "mode": "single",
+      "irType": "BorderRightWidthIR"
+    },
+    "border-top-left-radius": {
+      "name": "border-top-left-radius",
+      "syntax": "<length-percentage [0,∞]>{1,2}",
+      "inherited": false,
+      "initial": "0",
+      "mode": "single",
+      "irType": "BorderTopLeftRadiusIR"
+    },
+    "border-top-right-radius": {
+      "name": "border-top-right-radius",
+      "syntax": "<length-percentage [0,∞]>{1,2}",
+      "inherited": false,
+      "initial": "0",
+      "mode": "single",
+      "irType": "BorderTopRightRadiusIR"
+    },
+    "border-top-width": {
+      "name": "border-top-width",
+      "syntax": "<line-width>",
+      "inherited": false,
+      "initial": "medium",
+      "mode": "single",
+      "irType": "BorderTopWidthIR"
+    },
+    "margin-bottom": {
+      "name": "margin-bottom",
+      "syntax": "<length-percentage> | auto",
+      "inherited": false,
+      "initial": "0",
+      "mode": "single",
+      "irType": "MarginBottomIR"
+    },
+    "margin-left": {
+      "name": "margin-left",
+      "syntax": "<length-percentage> | auto",
+      "inherited": false,
+      "initial": "0",
+      "mode": "single",
+      "irType": "MarginLeftIR"
+    },
+    "margin-right": {
+      "name": "margin-right",
+      "syntax": "<length-percentage> | auto",
+      "inherited": false,
+      "initial": "0",
+      "mode": "single",
+      "irType": "MarginRightIR"
+    },
+    "margin-top": {
+      "name": "margin-top",
+      "syntax": "<length-percentage> | auto",
+      "inherited": false,
+      "initial": "0",
+      "mode": "single",
+      "irType": "MarginTopIR"
+    },
     "mix-blend-mode": {
       "name": "mix-blend-mode",
       "syntax": "<blend-mode>",
@@ -89,6 +185,38 @@
       "initial": "normal",
       "mode": "single",
       "irType": "MixBlendModeIR"
+    },
+    "padding-bottom": {
+      "name": "padding-bottom",
+      "syntax": "<length-percentage [0,∞]>",
+      "inherited": false,
+      "initial": "0",
+      "mode": "single",
+      "irType": "PaddingBottomIR"
+    },
+    "padding-left": {
+      "name": "padding-left",
+      "syntax": "<length-percentage [0,∞]>",
+      "inherited": false,
+      "initial": "0",
+      "mode": "single",
+      "irType": "PaddingLeftIR"
+    },
+    "padding-right": {
+      "name": "padding-right",
+      "syntax": "<length-percentage [0,∞]>",
+      "inherited": false,
+      "initial": "0",
+      "mode": "single",
+      "irType": "PaddingRightIR"
+    },
+    "padding-top": {
+      "name": "padding-top",
+      "syntax": "<length-percentage [0,∞]>",
+      "inherited": false,
+      "initial": "0",
+      "mode": "single",
+      "irType": "PaddingTopIR"
     }
   }
 }

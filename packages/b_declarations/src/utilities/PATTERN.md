@@ -86,10 +86,7 @@ export function parseBoxSides(
 }
 
 // utilities/box-sides/generator.ts
-export function generateBoxSides<T>(
-  sides: BoxSides<T>,
-  itemGenerator: (value: T) => GenerateResult
-): GenerateResult {
+export function generateBoxSides<T>(sides: BoxSides<T>, itemGenerator: (value: T) => GenerateResult): GenerateResult {
   // Generate shortest form (1-4 values)
 }
 
@@ -111,7 +108,7 @@ import * as Parsers from "@b/parsers";
 export function parsePaddingTop(ast: csstree.Value): ParseResult<PaddingTopIR> {
   const firstNode = ast.children.first;
   if (!firstNode) return parseErr(...);
-  
+
   // Use core parser, not utility (utilities are for shorthands)
   const result = Parsers.Length.parseNode(firstNode);
   // ...
@@ -135,6 +132,7 @@ export function parsePaddingTop(ast: csstree.Value): ParseResult<PaddingTopIR> {
 ### Future Utilities
 
 #### `box-sides/`
+
 **Shorthands:** `padding`, `margin`, `border-width`, `border-style`, `border-color`  
 **Longhands:** `padding-top`, `padding-right`, `padding-bottom`, `padding-left` (×5 property groups)
 
@@ -143,7 +141,7 @@ export function parsePaddingTop(ast: csstree.Value): ParseResult<PaddingTopIR> {
 export function parseBoxSides(
   ast: csstree.Value,
   itemParser: (node: csstree.CssNode) => ParseResult<T>
-): ParseResult<BoxSides<T>>
+): ParseResult<BoxSides<T>>;
 
 // Usage in b_short:
 import { parseBoxSides } from "@b/declarations/utilities/box-sides";
@@ -152,25 +150,23 @@ import { parseBoxSides } from "@b/declarations/utilities/box-sides";
 ```
 
 #### `box-corners/`
+
 **Shorthand:** `border-radius`  
 **Longhands:** `border-top-left-radius`, `border-top-right-radius`, etc.
 
 ```typescript
 // utilities/box-corners/parser.ts
-export function parseBoxCorners(
-  ast: csstree.Value
-): ParseResult<BoxCorners<T>>
+export function parseBoxCorners(ast: csstree.Value): ParseResult<BoxCorners<T>>;
 ```
 
 #### `border-side/`
+
 **Shorthands:** `border-top`, `border-right`, `border-bottom`, `border-left`  
 **Longhands:** `border-top-width`, `border-top-style`, `border-top-color`
 
 ```typescript
 // utilities/border-side/parser.ts
-export function parseBorderSide(
-  ast: csstree.Value
-): ParseResult<{ width: T, style: T, color: T }>
+export function parseBorderSide(ast: csstree.Value): ParseResult<{ width: T; style: T; color: T }>;
 ```
 
 ---

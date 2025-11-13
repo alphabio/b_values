@@ -36,7 +36,23 @@ import { backgroundPositionX } from "./background-position-x/definition";
 import { backgroundPositionY } from "./background-position-y/definition";
 import { backgroundRepeat } from "./background-repeat/definition";
 import { backgroundSize } from "./background-size/definition";
+import { borderBottomLeftRadius } from "./border-bottom-left-radius/definition";
+import { borderBottomRightRadius } from "./border-bottom-right-radius/definition";
+import { borderBottomWidth } from "./border-bottom-width/definition";
+import { borderLeftWidth } from "./border-left-width/definition";
+import { borderRightWidth } from "./border-right-width/definition";
+import { borderTopLeftRadius } from "./border-top-left-radius/definition";
+import { borderTopRightRadius } from "./border-top-right-radius/definition";
+import { borderTopWidth } from "./border-top-width/definition";
+import { marginBottom } from "./margin-bottom/definition";
+import { marginLeft } from "./margin-left/definition";
+import { marginRight } from "./margin-right/definition";
+import { marginTop } from "./margin-top/definition";
 import { mixBlendMode } from "./mix-blend-mode/definition";
+import { paddingBottom } from "./padding-bottom/definition";
+import { paddingLeft } from "./padding-left/definition";
+import { paddingRight } from "./padding-right/definition";
+import { paddingTop } from "./padding-top/definition";
 
 /**
  * Central definitions object.
@@ -61,7 +77,23 @@ export const PROPERTY_DEFINITIONS = {
   "background-position-y": backgroundPositionY,
   "background-repeat": backgroundRepeat,
   "background-size": backgroundSize,
+  "border-bottom-left-radius": borderBottomLeftRadius,
+  "border-bottom-right-radius": borderBottomRightRadius,
+  "border-bottom-width": borderBottomWidth,
+  "border-left-width": borderLeftWidth,
+  "border-right-width": borderRightWidth,
+  "border-top-left-radius": borderTopLeftRadius,
+  "border-top-right-radius": borderTopRightRadius,
+  "border-top-width": borderTopWidth,
+  "margin-bottom": marginBottom,
+  "margin-left": marginLeft,
+  "margin-right": marginRight,
+  "margin-top": marginTop,
   "mix-blend-mode": mixBlendMode,
+  "padding-bottom": paddingBottom,
+  "padding-left": paddingLeft,
+  "padding-right": paddingRight,
+  "padding-top": paddingTop,
 } as const;
 
 /**

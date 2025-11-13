@@ -1,9 +1,9 @@
-// b_path:: packages/b_declarations/src/properties/border-top-width/types.ts
+// b_path:: packages/b_declarations/src/properties/border-bottom-width/types.ts
 
 import type { CssValue } from "@b/types";
 import type * as Keywords from "@b/keywords";
 
-export type BorderTopWidthIR =
+export type BorderBottomWidthIR =
   | {
       kind: "keyword";
       value: "initial" | "inherit" | "unset" | "revert" | "revert-layer" | Keywords.BorderWidth.LineWidthKeyword;

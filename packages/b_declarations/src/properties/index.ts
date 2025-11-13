@@ -16,10 +16,22 @@ export * from "./background-position-x";
 export * from "./background-position-y";
 export * from "./background-repeat";
 export * from "./background-size";
+export * from "./border-bottom-left-radius";
+export * from "./border-bottom-right-radius";
+export * from "./border-bottom-width";
+export * from "./border-left-width";
+export * from "./border-right-width";
 export * from "./border-top-left-radius";
+export * from "./border-top-right-radius";
 export * from "./border-top-width";
+export * from "./margin-bottom";
+export * from "./margin-left";
+export * from "./margin-right";
 export * from "./margin-top";
 export * from "./mix-blend-mode";
+export * from "./padding-bottom";
+export * from "./padding-left";
+export * from "./padding-right";
 export * from "./padding-top";
 
 // Mark registry as initialized after all properties are loaded

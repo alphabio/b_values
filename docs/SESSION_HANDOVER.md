@@ -12,6 +12,7 @@
 **Problem:** `utilities/position/definition.ts` called `defineProperty()` → registered shorthand in runtime but NOT in types → **two sources of truth**
 
 **Solution:**
+
 - Removed `definition.ts` from utilities
 - Utilities now export plain functions only
 - Created `utilities/PATTERN.md` documenting the rule
@@ -42,15 +43,16 @@
 ### 3. 🔍 Discovered Parser API Inconsistency
 
 **Observation:**
+
 ```typescript
 // Expected:
-Parsers.Length.parse(node)
+Parsers.Length.parse(node);
 
 // Reality:
-Parsers.Length.parseLengthPercentageNode(node)
+Parsers.Length.parseLengthPercentageNode(node);
 
 // Our workaround:
-Parsers.Utils.parseNodeToCssValue(node)
+Parsers.Utils.parseNodeToCssValue(node);
 ```
 
 **Patterns:** `parse()`, `parseNode()`, `parseLengthPercentageNode()` - all different
@@ -68,12 +70,14 @@ Parsers.Utils.parseNodeToCssValue(node)
 **This is about upgrading our knowledge and building a world-class product.**
 
 Not panic, not crisis - we're:
+
 - ✅ Recognizing patterns
 - ✅ Documenting trade-offs
 - ✅ Making informed choices
 - ✅ Shipping with confidence
 
 **Parser API inconsistency example:**
+
 - Not blocking (workaround exists)
 - But understanding it → better decisions at scale
 - Documentation → future contributors benefit
@@ -83,6 +87,7 @@ Not panic, not crisis - we're:
 ## 🚀 Next Steps
 
 **Box model scaling:**
+
 - 4 templates ready
 - 20 remaining properties (copy-paste-modify)
 - ~2-3 hours systematic implementation
