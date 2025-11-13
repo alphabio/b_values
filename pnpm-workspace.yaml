@@ -13,8 +13,8 @@ catalog:
   '@tanstack/react-router-devtools': ^1.135.2
   '@tanstack/react-start': 1.135.2
   '@types/css-tree': ^2.3.11
-  '@types/react': ^19.2.2
-  '@types/react-dom': ^19.2.2
+  '@types/react': ^19.2.4
+  '@types/react-dom': ^19.2.3
   b_short: ^2.7.2
   class-variance-authority: ^0.7.1
   clsx: ^2.1.1
