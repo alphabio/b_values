@@ -55,6 +55,49 @@ When asked to add properties or utilities:
 
 ---
 
+## 🔍 Execution Protocol
+
+**BEFORE implementing anything new:**
+
+1. **Find existing examples** - Look at similar code FIRST
+   ```bash
+   # Find similar properties
+   ls packages/b_declarations/src/properties/
+   
+   # View working implementation
+   cat packages/b_declarations/src/properties/background-color/parser.ts
+   ```
+
+2. **Verify API surface** - Check what's actually exported
+   ```bash
+   # Check parsers exports
+   cat packages/b_parsers/src/index.ts
+   
+   # Check generators exports
+   cat packages/b_generators/src/index.ts
+   ```
+
+3. **Copy-paste-modify** - Don't assume, copy working code
+   - Start with working property as template
+   - Modify only what's different
+   - Keep structure identical
+
+4. **Verify BEFORE committing**
+   ```bash
+   just check    # ALWAYS run before git commit
+   just build    # Verify compilation
+   ```
+
+**NEVER:**
+- ❌ Assume function names without checking exports
+- ❌ Guess API shapes without looking at code
+- ❌ Commit without running `just check`
+- ❌ Claim "✅ Complete" without verification
+
+**If you didn't look at existing code, you're doing it wrong.**
+
+---
+
 ## 🎯 Session Startup Protocol
 
 When starting a new session, execute the bootstrap protocol:
