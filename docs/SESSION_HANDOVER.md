@@ -1,99 +1,161 @@
-# Session 072 Handover
+# Session 073 Handover - Foundation Properties for Animation Platform
 
-**Date:** 2025-11-13
-**Status:** 🟢 COMPLETE
-
----
-
-## 🎯 What We Accomplished
-
-### 1. ✅ Fixed Critical Architectural Issue - Utilities Pattern
-
-**Problem:** `utilities/position/definition.ts` called `defineProperty()` → registered shorthand in runtime but NOT in types → **two sources of truth**
-
-**Solution:**
-
-- Removed `definition.ts` from utilities
-- Utilities now export plain functions only
-- Created `utilities/PATTERN.md` documenting the rule
-- Updated `utilities/README.md` with warnings
-
-**Commit:** `da20cd6`
+**Date:** 2025-11-13  
+**Status:** 🟡 IN-PROGRESS - Foundation Building
 
 ---
 
-### 2. ✅ Implemented Box Model Property Templates
+## 🎯 Core Mission
 
-**Created 4 reference implementations:**
+**We are building a music visualization and art platform where:**
 
-1. **`padding-top`** - Simple `<length-percentage>`
-2. **`margin-top`** - Adds `auto` keyword
-3. **`border-top-width`** - Line-width keywords
-4. **`border-top-left-radius`** - 1-2 values (circular/elliptical)
+1. **Casual users** → Experiment with visualizations
+2. **Curious users** → Learn how things work, go deeper
+3. **Experienced users** → **Package and bundle their abilities for others to leverage**
 
-**Pattern:** All use `Parsers.Utils.parseNodeToCssValue(node)`
-
-**Properties:** 12 → 16 (+4)
-**Tests:** 2427 passing ✅
-
-**Commit:** `73d95cb`
+**The hinge:** Experienced users sharing their work enables the entire ecosystem.
 
 ---
 
-### 3. 🔍 Discovered Parser API Inconsistency
+## 💡 Critical Insight
 
-**Observation:**
+**The CSS property system we're building isn't the product.**
 
-```typescript
-// Expected:
-Parsers.Length.parse(node);
+It's the **infrastructure that enables:**
+- Parsing artist-created visualizations (SVG + CSS animations)
+- Transforming them semantically (not just text manipulation)
+- Packaging them for reuse (type-safe bundles)
+- Distributing them (experienced users → others)
 
-// Reality:
-Parsers.Length.parseLengthPercentageNode(node);
+**We knew this from the outset.** We had to solve CSS/SVG properties FIRST because without it, you can't parse, transform, or package artist work reliably.
 
-// Our workaround:
-Parsers.Utils.parseNodeToCssValue(node);
+---
+
+## 📊 Current State
+
+### ✅ Completed This Session
+- **Box Model Scale-Out:** 16 → 36 properties (+20)
+  - Padding (4), Margin (4), Border Width (4), Border Radius (4)
+  - Border Style (4 - keyword-only pattern)
+  - Border Color (4 - uses paint/color)
+- **Keyword Export Fix:** Removed namespace antipattern, alphabetical ordering
+- **Keyword-Only Pattern:** Established as first-class architectural pattern
+- **Test Infrastructure:** Updated integrity tests for keyword-only properties
+- **SVG Vision:** Documented complete roadmap and platform vision
+- **2427 tests passing ✅**
+
+### 🔨 Foundation Properties Still Needed
+
+**Priority order for animation platform:**
+
+#### 1. Transition Properties (4 longhands)
+- `transition-property`, `transition-duration`, `transition-timing-function`, `transition-delay`
+- **Requires:** `<time>` parser, `<easing-function>` parser
+
+#### 2. Animation Properties (8 longhands)  
+- `animation-name`, `animation-duration`, `animation-timing-function`, `animation-delay`
+- `animation-iteration-count`, `animation-direction`, `animation-fill-mode`, `animation-play-state`
+- **Requires:** Reuse `<time>` and `<easing-function>`, add keyword enums
+
+#### 3. SVG Properties (11 core - ANIMATION KEY)
+- **Paint:** `fill`, `stroke`
+- **Opacity:** `fill-opacity`, `stroke-opacity`, `opacity`
+- **Stroke:** `stroke-width`, `stroke-dasharray`, `stroke-dashoffset`, `stroke-linecap`, `stroke-linejoin`, `stroke-miterlimit`
+- **Requires:** `<paint>` type (Color | none | url), alpha-value parser
+
+#### 4. Transform Properties (4 longhands)
+- `transform`, `transform-origin`, `transform-style`, `transform-box`
+- **Requires:** Transform function parser, origin parser
+
+---
+
+## 🏗️ Infrastructure To Build
+
+### Phase 1: Time and Easing (Unlocks Transition/Animation)
+
+1. **`<time>` type and parser**
+   ```typescript
+   type Time = { kind: "time"; value: number; unit: "s" | "ms" }
+   parseTime("300ms") // → { kind: "time", value: 300, unit: "ms" }
+   ```
+
+2. **`<easing-function>` type and parser**
+   ```typescript
+   type EasingFunction = 
+     | { kind: "keyword"; value: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" }
+     | { kind: "cubic-bezier"; x1: number; y1: number; x2: number; y2: number }
+     | { kind: "steps"; count: number; position?: "start" | "end" | ... }
+   ```
+
+### Phase 2: Paint (Unlocks SVG)
+
+1. **`<paint>` type and parser**
+   ```typescript
+   type Paint = 
+     | { kind: "color"; value: Color }
+     | { kind: "none" }
+     | { kind: "url"; value: Url }
+     | { kind: "context-fill" | "context-stroke" }
+   ```
+
+2. **Alpha value parser** (number [0-1] | percentage)
+
+### Phase 3: Transform Functions (Unlocks Transforms)
+
+1. **Transform function types** (translate, rotate, scale, skew, matrix)
+2. **Transform parser** (function list)
+3. **Origin parser** (position values)
+
+---
+
+## 🎨 Why This Matters
+
+**Draw-on effect (the killer feature):**
+```css
+.path {
+  stroke: #3498db;
+  stroke-width: 3px;
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+  animation: draw 2s ease-out forwards;
+}
 ```
 
-**Patterns:** `parse()`, `parseNode()`, `parseLengthPercentageNode()` - all different
+**Requires:** `stroke`, `stroke-width`, `stroke-dasharray`, `stroke-dashoffset`, `animation-*`
 
-**Proposal:** Standardize all to `parse()`
-**Priority:** P3 (revisit before 50+ properties)
-**Doc:** `docs/sessions/072/parser-api-inconsistency.md`
-
-**Commit:** `070351a`
+This unlocks music visualization - waveforms, frequency bars, audio-reactive art.
 
 ---
 
-## 💡 Key Insight
+## 📝 Next Steps (Methodical)
 
-**This is about upgrading our knowledge and building a world-class product.**
+1. **Implement time infrastructure** (type, parser, generator)
+2. **Implement easing infrastructure** (type, parser, generator)
+3. **Implement transition properties** (4 longhands)
+4. **Implement animation properties** (8 longhands)
+5. **Implement paint infrastructure** (type, parser, generator)
+6. **Implement SVG properties** (11 core properties)
+7. **Implement transform infrastructure** (function types, parser)
+8. **Implement transform properties** (4 longhands)
 
-Not panic, not crisis - we're:
-
-- ✅ Recognizing patterns
-- ✅ Documenting trade-offs
-- ✅ Making informed choices
-- ✅ Shipping with confidence
-
-**Parser API inconsistency example:**
-
-- Not blocking (workaround exists)
-- But understanding it → better decisions at scale
-- Documentation → future contributors benefit
+**Then:** Validate with real visualizations, build packaging layer.
 
 ---
 
-## 🚀 Next Steps
+## 🔍 Key Documents
 
-**Box model scaling:**
-
-- 4 templates ready
-- 20 remaining properties (copy-paste-modify)
-- ~2-3 hours systematic implementation
-
-**Foundation is solid. Ready to scale to 50+ properties.** 🚀
+- `docs/architecture/SVG_VISION.md` - Complete SVG roadmap and platform vision
+- `docs/CODE_QUALITY.md` - Non-negotiable standards
+- `docs/README.md` - Architecture overview
 
 ---
 
-**Session complete: 2025-11-13 15:37 UTC**
+## 🚀 The Vision
+
+We're not just building a CSS library. We're building **infrastructure for a music visualization and art platform** that will enable artists to package and share their work in ways that don't exist today.
+
+**Methodically. Step by step. Making history.**
+
+---
+
+**Session complete: 2025-11-13 17:03 UTC**
