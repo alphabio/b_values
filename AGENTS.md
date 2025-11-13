@@ -60,19 +60,21 @@ When asked to add properties or utilities:
 **BEFORE implementing anything new:**
 
 1. **Find existing examples** - Look at similar code FIRST
+
    ```bash
    # Find similar properties
    ls packages/b_declarations/src/properties/
-   
+
    # View working implementation
    cat packages/b_declarations/src/properties/background-color/parser.ts
    ```
 
 2. **Verify API surface** - Check what's actually exported
+
    ```bash
    # Check parsers exports
    cat packages/b_parsers/src/index.ts
-   
+
    # Check generators exports
    cat packages/b_generators/src/index.ts
    ```
@@ -83,12 +85,14 @@ When asked to add properties or utilities:
    - Keep structure identical
 
 4. **Verify BEFORE committing**
+
    ```bash
    just check    # ALWAYS run before git commit
    just build    # Verify compilation
    ```
 
 **NEVER:**
+
 - ❌ Assume function names without checking exports
 - ❌ Guess API shapes without looking at code
 - ❌ Commit without running `just check`

@@ -2,7 +2,7 @@
 
 /**
  * Utilities - Reusable parsing logic (NOT registered as properties)
- * 
+ *
  * These are shorthand parsers or complex structures used internally.
  * They are NOT exposed in PROPERTY_DEFINITIONS.
  */

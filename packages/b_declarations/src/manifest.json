@@ -1,6 +1,6 @@
 {
   "$schema": "./manifest.schema.json",
-  "generated": "2025-11-13T13:19:35.112Z",
+  "generated": "2025-11-13T14:29:58.889Z",
   "properties": {
     "background-attachment": {
       "name": "background-attachment",
@@ -49,6 +49,22 @@
       "initial": "padding-box",
       "mode": "multi",
       "irType": "BackgroundOriginIR"
+    },
+    "background-position-x": {
+      "name": "background-position-x",
+      "syntax": "<length-percentage> | left | center | right",
+      "inherited": false,
+      "initial": "0%",
+      "mode": "single",
+      "irType": "BackgroundPositionXIR"
+    },
+    "background-position-y": {
+      "name": "background-position-y",
+      "syntax": "<length-percentage> | top | center | bottom",
+      "inherited": false,
+      "initial": "0%",
+      "mode": "single",
+      "irType": "BackgroundPositionYIR"
     },
     "background-repeat": {
       "name": "background-repeat",
