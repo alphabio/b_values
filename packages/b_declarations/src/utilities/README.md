@@ -2,6 +2,8 @@
 
 **Reusable parsing/generation logic for CSS shorthands and complex structures.**
 
+**⚠️ CRITICAL:** Utilities must NOT call `defineProperty()`. See [PATTERN.md](./PATTERN.md) for complete guide.
+
 ## Philosophy
 
 This directory contains **utilities, not properties**. Code here:
@@ -43,11 +45,14 @@ Each utility follows similar structure to properties:
 ```
 utilities/{name}/
 ├── types.ts       # IR types
-├── parser.ts      # Parsing logic
-├── generator.ts   # Generation logic
-├── index.ts       # Exports
+├── parser.ts      # Parsing logic (plain function)
+├── generator.ts   # Generation logic (plain function)
+├── index.ts       # Exports (NO definition.ts)
 └── README.md      # Usage documentation
 ```
+
+**❌ NO `definition.ts`** - Utilities must NOT call `defineProperty()`  
+**See:** [PATTERN.md](./PATTERN.md) for the complete pattern and rationale
 
 ## Current Utilities
 
