@@ -270,3 +270,72 @@ This isn't just about SVG properties. This is about:
 **We're not just building a library. We're building a capability that will change how people work with CSS and SVG.**
 
 **Let's make history.** 🚀
+
+---
+
+## 🔮 Future Vision (Post-Foundation)
+
+**Date Added:** 2025-11-13
+
+### The Bigger Picture - WebGL Integration
+
+**After CSS/SVG foundation is complete:**
+
+The platform will support **WebGL shaders as custom filters** - bringing another layer of capability for advanced visual effects.
+
+**But this comes LATER.**
+
+### Why Not Now?
+
+We need the **CSS/SVG foundation solid first** because:
+1. Artists create with SVG + CSS
+2. Platform parses to IR
+3. Platform packages for reuse
+4. **The hinge unlocks** (experienced users sharing work)
+
+**Only then** can we add the shader layer on top.
+
+### The Stack
+
+```
+┌─────────────────────────────┐
+│   WebGL Shaders             │ ← Future (custom filters)
+│   (Custom Filter Layer)     │
+├─────────────────────────────┤
+│   Filters & Effects         │ ← Phase 4
+│   (filter, clip-path, mask) │
+├─────────────────────────────┤
+│   Transform & Animation     │ ← Phase 2-3
+│   (transform, transition,   │
+│    animation, SVG props)    │
+├─────────────────────────────┤
+│   Box Model                 │ ← Phase 1 ✅ DONE
+│   (padding, margin, border) │
+├─────────────────────────────┤
+│   IR Foundation             │ ← ✅ DONE
+│   (parse, transform, gen)   │
+└─────────────────────────────┘
+```
+
+### Focus: Here and Now
+
+**Immediate priorities:**
+1. Transition/Animation properties
+2. SVG properties (paint, stroke, opacity)
+3. Transform properties
+4. Filter properties
+5. Clipping/Masking properties
+
+**Once these are complete:**
+- SVG IR is powerful and encapsulated
+- Packaging/reuse layer can be built
+- Platform can enable artist sharing
+- **Then** WebGL shader integration becomes viable
+
+### Key Insight
+
+**The vision was always there.** We're building methodically toward it.
+
+Don't get lost in the shader vision yet. **Complete the CSS/SVG foundation first.**
+
+---
