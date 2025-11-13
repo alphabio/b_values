@@ -25,8 +25,8 @@ catalogs:
       specifier: ^19.2.3
       version: 19.2.3
     b_short:
-      specifier: ^3.0.0
-      version: 3.0.0
+      specifier: ^3.1.0
+      version: 3.1.0
     framer-motion:
       specifier: ^12.23.24
       version: 12.23.24
@@ -354,7 +354,7 @@ importers:
         version: 3.6.6
       b_short:
         specifier: 'catalog:'
-        version: 3.0.0
+        version: 3.1.0
       zod:
         specifier: 'catalog:'
         version: 4.1.12
@@ -1787,8 +1787,8 @@ packages:
     resolution: {integrity: sha512-+q/t7Ekv1EDY2l6Gda6LLiX14rU9TV20Wa3ofeQmwPFZbOMo9DXrLbOjFaaclkXKWidIaopwAObQDqwWtGUjqg==}
     engines: {node: '>= 4.0.0'}
 
-  b_short@3.0.0:
-    resolution: {integrity: sha512-TlgdrgN4zwEEtPawZIF0YdJKiwrFfgC3qTQodQI7a0tlZcjt7jh/WolrvRa2/gNAKOr+gB+U4sh3++r2YspQOQ==}
+  b_short@3.1.0:
+    resolution: {integrity: sha512-bQNl0y92XNoLTHgUFpOFW4I+PKduBCMRS2u7N5ICoWczEy890UW4JqJu6JU33fHlRn6ClTFFI3s6uQxjM/mssg==}
     engines: {node: '>=16.0.0'}
 
   babel-dead-code-elimination@1.0.10:
@@ -5427,7 +5427,7 @@ snapshots:
 
   at-least-node@1.0.0: {}
 
-  b_short@3.0.0:
+  b_short@3.1.0:
     dependencies:
       '@eslint/css-tree': 3.6.6
 

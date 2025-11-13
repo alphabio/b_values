@@ -12,7 +12,6 @@ export * from "./background-clip";
 export * from "./background-color";
 export * from "./background-image";
 export * from "./background-origin";
-export * from "./background-position";
 export * from "./background-repeat";
 export * from "./background-size";
 export * from "./mix-blend-mode";

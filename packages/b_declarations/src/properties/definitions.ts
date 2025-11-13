@@ -32,7 +32,6 @@ import { backgroundClip } from "./background-clip/definition";
 import { backgroundColor } from "./background-color/definition";
 import { backgroundImage } from "./background-image/definition";
 import { backgroundOrigin } from "./background-origin/definition";
-import { backgroundPosition } from "./background-position/definition";
 import { backgroundRepeat } from "./background-repeat/definition";
 import { backgroundSize } from "./background-size/definition";
 import { mixBlendMode } from "./mix-blend-mode/definition";
@@ -56,7 +55,6 @@ export const PROPERTY_DEFINITIONS = {
   "background-color": backgroundColor,
   "background-image": backgroundImage,
   "background-origin": backgroundOrigin,
-  "background-position": backgroundPosition,
   "background-repeat": backgroundRepeat,
   "background-size": backgroundSize,
   "mix-blend-mode": mixBlendMode,

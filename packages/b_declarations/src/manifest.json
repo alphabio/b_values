@@ -1,6 +1,6 @@
 {
   "$schema": "./manifest.schema.json",
-  "generated": "2025-11-13T06:22:31.141Z",
+  "generated": "2025-11-13T13:19:35.112Z",
   "properties": {
     "background-attachment": {
       "name": "background-attachment",
@@ -49,14 +49,6 @@
       "initial": "padding-box",
       "mode": "multi",
       "irType": "BackgroundOriginIR"
-    },
-    "background-position": {
-      "name": "background-position",
-      "syntax": "<bg-position>#",
-      "inherited": false,
-      "initial": "0% 0%",
-      "mode": "multi",
-      "irType": "BackgroundPositionIR"
     },
     "background-repeat": {
       "name": "background-repeat",
