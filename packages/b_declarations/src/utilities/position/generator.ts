@@ -1,4 +1,4 @@
-// b_path:: packages/b_declarations/src/properties/background-position/generator.ts
+// b_path:: packages/b_declarations/src/utilities/position/generator.ts
 
 import { generateOk, type GenerateResult } from "@b/types";
 import * as Generators from "@b/generators";

@@ -1,4 +1,4 @@
-// b_path:: packages/b_declarations/src/properties/background-position/parser.ts
+// b_path:: packages/b_declarations/src/utilities/position/parser.ts
 
 import type { ParseResult, Position2D } from "@b/types";
 import * as Parsers from "@b/parsers";

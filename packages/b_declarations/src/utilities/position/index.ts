@@ -1,4 +1,4 @@
-// b_path:: packages/b_declarations/src/properties/background-position/index.ts
+// b_path:: packages/b_declarations/src/utilities/position/index.ts
 
 export * from "./types";
 export * from "./parser";

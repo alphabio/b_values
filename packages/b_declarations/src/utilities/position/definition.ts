@@ -1,4 +1,4 @@
-// b_path:: packages/b_declarations/src/properties/background-position/definition.ts
+// b_path:: packages/b_declarations/src/utilities/position/definition.ts
 
 import { defineProperty } from "../../core";
 import { parseBackgroundPosition } from "./parser";

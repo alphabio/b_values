@@ -1474,51 +1474,43 @@ export const backgroundOriginIR = z.discriminatedUnion("kind", [
 export type BackgroundOriginIR = z.infer<typeof backgroundOriginIR>;
 
 
-=== File: packages/b_declarations/src/properties/background-position/definition.ts ===
-// b_path:: packages/b_declarations/src/properties/background-position/definition.ts
+=== File: packages/b_declarations/src/properties/background-position-x/definition.ts ===
+// b_path:: packages/b_declarations/src/properties/background-position-x/definition.ts
 
 import { defineProperty } from "../../core";
-import { parseBackgroundPosition } from "./parser";
-import { generateBackgroundPosition } from "./generator";
-import type { BackgroundPositionIR } from "./types";
+import { parseBackgroundPositionX } from "./parser";
+import { generateBackgroundPositionX } from "./generator";
+import type { BackgroundPositionXIR } from "./types";
 
-export const backgroundPosition = defineProperty<BackgroundPositionIR>({
-  name: "background-position",
-  syntax: "<bg-position>#",
-  parser: parseBackgroundPosition,
-  multiValue: true,
-  generator: generateBackgroundPosition,
+export const backgroundPositionX = defineProperty<BackgroundPositionXIR>({
+  name: "background-position-x",
+  syntax: "<length-percentage> | left | center | right",
+  parser: parseBackgroundPositionX,
+  generator: generateBackgroundPositionX,
   inherited: false,
-  initial: "0% 0%",
+  initial: "0%",
 });
 
 
-=== File: packages/b_declarations/src/properties/background-position/generator.ts ===
-// b_path:: packages/b_declarations/src/properties/background-position/generator.ts
+=== File: packages/b_declarations/src/properties/background-position-x/generator.ts ===
+// b_path:: packages/b_declarations/src/properties/background-position-x/generator.ts
 
 import { generateOk, type GenerateResult } from "@b/types";
-import * as Generators from "@b/generators";
-import { generateValue } from "../../utils";
-import type { BackgroundPositionIR } from "./types";
+import { cssValueToCss } from "@b/utils";
+import type { BackgroundPositionXIR } from "./types";
 
-export function generateBackgroundPosition(ir: BackgroundPositionIR): GenerateResult {
+export function generateBackgroundPositionX(ir: BackgroundPositionXIR): GenerateResult {
   if (ir.kind === "keyword") {
     return generateOk(ir.value);
   }
 
-  const layerStrings: string[] = [];
-  for (const value of ir.values) {
-    const result = generateValue(value, Generators.Position.generate);
-    if (!result.ok) return result;
-    layerStrings.push(result.value);
-  }
-
-  return generateOk(layerStrings.join(", "));
+  const css = cssValueToCss(ir.value);
+  return generateOk(css);
 }
 
 
-=== File: packages/b_declarations/src/properties/background-position/index.ts ===
-// b_path:: packages/b_declarations/src/properties/background-position/index.ts
+=== File: packages/b_declarations/src/properties/background-position-x/index.ts ===
+// b_path:: packages/b_declarations/src/properties/background-position-x/index.ts
 
 export * from "./types";
 export * from "./parser";
@@ -1526,65 +1518,138 @@ export * from "./generator";
 export * from "./definition";
 
 
-=== File: packages/b_declarations/src/properties/background-position/parser.ts ===
-// b_path:: packages/b_declarations/src/properties/background-position/parser.ts
+=== File: packages/b_declarations/src/properties/background-position-x/parser.ts ===
+// b_path:: packages/b_declarations/src/properties/background-position-x/parser.ts
 
-import type { ParseResult, Position2D } from "@b/types";
+import type { ParseResult } from "@b/types";
 import * as Parsers from "@b/parsers";
-import { createMultiValueParser } from "../../utils";
-import type { BackgroundPositionIR } from "./types";
 import type * as csstree from "@eslint/css-tree";
+import type { BackgroundPositionXIR } from "./types";
 
-export const parseBackgroundPosition = createMultiValueParser<Position2D, BackgroundPositionIR>({
-  propertyName: "background-position",
+export function parseBackgroundPositionX(ast: csstree.Value): ParseResult<BackgroundPositionXIR> {
+  const firstNode = ast.children.first;
 
-  itemParser(valueNode: csstree.Value): ParseResult<Position2D> {
-    const nodes = Array.from(valueNode.children);
-    const result = Parsers.Position.parsePosition2D(nodes, 0);
-    if (result.ok) {
-      return {
-        ok: true,
-        property: "background-position",
-        value: result.value.position,
-        issues: result.issues,
-      };
-    }
-    return result as ParseResult<Position2D>;
-  },
+  if (!firstNode) {
+    return {
+      ok: false,
+      property: "background-position-x",
+      value: undefined,
+      issues: [{ code: "missing-value", severity: "error", message: "Empty value for background-position-x" }],
+    };
+  }
 
-  aggregator(values: Position2D[]): BackgroundPositionIR {
-    return { kind: "list", values };
-  },
+  const valueResult = Parsers.Utils.parseNodeToCssValue(firstNode);
+
+  if (valueResult.ok) {
+    return {
+      ok: true,
+      property: "background-position-x",
+      value: { kind: "value", value: valueResult.value },
+      issues: valueResult.issues,
+    };
+  }
+
+  return valueResult as ParseResult<BackgroundPositionXIR>;
+}
+
+
+=== File: packages/b_declarations/src/properties/background-position-x/types.ts ===
+// b_path:: packages/b_declarations/src/properties/background-position-x/types.ts
+
+import type { CssValue } from "@b/types";
+
+export type BackgroundPositionXIR =
+  | { kind: "keyword"; value: "initial" | "inherit" | "unset" | "revert" | "revert-layer" }
+  | { kind: "value"; value: CssValue };
+
+
+=== File: packages/b_declarations/src/properties/background-position-y/definition.ts ===
+// b_path:: packages/b_declarations/src/properties/background-position-y/definition.ts
+
+import { defineProperty } from "../../core";
+import { parseBackgroundPositionY } from "./parser";
+import { generateBackgroundPositionY } from "./generator";
+import type { BackgroundPositionYIR } from "./types";
+
+export const backgroundPositionY = defineProperty<BackgroundPositionYIR>({
+  name: "background-position-y",
+  syntax: "<length-percentage> | top | center | bottom",
+  parser: parseBackgroundPositionY,
+  generator: generateBackgroundPositionY,
+  inherited: false,
+  initial: "0%",
 });
 
 
-=== File: packages/b_declarations/src/properties/background-position/types.ts ===
-// b_path:: packages/b_declarations/src/properties/background-position/types.ts
+=== File: packages/b_declarations/src/properties/background-position-y/generator.ts ===
+// b_path:: packages/b_declarations/src/properties/background-position-y/generator.ts
 
-import { z } from "zod";
-import { position2DSchema, cssValueSchema } from "@b/types";
-import * as Keywords from "@b/keywords";
+import { generateOk, type GenerateResult } from "@b/types";
+import { cssValueToCss } from "@b/utils";
+import type { BackgroundPositionYIR } from "./types";
 
-/**
- * background-position value with universal CSS function support.
- */
-const backgroundPositionValueSchema = z.union([position2DSchema, cssValueSchema]);
+export function generateBackgroundPositionY(ir: BackgroundPositionYIR): GenerateResult {
+  if (ir.kind === "keyword") {
+    return generateOk(ir.value);
+  }
 
-/**
- * The final IR for the entire `background-position` property.
- */
-export const backgroundPositionIRSchema = z.discriminatedUnion("kind", [
-  z.object({
-    kind: z.literal("keyword"),
-    value: Keywords.cssWide,
-  }),
-  z.object({
-    kind: z.literal("list"),
-    values: z.array(backgroundPositionValueSchema).min(1),
-  }),
-]);
+  const css = cssValueToCss(ir.value);
+  return generateOk(css);
+}
 
-export type BackgroundPositionIR = z.infer<typeof backgroundPositionIRSchema>;
+
+=== File: packages/b_declarations/src/properties/background-position-y/index.ts ===
+// b_path:: packages/b_declarations/src/properties/background-position-y/index.ts
+
+export * from "./types";
+export * from "./parser";
+export * from "./generator";
+export * from "./definition";
+
+
+=== File: packages/b_declarations/src/properties/background-position-y/parser.ts ===
+// b_path:: packages/b_declarations/src/properties/background-position-y/parser.ts
+
+import type { ParseResult } from "@b/types";
+import * as Parsers from "@b/parsers";
+import type * as csstree from "@eslint/css-tree";
+import type { BackgroundPositionYIR } from "./types";
+
+export function parseBackgroundPositionY(ast: csstree.Value): ParseResult<BackgroundPositionYIR> {
+  const firstNode = ast.children.first;
+
+  if (!firstNode) {
+    return {
+      ok: false,
+      property: "background-position-y",
+      value: undefined,
+      issues: [{ code: "missing-value", severity: "error", message: "Empty value for background-position-y" }],
+    };
+  }
+
+  const valueResult = Parsers.Utils.parseNodeToCssValue(firstNode);
+
+  if (valueResult.ok) {
+    return {
+      ok: true,
+      property: "background-position-y",
+      value: { kind: "value", value: valueResult.value },
+      issues: valueResult.issues,
+    };
+  }
+
+  return valueResult as ParseResult<BackgroundPositionYIR>;
+}
+
+
+=== File: packages/b_declarations/src/properties/background-position-y/types.ts ===
+// b_path:: packages/b_declarations/src/properties/background-position-y/types.ts
+
+import type { CssValue } from "@b/types";
+
+export type BackgroundPositionYIR =
+  | { kind: "keyword"; value: "initial" | "inherit" | "unset" | "revert" | "revert-layer" }
+  | { kind: "value"; value: CssValue };
 
 
 === File: packages/b_declarations/src/properties/background-repeat/definition.ts ===
@@ -1938,7 +2003,8 @@ import { backgroundClip } from "./background-clip/definition";
 import { backgroundColor } from "./background-color/definition";
 import { backgroundImage } from "./background-image/definition";
 import { backgroundOrigin } from "./background-origin/definition";
-import { backgroundPosition } from "./background-position/definition";
+import { backgroundPositionX } from "./background-position-x/definition";
+import { backgroundPositionY } from "./background-position-y/definition";
 import { backgroundRepeat } from "./background-repeat/definition";
 import { backgroundSize } from "./background-size/definition";
 import { mixBlendMode } from "./mix-blend-mode/definition";
@@ -1962,7 +2028,8 @@ export const PROPERTY_DEFINITIONS = {
   "background-color": backgroundColor,
   "background-image": backgroundImage,
   "background-origin": backgroundOrigin,
-  "background-position": backgroundPosition,
+  "background-position-x": backgroundPositionX,
+  "background-position-y": backgroundPositionY,
   "background-repeat": backgroundRepeat,
   "background-size": backgroundSize,
   "mix-blend-mode": mixBlendMode,
@@ -1990,7 +2057,8 @@ export * from "./background-clip";
 export * from "./background-color";
 export * from "./background-image";
 export * from "./background-origin";
-export * from "./background-position";
+export * from "./background-position-x";
+export * from "./background-position-y";
 export * from "./background-repeat";
 export * from "./background-size";
 export * from "./mix-blend-mode";
@@ -2543,6 +2611,132 @@ type MultiValueIRsHaveListVariant = {
 // If any property violates this, TypeScript will error here showing the property name
 // @ts-expect-error - Type-level contract check, intentionally unused
 type _AssertMultiValueContract = MultiValueIRsHaveListVariant extends true ? true : never;
+
+
+=== File: packages/b_declarations/src/utilities/index.ts ===
+// b_path:: packages/b_declarations/src/utilities/index.ts
+
+/**
+ * Utilities - Reusable parsing logic (NOT registered as properties)
+ *
+ * These are shorthand parsers or complex structures used internally.
+ * They are NOT exposed in PROPERTY_DEFINITIONS.
+ */
+
+export * from "./position";
+
+
+=== File: packages/b_declarations/src/utilities/position/definition.ts ===
+// b_path:: packages/b_declarations/src/utilities/position/definition.ts
+
+import { defineProperty } from "../../core";
+import { parseBackgroundPosition } from "./parser";
+import { generateBackgroundPosition } from "./generator";
+import type { BackgroundPositionIR } from "./types";
+
+export const backgroundPosition = defineProperty<BackgroundPositionIR>({
+  name: "background-position",
+  syntax: "<bg-position>#",
+  parser: parseBackgroundPosition,
+  multiValue: true,
+  generator: generateBackgroundPosition,
+  inherited: false,
+  initial: "0% 0%",
+});
+
+
+=== File: packages/b_declarations/src/utilities/position/generator.ts ===
+// b_path:: packages/b_declarations/src/utilities/position/generator.ts
+
+import { generateOk, type GenerateResult } from "@b/types";
+import * as Generators from "@b/generators";
+import { generateValue } from "../../utils";
+import type { BackgroundPositionIR } from "./types";
+
+export function generateBackgroundPosition(ir: BackgroundPositionIR): GenerateResult {
+  if (ir.kind === "keyword") {
+    return generateOk(ir.value);
+  }
+
+  const layerStrings: string[] = [];
+  for (const value of ir.values) {
+    const result = generateValue(value, Generators.Position.generate);
+    if (!result.ok) return result;
+    layerStrings.push(result.value);
+  }
+
+  return generateOk(layerStrings.join(", "));
+}
+
+
+=== File: packages/b_declarations/src/utilities/position/index.ts ===
+// b_path:: packages/b_declarations/src/utilities/position/index.ts
+
+export * from "./types";
+export * from "./parser";
+export * from "./generator";
+export * from "./definition";
+
+
+=== File: packages/b_declarations/src/utilities/position/parser.ts ===
+// b_path:: packages/b_declarations/src/utilities/position/parser.ts
+
+import type { ParseResult, Position2D } from "@b/types";
+import * as Parsers from "@b/parsers";
+import { createMultiValueParser } from "../../utils";
+import type { BackgroundPositionIR } from "./types";
+import type * as csstree from "@eslint/css-tree";
+
+export const parseBackgroundPosition = createMultiValueParser<Position2D, BackgroundPositionIR>({
+  propertyName: "background-position",
+
+  itemParser(valueNode: csstree.Value): ParseResult<Position2D> {
+    const nodes = Array.from(valueNode.children);
+    const result = Parsers.Position.parsePosition2D(nodes, 0);
+    if (result.ok) {
+      return {
+        ok: true,
+        property: "background-position",
+        value: result.value.position,
+        issues: result.issues,
+      };
+    }
+    return result as ParseResult<Position2D>;
+  },
+
+  aggregator(values: Position2D[]): BackgroundPositionIR {
+    return { kind: "list", values };
+  },
+});
+
+
+=== File: packages/b_declarations/src/utilities/position/types.ts ===
+// b_path:: packages/b_declarations/src/utilities/position/types.ts
+
+import { z } from "zod";
+import { position2DSchema, cssValueSchema } from "@b/types";
+import * as Keywords from "@b/keywords";
+
+/**
+ * background-position value with universal CSS function support.
+ */
+const backgroundPositionValueSchema = z.union([position2DSchema, cssValueSchema]);
+
+/**
+ * The final IR for the entire `background-position` property.
+ */
+export const backgroundPositionIRSchema = z.discriminatedUnion("kind", [
+  z.object({
+    kind: z.literal("keyword"),
+    value: Keywords.cssWide,
+  }),
+  z.object({
+    kind: z.literal("list"),
+    values: z.array(backgroundPositionValueSchema).min(1),
+  }),
+]);
+
+export type BackgroundPositionIR = z.infer<typeof backgroundPositionIRSchema>;
 
 
 === File: packages/b_declarations/src/utils/create-multi-value-parser.ts ===

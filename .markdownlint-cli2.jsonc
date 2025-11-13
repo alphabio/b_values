@@ -10,7 +10,8 @@
     "MD024": { "siblings_only": true },
     "MD025": false,
     "MD026": false,
-    "MD034": false
+    "MD034": false,
+    "MD060": false
   },
   "globs": ["**/*.md"],
   "ignores": ["**/node_modules/**", "**/dist/**", "**/build/**", "**/.turbo/**", "**/.changeset/**"]

@@ -1,4 +1,4 @@
-// b_path:: packages/b_declarations/src/properties/background-position/types.ts
+// b_path:: packages/b_declarations/src/utilities/position/types.ts
 
 import { z } from "zod";
 import { position2DSchema, cssValueSchema } from "@b/types";

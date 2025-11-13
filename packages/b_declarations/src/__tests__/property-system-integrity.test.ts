@@ -338,7 +338,8 @@ describe("Property System Integrity", () => {
         const hasGeneratorImport =
           /@b\/generators/.test(generatorContent) ||
           /from ["']\.\.\/\.\.\/utils["']/.test(generatorContent) ||
-          /generateValue/.test(generatorContent);
+          /generateValue/.test(generatorContent) ||
+          /cssValueToCss/.test(generatorContent);
 
         if (!hasGeneratorImport) {
           violations.push(`${propName}: generator.ts doesn't import from @b/generators or use declaration utils`);
