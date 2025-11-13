@@ -16,7 +16,7 @@
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
 
-const MANIFEST_PATH = path.resolve(process.cwd(), "property-manifest.json");
+const MANIFEST_PATH = path.resolve(process.cwd(), "packages/b_declarations/src/manifest.json");
 const KEYWORDS_DIR = path.resolve(process.cwd(), "packages/b_keywords/src");
 const TYPES_DIR = path.resolve(process.cwd(), "packages/b_types/src");
 const PARSERS_DIR = path.resolve(process.cwd(), "packages/b_parsers/src");

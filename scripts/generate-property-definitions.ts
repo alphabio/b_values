@@ -1,11 +1,15 @@
 // b_path:: scripts/generate-property-definitions.ts
-/** biome-ignore-all lint/suspicious/noConsole: we scriptin */
+// biome-ignore lint/suspicious/noConsole: CLI script
 
 /**
- * Generate the central PROPERTY_DEFINITIONS export.
+ * Unified property generation system.
  *
- * Scans properties slash star slash definition.ts and builds definitions.ts.
- * This is the single source of truth for PropertyIRMap derivation.
+ * Scans properties/star/definition.ts and generates:
+ * 1. definitions.ts - Runtime registry (PROPERTY_DEFINITIONS)
+ * 2. types.map.ts - TypeScript type map (PropertyIRMap)
+ * 3. manifest.json - Property metadata for tooling
+ *
+ * Single source of truth. Single execution.
  *
  * Run: pnpm generate:definitions
  */
@@ -14,19 +18,28 @@ import * as fs from "node:fs/promises";
 import * as path from "node:path";
 
 const PROPERTIES_DIR = path.resolve(process.cwd(), "packages/b_declarations/src/properties");
-const OUTPUT_FILE = path.resolve(PROPERTIES_DIR, "definitions.ts");
+const DEFINITIONS_FILE = path.resolve(PROPERTIES_DIR, "definitions.ts");
+const TYPES_MAP_FILE = path.resolve(process.cwd(), "packages/b_declarations/src/types.map.ts");
+const MANIFEST_FILE = path.resolve(process.cwd(), "packages/b_declarations/src/manifest.json");
+const MANIFEST_SCHEMA = path.resolve(process.cwd(), "packages/b_declarations/src/manifest.schema.json");
 
 interface PropertyInfo {
   folderName: string;
   exportName: string;
   propertyName: string;
+  syntax: string;
+  inherited: boolean;
+  initial: string;
+  multiValue: boolean;
+  irTypeName: string;
 }
 
 async function extractPropertyInfo(definitionPath: string): Promise<PropertyInfo | null> {
-  const content = await fs.readFile(definitionPath, "utf-8");
+  const folderName = path.basename(path.dirname(definitionPath));
+  const definitionContent = await fs.readFile(definitionPath, "utf-8");
 
   // Extract export name: export const backgroundAttachment = defineProperty(...)
-  const exportMatch = content.match(/export\s+const\s+(\w+)\s*=/);
+  const exportMatch = definitionContent.match(/export\s+const\s+(\w+)\s*=/);
   if (!exportMatch) {
     console.warn(`Could not find export in ${definitionPath}`);
     return null;
@@ -34,60 +47,60 @@ async function extractPropertyInfo(definitionPath: string): Promise<PropertyInfo
   const exportName = exportMatch[1];
 
   // Extract property name: name: "background-attachment"
-  const nameMatch = content.match(/name:\s*["']([^"']+)["']/);
+  const nameMatch = definitionContent.match(/name:\s*["']([^"']+)["']/);
   if (!nameMatch) {
     console.warn(`Could not find property name in ${definitionPath}`);
     return null;
   }
   const propertyName = nameMatch[1];
 
-  const folderName = path.basename(path.dirname(definitionPath));
+  // Extract syntax: syntax: "<color>"
+  const syntaxMatch = definitionContent.match(/syntax:\s*["']([^"']+)["']/);
+  const syntax = syntaxMatch ? syntaxMatch[1] : "unknown";
 
-  return { folderName, exportName, propertyName };
+  // Extract inherited: inherited: false
+  const inheritedMatch = definitionContent.match(/inherited:\s*(true|false)/);
+  const inherited = inheritedMatch ? inheritedMatch[1] === "true" : false;
+
+  // Extract initial: initial: "transparent"
+  const initialMatch = definitionContent.match(/initial:\s*["']([^"']+)["']/);
+  const initial = initialMatch ? initialMatch[1] : "";
+
+  // Extract multiValue: multiValue: true
+  const multiValueMatch = definitionContent.match(/multiValue:\s*(true|false)/);
+  const multiValue = multiValueMatch ? multiValueMatch[1] === "true" : false;
+
+  // Extract IR type from types.ts
+  const typesPath = path.join(path.dirname(definitionPath), "types.ts");
+  let irTypeName = "unknown";
+  try {
+    const typesContent = await fs.readFile(typesPath, "utf-8");
+    const irTypeMatch = typesContent.match(/export type (\w+IR) =/);
+    if (irTypeMatch) {
+      irTypeName = irTypeMatch[1];
+    }
+  } catch {
+    console.warn(`Could not read types.ts for ${folderName}`);
+  }
+
+  return {
+    folderName,
+    exportName,
+    propertyName,
+    syntax,
+    inherited,
+    initial,
+    multiValue,
+    irTypeName,
+  };
 }
 
-async function main() {
-  console.log("Scanning property definitions...");
-
-  const entries = await fs.readdir(PROPERTIES_DIR, { withFileTypes: true });
-  const properties: PropertyInfo[] = [];
-
-  for (const entry of entries) {
-    if (!entry.isDirectory()) continue;
-
-    const definitionPath = path.join(PROPERTIES_DIR, entry.name, "definition.ts");
-
-    try {
-      await fs.access(definitionPath);
-      const info = await extractPropertyInfo(definitionPath);
-      if (info) {
-        properties.push(info);
-      }
-    } catch {
-      console.warn(`Skipping ${entry.name}: no definition.ts found`);
-    }
-  }
-
-  if (properties.length === 0) {
-    console.error("No properties found!");
-    process.exit(1);
-  }
-
-  // Sort properties (custom-property first, then alphabetically)
-  properties.sort((a, b) => {
-    if (a.propertyName === "--*") return -1;
-    if (b.propertyName === "--*") return 1;
-    return a.propertyName.localeCompare(b.propertyName);
-  });
-
-  // Generate imports
+async function generateDefinitionsFile(properties: PropertyInfo[]): Promise<void> {
   const imports = properties.map((p) => `import { ${p.exportName} } from "./${p.folderName}/definition";`).join("\n");
 
-  // Generate PROPERTY_DEFINITIONS object
-  const entries_code = properties.map((p) => `  "${p.propertyName}": ${p.exportName},`).join("\n");
+  const entries = properties.map((p) => `  "${p.propertyName}": ${p.exportName},`).join("\n");
 
-  // Generate file content
-  const fileContent = `// b_path:: packages/b_declarations/src/properties/definitions.ts
+  const content = `// b_path:: packages/b_declarations/src/properties/definitions.ts
 
 /**
  * Central registry of all property definitions.
@@ -128,7 +141,7 @@ ${imports}
  * - Contract validation
  */
 export const PROPERTY_DEFINITIONS = {
-${entries_code}
+${entries}
 } as const;
 
 /**
@@ -138,17 +151,126 @@ ${entries_code}
 export type PropertyDefinitions = typeof PROPERTY_DEFINITIONS;
 `;
 
-  await fs.writeFile(OUTPUT_FILE, fileContent, "utf-8");
-  console.log(`✅ Generated definitions.ts with ${properties.length} properties`);
+  await fs.writeFile(DEFINITIONS_FILE, content, "utf-8");
+  console.log("✅ Generated definitions.ts");
+}
 
-  // List properties
-  console.log("\nRegistered properties:");
+async function generateTypesMapFile(properties: PropertyInfo[]): Promise<void> {
+  // Filter out custom properties for types.map
+  const standardProps = properties.filter((p) => p.propertyName !== "--*");
+
+  const imports = standardProps.map((p) => `  ${p.irTypeName},`).join("\n");
+  const mapEntries = standardProps.map((p) => `  "${p.propertyName}": ${p.irTypeName};`).join("\n");
+
+  const content = `// b_path:: packages/b_declarations/src/types.map.ts
+
+/**
+ * Map of CSS property names to their IR types.
+ *
+ * ⚠️ THIS FILE IS AUTO-GENERATED. DO NOT EDIT MANUALLY.
+ *
+ * Run: pnpm generate:definitions
+ *
+ * Used for type-safe parsing and generation.
+ */
+
+import type {
+${imports}
+  CustomPropertyIR
+} from "./properties";
+
+/**
+ * Map of CSS property names to their IR types.
+ * Used for type-safe parsing and generation.
+ */
+export interface PropertyIRMap {
+${mapEntries}
+  [key: \`--\${string}\`]: CustomPropertyIR;
+}
+`;
+
+  await fs.writeFile(TYPES_MAP_FILE, content, "utf-8");
+  console.log("✅ Generated types.map.ts");
+}
+
+async function generateManifestFile(properties: PropertyInfo[]): Promise<void> {
+  const manifest: Record<string, unknown> = {
+    $schema: "./manifest.schema.json",
+    generated: new Date().toISOString(),
+    properties: {},
+  };
+
+  const propsObj: Record<string, unknown> = {};
+
   for (const p of properties) {
-    console.log(`  - ${p.propertyName} (${p.exportName})`);
+    // Skip custom properties in manifest
+    if (p.propertyName === "--*") continue;
+
+    propsObj[p.propertyName] = {
+      name: p.propertyName,
+      syntax: p.syntax,
+      inherited: p.inherited,
+      initial: p.initial,
+      mode: p.multiValue ? "multi" : "single",
+      irType: p.irTypeName,
+    };
+  }
+
+  manifest.properties = propsObj;
+
+  await fs.writeFile(MANIFEST_FILE, JSON.stringify(manifest, null, 2) + "\n", "utf-8");
+  console.log("✅ Generated manifest.json");
+}
+
+async function main() {
+  console.log("🔍 Scanning property definitions...\n");
+
+  const entries = await fs.readdir(PROPERTIES_DIR, { withFileTypes: true });
+  const properties: PropertyInfo[] = [];
+
+  for (const entry of entries) {
+    if (!entry.isDirectory()) continue;
+
+    const definitionPath = path.join(PROPERTIES_DIR, entry.name, "definition.ts");
+
+    try {
+      await fs.access(definitionPath);
+      const info = await extractPropertyInfo(definitionPath);
+      if (info) {
+        properties.push(info);
+      }
+    } catch {
+      console.warn(`⚠️  Skipping ${entry.name}: no definition.ts found`);
+    }
+  }
+
+  if (properties.length === 0) {
+    console.error("❌ No properties found!");
+    process.exit(1);
+  }
+
+  // Sort properties (custom-property first, then alphabetically)
+  properties.sort((a, b) => {
+    if (a.propertyName === "--*") return -1;
+    if (b.propertyName === "--*") return 1;
+    return a.propertyName.localeCompare(b.propertyName);
+  });
+
+  console.log(`📦 Found ${properties.length} properties\n`);
+
+  // Generate all artifacts
+  await generateDefinitionsFile(properties);
+  await generateTypesMapFile(properties);
+  await generateManifestFile(properties);
+
+  console.log("\n✨ Generation complete!\n");
+  console.log("Registered properties:");
+  for (const p of properties) {
+    console.log(`  • ${p.propertyName}`);
   }
 }
 
 main().catch((error) => {
-  console.error("Error generating definitions:", error);
+  console.error("❌ Error generating artifacts:", error);
   process.exit(1);
 });

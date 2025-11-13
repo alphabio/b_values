@@ -1,0 +1,86 @@
+{
+  "$schema": "./manifest.schema.json",
+  "generated": "2025-11-13T05:38:01.278Z",
+  "properties": {
+    "background-attachment": {
+      "name": "background-attachment",
+      "syntax": "<attachment>#",
+      "inherited": false,
+      "initial": "scroll",
+      "mode": "multi",
+      "irType": "BackgroundAttachmentIR"
+    },
+    "background-blend-mode": {
+      "name": "background-blend-mode",
+      "syntax": "<blend-mode>#",
+      "inherited": false,
+      "initial": "normal",
+      "mode": "multi",
+      "irType": "BackgroundBlendModeIR"
+    },
+    "background-clip": {
+      "name": "background-clip",
+      "syntax": "<box>#",
+      "inherited": false,
+      "initial": "border-box",
+      "mode": "multi",
+      "irType": "BackgroundClipIR"
+    },
+    "background-color": {
+      "name": "background-color",
+      "syntax": "<color>",
+      "inherited": false,
+      "initial": "transparent",
+      "mode": "single",
+      "irType": "BackgroundColorIR"
+    },
+    "background-image": {
+      "name": "background-image",
+      "syntax": "<bg-image>#",
+      "inherited": false,
+      "initial": "none",
+      "mode": "multi",
+      "irType": "BackgroundImageIR"
+    },
+    "background-origin": {
+      "name": "background-origin",
+      "syntax": "<box>#",
+      "inherited": false,
+      "initial": "padding-box",
+      "mode": "multi",
+      "irType": "BackgroundOriginIR"
+    },
+    "background-position": {
+      "name": "background-position",
+      "syntax": "<bg-position>#",
+      "inherited": false,
+      "initial": "0% 0%",
+      "mode": "multi",
+      "irType": "BackgroundPositionIR"
+    },
+    "background-repeat": {
+      "name": "background-repeat",
+      "syntax": "<repeat-style>#",
+      "inherited": false,
+      "initial": "repeat",
+      "mode": "multi",
+      "irType": "BackgroundRepeatIR"
+    },
+    "background-size": {
+      "name": "background-size",
+      "syntax": "<bg-size>#",
+      "inherited": false,
+      "initial": "auto",
+      "mode": "multi",
+      "irType": "BackgroundSizeIR"
+    },
+    "mix-blend-mode": {
+      "name": "mix-blend-mode",
+      "syntax": "<blend-mode>",
+      "inherited": false,
+      "initial": "normal",
+      "mode": "single",
+      "irType": "MixBlendModeIR"
+    }
+  }
+}
