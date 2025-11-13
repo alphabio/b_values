@@ -127,3 +127,24 @@ Then proceed with the task, applying the rules above.
 **Rationale:** Generic naming enables manifest system automation and pattern recognition.
 
 **Architecture:** Top-level for reusable types (2+ properties), nested for property-specific types.
+
+---
+
+## 🚫 What We DON'T Support
+
+**SHORTHANDS - NEVER**
+
+We do NOT support shorthand properties. We ONLY support registered longhand properties.
+
+Examples:
+- ❌ `background` (shorthand) → ✅ `background-color`, `background-image` (longhands)
+- ❌ `padding` (shorthand) → ✅ `padding-top`, `padding-right`, etc. (longhands)
+- ❌ `border` (shorthand) → ✅ `border-top-width`, `border-top-style`, etc. (longhands)
+
+**If it's not in `PROPERTY_DEFINITIONS`, we don't support it.**
+
+Any directory, utility, or documentation suggesting shorthand support is architectural debt.
+
+**Action:** Delete immediately.
+
+**Reference:** `docs/architecture/decisions/001-longhands-only.md`
