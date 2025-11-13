@@ -188,3 +188,48 @@ Complete CSS/SVG properties first → Enable packaging → Then shaders.
 **The vision was always there. We're building methodically toward it.**
 
 ---
+
+---
+
+## ⏭️ Next Session Priority
+
+**User confirmed next properties (in order):**
+
+1. **Transition** (4 longhands)
+   - transition-property
+   - transition-duration
+   - transition-timing-function
+   - transition-delay
+
+2. **Animation** (8 longhands)
+   - animation-name
+   - animation-duration
+   - animation-timing-function
+   - animation-delay
+   - animation-iteration-count
+   - animation-direction
+   - animation-fill-mode
+   - animation-play-state
+
+3. **Font** (also important for platform)
+   - font-family
+   - font-size
+   - font-weight
+   - font-style
+   - font-variant
+   - line-height
+   - letter-spacing
+   - (identify full set needed)
+
+**Infrastructure dependencies:**
+- `<time>` type and parser (300ms, 2s) - FIRST
+- `<easing-function>` type and parser - SECOND
+- Then transition properties
+- Then animation properties
+- Then font properties
+
+**Start next session with time infrastructure.**
+
+---
+
+**Session end: 2025-11-13 17:18 UTC**
