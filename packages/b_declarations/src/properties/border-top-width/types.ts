@@ -6,6 +6,6 @@ import type * as Keywords from "@b/keywords";
 export type BorderTopWidthIR =
   | {
       kind: "keyword";
-      value: "initial" | "inherit" | "unset" | "revert" | "revert-layer" | Keywords.BorderWidth.LineWidthKeyword;
+      value: "initial" | "inherit" | "unset" | "revert" | "revert-layer" | Keywords.LineWidthKeyword;
     }
   | { kind: "value"; value: CssValue };

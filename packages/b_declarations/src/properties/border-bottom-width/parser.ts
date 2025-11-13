@@ -20,7 +20,7 @@ export function parseBorderBottomWidth(ast: csstree.Value): ParseResult<BorderBo
 
   // Check for line-width keywords (thin | medium | thick)
   if (firstNode.type === "Identifier") {
-    const parsed = Keywords.BorderWidth.lineWidthKeywordSchema.safeParse(firstNode.name);
+    const parsed = Keywords.lineWidthKeywordSchema.safeParse(firstNode.name);
     if (parsed.success) {
       return {
         ok: true,
