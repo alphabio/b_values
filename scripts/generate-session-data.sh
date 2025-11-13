@@ -38,17 +38,19 @@ extract_session_metadata() {
         return 1
     fi
 
+    local date, focus, title, git_ref
+
     # Extract date (look for **Date:** pattern and clean it)
-    local date=$(grep -m 1 "^\*\*Date:\*\*" "$handover_file" | sed 's/.*: //' | sed 's/\*\*//g' | xargs || echo "")
+    date=$(grep -m 1 "^\*\*Date:\*\*" "$handover_file" | sed 's/.*: //' | sed 's/\*\*//g' | xargs || echo "")
 
     # Extract focus (look for **Focus:** pattern and clean it)
-    local focus=$(grep -m 1 "^\*\*Focus:\*\*" "$handover_file" | sed 's/.*: //' | sed 's/\*\*//g' | xargs || echo "")
+    focus=$(grep -m 1 "^\*\*Focus:\*\*" "$handover_file" | sed 's/.*: //' | sed 's/\*\*//g' | xargs || echo "")
 
     # Extract title from first heading
-    local title=$(grep -m 1 "^# " "$handover_file" | sed 's/^# //' || echo "Session $session_num")
+    title=$(grep -m 1 "^# " "$handover_file" | sed 's/^# //' || echo "Session $session_num")
 
     # Get git ref
-    local git_ref=""
+    git_ref=""
     if [[ -f "$git_ref_file" ]]; then
         git_ref=$(cat "$git_ref_file" | tr -d '\n')
     fi
@@ -59,20 +61,24 @@ extract_session_metadata() {
     local files_changed=0
     local insertions=0
     local deletions=0
+    local stats
+    local accomplishments
+    local artifacts
+    local tests_passing
 
     if [[ -n "$git_ref" ]] && git rev-parse --verify "$git_ref" &> /dev/null; then
         commit_date=$(git show -s --format=%cI "$git_ref" 2>/dev/null || echo "")
         commit_message=$(git show -s --format=%s "$git_ref" 2>/dev/null || echo "")
 
         # Get stats
-        local stats=$(git show --stat --format="" "$git_ref" 2>/dev/null | tail -1 || echo "")
+        stats=$(git show --stat --format="" "$git_ref" 2>/dev/null | tail -1 || echo "")
         files_changed=$(echo "$stats" | grep -o '[0-9]* file' | grep -o '[0-9]*' || echo "0")
         insertions=$(echo "$stats" | grep -o '[0-9]* insertion' | grep -o '[0-9]*' || echo "0")
         deletions=$(echo "$stats" | grep -o '[0-9]* deletion' | grep -o '[0-9]*' || echo "0")
     fi
 
     # Extract accomplishments (lines starting with - or * after "Accomplished" section)
-    local accomplishments=$(awk '/## .*Accomplished/,/^## / {
+    accomplishments=$(awk '/## .*Accomplished/,/^## / {
         if ($0 ~ /^[[:space:]]*[-*]/ && $0 !~ /^## /) {
             gsub(/^[[:space:]]*[-*][[:space:]]*/, "");
             gsub(/\[x\][[:space:]]*/, "");
@@ -85,13 +91,13 @@ extract_session_metadata() {
     }' "$handover_file" | head -20 | jq -R . | jq -s .)
 
     # Get artifact files (exclude SESSION_HANDOVER.md and git-ref.txt)
-    local artifacts=$(find "$session_dir" -maxdepth 1 -type f \
+    artifacts=$(find "$session_dir" -maxdepth 1 -type f \
         ! -name "SESSION_HANDOVER.md" \
         ! -name "git-ref.txt" \
         -exec basename {} \; | jq -R . | jq -s .)
 
     # Extract test count if mentioned
-    local tests_passing=$(grep -o '[0-9,]*[0-9] tests passing' "$handover_file" | head -1 | grep -o '[0-9,]*[0-9]' | tr -d ',' || echo "0")
+    tests_passing=$(grep -o '[0-9,]*[0-9] tests passing' "$handover_file" | head -1 | grep -o '[0-9,]*[0-9]' | tr -d ',' || echo "0")
 
     # Extract tags/categories from focus and accomplishments
     local tags="[]"

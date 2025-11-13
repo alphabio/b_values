@@ -1,5 +1,4 @@
 // b_path:: scripts/generate-property-definitions.ts
-// biome-ignore lint/suspicious/noConsole: CLI script
 
 /**
  * Unified property generation system.
@@ -21,7 +20,6 @@ const PROPERTIES_DIR = path.resolve(process.cwd(), "packages/b_declarations/src/
 const DEFINITIONS_FILE = path.resolve(PROPERTIES_DIR, "definitions.ts");
 const TYPES_MAP_FILE = path.resolve(process.cwd(), "packages/b_declarations/src/types.map.ts");
 const MANIFEST_FILE = path.resolve(process.cwd(), "packages/b_declarations/src/manifest.json");
-const MANIFEST_SCHEMA = path.resolve(process.cwd(), "packages/b_declarations/src/manifest.schema.json");
 
 interface PropertyInfo {
   folderName: string;
@@ -218,7 +216,7 @@ async function generateManifestFile(properties: PropertyInfo[]): Promise<void> {
 
   manifest.properties = propsObj;
 
-  await fs.writeFile(MANIFEST_FILE, JSON.stringify(manifest, null, 2) + "\n", "utf-8");
+  await fs.writeFile(MANIFEST_FILE, `${JSON.stringify(manifest, null, 2)}\n`, "utf-8");
   console.log("✅ Generated manifest.json");
 }
 

@@ -91,5 +91,17 @@
         "noDelete": "off"
       }
     }
-  }
+  },
+  "overrides": [
+    {
+      "includes": ["scripts/**/*.ts", "scripts/**/*.js"],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noConsole": "off"
+          }
+        }
+      }
+    }
+  ]
 }
