@@ -16,6 +16,7 @@ This entire architecture - the IR system, the bidirectional parsers, the propert
 ## 💡 Why This Matters
 
 ### Audio/Animation Studio Use Cases
+
 - **Visualizers:** Real-time waveforms, frequency bars, spectrograms
 - **Draw-on Effects:** `stroke-dasharray` + `stroke-dashoffset` animations
 - **Morphing:** Path interpolation and transformations
@@ -23,7 +24,9 @@ This entire architecture - the IR system, the bidirectional parsers, the propert
 - **Performance:** Type-safe transforms without runtime parsing overhead
 
 ### The Gap We're Filling
+
 Current tools either:
+
 - Parse CSS but don't understand SVG presentation attributes semantically
 - Handle SVG but lack bidirectional transform capabilities
 - Support animation but without type safety or IR representation
@@ -35,6 +38,7 @@ Current tools either:
 ## 🏗️ The Foundation (Current State)
 
 ### ✅ What We Have
+
 - **Color parsing:** Full CSS4 color support (rgb, hsl, hwb, lab, lch, oklab, oklch)
 - **URL parsing:** `url()` function with quoted/unquoted support
 - **Length/percentage:** Dimensional values with unit support
@@ -45,24 +49,27 @@ Current tools either:
 ### 🔨 What We Need to Build
 
 #### Phase 1: Paint Infrastructure
+
 **The `<paint>` type is the cornerstone.**
 
 ```typescript
 // SVG paint is MORE than just color
-type Paint = 
-  | Color                    // rgb(255, 0, 0), hsl(120, 100%, 50%)
-  | "none"                   // no fill/stroke
-  | Url                      // url(#gradient-id), url(#pattern-id)
-  | "context-fill"           // inherit from context
-  | "context-stroke"         // inherit from context
+type Paint =
+  | Color // rgb(255, 0, 0), hsl(120, 100%, 50%)
+  | "none" // no fill/stroke
+  | Url // url(#gradient-id), url(#pattern-id)
+  | "context-fill" // inherit from context
+  | "context-stroke"; // inherit from context
 ```
 
 **Implementation:**
+
 1. Create `Paint` type in `@b/types`
-2. Create `paint` parser in `@b/parsers` 
+2. Create `paint` parser in `@b/parsers`
 3. Create `paint` generator in `@b/generators`
 
 **Dependencies:**
+
 - ✅ Color parser (exists)
 - ✅ URL parser (exists)
 - 🔨 Context keyword support (new)
@@ -72,6 +79,7 @@ type Paint =
 ## 📋 Property Implementation Roadmap
 
 ### Tier 1: Core Paint (HIGHEST PRIORITY)
+
 **Unlocks:** Visual appearance of all SVG elements
 
 1. **`fill`** - Fill color/paint
@@ -85,6 +93,7 @@ type Paint =
    - Essential for outlines and paths
 
 ### Tier 2: Opacity Control
+
 **Unlocks:** Transparency and layering effects
 
 3. **`fill-opacity`** - Fill transparency
@@ -101,6 +110,7 @@ type Paint =
    - Note: Already exists in CSS, may need SVG context
 
 ### Tier 3: Stroke Properties (ANIMATION KEY)
+
 **Unlocks:** Draw-on effects, dashed lines, stroke styling
 
 6. **`stroke-width`** - Stroke thickness
@@ -126,6 +136,7 @@ type Paint =
     - Initial: `miter`
 
 ### Tier 4: Advanced Stroke
+
 **Unlocks:** Precise stroke control
 
 11. **`stroke-miterlimit`** - Miter join limit
@@ -144,11 +155,11 @@ type Paint =
   fill: none;
   stroke: #3498db;
   stroke-width: 3px;
-  
+
   /* Hide the stroke initially */
   stroke-dasharray: 1000;
   stroke-dashoffset: 1000;
-  
+
   /* Animate the stroke drawing on */
   animation: draw 2s ease-in-out forwards;
 }
@@ -161,8 +172,9 @@ type Paint =
 ```
 
 **Our system will:**
+
 1. Parse `stroke-dasharray: 1000` → IR
-2. Parse `stroke-dashoffset: 1000` → IR  
+2. Parse `stroke-dashoffset: 1000` → IR
 3. Transform/interpolate for animation
 4. Generate optimized CSS output
 5. Type-safe throughout
@@ -172,9 +184,11 @@ type Paint =
 ## 🔬 Technical Challenges
 
 ### 1. Paint Parser Implementation
+
 **Challenge:** Paint is a union of multiple types (color | none | url | keywords)
 
 **Solution:**
+
 ```typescript
 export function parsePaint(node: csstree.CssNode): ParseResult<Paint> {
   // Try color first (most common)
@@ -182,35 +196,39 @@ export function parsePaint(node: csstree.CssNode): ParseResult<Paint> {
     const colorResult = parseColor(node);
     if (colorResult.ok) return colorResult;
   }
-  
+
   // Try url() function
   if (node.type === "Function" && node.name === "url") {
     const urlResult = parseUrlFromNode(node);
     if (urlResult.ok) return urlResult;
   }
-  
+
   // Try keywords
   if (node.type === "Identifier") {
     if (node.name === "none") return parseOk({ kind: "none" });
     if (node.name === "context-fill") return parseOk({ kind: "context-fill" });
     if (node.name === "context-stroke") return parseOk({ kind: "context-stroke" });
   }
-  
+
   return parseErr("paint", createError("invalid-value", "Invalid paint value"));
 }
 ```
 
 ### 2. Dasharray List Parsing
+
 **Challenge:** `stroke-dasharray` accepts a comma/space-separated list
 
 **Solution:** Use existing multi-value parser infrastructure
+
 - Already solved for `background-size`, `background-position`
 - Pattern: `createMultiValueParser` from declarations utils
 
 ### 3. Alpha Values (Opacity)
+
 **Challenge:** Accepts both `<number>` [0-1] and `<percentage>`
 
-**Solution:** 
+**Solution:**
+
 - Check if we have alpha-value parser in `@b/parsers`
 - If not, create simple number/percentage union parser
 - Normalize to [0-1] range in IR
@@ -220,6 +238,7 @@ export function parsePaint(node: csstree.CssNode): ParseResult<Paint> {
 ## 📊 Success Metrics
 
 ### Phase 1 Complete When:
+
 - ✅ Paint type exists in `@b/types`
 - ✅ Paint parser exists in `@b/parsers`
 - ✅ `fill` property implemented
@@ -228,11 +247,13 @@ export function parsePaint(node: csstree.CssNode): ParseResult<Paint> {
 - ✅ Integration with color system verified
 
 ### Phase 2 Complete When:
+
 - ✅ All 3 opacity properties implemented
 - ✅ Alpha value parsing working
 - ✅ Tests cover 0-1 range and percentages
 
 ### Phase 3 Complete When:
+
 - ✅ `stroke-width` implemented
 - ✅ `stroke-dasharray` implemented (multi-value)
 - ✅ `stroke-dashoffset` implemented
@@ -288,6 +309,7 @@ The platform will support **WebGL shaders as custom filters** - bringing another
 ### Why Not Now?
 
 We need the **CSS/SVG foundation solid first** because:
+
 1. Artists create with SVG + CSS
 2. Platform parses to IR
 3. Platform packages for reuse
@@ -320,6 +342,7 @@ We need the **CSS/SVG foundation solid first** because:
 ### Focus: Here and Now
 
 **Immediate priorities:**
+
 1. Transition/Animation properties
 2. SVG properties (paint, stroke, opacity)
 3. Transform properties
@@ -327,6 +350,7 @@ We need the **CSS/SVG foundation solid first** because:
 5. Clipping/Masking properties
 
 **Once these are complete:**
+
 - SVG IR is powerful and encapsulated
 - Packaging/reuse layer can be built
 - Platform can enable artist sharing
