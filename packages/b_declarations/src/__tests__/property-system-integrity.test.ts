@@ -288,13 +288,16 @@ describe("Property System Integrity", () => {
 
         const parserContent = fs.readFileSync(parserPath, "utf8");
 
-        // Check if parser imports from @b/parsers or uses utils
+        // Check if parser imports from @b/parsers, uses utils, OR is keyword-only
         const hasParserImport =
           /@b\/parsers/.test(parserContent) ||
           /from ["']\.\.\/\.\.\/utils["']/.test(parserContent) ||
           /createMultiValueParser/.test(parserContent);
 
-        if (!hasParserImport) {
+        // Keyword-only parsers are valid (they only use @b/keywords)
+        const isKeywordOnly = /@b\/keywords/.test(parserContent) && /Keywords\.\w+\.safeParse/.test(parserContent);
+
+        if (!hasParserImport && !isKeywordOnly) {
           violations.push(`${propName}: parser.ts doesn't import from @b/parsers or use declaration utils`);
         }
 
@@ -334,14 +337,17 @@ describe("Property System Integrity", () => {
 
         const generatorContent = fs.readFileSync(generatorPath, "utf8");
 
-        // Check if generator imports from @b/generators or uses utils
+        // Check if generator imports from @b/generators, uses utils, OR is keyword-only
         const hasGeneratorImport =
           /@b\/generators/.test(generatorContent) ||
           /from ["']\.\.\/\.\.\/utils["']/.test(generatorContent) ||
           /generateValue/.test(generatorContent) ||
           /cssValueToCss/.test(generatorContent);
 
-        if (!hasGeneratorImport) {
+        // Keyword-only generators are valid (they only use generateOk)
+        const isKeywordOnly = /generateOk/.test(generatorContent) && /ir\.value/.test(generatorContent);
+
+        if (!hasGeneratorImport && !isKeywordOnly) {
           violations.push(`${propName}: generator.ts doesn't import from @b/generators or use declaration utils`);
         }
 

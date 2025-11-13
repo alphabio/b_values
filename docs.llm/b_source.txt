@@ -1888,6 +1888,1243 @@ export const backgroundSizeIR = z.discriminatedUnion("kind", [
 export type BackgroundSizeIR = z.infer<typeof backgroundSizeIR>;
 
 
+=== File: packages/b_declarations/src/properties/border-bottom-color/definition.ts ===
+// b_path:: packages/b_declarations/src/properties/border-bottom-color/definition.ts
+
+import { defineProperty } from "../../core";
+import { parseBorderBottomColor } from "./parser";
+import { generateBorderBottomColor } from "./generator";
+import type { BorderBottomColorIR } from "./types";
+
+export const borderBottomColor = defineProperty<BorderBottomColorIR>({
+  name: "border-bottom-color",
+  syntax: "<color>",
+  parser: parseBorderBottomColor,
+  generator: generateBorderBottomColor,
+  inherited: false,
+  initial: "currentcolor",
+});
+
+
+=== File: packages/b_declarations/src/properties/border-bottom-color/generator.ts ===
+// b_path:: packages/b_declarations/src/properties/border-bottom-color/generator.ts
+
+import { generateOk, type GenerateResult } from "@b/types";
+import * as Generators from "@b/generators";
+import type { BorderBottomColorIR } from "./types";
+
+export function generateBorderBottomColor(ir: BorderBottomColorIR): GenerateResult {
+  if (ir.kind === "keyword") {
+    return generateOk(ir.value);
+  }
+
+  const result = Generators.Color.generate(ir.value);
+  return result;
+}
+
+
+=== File: packages/b_declarations/src/properties/border-bottom-color/index.ts ===
+// b_path:: packages/b_declarations/src/properties/border-bottom-color/index.ts
+
+export * from "./types";
+export * from "./parser";
+export * from "./generator";
+export * from "./definition";
+
+
+=== File: packages/b_declarations/src/properties/border-bottom-color/parser.ts ===
+// b_path:: packages/b_declarations/src/properties/border-bottom-color/parser.ts
+
+import type { ParseResult } from "@b/types";
+import * as Parsers from "@b/parsers";
+import type * as csstree from "@eslint/css-tree";
+import type { BorderBottomColorIR } from "./types";
+
+export function parseBorderBottomColor(ast: csstree.Value): ParseResult<BorderBottomColorIR> {
+  const firstNode = ast.children.first;
+
+  if (!firstNode) {
+    return {
+      ok: false,
+      property: "border-bottom-color",
+      value: undefined,
+      issues: [{ code: "missing-value", severity: "error", message: "Empty value for border-bottom-color" }],
+    };
+  }
+
+  const colorResult = Parsers.Color.parseNode(firstNode);
+
+  if (colorResult.ok) {
+    return {
+      ok: true,
+      property: "border-bottom-color",
+      value: { kind: "value", value: colorResult.value },
+      issues: colorResult.issues,
+    };
+  }
+
+  return colorResult as ParseResult<BorderBottomColorIR>;
+}
+
+
+=== File: packages/b_declarations/src/properties/border-bottom-color/types.ts ===
+// b_path:: packages/b_declarations/src/properties/border-bottom-color/types.ts
+
+import { z } from "zod";
+import { colorSchema } from "@b/types";
+import * as Keywords from "@b/keywords";
+
+/**
+ * The final IR for the entire `border-bottom-color` property.
+ */
+export const borderBottomColorIRSchema = z.discriminatedUnion("kind", [
+  z.object({
+    kind: z.literal("keyword"),
+    value: Keywords.cssWide,
+  }),
+  z.object({
+    kind: z.literal("value"),
+    value: colorSchema,
+  }),
+]);
+
+export type BorderBottomColorIR = z.infer<typeof borderBottomColorIRSchema>;
+
+
+=== File: packages/b_declarations/src/properties/border-bottom-left-radius/definition.ts ===
+// b_path:: packages/b_declarations/src/properties/border-bottom-left-radius/definition.ts
+
+import { defineProperty } from "../../core";
+import { parseBorderBottomLeftRadius } from "./parser";
+import { generateBorderBottomLeftRadius } from "./generator";
+import type { BorderBottomLeftRadiusIR } from "./types";
+
+export const borderBottomLeftRadius = defineProperty<BorderBottomLeftRadiusIR>({
+  name: "border-bottom-left-radius",
+  syntax: "<length-percentage [0,∞]>{1,2}",
+  parser: parseBorderBottomLeftRadius,
+  generator: generateBorderBottomLeftRadius,
+  inherited: false,
+  initial: "0",
+});
+
+
+=== File: packages/b_declarations/src/properties/border-bottom-left-radius/generator.ts ===
+// b_path:: packages/b_declarations/src/properties/border-bottom-left-radius/generator.ts
+
+import { generateOk, type GenerateResult } from "@b/types";
+import { cssValueToCss } from "@b/utils";
+import type { BorderBottomLeftRadiusIR } from "./types";
+
+export function generateBorderBottomLeftRadius(ir: BorderBottomLeftRadiusIR): GenerateResult {
+  if (ir.kind === "keyword") {
+    return generateOk(ir.value);
+  }
+
+  if (ir.kind === "circular") {
+    const css = cssValueToCss(ir.radius);
+    return generateOk(css);
+  }
+
+  // elliptical
+  const horizontal = cssValueToCss(ir.horizontal);
+  const vertical = cssValueToCss(ir.vertical);
+  return generateOk(`${horizontal} ${vertical}`);
+}
+
+
+=== File: packages/b_declarations/src/properties/border-bottom-left-radius/index.ts ===
+// b_path:: packages/b_declarations/src/properties/border-bottom-left-radius/index.ts
+
+export * from "./types";
+export * from "./parser";
+export * from "./generator";
+export * from "./definition";
+
+
+=== File: packages/b_declarations/src/properties/border-bottom-left-radius/parser.ts ===
+// b_path:: packages/b_declarations/src/properties/border-bottom-left-radius/parser.ts
+
+import type { ParseResult } from "@b/types";
+import * as Parsers from "@b/parsers";
+import type * as csstree from "@eslint/css-tree";
+import type { BorderBottomLeftRadiusIR } from "./types";
+
+export function parseBorderBottomLeftRadius(ast: csstree.Value): ParseResult<BorderBottomLeftRadiusIR> {
+  const nodes = Array.from(ast.children);
+
+  if (nodes.length === 0) {
+    return {
+      ok: false,
+      property: "border-bottom-left-radius",
+      value: undefined,
+      issues: [{ code: "missing-value", severity: "error", message: "Empty value for border-bottom-left-radius" }],
+    };
+  }
+
+  // Parse first value (horizontal radius)
+  const firstResult = Parsers.Utils.parseNodeToCssValue(nodes[0]);
+  if (!firstResult.ok) {
+    return firstResult as ParseResult<BorderBottomLeftRadiusIR>;
+  }
+
+  // Single value = circular radius
+  if (nodes.length === 1) {
+    return {
+      ok: true,
+      property: "border-bottom-left-radius",
+      value: { kind: "circular", radius: firstResult.value },
+      issues: [],
+    };
+  }
+
+  // Two values = elliptical (horizontal, vertical)
+  const secondResult = Parsers.Utils.parseNodeToCssValue(nodes[1]);
+  if (!secondResult.ok) {
+    return secondResult as ParseResult<BorderBottomLeftRadiusIR>;
+  }
+
+  return {
+    ok: true,
+    property: "border-bottom-left-radius",
+    value: {
+      kind: "elliptical",
+      horizontal: firstResult.value,
+      vertical: secondResult.value,
+    },
+    issues: [],
+  };
+}
+
+
+=== File: packages/b_declarations/src/properties/border-bottom-left-radius/types.ts ===
+// b_path:: packages/b_declarations/src/properties/border-bottom-left-radius/types.ts
+
+import type { CssValue } from "@b/types";
+
+export type BorderBottomLeftRadiusIR =
+  | { kind: "keyword"; value: "initial" | "inherit" | "unset" | "revert" | "revert-layer" }
+  | { kind: "circular"; radius: CssValue }
+  | { kind: "elliptical"; horizontal: CssValue; vertical: CssValue };
+
+
+=== File: packages/b_declarations/src/properties/border-bottom-right-radius/definition.ts ===
+// b_path:: packages/b_declarations/src/properties/border-bottom-right-radius/definition.ts
+
+import { defineProperty } from "../../core";
+import { parseBorderBottomRightRadius } from "./parser";
+import { generateBorderBottomRightRadius } from "./generator";
+import type { BorderBottomRightRadiusIR } from "./types";
+
+export const borderBottomRightRadius = defineProperty<BorderBottomRightRadiusIR>({
+  name: "border-bottom-right-radius",
+  syntax: "<length-percentage [0,∞]>{1,2}",
+  parser: parseBorderBottomRightRadius,
+  generator: generateBorderBottomRightRadius,
+  inherited: false,
+  initial: "0",
+});
+
+
+=== File: packages/b_declarations/src/properties/border-bottom-right-radius/generator.ts ===
+// b_path:: packages/b_declarations/src/properties/border-bottom-right-radius/generator.ts
+
+import { generateOk, type GenerateResult } from "@b/types";
+import { cssValueToCss } from "@b/utils";
+import type { BorderBottomRightRadiusIR } from "./types";
+
+export function generateBorderBottomRightRadius(ir: BorderBottomRightRadiusIR): GenerateResult {
+  if (ir.kind === "keyword") {
+    return generateOk(ir.value);
+  }
+
+  if (ir.kind === "circular") {
+    const css = cssValueToCss(ir.radius);
+    return generateOk(css);
+  }
+
+  // elliptical
+  const horizontal = cssValueToCss(ir.horizontal);
+  const vertical = cssValueToCss(ir.vertical);
+  return generateOk(`${horizontal} ${vertical}`);
+}
+
+
+=== File: packages/b_declarations/src/properties/border-bottom-right-radius/index.ts ===
+// b_path:: packages/b_declarations/src/properties/border-bottom-right-radius/index.ts
+
+export * from "./types";
+export * from "./parser";
+export * from "./generator";
+export * from "./definition";
+
+
+=== File: packages/b_declarations/src/properties/border-bottom-right-radius/parser.ts ===
+// b_path:: packages/b_declarations/src/properties/border-bottom-right-radius/parser.ts
+
+import type { ParseResult } from "@b/types";
+import * as Parsers from "@b/parsers";
+import type * as csstree from "@eslint/css-tree";
+import type { BorderBottomRightRadiusIR } from "./types";
+
+export function parseBorderBottomRightRadius(ast: csstree.Value): ParseResult<BorderBottomRightRadiusIR> {
+  const nodes = Array.from(ast.children);
+
+  if (nodes.length === 0) {
+    return {
+      ok: false,
+      property: "border-bottom-right-radius",
+      value: undefined,
+      issues: [{ code: "missing-value", severity: "error", message: "Empty value for border-bottom-right-radius" }],
+    };
+  }
+
+  // Parse first value (horizontal radius)
+  const firstResult = Parsers.Utils.parseNodeToCssValue(nodes[0]);
+  if (!firstResult.ok) {
+    return firstResult as ParseResult<BorderBottomRightRadiusIR>;
+  }
+
+  // Single value = circular radius
+  if (nodes.length === 1) {
+    return {
+      ok: true,
+      property: "border-bottom-right-radius",
+      value: { kind: "circular", radius: firstResult.value },
+      issues: [],
+    };
+  }
+
+  // Two values = elliptical (horizontal, vertical)
+  const secondResult = Parsers.Utils.parseNodeToCssValue(nodes[1]);
+  if (!secondResult.ok) {
+    return secondResult as ParseResult<BorderBottomRightRadiusIR>;
+  }
+
+  return {
+    ok: true,
+    property: "border-bottom-right-radius",
+    value: {
+      kind: "elliptical",
+      horizontal: firstResult.value,
+      vertical: secondResult.value,
+    },
+    issues: [],
+  };
+}
+
+
+=== File: packages/b_declarations/src/properties/border-bottom-right-radius/types.ts ===
+// b_path:: packages/b_declarations/src/properties/border-bottom-right-radius/types.ts
+
+import type { CssValue } from "@b/types";
+
+export type BorderBottomRightRadiusIR =
+  | { kind: "keyword"; value: "initial" | "inherit" | "unset" | "revert" | "revert-layer" }
+  | { kind: "circular"; radius: CssValue }
+  | { kind: "elliptical"; horizontal: CssValue; vertical: CssValue };
+
+
+=== File: packages/b_declarations/src/properties/border-bottom-style/definition.ts ===
+// b_path:: packages/b_declarations/src/properties/border-bottom-style/definition.ts
+
+import { defineProperty } from "../../core";
+import { parseBorderBottomStyle } from "./parser";
+import { generateBorderBottomStyle } from "./generator";
+import type { BorderBottomStyleIR } from "./types";
+
+export const borderBottomStyle = defineProperty<BorderBottomStyleIR>({
+  name: "border-bottom-style",
+  syntax: "<line-style>",
+  parser: parseBorderBottomStyle,
+  generator: generateBorderBottomStyle,
+  inherited: false,
+  initial: "none",
+});
+
+
+=== File: packages/b_declarations/src/properties/border-bottom-style/generator.ts ===
+// b_path:: packages/b_declarations/src/properties/border-bottom-style/generator.ts
+
+import { generateOk, type GenerateResult } from "@b/types";
+import type { BorderBottomStyleIR } from "./types";
+
+export function generateBorderBottomStyle(ir: BorderBottomStyleIR): GenerateResult {
+  return generateOk(ir.value);
+}
+
+
+=== File: packages/b_declarations/src/properties/border-bottom-style/index.ts ===
+// b_path:: packages/b_declarations/src/properties/border-bottom-style/index.ts
+
+export * from "./types";
+export * from "./parser";
+export * from "./generator";
+export * from "./definition";
+
+
+=== File: packages/b_declarations/src/properties/border-bottom-style/parser.ts ===
+// b_path:: packages/b_declarations/src/properties/border-bottom-style/parser.ts
+
+import type { ParseResult } from "@b/types";
+import * as Keywords from "@b/keywords";
+import type * as csstree from "@eslint/css-tree";
+import type { BorderBottomStyleIR } from "./types";
+
+export function parseBorderBottomStyle(ast: csstree.Value): ParseResult<BorderBottomStyleIR> {
+  const firstNode = ast.children.first;
+
+  if (!firstNode) {
+    return {
+      ok: false,
+      property: "border-bottom-style",
+      value: undefined,
+      issues: [{ code: "missing-value", severity: "error", message: "Empty value for border-bottom-style" }],
+    };
+  }
+
+  if (firstNode.type === "Identifier") {
+    const parsed = Keywords.borderStyleKeywordSchema.safeParse(firstNode.name);
+    if (parsed.success) {
+      return {
+        ok: true,
+        property: "border-bottom-style",
+        value: { kind: "keyword", value: parsed.data },
+        issues: [],
+      };
+    }
+  }
+
+  return {
+    ok: false,
+    property: "border-bottom-style",
+    value: undefined,
+    issues: [{ code: "invalid-value", severity: "error", message: "Invalid border-style value" }],
+  };
+}
+
+
+=== File: packages/b_declarations/src/properties/border-bottom-style/types.ts ===
+// b_path:: packages/b_declarations/src/properties/border-bottom-style/types.ts
+
+import type * as Keywords from "@b/keywords";
+
+export type BorderBottomStyleIR = {
+  kind: "keyword";
+  value: "initial" | "inherit" | "unset" | "revert" | "revert-layer" | Keywords.BorderStyleKeyword;
+};
+
+
+=== File: packages/b_declarations/src/properties/border-bottom-width/definition.ts ===
+// b_path:: packages/b_declarations/src/properties/border-bottom-width/definition.ts
+
+import { defineProperty } from "../../core";
+import { parseBorderBottomWidth } from "./parser";
+import { generateBorderBottomWidth } from "./generator";
+import type { BorderBottomWidthIR } from "./types";
+
+export const borderBottomWidth = defineProperty<BorderBottomWidthIR>({
+  name: "border-bottom-width",
+  syntax: "<line-width>",
+  parser: parseBorderBottomWidth,
+  generator: generateBorderBottomWidth,
+  inherited: false,
+  initial: "medium",
+});
+
+
+=== File: packages/b_declarations/src/properties/border-bottom-width/generator.ts ===
+// b_path:: packages/b_declarations/src/properties/border-bottom-width/generator.ts
+
+import { generateOk, type GenerateResult } from "@b/types";
+import { cssValueToCss } from "@b/utils";
+import type { BorderBottomWidthIR } from "./types";
+
+export function generateBorderBottomWidth(ir: BorderBottomWidthIR): GenerateResult {
+  if (ir.kind === "keyword") {
+    return generateOk(ir.value);
+  }
+
+  const css = cssValueToCss(ir.value);
+  return generateOk(css);
+}
+
+
+=== File: packages/b_declarations/src/properties/border-bottom-width/index.ts ===
+// b_path:: packages/b_declarations/src/properties/border-bottom-width/index.ts
+
+export * from "./types";
+export * from "./parser";
+export * from "./generator";
+export * from "./definition";
+
+
+=== File: packages/b_declarations/src/properties/border-bottom-width/parser.ts ===
+// b_path:: packages/b_declarations/src/properties/border-bottom-width/parser.ts
+
+import type { ParseResult } from "@b/types";
+import * as Parsers from "@b/parsers";
+import * as Keywords from "@b/keywords";
+import type * as csstree from "@eslint/css-tree";
+import type { BorderBottomWidthIR } from "./types";
+
+export function parseBorderBottomWidth(ast: csstree.Value): ParseResult<BorderBottomWidthIR> {
+  const firstNode = ast.children.first;
+
+  if (!firstNode) {
+    return {
+      ok: false,
+      property: "border-bottom-width",
+      value: undefined,
+      issues: [{ code: "missing-value", severity: "error", message: "Empty value for border-bottom-width" }],
+    };
+  }
+
+  // Check for line-width keywords (thin | medium | thick)
+  if (firstNode.type === "Identifier") {
+    const parsed = Keywords.lineWidthKeywordSchema.safeParse(firstNode.name);
+    if (parsed.success) {
+      return {
+        ok: true,
+        property: "border-bottom-width",
+        value: { kind: "keyword", value: parsed.data },
+        issues: [],
+      };
+    }
+  }
+
+  const valueResult = Parsers.Utils.parseNodeToCssValue(firstNode);
+
+  if (valueResult.ok) {
+    return {
+      ok: true,
+      property: "border-bottom-width",
+      value: { kind: "value", value: valueResult.value },
+      issues: valueResult.issues,
+    };
+  }
+
+  return valueResult as ParseResult<BorderBottomWidthIR>;
+}
+
+
+=== File: packages/b_declarations/src/properties/border-bottom-width/types.ts ===
+// b_path:: packages/b_declarations/src/properties/border-bottom-width/types.ts
+
+import type { CssValue } from "@b/types";
+import type * as Keywords from "@b/keywords";
+
+export type BorderBottomWidthIR =
+  | {
+      kind: "keyword";
+      value: "initial" | "inherit" | "unset" | "revert" | "revert-layer" | Keywords.LineWidthKeyword;
+    }
+  | { kind: "value"; value: CssValue };
+
+
+=== File: packages/b_declarations/src/properties/border-left-color/definition.ts ===
+// b_path:: packages/b_declarations/src/properties/border-left-color/definition.ts
+
+import { defineProperty } from "../../core";
+import { parseBorderLeftColor } from "./parser";
+import { generateBorderLeftColor } from "./generator";
+import type { BorderLeftColorIR } from "./types";
+
+export const borderLeftColor = defineProperty<BorderLeftColorIR>({
+  name: "border-left-color",
+  syntax: "<color>",
+  parser: parseBorderLeftColor,
+  generator: generateBorderLeftColor,
+  inherited: false,
+  initial: "currentcolor",
+});
+
+
+=== File: packages/b_declarations/src/properties/border-left-color/generator.ts ===
+// b_path:: packages/b_declarations/src/properties/border-left-color/generator.ts
+
+import { generateOk, type GenerateResult } from "@b/types";
+import * as Generators from "@b/generators";
+import type { BorderLeftColorIR } from "./types";
+
+export function generateBorderLeftColor(ir: BorderLeftColorIR): GenerateResult {
+  if (ir.kind === "keyword") {
+    return generateOk(ir.value);
+  }
+
+  const result = Generators.Color.generate(ir.value);
+  return result;
+}
+
+
+=== File: packages/b_declarations/src/properties/border-left-color/index.ts ===
+// b_path:: packages/b_declarations/src/properties/border-left-color/index.ts
+
+export * from "./types";
+export * from "./parser";
+export * from "./generator";
+export * from "./definition";
+
+
+=== File: packages/b_declarations/src/properties/border-left-color/parser.ts ===
+// b_path:: packages/b_declarations/src/properties/border-left-color/parser.ts
+
+import type { ParseResult } from "@b/types";
+import * as Parsers from "@b/parsers";
+import type * as csstree from "@eslint/css-tree";
+import type { BorderLeftColorIR } from "./types";
+
+export function parseBorderLeftColor(ast: csstree.Value): ParseResult<BorderLeftColorIR> {
+  const firstNode = ast.children.first;
+
+  if (!firstNode) {
+    return {
+      ok: false,
+      property: "border-left-color",
+      value: undefined,
+      issues: [{ code: "missing-value", severity: "error", message: "Empty value for border-left-color" }],
+    };
+  }
+
+  const colorResult = Parsers.Color.parseNode(firstNode);
+
+  if (colorResult.ok) {
+    return {
+      ok: true,
+      property: "border-left-color",
+      value: { kind: "value", value: colorResult.value },
+      issues: colorResult.issues,
+    };
+  }
+
+  return colorResult as ParseResult<BorderLeftColorIR>;
+}
+
+
+=== File: packages/b_declarations/src/properties/border-left-color/types.ts ===
+// b_path:: packages/b_declarations/src/properties/border-left-color/types.ts
+
+import { z } from "zod";
+import { colorSchema } from "@b/types";
+import * as Keywords from "@b/keywords";
+
+/**
+ * The final IR for the entire `border-left-color` property.
+ */
+export const borderLeftColorIRSchema = z.discriminatedUnion("kind", [
+  z.object({
+    kind: z.literal("keyword"),
+    value: Keywords.cssWide,
+  }),
+  z.object({
+    kind: z.literal("value"),
+    value: colorSchema,
+  }),
+]);
+
+export type BorderLeftColorIR = z.infer<typeof borderLeftColorIRSchema>;
+
+
+=== File: packages/b_declarations/src/properties/border-left-style/definition.ts ===
+// b_path:: packages/b_declarations/src/properties/border-left-style/definition.ts
+
+import { defineProperty } from "../../core";
+import { parseBorderLeftStyle } from "./parser";
+import { generateBorderLeftStyle } from "./generator";
+import type { BorderLeftStyleIR } from "./types";
+
+export const borderLeftStyle = defineProperty<BorderLeftStyleIR>({
+  name: "border-left-style",
+  syntax: "<line-style>",
+  parser: parseBorderLeftStyle,
+  generator: generateBorderLeftStyle,
+  inherited: false,
+  initial: "none",
+});
+
+
+=== File: packages/b_declarations/src/properties/border-left-style/generator.ts ===
+// b_path:: packages/b_declarations/src/properties/border-left-style/generator.ts
+
+import { generateOk, type GenerateResult } from "@b/types";
+import type { BorderLeftStyleIR } from "./types";
+
+export function generateBorderLeftStyle(ir: BorderLeftStyleIR): GenerateResult {
+  return generateOk(ir.value);
+}
+
+
+=== File: packages/b_declarations/src/properties/border-left-style/index.ts ===
+// b_path:: packages/b_declarations/src/properties/border-left-style/index.ts
+
+export * from "./types";
+export * from "./parser";
+export * from "./generator";
+export * from "./definition";
+
+
+=== File: packages/b_declarations/src/properties/border-left-style/parser.ts ===
+// b_path:: packages/b_declarations/src/properties/border-left-style/parser.ts
+
+import type { ParseResult } from "@b/types";
+import * as Keywords from "@b/keywords";
+import type * as csstree from "@eslint/css-tree";
+import type { BorderLeftStyleIR } from "./types";
+
+export function parseBorderLeftStyle(ast: csstree.Value): ParseResult<BorderLeftStyleIR> {
+  const firstNode = ast.children.first;
+
+  if (!firstNode) {
+    return {
+      ok: false,
+      property: "border-left-style",
+      value: undefined,
+      issues: [{ code: "missing-value", severity: "error", message: "Empty value for border-left-style" }],
+    };
+  }
+
+  if (firstNode.type === "Identifier") {
+    const parsed = Keywords.borderStyleKeywordSchema.safeParse(firstNode.name);
+    if (parsed.success) {
+      return {
+        ok: true,
+        property: "border-left-style",
+        value: { kind: "keyword", value: parsed.data },
+        issues: [],
+      };
+    }
+  }
+
+  return {
+    ok: false,
+    property: "border-left-style",
+    value: undefined,
+    issues: [{ code: "invalid-value", severity: "error", message: "Invalid border-style value" }],
+  };
+}
+
+
+=== File: packages/b_declarations/src/properties/border-left-style/types.ts ===
+// b_path:: packages/b_declarations/src/properties/border-left-style/types.ts
+
+import type * as Keywords from "@b/keywords";
+
+export type BorderLeftStyleIR = {
+  kind: "keyword";
+  value: "initial" | "inherit" | "unset" | "revert" | "revert-layer" | Keywords.BorderStyleKeyword;
+};
+
+
+=== File: packages/b_declarations/src/properties/border-left-width/definition.ts ===
+// b_path:: packages/b_declarations/src/properties/border-left-width/definition.ts
+
+import { defineProperty } from "../../core";
+import { parseBorderLeftWidth } from "./parser";
+import { generateBorderLeftWidth } from "./generator";
+import type { BorderLeftWidthIR } from "./types";
+
+export const borderLeftWidth = defineProperty<BorderLeftWidthIR>({
+  name: "border-left-width",
+  syntax: "<line-width>",
+  parser: parseBorderLeftWidth,
+  generator: generateBorderLeftWidth,
+  inherited: false,
+  initial: "medium",
+});
+
+
+=== File: packages/b_declarations/src/properties/border-left-width/generator.ts ===
+// b_path:: packages/b_declarations/src/properties/border-left-width/generator.ts
+
+import { generateOk, type GenerateResult } from "@b/types";
+import { cssValueToCss } from "@b/utils";
+import type { BorderLeftWidthIR } from "./types";
+
+export function generateBorderLeftWidth(ir: BorderLeftWidthIR): GenerateResult {
+  if (ir.kind === "keyword") {
+    return generateOk(ir.value);
+  }
+
+  const css = cssValueToCss(ir.value);
+  return generateOk(css);
+}
+
+
+=== File: packages/b_declarations/src/properties/border-left-width/index.ts ===
+// b_path:: packages/b_declarations/src/properties/border-left-width/index.ts
+
+export * from "./types";
+export * from "./parser";
+export * from "./generator";
+export * from "./definition";
+
+
+=== File: packages/b_declarations/src/properties/border-left-width/parser.ts ===
+// b_path:: packages/b_declarations/src/properties/border-left-width/parser.ts
+
+import type { ParseResult } from "@b/types";
+import * as Parsers from "@b/parsers";
+import * as Keywords from "@b/keywords";
+import type * as csstree from "@eslint/css-tree";
+import type { BorderLeftWidthIR } from "./types";
+
+export function parseBorderLeftWidth(ast: csstree.Value): ParseResult<BorderLeftWidthIR> {
+  const firstNode = ast.children.first;
+
+  if (!firstNode) {
+    return {
+      ok: false,
+      property: "border-left-width",
+      value: undefined,
+      issues: [{ code: "missing-value", severity: "error", message: "Empty value for border-left-width" }],
+    };
+  }
+
+  // Check for line-width keywords (thin | medium | thick)
+  if (firstNode.type === "Identifier") {
+    const parsed = Keywords.lineWidthKeywordSchema.safeParse(firstNode.name);
+    if (parsed.success) {
+      return {
+        ok: true,
+        property: "border-left-width",
+        value: { kind: "keyword", value: parsed.data },
+        issues: [],
+      };
+    }
+  }
+
+  const valueResult = Parsers.Utils.parseNodeToCssValue(firstNode);
+
+  if (valueResult.ok) {
+    return {
+      ok: true,
+      property: "border-left-width",
+      value: { kind: "value", value: valueResult.value },
+      issues: valueResult.issues,
+    };
+  }
+
+  return valueResult as ParseResult<BorderLeftWidthIR>;
+}
+
+
+=== File: packages/b_declarations/src/properties/border-left-width/types.ts ===
+// b_path:: packages/b_declarations/src/properties/border-left-width/types.ts
+
+import type { CssValue } from "@b/types";
+import type * as Keywords from "@b/keywords";
+
+export type BorderLeftWidthIR =
+  | {
+      kind: "keyword";
+      value: "initial" | "inherit" | "unset" | "revert" | "revert-layer" | Keywords.LineWidthKeyword;
+    }
+  | { kind: "value"; value: CssValue };
+
+
+=== File: packages/b_declarations/src/properties/border-right-color/definition.ts ===
+// b_path:: packages/b_declarations/src/properties/border-right-color/definition.ts
+
+import { defineProperty } from "../../core";
+import { parseBorderRightColor } from "./parser";
+import { generateBorderRightColor } from "./generator";
+import type { BorderRightColorIR } from "./types";
+
+export const borderRightColor = defineProperty<BorderRightColorIR>({
+  name: "border-right-color",
+  syntax: "<color>",
+  parser: parseBorderRightColor,
+  generator: generateBorderRightColor,
+  inherited: false,
+  initial: "currentcolor",
+});
+
+
+=== File: packages/b_declarations/src/properties/border-right-color/generator.ts ===
+// b_path:: packages/b_declarations/src/properties/border-right-color/generator.ts
+
+import { generateOk, type GenerateResult } from "@b/types";
+import * as Generators from "@b/generators";
+import type { BorderRightColorIR } from "./types";
+
+export function generateBorderRightColor(ir: BorderRightColorIR): GenerateResult {
+  if (ir.kind === "keyword") {
+    return generateOk(ir.value);
+  }
+
+  const result = Generators.Color.generate(ir.value);
+  return result;
+}
+
+
+=== File: packages/b_declarations/src/properties/border-right-color/index.ts ===
+// b_path:: packages/b_declarations/src/properties/border-right-color/index.ts
+
+export * from "./types";
+export * from "./parser";
+export * from "./generator";
+export * from "./definition";
+
+
+=== File: packages/b_declarations/src/properties/border-right-color/parser.ts ===
+// b_path:: packages/b_declarations/src/properties/border-right-color/parser.ts
+
+import type { ParseResult } from "@b/types";
+import * as Parsers from "@b/parsers";
+import type * as csstree from "@eslint/css-tree";
+import type { BorderRightColorIR } from "./types";
+
+export function parseBorderRightColor(ast: csstree.Value): ParseResult<BorderRightColorIR> {
+  const firstNode = ast.children.first;
+
+  if (!firstNode) {
+    return {
+      ok: false,
+      property: "border-right-color",
+      value: undefined,
+      issues: [{ code: "missing-value", severity: "error", message: "Empty value for border-right-color" }],
+    };
+  }
+
+  const colorResult = Parsers.Color.parseNode(firstNode);
+
+  if (colorResult.ok) {
+    return {
+      ok: true,
+      property: "border-right-color",
+      value: { kind: "value", value: colorResult.value },
+      issues: colorResult.issues,
+    };
+  }
+
+  return colorResult as ParseResult<BorderRightColorIR>;
+}
+
+
+=== File: packages/b_declarations/src/properties/border-right-color/types.ts ===
+// b_path:: packages/b_declarations/src/properties/border-right-color/types.ts
+
+import { z } from "zod";
+import { colorSchema } from "@b/types";
+import * as Keywords from "@b/keywords";
+
+/**
+ * The final IR for the entire `border-right-color` property.
+ */
+export const borderRightColorIRSchema = z.discriminatedUnion("kind", [
+  z.object({
+    kind: z.literal("keyword"),
+    value: Keywords.cssWide,
+  }),
+  z.object({
+    kind: z.literal("value"),
+    value: colorSchema,
+  }),
+]);
+
+export type BorderRightColorIR = z.infer<typeof borderRightColorIRSchema>;
+
+
+=== File: packages/b_declarations/src/properties/border-right-style/definition.ts ===
+// b_path:: packages/b_declarations/src/properties/border-right-style/definition.ts
+
+import { defineProperty } from "../../core";
+import { parseBorderRightStyle } from "./parser";
+import { generateBorderRightStyle } from "./generator";
+import type { BorderRightStyleIR } from "./types";
+
+export const borderRightStyle = defineProperty<BorderRightStyleIR>({
+  name: "border-right-style",
+  syntax: "<line-style>",
+  parser: parseBorderRightStyle,
+  generator: generateBorderRightStyle,
+  inherited: false,
+  initial: "none",
+});
+
+
+=== File: packages/b_declarations/src/properties/border-right-style/generator.ts ===
+// b_path:: packages/b_declarations/src/properties/border-right-style/generator.ts
+
+import { generateOk, type GenerateResult } from "@b/types";
+import type { BorderRightStyleIR } from "./types";
+
+export function generateBorderRightStyle(ir: BorderRightStyleIR): GenerateResult {
+  return generateOk(ir.value);
+}
+
+
+=== File: packages/b_declarations/src/properties/border-right-style/index.ts ===
+// b_path:: packages/b_declarations/src/properties/border-right-style/index.ts
+
+export * from "./types";
+export * from "./parser";
+export * from "./generator";
+export * from "./definition";
+
+
+=== File: packages/b_declarations/src/properties/border-right-style/parser.ts ===
+// b_path:: packages/b_declarations/src/properties/border-right-style/parser.ts
+
+import type { ParseResult } from "@b/types";
+import * as Keywords from "@b/keywords";
+import type * as csstree from "@eslint/css-tree";
+import type { BorderRightStyleIR } from "./types";
+
+export function parseBorderRightStyle(ast: csstree.Value): ParseResult<BorderRightStyleIR> {
+  const firstNode = ast.children.first;
+
+  if (!firstNode) {
+    return {
+      ok: false,
+      property: "border-right-style",
+      value: undefined,
+      issues: [{ code: "missing-value", severity: "error", message: "Empty value for border-right-style" }],
+    };
+  }
+
+  if (firstNode.type === "Identifier") {
+    const parsed = Keywords.borderStyleKeywordSchema.safeParse(firstNode.name);
+    if (parsed.success) {
+      return {
+        ok: true,
+        property: "border-right-style",
+        value: { kind: "keyword", value: parsed.data },
+        issues: [],
+      };
+    }
+  }
+
+  return {
+    ok: false,
+    property: "border-right-style",
+    value: undefined,
+    issues: [{ code: "invalid-value", severity: "error", message: "Invalid border-style value" }],
+  };
+}
+
+
+=== File: packages/b_declarations/src/properties/border-right-style/types.ts ===
+// b_path:: packages/b_declarations/src/properties/border-right-style/types.ts
+
+import type * as Keywords from "@b/keywords";
+
+export type BorderRightStyleIR = {
+  kind: "keyword";
+  value: "initial" | "inherit" | "unset" | "revert" | "revert-layer" | Keywords.BorderStyleKeyword;
+};
+
+
+=== File: packages/b_declarations/src/properties/border-right-width/definition.ts ===
+// b_path:: packages/b_declarations/src/properties/border-right-width/definition.ts
+
+import { defineProperty } from "../../core";
+import { parseBorderRightWidth } from "./parser";
+import { generateBorderRightWidth } from "./generator";
+import type { BorderRightWidthIR } from "./types";
+
+export const borderRightWidth = defineProperty<BorderRightWidthIR>({
+  name: "border-right-width",
+  syntax: "<line-width>",
+  parser: parseBorderRightWidth,
+  generator: generateBorderRightWidth,
+  inherited: false,
+  initial: "medium",
+});
+
+
+=== File: packages/b_declarations/src/properties/border-right-width/generator.ts ===
+// b_path:: packages/b_declarations/src/properties/border-right-width/generator.ts
+
+import { generateOk, type GenerateResult } from "@b/types";
+import { cssValueToCss } from "@b/utils";
+import type { BorderRightWidthIR } from "./types";
+
+export function generateBorderRightWidth(ir: BorderRightWidthIR): GenerateResult {
+  if (ir.kind === "keyword") {
+    return generateOk(ir.value);
+  }
+
+  const css = cssValueToCss(ir.value);
+  return generateOk(css);
+}
+
+
+=== File: packages/b_declarations/src/properties/border-right-width/index.ts ===
+// b_path:: packages/b_declarations/src/properties/border-right-width/index.ts
+
+export * from "./types";
+export * from "./parser";
+export * from "./generator";
+export * from "./definition";
+
+
+=== File: packages/b_declarations/src/properties/border-right-width/parser.ts ===
+// b_path:: packages/b_declarations/src/properties/border-right-width/parser.ts
+
+import type { ParseResult } from "@b/types";
+import * as Parsers from "@b/parsers";
+import * as Keywords from "@b/keywords";
+import type * as csstree from "@eslint/css-tree";
+import type { BorderRightWidthIR } from "./types";
+
+export function parseBorderRightWidth(ast: csstree.Value): ParseResult<BorderRightWidthIR> {
+  const firstNode = ast.children.first;
+
+  if (!firstNode) {
+    return {
+      ok: false,
+      property: "border-right-width",
+      value: undefined,
+      issues: [{ code: "missing-value", severity: "error", message: "Empty value for border-right-width" }],
+    };
+  }
+
+  // Check for line-width keywords (thin | medium | thick)
+  if (firstNode.type === "Identifier") {
+    const parsed = Keywords.lineWidthKeywordSchema.safeParse(firstNode.name);
+    if (parsed.success) {
+      return {
+        ok: true,
+        property: "border-right-width",
+        value: { kind: "keyword", value: parsed.data },
+        issues: [],
+      };
+    }
+  }
+
+  const valueResult = Parsers.Utils.parseNodeToCssValue(firstNode);
+
+  if (valueResult.ok) {
+    return {
+      ok: true,
+      property: "border-right-width",
+      value: { kind: "value", value: valueResult.value },
+      issues: valueResult.issues,
+    };
+  }
+
+  return valueResult as ParseResult<BorderRightWidthIR>;
+}
+
+
+=== File: packages/b_declarations/src/properties/border-right-width/types.ts ===
+// b_path:: packages/b_declarations/src/properties/border-right-width/types.ts
+
+import type { CssValue } from "@b/types";
+import type * as Keywords from "@b/keywords";
+
+export type BorderRightWidthIR =
+  | {
+      kind: "keyword";
+      value: "initial" | "inherit" | "unset" | "revert" | "revert-layer" | Keywords.LineWidthKeyword;
+    }
+  | { kind: "value"; value: CssValue };
+
+
+=== File: packages/b_declarations/src/properties/border-top-color/definition.ts ===
+// b_path:: packages/b_declarations/src/properties/border-top-color/definition.ts
+
+import { defineProperty } from "../../core";
+import { parseBorderTopColor } from "./parser";
+import { generateBorderTopColor } from "./generator";
+import type { BorderTopColorIR } from "./types";
+
+export const borderTopColor = defineProperty<BorderTopColorIR>({
+  name: "border-top-color",
+  syntax: "<color>",
+  parser: parseBorderTopColor,
+  generator: generateBorderTopColor,
+  inherited: false,
+  initial: "currentcolor",
+});
+
+
+=== File: packages/b_declarations/src/properties/border-top-color/generator.ts ===
+// b_path:: packages/b_declarations/src/properties/border-top-color/generator.ts
+
+import { generateOk, type GenerateResult } from "@b/types";
+import * as Generators from "@b/generators";
+import type { BorderTopColorIR } from "./types";
+
+export function generateBorderTopColor(ir: BorderTopColorIR): GenerateResult {
+  if (ir.kind === "keyword") {
+    return generateOk(ir.value);
+  }
+
+  const result = Generators.Color.generate(ir.value);
+  return result;
+}
+
+
+=== File: packages/b_declarations/src/properties/border-top-color/index.ts ===
+// b_path:: packages/b_declarations/src/properties/border-top-color/index.ts
+
+export * from "./types";
+export * from "./parser";
+export * from "./generator";
+export * from "./definition";
+
+
+=== File: packages/b_declarations/src/properties/border-top-color/parser.ts ===
+// b_path:: packages/b_declarations/src/properties/border-top-color/parser.ts
+
+import type { ParseResult } from "@b/types";
+import * as Parsers from "@b/parsers";
+import type * as csstree from "@eslint/css-tree";
+import type { BorderTopColorIR } from "./types";
+
+export function parseBorderTopColor(ast: csstree.Value): ParseResult<BorderTopColorIR> {
+  const firstNode = ast.children.first;
+
+  if (!firstNode) {
+    return {
+      ok: false,
+      property: "border-top-color",
+      value: undefined,
+      issues: [{ code: "missing-value", severity: "error", message: "Empty value for border-top-color" }],
+    };
+  }
+
+  const colorResult = Parsers.Color.parseNode(firstNode);
+
+  if (colorResult.ok) {
+    return {
+      ok: true,
+      property: "border-top-color",
+      value: { kind: "value", value: colorResult.value },
+      issues: colorResult.issues,
+    };
+  }
+
+  return colorResult as ParseResult<BorderTopColorIR>;
+}
+
+
+=== File: packages/b_declarations/src/properties/border-top-color/types.ts ===
+// b_path:: packages/b_declarations/src/properties/border-top-color/types.ts
+
+import { z } from "zod";
+import { colorSchema } from "@b/types";
+import * as Keywords from "@b/keywords";
+
+/**
+ * The final IR for the entire `border-top-color` property.
+ */
+export const borderTopColorIRSchema = z.discriminatedUnion("kind", [
+  z.object({
+    kind: z.literal("keyword"),
+    value: Keywords.cssWide,
+  }),
+  z.object({
+    kind: z.literal("value"),
+    value: colorSchema,
+  }),
+]);
+
+export type BorderTopColorIR = z.infer<typeof borderTopColorIRSchema>;
+
+
 === File: packages/b_declarations/src/properties/border-top-left-radius/definition.ts ===
 // b_path:: packages/b_declarations/src/properties/border-top-left-radius/definition.ts
 
@@ -2005,6 +3242,213 @@ export type BorderTopLeftRadiusIR =
   | { kind: "elliptical"; horizontal: CssValue; vertical: CssValue };
 
 
+=== File: packages/b_declarations/src/properties/border-top-right-radius/definition.ts ===
+// b_path:: packages/b_declarations/src/properties/border-top-right-radius/definition.ts
+
+import { defineProperty } from "../../core";
+import { parseBorderTopRightRadius } from "./parser";
+import { generateBorderTopRightRadius } from "./generator";
+import type { BorderTopRightRadiusIR } from "./types";
+
+export const borderTopRightRadius = defineProperty<BorderTopRightRadiusIR>({
+  name: "border-top-right-radius",
+  syntax: "<length-percentage [0,∞]>{1,2}",
+  parser: parseBorderTopRightRadius,
+  generator: generateBorderTopRightRadius,
+  inherited: false,
+  initial: "0",
+});
+
+
+=== File: packages/b_declarations/src/properties/border-top-right-radius/generator.ts ===
+// b_path:: packages/b_declarations/src/properties/border-top-right-radius/generator.ts
+
+import { generateOk, type GenerateResult } from "@b/types";
+import { cssValueToCss } from "@b/utils";
+import type { BorderTopRightRadiusIR } from "./types";
+
+export function generateBorderTopRightRadius(ir: BorderTopRightRadiusIR): GenerateResult {
+  if (ir.kind === "keyword") {
+    return generateOk(ir.value);
+  }
+
+  if (ir.kind === "circular") {
+    const css = cssValueToCss(ir.radius);
+    return generateOk(css);
+  }
+
+  // elliptical
+  const horizontal = cssValueToCss(ir.horizontal);
+  const vertical = cssValueToCss(ir.vertical);
+  return generateOk(`${horizontal} ${vertical}`);
+}
+
+
+=== File: packages/b_declarations/src/properties/border-top-right-radius/index.ts ===
+// b_path:: packages/b_declarations/src/properties/border-top-right-radius/index.ts
+
+export * from "./types";
+export * from "./parser";
+export * from "./generator";
+export * from "./definition";
+
+
+=== File: packages/b_declarations/src/properties/border-top-right-radius/parser.ts ===
+// b_path:: packages/b_declarations/src/properties/border-top-right-radius/parser.ts
+
+import type { ParseResult } from "@b/types";
+import * as Parsers from "@b/parsers";
+import type * as csstree from "@eslint/css-tree";
+import type { BorderTopRightRadiusIR } from "./types";
+
+export function parseBorderTopRightRadius(ast: csstree.Value): ParseResult<BorderTopRightRadiusIR> {
+  const nodes = Array.from(ast.children);
+
+  if (nodes.length === 0) {
+    return {
+      ok: false,
+      property: "border-top-right-radius",
+      value: undefined,
+      issues: [{ code: "missing-value", severity: "error", message: "Empty value for border-top-right-radius" }],
+    };
+  }
+
+  // Parse first value (horizontal radius)
+  const firstResult = Parsers.Utils.parseNodeToCssValue(nodes[0]);
+  if (!firstResult.ok) {
+    return firstResult as ParseResult<BorderTopRightRadiusIR>;
+  }
+
+  // Single value = circular radius
+  if (nodes.length === 1) {
+    return {
+      ok: true,
+      property: "border-top-right-radius",
+      value: { kind: "circular", radius: firstResult.value },
+      issues: [],
+    };
+  }
+
+  // Two values = elliptical (horizontal, vertical)
+  const secondResult = Parsers.Utils.parseNodeToCssValue(nodes[1]);
+  if (!secondResult.ok) {
+    return secondResult as ParseResult<BorderTopRightRadiusIR>;
+  }
+
+  return {
+    ok: true,
+    property: "border-top-right-radius",
+    value: {
+      kind: "elliptical",
+      horizontal: firstResult.value,
+      vertical: secondResult.value,
+    },
+    issues: [],
+  };
+}
+
+
+=== File: packages/b_declarations/src/properties/border-top-right-radius/types.ts ===
+// b_path:: packages/b_declarations/src/properties/border-top-right-radius/types.ts
+
+import type { CssValue } from "@b/types";
+
+export type BorderTopRightRadiusIR =
+  | { kind: "keyword"; value: "initial" | "inherit" | "unset" | "revert" | "revert-layer" }
+  | { kind: "circular"; radius: CssValue }
+  | { kind: "elliptical"; horizontal: CssValue; vertical: CssValue };
+
+
+=== File: packages/b_declarations/src/properties/border-top-style/definition.ts ===
+// b_path:: packages/b_declarations/src/properties/border-top-style/definition.ts
+
+import { defineProperty } from "../../core";
+import { parseBorderTopStyle } from "./parser";
+import { generateBorderTopStyle } from "./generator";
+import type { BorderTopStyleIR } from "./types";
+
+export const borderTopStyle = defineProperty<BorderTopStyleIR>({
+  name: "border-top-style",
+  syntax: "<line-style>",
+  parser: parseBorderTopStyle,
+  generator: generateBorderTopStyle,
+  inherited: false,
+  initial: "none",
+});
+
+
+=== File: packages/b_declarations/src/properties/border-top-style/generator.ts ===
+// b_path:: packages/b_declarations/src/properties/border-top-style/generator.ts
+
+import { generateOk, type GenerateResult } from "@b/types";
+import type { BorderTopStyleIR } from "./types";
+
+export function generateBorderTopStyle(ir: BorderTopStyleIR): GenerateResult {
+  return generateOk(ir.value);
+}
+
+
+=== File: packages/b_declarations/src/properties/border-top-style/index.ts ===
+// b_path:: packages/b_declarations/src/properties/border-top-style/index.ts
+
+export * from "./types";
+export * from "./parser";
+export * from "./generator";
+export * from "./definition";
+
+
+=== File: packages/b_declarations/src/properties/border-top-style/parser.ts ===
+// b_path:: packages/b_declarations/src/properties/border-top-style/parser.ts
+
+import type { ParseResult } from "@b/types";
+import * as Keywords from "@b/keywords";
+import type * as csstree from "@eslint/css-tree";
+import type { BorderTopStyleIR } from "./types";
+
+export function parseBorderTopStyle(ast: csstree.Value): ParseResult<BorderTopStyleIR> {
+  const firstNode = ast.children.first;
+
+  if (!firstNode) {
+    return {
+      ok: false,
+      property: "border-top-style",
+      value: undefined,
+      issues: [{ code: "missing-value", severity: "error", message: "Empty value for border-top-style" }],
+    };
+  }
+
+  if (firstNode.type === "Identifier") {
+    const parsed = Keywords.borderStyleKeywordSchema.safeParse(firstNode.name);
+    if (parsed.success) {
+      return {
+        ok: true,
+        property: "border-top-style",
+        value: { kind: "keyword", value: parsed.data },
+        issues: [],
+      };
+    }
+  }
+
+  return {
+    ok: false,
+    property: "border-top-style",
+    value: undefined,
+    issues: [{ code: "invalid-value", severity: "error", message: "Invalid border-style value" }],
+  };
+}
+
+
+=== File: packages/b_declarations/src/properties/border-top-style/types.ts ===
+// b_path:: packages/b_declarations/src/properties/border-top-style/types.ts
+
+import type * as Keywords from "@b/keywords";
+
+export type BorderTopStyleIR = {
+  kind: "keyword";
+  value: "initial" | "inherit" | "unset" | "revert" | "revert-layer" | Keywords.BorderStyleKeyword;
+};
+
+
 === File: packages/b_declarations/src/properties/border-top-width/definition.ts ===
 // b_path:: packages/b_declarations/src/properties/border-top-width/definition.ts
 
@@ -2072,7 +3516,7 @@ export function parseBorderTopWidth(ast: csstree.Value): ParseResult<BorderTopWi
 
   // Check for line-width keywords (thin | medium | thick)
   if (firstNode.type === "Identifier") {
-    const parsed = Keywords.BorderWidth.lineWidthKeywordSchema.safeParse(firstNode.name);
+    const parsed = Keywords.lineWidthKeywordSchema.safeParse(firstNode.name);
     if (parsed.success) {
       return {
         ok: true,
@@ -2107,7 +3551,7 @@ import type * as Keywords from "@b/keywords";
 export type BorderTopWidthIR =
   | {
       kind: "keyword";
-      value: "initial" | "inherit" | "unset" | "revert" | "revert-layer" | Keywords.BorderWidth.LineWidthKeyword;
+      value: "initial" | "inherit" | "unset" | "revert" | "revert-layer" | Keywords.LineWidthKeyword;
     }
   | { kind: "value"; value: CssValue };
 
@@ -2231,10 +3675,30 @@ import { backgroundPositionX } from "./background-position-x/definition";
 import { backgroundPositionY } from "./background-position-y/definition";
 import { backgroundRepeat } from "./background-repeat/definition";
 import { backgroundSize } from "./background-size/definition";
+import { borderBottomColor } from "./border-bottom-color/definition";
+import { borderBottomLeftRadius } from "./border-bottom-left-radius/definition";
+import { borderBottomRightRadius } from "./border-bottom-right-radius/definition";
+import { borderBottomStyle } from "./border-bottom-style/definition";
+import { borderBottomWidth } from "./border-bottom-width/definition";
+import { borderLeftColor } from "./border-left-color/definition";
+import { borderLeftStyle } from "./border-left-style/definition";
+import { borderLeftWidth } from "./border-left-width/definition";
+import { borderRightColor } from "./border-right-color/definition";
+import { borderRightStyle } from "./border-right-style/definition";
+import { borderRightWidth } from "./border-right-width/definition";
+import { borderTopColor } from "./border-top-color/definition";
 import { borderTopLeftRadius } from "./border-top-left-radius/definition";
+import { borderTopRightRadius } from "./border-top-right-radius/definition";
+import { borderTopStyle } from "./border-top-style/definition";
 import { borderTopWidth } from "./border-top-width/definition";
+import { marginBottom } from "./margin-bottom/definition";
+import { marginLeft } from "./margin-left/definition";
+import { marginRight } from "./margin-right/definition";
 import { marginTop } from "./margin-top/definition";
 import { mixBlendMode } from "./mix-blend-mode/definition";
+import { paddingBottom } from "./padding-bottom/definition";
+import { paddingLeft } from "./padding-left/definition";
+import { paddingRight } from "./padding-right/definition";
 import { paddingTop } from "./padding-top/definition";
 
 /**
@@ -2260,10 +3724,30 @@ export const PROPERTY_DEFINITIONS = {
   "background-position-y": backgroundPositionY,
   "background-repeat": backgroundRepeat,
   "background-size": backgroundSize,
+  "border-bottom-color": borderBottomColor,
+  "border-bottom-left-radius": borderBottomLeftRadius,
+  "border-bottom-right-radius": borderBottomRightRadius,
+  "border-bottom-style": borderBottomStyle,
+  "border-bottom-width": borderBottomWidth,
+  "border-left-color": borderLeftColor,
+  "border-left-style": borderLeftStyle,
+  "border-left-width": borderLeftWidth,
+  "border-right-color": borderRightColor,
+  "border-right-style": borderRightStyle,
+  "border-right-width": borderRightWidth,
+  "border-top-color": borderTopColor,
   "border-top-left-radius": borderTopLeftRadius,
+  "border-top-right-radius": borderTopRightRadius,
+  "border-top-style": borderTopStyle,
   "border-top-width": borderTopWidth,
+  "margin-bottom": marginBottom,
+  "margin-left": marginLeft,
+  "margin-right": marginRight,
   "margin-top": marginTop,
   "mix-blend-mode": mixBlendMode,
+  "padding-bottom": paddingBottom,
+  "padding-left": paddingLeft,
+  "padding-right": paddingRight,
   "padding-top": paddingTop,
 } as const;
 
@@ -2293,16 +3777,333 @@ export * from "./background-position-x";
 export * from "./background-position-y";
 export * from "./background-repeat";
 export * from "./background-size";
+export * from "./border-bottom-color";
+export * from "./border-bottom-left-radius";
+export * from "./border-bottom-right-radius";
+export * from "./border-bottom-style";
+export * from "./border-bottom-width";
+export * from "./border-left-color";
+export * from "./border-left-style";
+export * from "./border-left-width";
+export * from "./border-right-color";
+export * from "./border-right-style";
+export * from "./border-right-width";
+export * from "./border-top-color";
 export * from "./border-top-left-radius";
+export * from "./border-top-right-radius";
+export * from "./border-top-style";
 export * from "./border-top-width";
+export * from "./margin-bottom";
+export * from "./margin-left";
+export * from "./margin-right";
 export * from "./margin-top";
 export * from "./mix-blend-mode";
+export * from "./padding-bottom";
+export * from "./padding-left";
+export * from "./padding-right";
 export * from "./padding-top";
 
 // Mark registry as initialized after all properties are loaded
 // This is a side-effect import that happens when this module is imported
 import { propertyRegistry } from "../core/registry";
 propertyRegistry.markInitialized();
+
+
+=== File: packages/b_declarations/src/properties/margin-bottom/definition.ts ===
+// b_path:: packages/b_declarations/src/properties/margin-bottom/definition.ts
+
+import { defineProperty } from "../../core";
+import { parseMarginBottom } from "./parser";
+import { generateMarginBottom } from "./generator";
+import type { MarginBottomIR } from "./types";
+
+export const marginBottom = defineProperty<MarginBottomIR>({
+  name: "margin-bottom",
+  syntax: "<length-percentage> | auto",
+  parser: parseMarginBottom,
+  generator: generateMarginBottom,
+  inherited: false,
+  initial: "0",
+});
+
+
+=== File: packages/b_declarations/src/properties/margin-bottom/generator.ts ===
+// b_path:: packages/b_declarations/src/properties/margin-bottom/generator.ts
+
+import { generateOk, type GenerateResult } from "@b/types";
+import { cssValueToCss } from "@b/utils";
+import type { MarginBottomIR } from "./types";
+
+export function generateMarginBottom(ir: MarginBottomIR): GenerateResult {
+  if (ir.kind === "keyword") {
+    return generateOk(ir.value);
+  }
+
+  const css = cssValueToCss(ir.value);
+  return generateOk(css);
+}
+
+
+=== File: packages/b_declarations/src/properties/margin-bottom/index.ts ===
+// b_path:: packages/b_declarations/src/properties/margin-bottom/index.ts
+
+export * from "./types";
+export * from "./parser";
+export * from "./generator";
+export * from "./definition";
+
+
+=== File: packages/b_declarations/src/properties/margin-bottom/parser.ts ===
+// b_path:: packages/b_declarations/src/properties/margin-bottom/parser.ts
+
+import type { ParseResult } from "@b/types";
+import * as Parsers from "@b/parsers";
+import type * as csstree from "@eslint/css-tree";
+import type { MarginBottomIR } from "./types";
+
+export function parseMarginBottom(ast: csstree.Value): ParseResult<MarginBottomIR> {
+  const firstNode = ast.children.first;
+
+  if (!firstNode) {
+    return {
+      ok: false,
+      property: "margin-bottom",
+      value: undefined,
+      issues: [{ code: "missing-value", severity: "error", message: "Empty value for margin-bottom" }],
+    };
+  }
+
+  // Check for 'auto' keyword
+  if (firstNode.type === "Identifier" && firstNode.name === "auto") {
+    return {
+      ok: true,
+      property: "margin-bottom",
+      value: { kind: "keyword", value: "auto" },
+      issues: [],
+    };
+  }
+
+  const valueResult = Parsers.Utils.parseNodeToCssValue(firstNode);
+
+  if (valueResult.ok) {
+    return {
+      ok: true,
+      property: "margin-bottom",
+      value: { kind: "value", value: valueResult.value },
+      issues: valueResult.issues,
+    };
+  }
+
+  return valueResult as ParseResult<MarginBottomIR>;
+}
+
+
+=== File: packages/b_declarations/src/properties/margin-bottom/types.ts ===
+// b_path:: packages/b_declarations/src/properties/margin-bottom/types.ts
+
+import type { CssValue } from "@b/types";
+
+export type MarginBottomIR =
+  | { kind: "keyword"; value: "initial" | "inherit" | "unset" | "revert" | "revert-layer" | "auto" }
+  | { kind: "value"; value: CssValue };
+
+
+=== File: packages/b_declarations/src/properties/margin-left/definition.ts ===
+// b_path:: packages/b_declarations/src/properties/margin-left/definition.ts
+
+import { defineProperty } from "../../core";
+import { parseMarginLeft } from "./parser";
+import { generateMarginLeft } from "./generator";
+import type { MarginLeftIR } from "./types";
+
+export const marginLeft = defineProperty<MarginLeftIR>({
+  name: "margin-left",
+  syntax: "<length-percentage> | auto",
+  parser: parseMarginLeft,
+  generator: generateMarginLeft,
+  inherited: false,
+  initial: "0",
+});
+
+
+=== File: packages/b_declarations/src/properties/margin-left/generator.ts ===
+// b_path:: packages/b_declarations/src/properties/margin-left/generator.ts
+
+import { generateOk, type GenerateResult } from "@b/types";
+import { cssValueToCss } from "@b/utils";
+import type { MarginLeftIR } from "./types";
+
+export function generateMarginLeft(ir: MarginLeftIR): GenerateResult {
+  if (ir.kind === "keyword") {
+    return generateOk(ir.value);
+  }
+
+  const css = cssValueToCss(ir.value);
+  return generateOk(css);
+}
+
+
+=== File: packages/b_declarations/src/properties/margin-left/index.ts ===
+// b_path:: packages/b_declarations/src/properties/margin-left/index.ts
+
+export * from "./types";
+export * from "./parser";
+export * from "./generator";
+export * from "./definition";
+
+
+=== File: packages/b_declarations/src/properties/margin-left/parser.ts ===
+// b_path:: packages/b_declarations/src/properties/margin-left/parser.ts
+
+import type { ParseResult } from "@b/types";
+import * as Parsers from "@b/parsers";
+import type * as csstree from "@eslint/css-tree";
+import type { MarginLeftIR } from "./types";
+
+export function parseMarginLeft(ast: csstree.Value): ParseResult<MarginLeftIR> {
+  const firstNode = ast.children.first;
+
+  if (!firstNode) {
+    return {
+      ok: false,
+      property: "margin-left",
+      value: undefined,
+      issues: [{ code: "missing-value", severity: "error", message: "Empty value for margin-left" }],
+    };
+  }
+
+  // Check for 'auto' keyword
+  if (firstNode.type === "Identifier" && firstNode.name === "auto") {
+    return {
+      ok: true,
+      property: "margin-left",
+      value: { kind: "keyword", value: "auto" },
+      issues: [],
+    };
+  }
+
+  const valueResult = Parsers.Utils.parseNodeToCssValue(firstNode);
+
+  if (valueResult.ok) {
+    return {
+      ok: true,
+      property: "margin-left",
+      value: { kind: "value", value: valueResult.value },
+      issues: valueResult.issues,
+    };
+  }
+
+  return valueResult as ParseResult<MarginLeftIR>;
+}
+
+
+=== File: packages/b_declarations/src/properties/margin-left/types.ts ===
+// b_path:: packages/b_declarations/src/properties/margin-left/types.ts
+
+import type { CssValue } from "@b/types";
+
+export type MarginLeftIR =
+  | { kind: "keyword"; value: "initial" | "inherit" | "unset" | "revert" | "revert-layer" | "auto" }
+  | { kind: "value"; value: CssValue };
+
+
+=== File: packages/b_declarations/src/properties/margin-right/definition.ts ===
+// b_path:: packages/b_declarations/src/properties/margin-right/definition.ts
+
+import { defineProperty } from "../../core";
+import { parseMarginRight } from "./parser";
+import { generateMarginRight } from "./generator";
+import type { MarginRightIR } from "./types";
+
+export const marginRight = defineProperty<MarginRightIR>({
+  name: "margin-right",
+  syntax: "<length-percentage> | auto",
+  parser: parseMarginRight,
+  generator: generateMarginRight,
+  inherited: false,
+  initial: "0",
+});
+
+
+=== File: packages/b_declarations/src/properties/margin-right/generator.ts ===
+// b_path:: packages/b_declarations/src/properties/margin-right/generator.ts
+
+import { generateOk, type GenerateResult } from "@b/types";
+import { cssValueToCss } from "@b/utils";
+import type { MarginRightIR } from "./types";
+
+export function generateMarginRight(ir: MarginRightIR): GenerateResult {
+  if (ir.kind === "keyword") {
+    return generateOk(ir.value);
+  }
+
+  const css = cssValueToCss(ir.value);
+  return generateOk(css);
+}
+
+
+=== File: packages/b_declarations/src/properties/margin-right/index.ts ===
+// b_path:: packages/b_declarations/src/properties/margin-right/index.ts
+
+export * from "./types";
+export * from "./parser";
+export * from "./generator";
+export * from "./definition";
+
+
+=== File: packages/b_declarations/src/properties/margin-right/parser.ts ===
+// b_path:: packages/b_declarations/src/properties/margin-right/parser.ts
+
+import type { ParseResult } from "@b/types";
+import * as Parsers from "@b/parsers";
+import type * as csstree from "@eslint/css-tree";
+import type { MarginRightIR } from "./types";
+
+export function parseMarginRight(ast: csstree.Value): ParseResult<MarginRightIR> {
+  const firstNode = ast.children.first;
+
+  if (!firstNode) {
+    return {
+      ok: false,
+      property: "margin-right",
+      value: undefined,
+      issues: [{ code: "missing-value", severity: "error", message: "Empty value for margin-right" }],
+    };
+  }
+
+  // Check for 'auto' keyword
+  if (firstNode.type === "Identifier" && firstNode.name === "auto") {
+    return {
+      ok: true,
+      property: "margin-right",
+      value: { kind: "keyword", value: "auto" },
+      issues: [],
+    };
+  }
+
+  const valueResult = Parsers.Utils.parseNodeToCssValue(firstNode);
+
+  if (valueResult.ok) {
+    return {
+      ok: true,
+      property: "margin-right",
+      value: { kind: "value", value: valueResult.value },
+      issues: valueResult.issues,
+    };
+  }
+
+  return valueResult as ParseResult<MarginRightIR>;
+}
+
+
+=== File: packages/b_declarations/src/properties/margin-right/types.ts ===
+// b_path:: packages/b_declarations/src/properties/margin-right/types.ts
+
+import type { CssValue } from "@b/types";
+
+export type MarginRightIR =
+  | { kind: "keyword"; value: "initial" | "inherit" | "unset" | "revert" | "revert-layer" | "auto" }
+  | { kind: "value"; value: CssValue };
 
 
 === File: packages/b_declarations/src/properties/margin-top/definition.ts ===
@@ -2519,6 +4320,273 @@ export const mixBlendModeIRSchema = z.discriminatedUnion("kind", [
 ]);
 
 export type MixBlendModeIR = z.infer<typeof mixBlendModeIRSchema>;
+
+
+=== File: packages/b_declarations/src/properties/padding-bottom/definition.ts ===
+// b_path:: packages/b_declarations/src/properties/padding-bottom/definition.ts
+
+import { defineProperty } from "../../core";
+import { parsePaddingBottom } from "./parser";
+import { generatePaddingBottom } from "./generator";
+import type { PaddingBottomIR } from "./types";
+
+export const paddingBottom = defineProperty<PaddingBottomIR>({
+  name: "padding-bottom",
+  syntax: "<length-percentage [0,∞]>",
+  parser: parsePaddingBottom,
+  generator: generatePaddingBottom,
+  inherited: false,
+  initial: "0",
+});
+
+
+=== File: packages/b_declarations/src/properties/padding-bottom/generator.ts ===
+// b_path:: packages/b_declarations/src/properties/padding-bottom/generator.ts
+
+import { generateOk, type GenerateResult } from "@b/types";
+import { cssValueToCss } from "@b/utils";
+import type { PaddingBottomIR } from "./types";
+
+export function generatePaddingBottom(ir: PaddingBottomIR): GenerateResult {
+  if (ir.kind === "keyword") {
+    return generateOk(ir.value);
+  }
+
+  const css = cssValueToCss(ir.value);
+  return generateOk(css);
+}
+
+
+=== File: packages/b_declarations/src/properties/padding-bottom/index.ts ===
+// b_path:: packages/b_declarations/src/properties/padding-bottom/index.ts
+
+export * from "./types";
+export * from "./parser";
+export * from "./generator";
+export * from "./definition";
+
+
+=== File: packages/b_declarations/src/properties/padding-bottom/parser.ts ===
+// b_path:: packages/b_declarations/src/properties/padding-bottom/parser.ts
+
+import type { ParseResult } from "@b/types";
+import * as Parsers from "@b/parsers";
+import type * as csstree from "@eslint/css-tree";
+import type { PaddingBottomIR } from "./types";
+
+export function parsePaddingBottom(ast: csstree.Value): ParseResult<PaddingBottomIR> {
+  const firstNode = ast.children.first;
+
+  if (!firstNode) {
+    return {
+      ok: false,
+      property: "padding-bottom",
+      value: undefined,
+      issues: [{ code: "missing-value", severity: "error", message: "Empty value for padding-bottom" }],
+    };
+  }
+
+  const valueResult = Parsers.Utils.parseNodeToCssValue(firstNode);
+
+  if (valueResult.ok) {
+    return {
+      ok: true,
+      property: "padding-bottom",
+      value: { kind: "value", value: valueResult.value },
+      issues: valueResult.issues,
+    };
+  }
+
+  return valueResult as ParseResult<PaddingBottomIR>;
+}
+
+
+=== File: packages/b_declarations/src/properties/padding-bottom/types.ts ===
+// b_path:: packages/b_declarations/src/properties/padding-bottom/types.ts
+
+import type { CssValue } from "@b/types";
+
+export type PaddingBottomIR =
+  | { kind: "keyword"; value: "initial" | "inherit" | "unset" | "revert" | "revert-layer" }
+  | { kind: "value"; value: CssValue };
+
+
+=== File: packages/b_declarations/src/properties/padding-left/definition.ts ===
+// b_path:: packages/b_declarations/src/properties/padding-left/definition.ts
+
+import { defineProperty } from "../../core";
+import { parsePaddingLeft } from "./parser";
+import { generatePaddingLeft } from "./generator";
+import type { PaddingLeftIR } from "./types";
+
+export const paddingLeft = defineProperty<PaddingLeftIR>({
+  name: "padding-left",
+  syntax: "<length-percentage [0,∞]>",
+  parser: parsePaddingLeft,
+  generator: generatePaddingLeft,
+  inherited: false,
+  initial: "0",
+});
+
+
+=== File: packages/b_declarations/src/properties/padding-left/generator.ts ===
+// b_path:: packages/b_declarations/src/properties/padding-left/generator.ts
+
+import { generateOk, type GenerateResult } from "@b/types";
+import { cssValueToCss } from "@b/utils";
+import type { PaddingLeftIR } from "./types";
+
+export function generatePaddingLeft(ir: PaddingLeftIR): GenerateResult {
+  if (ir.kind === "keyword") {
+    return generateOk(ir.value);
+  }
+
+  const css = cssValueToCss(ir.value);
+  return generateOk(css);
+}
+
+
+=== File: packages/b_declarations/src/properties/padding-left/index.ts ===
+// b_path:: packages/b_declarations/src/properties/padding-left/index.ts
+
+export * from "./types";
+export * from "./parser";
+export * from "./generator";
+export * from "./definition";
+
+
+=== File: packages/b_declarations/src/properties/padding-left/parser.ts ===
+// b_path:: packages/b_declarations/src/properties/padding-left/parser.ts
+
+import type { ParseResult } from "@b/types";
+import * as Parsers from "@b/parsers";
+import type * as csstree from "@eslint/css-tree";
+import type { PaddingLeftIR } from "./types";
+
+export function parsePaddingLeft(ast: csstree.Value): ParseResult<PaddingLeftIR> {
+  const firstNode = ast.children.first;
+
+  if (!firstNode) {
+    return {
+      ok: false,
+      property: "padding-left",
+      value: undefined,
+      issues: [{ code: "missing-value", severity: "error", message: "Empty value for padding-left" }],
+    };
+  }
+
+  const valueResult = Parsers.Utils.parseNodeToCssValue(firstNode);
+
+  if (valueResult.ok) {
+    return {
+      ok: true,
+      property: "padding-left",
+      value: { kind: "value", value: valueResult.value },
+      issues: valueResult.issues,
+    };
+  }
+
+  return valueResult as ParseResult<PaddingLeftIR>;
+}
+
+
+=== File: packages/b_declarations/src/properties/padding-left/types.ts ===
+// b_path:: packages/b_declarations/src/properties/padding-left/types.ts
+
+import type { CssValue } from "@b/types";
+
+export type PaddingLeftIR =
+  | { kind: "keyword"; value: "initial" | "inherit" | "unset" | "revert" | "revert-layer" }
+  | { kind: "value"; value: CssValue };
+
+
+=== File: packages/b_declarations/src/properties/padding-right/definition.ts ===
+// b_path:: packages/b_declarations/src/properties/padding-right/definition.ts
+
+import { defineProperty } from "../../core";
+import { parsePaddingRight } from "./parser";
+import { generatePaddingRight } from "./generator";
+import type { PaddingRightIR } from "./types";
+
+export const paddingRight = defineProperty<PaddingRightIR>({
+  name: "padding-right",
+  syntax: "<length-percentage [0,∞]>",
+  parser: parsePaddingRight,
+  generator: generatePaddingRight,
+  inherited: false,
+  initial: "0",
+});
+
+
+=== File: packages/b_declarations/src/properties/padding-right/generator.ts ===
+// b_path:: packages/b_declarations/src/properties/padding-right/generator.ts
+
+import { generateOk, type GenerateResult } from "@b/types";
+import { cssValueToCss } from "@b/utils";
+import type { PaddingRightIR } from "./types";
+
+export function generatePaddingRight(ir: PaddingRightIR): GenerateResult {
+  if (ir.kind === "keyword") {
+    return generateOk(ir.value);
+  }
+
+  const css = cssValueToCss(ir.value);
+  return generateOk(css);
+}
+
+
+=== File: packages/b_declarations/src/properties/padding-right/index.ts ===
+// b_path:: packages/b_declarations/src/properties/padding-right/index.ts
+
+export * from "./types";
+export * from "./parser";
+export * from "./generator";
+export * from "./definition";
+
+
+=== File: packages/b_declarations/src/properties/padding-right/parser.ts ===
+// b_path:: packages/b_declarations/src/properties/padding-right/parser.ts
+
+import type { ParseResult } from "@b/types";
+import * as Parsers from "@b/parsers";
+import type * as csstree from "@eslint/css-tree";
+import type { PaddingRightIR } from "./types";
+
+export function parsePaddingRight(ast: csstree.Value): ParseResult<PaddingRightIR> {
+  const firstNode = ast.children.first;
+
+  if (!firstNode) {
+    return {
+      ok: false,
+      property: "padding-right",
+      value: undefined,
+      issues: [{ code: "missing-value", severity: "error", message: "Empty value for padding-right" }],
+    };
+  }
+
+  const valueResult = Parsers.Utils.parseNodeToCssValue(firstNode);
+
+  if (valueResult.ok) {
+    return {
+      ok: true,
+      property: "padding-right",
+      value: { kind: "value", value: valueResult.value },
+      issues: valueResult.issues,
+    };
+  }
+
+  return valueResult as ParseResult<PaddingRightIR>;
+}
+
+
+=== File: packages/b_declarations/src/properties/padding-right/types.ts ===
+// b_path:: packages/b_declarations/src/properties/padding-right/types.ts
+
+import type { CssValue } from "@b/types";
+
+export type PaddingRightIR =
+  | { kind: "keyword"; value: "initial" | "inherit" | "unset" | "revert" | "revert-layer" }
+  | { kind: "value"; value: CssValue };
 
 
 === File: packages/b_declarations/src/properties/padding-top/definition.ts ===
@@ -5205,6 +7273,31 @@ export const BLEND_MODE = getLiteralValues(blendMode);
 export type BlendMode = z.infer<typeof blendMode>;
 
 
+=== File: packages/b_keywords/src/border-style.ts ===
+// b_path:: packages/b_keywords/src/border-style.ts
+
+import { z } from "zod";
+
+/**
+ * Border style keywords
+ * @see https://drafts.csswg.org/css-backgrounds-3/#propdef-border-style
+ */
+export const borderStyleKeywordSchema = z.union([
+  z.literal("none"),
+  z.literal("hidden"),
+  z.literal("dotted"),
+  z.literal("dashed"),
+  z.literal("solid"),
+  z.literal("double"),
+  z.literal("groove"),
+  z.literal("ridge"),
+  z.literal("inset"),
+  z.literal("outset"),
+]);
+
+export type BorderStyleKeyword = z.infer<typeof borderStyleKeywordSchema>;
+
+
 === File: packages/b_keywords/src/border-width.ts ===
 // b_path:: packages/b_keywords/src/border-width.ts
 
@@ -5332,7 +7425,8 @@ export * from "./background-clip";
 export * from "./background-origin";
 export * from "./bg-size";
 export * from "./blend-mode";
-export * as BorderWidth from "./border-width";
+export * from "./border-style";
+export * from "./border-width";
 export * from "./color-interpolation";
 export * from "./color-space";
 export * from "./common";

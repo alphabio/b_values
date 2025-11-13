@@ -36,13 +36,21 @@ import { backgroundPositionX } from "./background-position-x/definition";
 import { backgroundPositionY } from "./background-position-y/definition";
 import { backgroundRepeat } from "./background-repeat/definition";
 import { backgroundSize } from "./background-size/definition";
+import { borderBottomColor } from "./border-bottom-color/definition";
 import { borderBottomLeftRadius } from "./border-bottom-left-radius/definition";
 import { borderBottomRightRadius } from "./border-bottom-right-radius/definition";
+import { borderBottomStyle } from "./border-bottom-style/definition";
 import { borderBottomWidth } from "./border-bottom-width/definition";
+import { borderLeftColor } from "./border-left-color/definition";
+import { borderLeftStyle } from "./border-left-style/definition";
 import { borderLeftWidth } from "./border-left-width/definition";
+import { borderRightColor } from "./border-right-color/definition";
+import { borderRightStyle } from "./border-right-style/definition";
 import { borderRightWidth } from "./border-right-width/definition";
+import { borderTopColor } from "./border-top-color/definition";
 import { borderTopLeftRadius } from "./border-top-left-radius/definition";
 import { borderTopRightRadius } from "./border-top-right-radius/definition";
+import { borderTopStyle } from "./border-top-style/definition";
 import { borderTopWidth } from "./border-top-width/definition";
 import { marginBottom } from "./margin-bottom/definition";
 import { marginLeft } from "./margin-left/definition";
@@ -77,13 +85,21 @@ export const PROPERTY_DEFINITIONS = {
   "background-position-y": backgroundPositionY,
   "background-repeat": backgroundRepeat,
   "background-size": backgroundSize,
+  "border-bottom-color": borderBottomColor,
   "border-bottom-left-radius": borderBottomLeftRadius,
   "border-bottom-right-radius": borderBottomRightRadius,
+  "border-bottom-style": borderBottomStyle,
   "border-bottom-width": borderBottomWidth,
+  "border-left-color": borderLeftColor,
+  "border-left-style": borderLeftStyle,
   "border-left-width": borderLeftWidth,
+  "border-right-color": borderRightColor,
+  "border-right-style": borderRightStyle,
   "border-right-width": borderRightWidth,
+  "border-top-color": borderTopColor,
   "border-top-left-radius": borderTopLeftRadius,
   "border-top-right-radius": borderTopRightRadius,
+  "border-top-style": borderTopStyle,
   "border-top-width": borderTopWidth,
   "margin-bottom": marginBottom,
   "margin-left": marginLeft,

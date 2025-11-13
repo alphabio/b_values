@@ -1,6 +1,6 @@
 {
   "$schema": "./manifest.schema.json",
-  "generated": "2025-11-13T16:16:10.160Z",
+  "generated": "2025-11-13T16:30:23.591Z",
   "properties": {
     "background-attachment": {
       "name": "background-attachment",
@@ -82,6 +82,14 @@
       "mode": "multi",
       "irType": "BackgroundSizeIR"
     },
+    "border-bottom-color": {
+      "name": "border-bottom-color",
+      "syntax": "<color>",
+      "inherited": false,
+      "initial": "currentcolor",
+      "mode": "single",
+      "irType": "BorderBottomColorIR"
+    },
     "border-bottom-left-radius": {
       "name": "border-bottom-left-radius",
       "syntax": "<length-percentage [0,∞]>{1,2}",
@@ -98,6 +106,14 @@
       "mode": "single",
       "irType": "BorderBottomRightRadiusIR"
     },
+    "border-bottom-style": {
+      "name": "border-bottom-style",
+      "syntax": "<line-style>",
+      "inherited": false,
+      "initial": "none",
+      "mode": "single",
+      "irType": "BorderBottomStyleIR"
+    },
     "border-bottom-width": {
       "name": "border-bottom-width",
       "syntax": "<line-width>",
@@ -105,6 +121,22 @@
       "initial": "medium",
       "mode": "single",
       "irType": "BorderBottomWidthIR"
+    },
+    "border-left-color": {
+      "name": "border-left-color",
+      "syntax": "<color>",
+      "inherited": false,
+      "initial": "currentcolor",
+      "mode": "single",
+      "irType": "BorderLeftColorIR"
+    },
+    "border-left-style": {
+      "name": "border-left-style",
+      "syntax": "<line-style>",
+      "inherited": false,
+      "initial": "none",
+      "mode": "single",
+      "irType": "BorderLeftStyleIR"
     },
     "border-left-width": {
       "name": "border-left-width",
@@ -114,6 +146,22 @@
       "mode": "single",
       "irType": "BorderLeftWidthIR"
     },
+    "border-right-color": {
+      "name": "border-right-color",
+      "syntax": "<color>",
+      "inherited": false,
+      "initial": "currentcolor",
+      "mode": "single",
+      "irType": "BorderRightColorIR"
+    },
+    "border-right-style": {
+      "name": "border-right-style",
+      "syntax": "<line-style>",
+      "inherited": false,
+      "initial": "none",
+      "mode": "single",
+      "irType": "BorderRightStyleIR"
+    },
     "border-right-width": {
       "name": "border-right-width",
       "syntax": "<line-width>",
@@ -121,6 +169,14 @@
       "initial": "medium",
       "mode": "single",
       "irType": "BorderRightWidthIR"
+    },
+    "border-top-color": {
+      "name": "border-top-color",
+      "syntax": "<color>",
+      "inherited": false,
+      "initial": "currentcolor",
+      "mode": "single",
+      "irType": "BorderTopColorIR"
     },
     "border-top-left-radius": {
       "name": "border-top-left-radius",
@@ -137,6 +193,14 @@
       "initial": "0",
       "mode": "single",
       "irType": "BorderTopRightRadiusIR"
+    },
+    "border-top-style": {
+      "name": "border-top-style",
+      "syntax": "<line-style>",
+      "inherited": false,
+      "initial": "none",
+      "mode": "single",
+      "irType": "BorderTopStyleIR"
     },
     "border-top-width": {
       "name": "border-top-width",
