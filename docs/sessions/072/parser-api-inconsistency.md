@@ -10,19 +10,19 @@
 
 ```typescript
 // What we expected:
-Parsers.Length.parse(node)
+Parsers.Length.parse(node);
 
 // What exists:
-Parsers.Length.parseLengthPercentageNode(node)
+Parsers.Length.parseLengthPercentageNode(node);
 
 // What we ended up using:
-Parsers.Utils.parseNodeToCssValue(node)  // Generic, not type-specific
+Parsers.Utils.parseNodeToCssValue(node); // Generic, not type-specific
 ```
 
 ## Current Patterns
 
 1. `parse()` - BlendMode, Image
-2. `parseNode()` - Color  
+2. `parseNode()` - Color
 3. `parseLengthPercentageNode()` - Length
 4. `Utils.parseNodeToCssValue()` - Our workaround
 
