@@ -159,3 +159,32 @@ We're not just building a CSS library. We're building **infrastructure for a mus
 ---
 
 **Session complete: 2025-11-13 17:03 UTC**
+
+---
+
+## 🔮 Critical Addition - Future Vision Context
+
+**The vision includes WebGL shaders as custom filters** - but this comes AFTER foundation.
+
+### The Stack (Bottom-Up)
+1. ✅ IR Foundation (parse, transform, generate)
+2. ✅ Box Model (36 properties)
+3. 🔨 Transform & Animation (transition, animation, transform, SVG)
+4. 🔨 Filters & Effects (filter, backdrop-filter, clip-path, mask)
+5. 🔮 WebGL Shaders (custom filters - FUTURE)
+
+### Why This Order
+**Foundation enables packaging/reuse:**
+- Artists create with SVG + CSS
+- Platform parses to powerful, encapsulated IR
+- Platform packages for reuse
+- Experienced users share their work (THE HINGE)
+- Then shader layer adds advanced capabilities
+
+### Focus
+**Don't get lost in shader vision.**
+Complete CSS/SVG properties first → Enable packaging → Then shaders.
+
+**The vision was always there. We're building methodically toward it.**
+
+---
