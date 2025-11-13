@@ -16,7 +16,11 @@ export * from "./background-position-x";
 export * from "./background-position-y";
 export * from "./background-repeat";
 export * from "./background-size";
+export * from "./border-top-left-radius";
+export * from "./border-top-width";
+export * from "./margin-top";
 export * from "./mix-blend-mode";
+export * from "./padding-top";
 
 // Mark registry as initialized after all properties are loaded
 // This is a side-effect import that happens when this module is imported
