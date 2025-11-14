@@ -1,6 +1,6 @@
 {
   "$schema": "./manifest.schema.json",
-  "generated": "2025-11-14T13:51:28.183Z",
+  "generated": "2025-11-14T14:59:29.763Z",
   "properties": {
     "animation-delay": {
       "name": "animation-delay",
@@ -361,6 +361,38 @@
       "initial": "0",
       "mode": "single",
       "irType": "PaddingTopIR"
+    },
+    "perspective": {
+      "name": "perspective",
+      "syntax": "<length [0,∞]> | none",
+      "inherited": false,
+      "initial": "none",
+      "mode": "single",
+      "irType": "PerspectiveIR"
+    },
+    "transform": {
+      "name": "transform",
+      "syntax": "none | <transform-list>",
+      "inherited": false,
+      "initial": "none",
+      "mode": "single",
+      "irType": "TransformIR"
+    },
+    "transform-origin": {
+      "name": "transform-origin",
+      "syntax": "<position>",
+      "inherited": false,
+      "initial": "50% 50%",
+      "mode": "single",
+      "irType": "TransformOriginIR"
+    },
+    "transform-style": {
+      "name": "transform-style",
+      "syntax": "flat | preserve-3d",
+      "inherited": false,
+      "initial": "flat",
+      "mode": "single",
+      "irType": "TransformStyleIR"
     },
     "transition-delay": {
       "name": "transition-delay",

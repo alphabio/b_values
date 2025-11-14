@@ -19,5 +19,6 @@ export * from "./none";
 export * from "./position";
 export * from "./radial-shape";
 export * from "./radial-size";
+export * from "./transform-style";
 export * from "./utils";
 export * from "./visibility";

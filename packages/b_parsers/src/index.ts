@@ -9,6 +9,7 @@ export * as Image from "./image";
 export * as Length from "./length";
 export * as Position from "./position";
 export * as Time from "./time";
+export * as Transform from "./transform";
 export * as Url from "./url";
 export * as Utils from "./utils";
 export * as Math from "./math";

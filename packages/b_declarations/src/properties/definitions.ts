@@ -71,6 +71,10 @@ import { paddingBottom } from "./padding-bottom/definition";
 import { paddingLeft } from "./padding-left/definition";
 import { paddingRight } from "./padding-right/definition";
 import { paddingTop } from "./padding-top/definition";
+import { perspective } from "./perspective/definition";
+import { transform } from "./transform/definition";
+import { transformOrigin } from "./transform-origin/definition";
+import { transformStyle } from "./transform-style/definition";
 import { transitionDelay } from "./transition-delay/definition";
 import { transitionDuration } from "./transition-duration/definition";
 import { transitionProperty } from "./transition-property/definition";
@@ -135,6 +139,10 @@ export const PROPERTY_DEFINITIONS = {
   "padding-left": paddingLeft,
   "padding-right": paddingRight,
   "padding-top": paddingTop,
+  perspective: perspective,
+  transform: transform,
+  "transform-origin": transformOrigin,
+  "transform-style": transformStyle,
   "transition-delay": transitionDelay,
   "transition-duration": transitionDuration,
   "transition-property": transitionProperty,

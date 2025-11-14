@@ -22,3 +22,4 @@ export * from "./gradient";
 export * from "./bg-size";
 export * from "./time";
 export * from "./easing-function";
+export * from "./transform";
