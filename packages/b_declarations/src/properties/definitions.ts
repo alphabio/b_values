@@ -60,11 +60,13 @@ import { borderTopLeftRadius } from "./border-top-left-radius/definition";
 import { borderTopRightRadius } from "./border-top-right-radius/definition";
 import { borderTopStyle } from "./border-top-style/definition";
 import { borderTopWidth } from "./border-top-width/definition";
+import { color } from "./color/definition";
 import { marginBottom } from "./margin-bottom/definition";
 import { marginLeft } from "./margin-left/definition";
 import { marginRight } from "./margin-right/definition";
 import { marginTop } from "./margin-top/definition";
 import { mixBlendMode } from "./mix-blend-mode/definition";
+import { opacity } from "./opacity/definition";
 import { paddingBottom } from "./padding-bottom/definition";
 import { paddingLeft } from "./padding-left/definition";
 import { paddingRight } from "./padding-right/definition";
@@ -73,6 +75,7 @@ import { transitionDelay } from "./transition-delay/definition";
 import { transitionDuration } from "./transition-duration/definition";
 import { transitionProperty } from "./transition-property/definition";
 import { transitionTimingFunction } from "./transition-timing-function/definition";
+import { visibility } from "./visibility/definition";
 
 /**
  * Central definitions object.
@@ -121,11 +124,13 @@ export const PROPERTY_DEFINITIONS = {
   "border-top-right-radius": borderTopRightRadius,
   "border-top-style": borderTopStyle,
   "border-top-width": borderTopWidth,
+  color: color,
   "margin-bottom": marginBottom,
   "margin-left": marginLeft,
   "margin-right": marginRight,
   "margin-top": marginTop,
   "mix-blend-mode": mixBlendMode,
+  opacity: opacity,
   "padding-bottom": paddingBottom,
   "padding-left": paddingLeft,
   "padding-right": paddingRight,
@@ -134,6 +139,7 @@ export const PROPERTY_DEFINITIONS = {
   "transition-duration": transitionDuration,
   "transition-property": transitionProperty,
   "transition-timing-function": transitionTimingFunction,
+  visibility: visibility,
 } as const;
 
 /**

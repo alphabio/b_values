@@ -1,6 +1,6 @@
 {
   "$schema": "./manifest.schema.json",
-  "generated": "2025-11-14T13:23:34.801Z",
+  "generated": "2025-11-14T13:50:52.479Z",
   "properties": {
     "animation-delay": {
       "name": "animation-delay",
@@ -274,6 +274,14 @@
       "mode": "single",
       "irType": "BorderTopWidthIR"
     },
+    "color": {
+      "name": "color",
+      "syntax": "<color>",
+      "inherited": true,
+      "initial": "canvastext",
+      "mode": "single",
+      "irType": "ColorIR"
+    },
     "margin-bottom": {
       "name": "margin-bottom",
       "syntax": "<length-percentage> | auto",
@@ -313,6 +321,14 @@
       "initial": "normal",
       "mode": "single",
       "irType": "MixBlendModeIR"
+    },
+    "opacity": {
+      "name": "opacity",
+      "syntax": "<number>",
+      "inherited": false,
+      "initial": "1",
+      "mode": "single",
+      "irType": "OpacityIR"
     },
     "padding-bottom": {
       "name": "padding-bottom",
@@ -377,6 +393,14 @@
       "initial": "ease",
       "mode": "single",
       "irType": "TransitionTimingFunctionIR"
+    },
+    "visibility": {
+      "name": "visibility",
+      "syntax": "visible | hidden | collapse",
+      "inherited": true,
+      "initial": "visible",
+      "mode": "single",
+      "irType": "VisibilityIR"
     }
   }
 }

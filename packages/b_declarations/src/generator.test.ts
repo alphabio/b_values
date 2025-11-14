@@ -205,10 +205,8 @@ describe("generateDeclaration", () => {
 
     it("should append !important when flag is true", () => {
       const result = generateDeclaration({
-        // @ts-expect-error Testing mock property
         property: "color",
-        // @ts-expect-error Testing mock property
-        ir: "red",
+        ir: { kind: "value", value: { kind: "named", name: "red" } },
         important: true,
       });
 
@@ -219,10 +217,8 @@ describe("generateDeclaration", () => {
 
     it("should not append !important when flag is false", () => {
       const result = generateDeclaration({
-        // @ts-expect-error Testing mock property
         property: "color",
-        // @ts-expect-error Testing mock property
-        ir: "blue",
+        ir: { kind: "value", value: { kind: "named", name: "blue" } },
         important: false,
       });
 
@@ -233,10 +229,8 @@ describe("generateDeclaration", () => {
 
     it("should not append !important when flag is undefined", () => {
       const result = generateDeclaration({
-        // @ts-expect-error Testing mock property
         property: "color",
-        // @ts-expect-error Testing mock property
-        ir: "green",
+        ir: { kind: "value", value: { kind: "named", name: "green" } },
       });
 
       expect(result.ok).toBe(true);

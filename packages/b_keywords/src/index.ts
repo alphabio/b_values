@@ -20,3 +20,4 @@ export * from "./position";
 export * from "./radial-shape";
 export * from "./radial-size";
 export * from "./utils";
+export * from "./visibility";

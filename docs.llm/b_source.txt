@@ -1,7 +1,3 @@
-Excluding patterns: 
-Documentation for LLMs
-Excluding patterns: 
-Excluding patterns: -not -path */__pycache__/* -not -path */__tests__/* -not -path */.git/* -not -path */.idea/* -not -path */.next/* -not -path */.venv/* -not -path */.vscode/* -not -path */*.spec.py -not -path */*.spec.ts -not -path */*.spec.tsx -not -path */*.test.py -not -path */*.test.ts -not -path */*.test.tsx -not -path */*test.py -not -path */*test.ts -not -path */*test.tsx -not -path */build/* -not -path */dist/* -not -path */me.ts -not -path */node_modules/* -not -path */test_*.py -not -path */test.ts -not -path */test.ts -not -path */tests/* -not -path */venv/*
 === File: packages/b_declarations/src/core/index.ts ===
 // b_path:: packages/b_declarations/src/core/index.ts
 export * from "./registry";
@@ -321,20 +317,17 @@ export function parseDeclarationList(css: string): ParseResult<DeclarationResult
 
   const hasErrors = allIssues.some((issue) => issue.severity === "error");
 
-  // If we have declarations AND no errors, it's a success.
-  // If we have no declarations but also no issues, it's an empty-but-valid success.
-  if ((declarations.length > 0 && !hasErrors) || (declarations.length === 0 && allIssues.length === 0)) {
+  if (hasErrors) {
     return {
-      ok: true,
+      ok: false,
       value: declarations,
       issues: allIssues,
     };
   }
 
-  // Otherwise, it's a failure (either partial or total).
   return {
-    ok: false,
-    value: declarations, // Still return partial value
+    ok: true,
+    value: declarations,
     issues: allIssues,
   };
 }
@@ -765,6 +758,888 @@ function unsafeGenerateDeclaration(property: string, ir: unknown): GenerateResul
 function withImportant<T extends DeclarationResult>(decl: T, important: boolean): T {
   return important ? { ...decl, important: true } : decl;
 }
+
+
+=== File: packages/b_declarations/src/properties/animation-delay/definition.ts ===
+// b_path:: packages/b_declarations/src/properties/animation-delay/definition.ts
+
+import { defineProperty } from "../../core";
+import { parseAnimationDelay } from "./parser";
+import { generateAnimationDelay } from "./generator";
+import type { AnimationDelayIR } from "./types";
+
+export const animationDelay = defineProperty<AnimationDelayIR>({
+  name: "animation-delay",
+  syntax: "<time>#",
+  parser: parseAnimationDelay,
+  generator: generateAnimationDelay,
+  inherited: false,
+  initial: "0s",
+});
+
+
+=== File: packages/b_declarations/src/properties/animation-delay/generator.ts ===
+// b_path:: packages/b_declarations/src/properties/animation-delay/generator.ts
+
+import { generateOk, type GenerateResult } from "@b/types";
+import * as Generators from "@b/generators";
+import type { AnimationDelayIR } from "./types";
+
+export function generateAnimationDelay(ir: AnimationDelayIR): GenerateResult {
+  if (ir.kind === "keyword") {
+    return generateOk(ir.value);
+  }
+
+  const result = Generators.Time.generate(ir.value);
+  return result;
+}
+
+
+=== File: packages/b_declarations/src/properties/animation-delay/index.ts ===
+// b_path:: packages/b_declarations/src/properties/animation-delay/index.ts
+
+export * from "./types";
+export * from "./parser";
+export * from "./generator";
+export * from "./definition";
+
+
+=== File: packages/b_declarations/src/properties/animation-delay/parser.ts ===
+// b_path:: packages/b_declarations/src/properties/animation-delay/parser.ts
+
+import type { ParseResult } from "@b/types";
+import * as Parsers from "@b/parsers";
+import type * as csstree from "@eslint/css-tree";
+import type { AnimationDelayIR } from "./types";
+
+export function parseAnimationDelay(ast: csstree.Value): ParseResult<AnimationDelayIR> {
+  const firstNode = ast.children.first;
+
+  if (!firstNode) {
+    return {
+      ok: false,
+      property: "animation-delay",
+      value: undefined,
+      issues: [{ code: "missing-value", severity: "error", message: "Empty value for animation-delay" }],
+    };
+  }
+
+  const timeResult = Parsers.Time.parseTimeNode(firstNode);
+
+  if (timeResult.ok) {
+    return {
+      ok: true,
+      property: "animation-delay",
+      value: { kind: "value", value: timeResult.value },
+      issues: timeResult.issues,
+    };
+  }
+
+  return timeResult as ParseResult<AnimationDelayIR>;
+}
+
+
+=== File: packages/b_declarations/src/properties/animation-delay/types.ts ===
+// b_path:: packages/b_declarations/src/properties/animation-delay/types.ts
+
+import { z } from "zod";
+import { timeSchema } from "@b/types";
+import * as Keywords from "@b/keywords";
+
+export const animationDelayIRSchema = z.discriminatedUnion("kind", [
+  z.object({
+    kind: z.literal("keyword"),
+    value: Keywords.cssWide,
+  }),
+  z.object({
+    kind: z.literal("value"),
+    value: timeSchema,
+  }),
+]);
+
+export type AnimationDelayIR = z.infer<typeof animationDelayIRSchema>;
+
+
+=== File: packages/b_declarations/src/properties/animation-direction/definition.ts ===
+// b_path:: packages/b_declarations/src/properties/animation-direction/definition.ts
+
+import { defineProperty } from "../../core";
+import { parseAnimationDirection } from "./parser";
+import { generateAnimationDirection } from "./generator";
+import type { AnimationDirectionIR } from "./types";
+
+export const animationDirection = defineProperty<AnimationDirectionIR>({
+  name: "animation-direction",
+  syntax: "normal | reverse | alternate | alternate-reverse",
+  parser: parseAnimationDirection,
+  generator: generateAnimationDirection,
+  inherited: false,
+  initial: "normal",
+});
+
+
+=== File: packages/b_declarations/src/properties/animation-direction/generator.ts ===
+// b_path:: packages/b_declarations/src/properties/animation-direction/generator.ts
+
+import { generateOk, type GenerateResult } from "@b/types";
+import type { AnimationDirectionIR } from "./types";
+
+export function generateAnimationDirection(ir: AnimationDirectionIR): GenerateResult {
+  return generateOk(ir.value);
+}
+
+
+=== File: packages/b_declarations/src/properties/animation-direction/index.ts ===
+// b_path:: packages/b_declarations/src/properties/animation-direction/index.ts
+
+export * from "./types";
+export * from "./parser";
+export * from "./generator";
+export * from "./definition";
+
+
+=== File: packages/b_declarations/src/properties/animation-direction/parser.ts ===
+// b_path:: packages/b_declarations/src/properties/animation-direction/parser.ts
+
+import type { ParseResult } from "@b/types";
+import * as Keywords from "@b/keywords";
+import type * as csstree from "@eslint/css-tree";
+import type { AnimationDirectionIR } from "./types";
+
+export function parseAnimationDirection(ast: csstree.Value): ParseResult<AnimationDirectionIR> {
+  const firstNode = ast.children.first;
+
+  if (!firstNode) {
+    return {
+      ok: false,
+      property: "animation-direction",
+      value: undefined,
+      issues: [
+        {
+          code: "missing-value",
+          severity: "error",
+          message: "Empty value for animation-direction",
+        },
+      ],
+    };
+  }
+
+  if (firstNode.type === "Identifier") {
+    const parsed = Keywords.animationDirectionKeywordSchema.safeParse(firstNode.name);
+    if (parsed.success) {
+      return {
+        ok: true,
+        property: "animation-direction",
+        value: { kind: "keyword", value: parsed.data },
+        issues: [],
+      };
+    }
+  }
+
+  return {
+    ok: false,
+    property: "animation-direction",
+    value: undefined,
+    issues: [
+      {
+        code: "invalid-value",
+        severity: "error",
+        message: "Invalid animation-direction value",
+      },
+    ],
+  };
+}
+
+
+=== File: packages/b_declarations/src/properties/animation-direction/types.ts ===
+// b_path:: packages/b_declarations/src/properties/animation-direction/types.ts
+
+import type * as Keywords from "@b/keywords";
+
+export type AnimationDirectionIR = {
+  kind: "keyword";
+  value: "initial" | "inherit" | "unset" | "revert" | "revert-layer" | Keywords.AnimationDirectionKeyword;
+};
+
+
+=== File: packages/b_declarations/src/properties/animation-duration/definition.ts ===
+// b_path:: packages/b_declarations/src/properties/animation-duration/definition.ts
+
+import { defineProperty } from "../../core";
+import { parseAnimationDuration } from "./parser";
+import { generateAnimationDuration } from "./generator";
+import type { AnimationDurationIR } from "./types";
+
+export const animationDuration = defineProperty<AnimationDurationIR>({
+  name: "animation-duration",
+  syntax: "<time>#",
+  parser: parseAnimationDuration,
+  generator: generateAnimationDuration,
+  inherited: false,
+  initial: "0s",
+});
+
+
+=== File: packages/b_declarations/src/properties/animation-duration/generator.ts ===
+// b_path:: packages/b_declarations/src/properties/animation-duration/generator.ts
+
+import { generateOk, type GenerateResult } from "@b/types";
+import * as Generators from "@b/generators";
+import type { AnimationDurationIR } from "./types";
+
+export function generateAnimationDuration(ir: AnimationDurationIR): GenerateResult {
+  if (ir.kind === "keyword") {
+    return generateOk(ir.value);
+  }
+
+  const result = Generators.Time.generate(ir.value);
+  return result;
+}
+
+
+=== File: packages/b_declarations/src/properties/animation-duration/index.ts ===
+// b_path:: packages/b_declarations/src/properties/animation-duration/index.ts
+
+export * from "./types";
+export * from "./parser";
+export * from "./generator";
+export * from "./definition";
+
+
+=== File: packages/b_declarations/src/properties/animation-duration/parser.ts ===
+// b_path:: packages/b_declarations/src/properties/animation-duration/parser.ts
+
+import type { ParseResult } from "@b/types";
+import * as Parsers from "@b/parsers";
+import type * as csstree from "@eslint/css-tree";
+import type { AnimationDurationIR } from "./types";
+
+export function parseAnimationDuration(ast: csstree.Value): ParseResult<AnimationDurationIR> {
+  const firstNode = ast.children.first;
+
+  if (!firstNode) {
+    return {
+      ok: false,
+      property: "animation-duration",
+      value: undefined,
+      issues: [
+        {
+          code: "missing-value",
+          severity: "error",
+          message: "Empty value for animation-duration",
+        },
+      ],
+    };
+  }
+
+  const timeResult = Parsers.Time.parseTimeNode(firstNode);
+
+  if (timeResult.ok) {
+    return {
+      ok: true,
+      property: "animation-duration",
+      value: { kind: "value", value: timeResult.value },
+      issues: timeResult.issues,
+    };
+  }
+
+  return timeResult as ParseResult<AnimationDurationIR>;
+}
+
+
+=== File: packages/b_declarations/src/properties/animation-duration/types.ts ===
+// b_path:: packages/b_declarations/src/properties/animation-duration/types.ts
+
+import { z } from "zod";
+import { timeSchema } from "@b/types";
+import * as Keywords from "@b/keywords";
+
+export const animationDurationIRSchema = z.discriminatedUnion("kind", [
+  z.object({
+    kind: z.literal("keyword"),
+    value: Keywords.cssWide,
+  }),
+  z.object({
+    kind: z.literal("value"),
+    value: timeSchema,
+  }),
+]);
+
+export type AnimationDurationIR = z.infer<typeof animationDurationIRSchema>;
+
+
+=== File: packages/b_declarations/src/properties/animation-fill-mode/definition.ts ===
+// b_path:: packages/b_declarations/src/properties/animation-fill-mode/definition.ts
+
+import { defineProperty } from "../../core";
+import { parseAnimationFillMode } from "./parser";
+import { generateAnimationFillMode } from "./generator";
+import type { AnimationFillModeIR } from "./types";
+
+export const animationFillMode = defineProperty<AnimationFillModeIR>({
+  name: "animation-fill-mode",
+  syntax: "none | forwards | backwards | both",
+  parser: parseAnimationFillMode,
+  generator: generateAnimationFillMode,
+  inherited: false,
+  initial: "none",
+});
+
+
+=== File: packages/b_declarations/src/properties/animation-fill-mode/generator.ts ===
+// b_path:: packages/b_declarations/src/properties/animation-fill-mode/generator.ts
+
+import { generateOk, type GenerateResult } from "@b/types";
+import type { AnimationFillModeIR } from "./types";
+
+export function generateAnimationFillMode(ir: AnimationFillModeIR): GenerateResult {
+  return generateOk(ir.value);
+}
+
+
+=== File: packages/b_declarations/src/properties/animation-fill-mode/index.ts ===
+// b_path:: packages/b_declarations/src/properties/animation-fill-mode/index.ts
+
+export * from "./types";
+export * from "./parser";
+export * from "./generator";
+export * from "./definition";
+
+
+=== File: packages/b_declarations/src/properties/animation-fill-mode/parser.ts ===
+// b_path:: packages/b_declarations/src/properties/animation-fill-mode/parser.ts
+
+import type { ParseResult } from "@b/types";
+import * as Keywords from "@b/keywords";
+import type * as csstree from "@eslint/css-tree";
+import type { AnimationFillModeIR } from "./types";
+
+export function parseAnimationFillMode(ast: csstree.Value): ParseResult<AnimationFillModeIR> {
+  const firstNode = ast.children.first;
+
+  if (!firstNode) {
+    return {
+      ok: false,
+      property: "animation-fill-mode",
+      value: undefined,
+      issues: [
+        {
+          code: "missing-value",
+          severity: "error",
+          message: "Empty value for animation-fill-mode",
+        },
+      ],
+    };
+  }
+
+  if (firstNode.type === "Identifier") {
+    const parsed = Keywords.animationFillModeKeywordSchema.safeParse(firstNode.name);
+    if (parsed.success) {
+      return {
+        ok: true,
+        property: "animation-fill-mode",
+        value: { kind: "keyword", value: parsed.data },
+        issues: [],
+      };
+    }
+  }
+
+  return {
+    ok: false,
+    property: "animation-fill-mode",
+    value: undefined,
+    issues: [
+      {
+        code: "invalid-value",
+        severity: "error",
+        message: "Invalid animation-fill-mode value",
+      },
+    ],
+  };
+}
+
+
+=== File: packages/b_declarations/src/properties/animation-fill-mode/types.ts ===
+// b_path:: packages/b_declarations/src/properties/animation-fill-mode/types.ts
+
+import type * as Keywords from "@b/keywords";
+
+export type AnimationFillModeIR = {
+  kind: "keyword";
+  value: "initial" | "inherit" | "unset" | "revert" | "revert-layer" | Keywords.AnimationFillModeKeyword;
+};
+
+
+=== File: packages/b_declarations/src/properties/animation-iteration-count/definition.ts ===
+// b_path:: packages/b_declarations/src/properties/animation-iteration-count/definition.ts
+
+import { defineProperty } from "../../core";
+import { parseAnimationIterationCount } from "./parser";
+import { generateAnimationIterationCount } from "./generator";
+import type { AnimationIterationCountIR } from "./types";
+
+export const animationIterationCount = defineProperty<AnimationIterationCountIR>({
+  name: "animation-iteration-count",
+  syntax: "<number> | infinite",
+  parser: parseAnimationIterationCount,
+  generator: generateAnimationIterationCount,
+  inherited: false,
+  initial: "1",
+});
+
+
+=== File: packages/b_declarations/src/properties/animation-iteration-count/generator.ts ===
+// b_path:: packages/b_declarations/src/properties/animation-iteration-count/generator.ts
+
+import { generateOk, type GenerateResult } from "@b/types";
+import type { AnimationIterationCountIR } from "./types";
+
+export function generateAnimationIterationCount(ir: AnimationIterationCountIR): GenerateResult {
+  if (ir.kind === "keyword") {
+    return generateOk(ir.value);
+  }
+
+  return generateOk(ir.value.toString());
+}
+
+
+=== File: packages/b_declarations/src/properties/animation-iteration-count/index.ts ===
+// b_path:: packages/b_declarations/src/properties/animation-iteration-count/index.ts
+
+export * from "./types";
+export * from "./parser";
+export * from "./generator";
+export * from "./definition";
+
+
+=== File: packages/b_declarations/src/properties/animation-iteration-count/parser.ts ===
+// b_path:: packages/b_declarations/src/properties/animation-iteration-count/parser.ts
+
+import type { ParseResult } from "@b/types";
+import * as Keywords from "@b/keywords";
+import type * as csstree from "@eslint/css-tree";
+import type { AnimationIterationCountIR } from "./types";
+
+export function parseAnimationIterationCount(ast: csstree.Value): ParseResult<AnimationIterationCountIR> {
+  const firstNode = ast.children.first;
+
+  if (!firstNode) {
+    return {
+      ok: false,
+      property: "animation-iteration-count",
+      value: undefined,
+      issues: [
+        {
+          code: "missing-value",
+          severity: "error",
+          message: "Empty value for animation-iteration-count",
+        },
+      ],
+    };
+  }
+
+  if (firstNode.type === "Identifier") {
+    const name = firstNode.name.toLowerCase();
+
+    const cssWideResult = Keywords.cssWide.safeParse(name);
+    if (cssWideResult.success) {
+      return {
+        ok: true,
+        property: "animation-iteration-count",
+        value: { kind: "keyword", value: cssWideResult.data },
+        issues: [],
+      };
+    }
+
+    if (name === "infinite") {
+      return {
+        ok: true,
+        property: "animation-iteration-count",
+        value: { kind: "keyword", value: "infinite" },
+        issues: [],
+      };
+    }
+  }
+
+  if (firstNode.type === "Number") {
+    const num = Number.parseFloat(firstNode.value);
+
+    if (Number.isNaN(num) || num < 0) {
+      return {
+        ok: false,
+        property: "animation-iteration-count",
+        value: undefined,
+        issues: [
+          {
+            code: "invalid-value",
+            severity: "error",
+            message: "animation-iteration-count must be a non-negative number",
+          },
+        ],
+      };
+    }
+
+    return {
+      ok: true,
+      property: "animation-iteration-count",
+      value: { kind: "number", value: num },
+      issues: [],
+    };
+  }
+
+  return {
+    ok: false,
+    property: "animation-iteration-count",
+    value: undefined,
+    issues: [
+      {
+        code: "invalid-value",
+        severity: "error",
+        message: "Invalid animation-iteration-count value",
+      },
+    ],
+  };
+}
+
+
+=== File: packages/b_declarations/src/properties/animation-iteration-count/types.ts ===
+// b_path:: packages/b_declarations/src/properties/animation-iteration-count/types.ts
+
+export type AnimationIterationCountIR =
+  | {
+      kind: "keyword";
+      value: "initial" | "inherit" | "unset" | "revert" | "revert-layer" | "infinite";
+    }
+  | {
+      kind: "number";
+      value: number;
+    };
+
+
+=== File: packages/b_declarations/src/properties/animation-name/definition.ts ===
+// b_path:: packages/b_declarations/src/properties/animation-name/definition.ts
+
+import { defineProperty } from "../../core";
+import { parseAnimationName } from "./parser";
+import { generateAnimationName } from "./generator";
+import type { AnimationNameIR } from "./types";
+
+export const animationName = defineProperty<AnimationNameIR>({
+  name: "animation-name",
+  syntax: "[ none | <keyframes-name> ]#",
+  parser: parseAnimationName,
+  generator: generateAnimationName,
+  inherited: false,
+  initial: "none",
+});
+
+
+=== File: packages/b_declarations/src/properties/animation-name/generator.ts ===
+// b_path:: packages/b_declarations/src/properties/animation-name/generator.ts
+
+import { generateOk, type GenerateResult } from "@b/types";
+import type { AnimationNameIR } from "./types";
+
+export function generateAnimationName(ir: AnimationNameIR): GenerateResult {
+  if (ir.kind === "keyword") {
+    return generateOk(ir.value);
+  }
+
+  return generateOk(ir.value);
+}
+
+
+=== File: packages/b_declarations/src/properties/animation-name/index.ts ===
+// b_path:: packages/b_declarations/src/properties/animation-name/index.ts
+
+export * from "./types";
+export * from "./parser";
+export * from "./generator";
+export * from "./definition";
+
+
+=== File: packages/b_declarations/src/properties/animation-name/parser.ts ===
+// b_path:: packages/b_declarations/src/properties/animation-name/parser.ts
+
+import type { ParseResult } from "@b/types";
+import * as Keywords from "@b/keywords";
+import type * as csstree from "@eslint/css-tree";
+import type { AnimationNameIR } from "./types";
+
+export function parseAnimationName(ast: csstree.Value): ParseResult<AnimationNameIR> {
+  const firstNode = ast.children.first;
+
+  if (!firstNode) {
+    return {
+      ok: false,
+      property: "animation-name",
+      value: undefined,
+      issues: [{ code: "missing-value", severity: "error", message: "Empty value for animation-name" }],
+    };
+  }
+
+  if (firstNode.type === "Identifier") {
+    const name = firstNode.name.toLowerCase();
+
+    // CSS-wide keywords
+    const cssWideResult = Keywords.cssWide.safeParse(name);
+    if (cssWideResult.success) {
+      return {
+        ok: true,
+        property: "animation-name",
+        value: { kind: "keyword", value: cssWideResult.data },
+        issues: [],
+      };
+    }
+
+    // Special keyword for animation-name
+    if (name === "none") {
+      return {
+        ok: true,
+        property: "animation-name",
+        value: { kind: "keyword", value: name },
+        issues: [],
+      };
+    }
+
+    // Custom identifier (animation name)
+    return {
+      ok: true,
+      property: "animation-name",
+      value: { kind: "custom-ident", value: firstNode.name },
+      issues: [],
+    };
+  }
+
+  return {
+    ok: false,
+    property: "animation-name",
+    value: undefined,
+    issues: [{ code: "invalid-value", severity: "error", message: "Invalid animation-name value" }],
+  };
+}
+
+
+=== File: packages/b_declarations/src/properties/animation-name/types.ts ===
+// b_path:: packages/b_declarations/src/properties/animation-name/types.ts
+
+export type AnimationNameIR =
+  | {
+      kind: "keyword";
+      value: "initial" | "inherit" | "unset" | "revert" | "revert-layer" | "none";
+    }
+  | {
+      kind: "custom-ident";
+      value: string;
+    };
+
+
+=== File: packages/b_declarations/src/properties/animation-play-state/definition.ts ===
+// b_path:: packages/b_declarations/src/properties/animation-play-state/definition.ts
+
+import { defineProperty } from "../../core";
+import { parseAnimationPlayState } from "./parser";
+import { generateAnimationPlayState } from "./generator";
+import type { AnimationPlayStateIR } from "./types";
+
+export const animationPlayState = defineProperty<AnimationPlayStateIR>({
+  name: "animation-play-state",
+  syntax: "running | paused",
+  parser: parseAnimationPlayState,
+  generator: generateAnimationPlayState,
+  inherited: false,
+  initial: "running",
+});
+
+
+=== File: packages/b_declarations/src/properties/animation-play-state/generator.ts ===
+// b_path:: packages/b_declarations/src/properties/animation-play-state/generator.ts
+
+import { generateOk, type GenerateResult } from "@b/types";
+import type { AnimationPlayStateIR } from "./types";
+
+export function generateAnimationPlayState(ir: AnimationPlayStateIR): GenerateResult {
+  return generateOk(ir.value);
+}
+
+
+=== File: packages/b_declarations/src/properties/animation-play-state/index.ts ===
+// b_path:: packages/b_declarations/src/properties/animation-play-state/index.ts
+
+export * from "./types";
+export * from "./parser";
+export * from "./generator";
+export * from "./definition";
+
+
+=== File: packages/b_declarations/src/properties/animation-play-state/parser.ts ===
+// b_path:: packages/b_declarations/src/properties/animation-play-state/parser.ts
+
+import type { ParseResult } from "@b/types";
+import * as Keywords from "@b/keywords";
+import type * as csstree from "@eslint/css-tree";
+import type { AnimationPlayStateIR } from "./types";
+
+export function parseAnimationPlayState(ast: csstree.Value): ParseResult<AnimationPlayStateIR> {
+  const firstNode = ast.children.first;
+
+  if (!firstNode) {
+    return {
+      ok: false,
+      property: "animation-play-state",
+      value: undefined,
+      issues: [
+        {
+          code: "missing-value",
+          severity: "error",
+          message: "Empty value for animation-play-state",
+        },
+      ],
+    };
+  }
+
+  if (firstNode.type === "Identifier") {
+    const parsed = Keywords.animationPlayStateKeywordSchema.safeParse(firstNode.name);
+    if (parsed.success) {
+      return {
+        ok: true,
+        property: "animation-play-state",
+        value: { kind: "keyword", value: parsed.data },
+        issues: [],
+      };
+    }
+  }
+
+  return {
+    ok: false,
+    property: "animation-play-state",
+    value: undefined,
+    issues: [
+      {
+        code: "invalid-value",
+        severity: "error",
+        message: "Invalid animation-play-state value",
+      },
+    ],
+  };
+}
+
+
+=== File: packages/b_declarations/src/properties/animation-play-state/types.ts ===
+// b_path:: packages/b_declarations/src/properties/animation-play-state/types.ts
+
+import type * as Keywords from "@b/keywords";
+
+export type AnimationPlayStateIR = {
+  kind: "keyword";
+  value: "initial" | "inherit" | "unset" | "revert" | "revert-layer" | Keywords.AnimationPlayStateKeyword;
+};
+
+
+=== File: packages/b_declarations/src/properties/animation-timing-function/definition.ts ===
+// b_path:: packages/b_declarations/src/properties/animation-timing-function/definition.ts
+
+import { defineProperty } from "../../core";
+import { parseAnimationTimingFunction } from "./parser";
+import { generateAnimationTimingFunction } from "./generator";
+import type { AnimationTimingFunctionIR } from "./types";
+
+export const animationTimingFunction = defineProperty<AnimationTimingFunctionIR>({
+  name: "animation-timing-function",
+  syntax: "<easing-function>#",
+  parser: parseAnimationTimingFunction,
+  generator: generateAnimationTimingFunction,
+  inherited: false,
+  initial: "ease",
+});
+
+
+=== File: packages/b_declarations/src/properties/animation-timing-function/generator.ts ===
+// b_path:: packages/b_declarations/src/properties/animation-timing-function/generator.ts
+
+import { generateOk, type GenerateResult } from "@b/types";
+import * as Generators from "@b/generators";
+import type { AnimationTimingFunctionIR } from "./types";
+
+export function generateAnimationTimingFunction(ir: AnimationTimingFunctionIR): GenerateResult {
+  if (ir.kind === "keyword") {
+    return generateOk(ir.value);
+  }
+
+  const result = Generators.EasingFunction.generate(ir.value);
+  return result;
+}
+
+
+=== File: packages/b_declarations/src/properties/animation-timing-function/index.ts ===
+// b_path:: packages/b_declarations/src/properties/animation-timing-function/index.ts
+
+export * from "./types";
+export * from "./parser";
+export * from "./generator";
+export * from "./definition";
+
+
+=== File: packages/b_declarations/src/properties/animation-timing-function/parser.ts ===
+// b_path:: packages/b_declarations/src/properties/animation-timing-function/parser.ts
+
+import type { ParseResult } from "@b/types";
+import * as Parsers from "@b/parsers";
+import type * as csstree from "@eslint/css-tree";
+import type { AnimationTimingFunctionIR } from "./types";
+
+export function parseAnimationTimingFunction(ast: csstree.Value): ParseResult<AnimationTimingFunctionIR> {
+  const firstNode = ast.children.first;
+
+  if (!firstNode) {
+    return {
+      ok: false,
+      property: "animation-timing-function",
+      value: undefined,
+      issues: [
+        {
+          code: "missing-value",
+          severity: "error",
+          message: "Empty value for animation-timing-function",
+        },
+      ],
+    };
+  }
+
+  const easingResult = Parsers.EasingFunction.parseEasingFunctionNode(firstNode);
+
+  if (easingResult.ok) {
+    return {
+      ok: true,
+      property: "animation-timing-function",
+      value: { kind: "value", value: easingResult.value },
+      issues: easingResult.issues,
+    };
+  }
+
+  return easingResult as ParseResult<AnimationTimingFunctionIR>;
+}
+
+
+=== File: packages/b_declarations/src/properties/animation-timing-function/types.ts ===
+// b_path:: packages/b_declarations/src/properties/animation-timing-function/types.ts
+
+import { z } from "zod";
+import { easingFunctionSchema } from "@b/types";
+import * as Keywords from "@b/keywords";
+
+export const animationTimingFunctionIRSchema = z.discriminatedUnion("kind", [
+  z.object({
+    kind: z.literal("keyword"),
+    value: Keywords.cssWide,
+  }),
+  z.object({
+    kind: z.literal("value"),
+    value: easingFunctionSchema,
+  }),
+]);
+
+export type AnimationTimingFunctionIR = z.infer<typeof animationTimingFunctionIRSchema>;
 
 
 === File: packages/b_declarations/src/properties/background-attachment/definition.ts ===
@@ -3665,6 +4540,14 @@ export type CustomPropertyIR = { kind: "raw"; value: string };
  */
 
 import { customProperty } from "./custom-property/definition";
+import { animationDelay } from "./animation-delay/definition";
+import { animationDirection } from "./animation-direction/definition";
+import { animationDuration } from "./animation-duration/definition";
+import { animationFillMode } from "./animation-fill-mode/definition";
+import { animationIterationCount } from "./animation-iteration-count/definition";
+import { animationName } from "./animation-name/definition";
+import { animationPlayState } from "./animation-play-state/definition";
+import { animationTimingFunction } from "./animation-timing-function/definition";
 import { backgroundAttachment } from "./background-attachment/definition";
 import { backgroundBlendMode } from "./background-blend-mode/definition";
 import { backgroundClip } from "./background-clip/definition";
@@ -3718,6 +4601,14 @@ import { transitionTimingFunction } from "./transition-timing-function/definitio
  */
 export const PROPERTY_DEFINITIONS = {
   "--*": customProperty,
+  "animation-delay": animationDelay,
+  "animation-direction": animationDirection,
+  "animation-duration": animationDuration,
+  "animation-fill-mode": animationFillMode,
+  "animation-iteration-count": animationIterationCount,
+  "animation-name": animationName,
+  "animation-play-state": animationPlayState,
+  "animation-timing-function": animationTimingFunction,
   "background-attachment": backgroundAttachment,
   "background-blend-mode": backgroundBlendMode,
   "background-clip": backgroundClip,
@@ -7530,6 +8421,58 @@ export default defineConfig({
 });
 
 
+=== File: packages/b_keywords/src/animation-direction.ts ===
+// b_path:: packages/b_keywords/src/animation-direction.ts
+
+import { z } from "zod";
+
+/**
+ * Animation direction keywords
+ * @see https://drafts.csswg.org/css-animations-1/#propdef-animation-direction
+ */
+export const animationDirectionKeywordSchema = z.union([
+  z.literal("normal"),
+  z.literal("reverse"),
+  z.literal("alternate"),
+  z.literal("alternate-reverse"),
+]);
+
+export type AnimationDirectionKeyword = z.infer<typeof animationDirectionKeywordSchema>;
+
+
+=== File: packages/b_keywords/src/animation-fill-mode.ts ===
+// b_path:: packages/b_keywords/src/animation-fill-mode.ts
+
+import { z } from "zod";
+
+/**
+ * Animation fill mode keywords
+ * @see https://drafts.csswg.org/css-animations-1/#propdef-animation-fill-mode
+ */
+export const animationFillModeKeywordSchema = z.union([
+  z.literal("none"),
+  z.literal("forwards"),
+  z.literal("backwards"),
+  z.literal("both"),
+]);
+
+export type AnimationFillModeKeyword = z.infer<typeof animationFillModeKeywordSchema>;
+
+
+=== File: packages/b_keywords/src/animation-play-state.ts ===
+// b_path:: packages/b_keywords/src/animation-play-state.ts
+
+import { z } from "zod";
+
+/**
+ * Animation play state keywords
+ * @see https://drafts.csswg.org/css-animations-1/#propdef-animation-play-state
+ */
+export const animationPlayStateKeywordSchema = z.union([z.literal("running"), z.literal("paused")]);
+
+export type AnimationPlayStateKeyword = z.infer<typeof animationPlayStateKeywordSchema>;
+
+
 === File: packages/b_keywords/src/background-attachment.ts ===
 // b_path:: packages/b_keywords/src/background-attachment.ts
 
@@ -7819,6 +8762,9 @@ export type GradientCorner = z.infer<typeof gradientCorner>;
 
 === File: packages/b_keywords/src/index.ts ===
 // b_path:: packages/b_keywords/src/index.ts
+export * from "./animation-direction";
+export * from "./animation-fill-mode";
+export * from "./animation-play-state";
 export * from "./background-attachment";
 export * from "./background-clip";
 export * from "./background-origin";
@@ -15189,5 +16135,3 @@ export default defineConfig({
     },
   },
 });
-
-
