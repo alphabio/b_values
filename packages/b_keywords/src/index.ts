@@ -1,4 +1,7 @@
 // b_path:: packages/b_keywords/src/index.ts
+export * from "./animation-direction";
+export * from "./animation-fill-mode";
+export * from "./animation-play-state";
 export * from "./background-attachment";
 export * from "./background-clip";
 export * from "./background-origin";

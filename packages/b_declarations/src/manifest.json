@@ -1,7 +1,71 @@
 {
   "$schema": "./manifest.schema.json",
-  "generated": "2025-11-14T10:31:45.181Z",
+  "generated": "2025-11-14T13:23:34.801Z",
   "properties": {
+    "animation-delay": {
+      "name": "animation-delay",
+      "syntax": "<time>#",
+      "inherited": false,
+      "initial": "0s",
+      "mode": "single",
+      "irType": "AnimationDelayIR"
+    },
+    "animation-direction": {
+      "name": "animation-direction",
+      "syntax": "normal | reverse | alternate | alternate-reverse",
+      "inherited": false,
+      "initial": "normal",
+      "mode": "single",
+      "irType": "AnimationDirectionIR"
+    },
+    "animation-duration": {
+      "name": "animation-duration",
+      "syntax": "<time>#",
+      "inherited": false,
+      "initial": "0s",
+      "mode": "single",
+      "irType": "AnimationDurationIR"
+    },
+    "animation-fill-mode": {
+      "name": "animation-fill-mode",
+      "syntax": "none | forwards | backwards | both",
+      "inherited": false,
+      "initial": "none",
+      "mode": "single",
+      "irType": "AnimationFillModeIR"
+    },
+    "animation-iteration-count": {
+      "name": "animation-iteration-count",
+      "syntax": "<number> | infinite",
+      "inherited": false,
+      "initial": "1",
+      "mode": "single",
+      "irType": "AnimationIterationCountIR"
+    },
+    "animation-name": {
+      "name": "animation-name",
+      "syntax": "[ none | <keyframes-name> ]#",
+      "inherited": false,
+      "initial": "none",
+      "mode": "single",
+      "irType": "AnimationNameIR"
+    },
+    "animation-play-state": {
+      "name": "animation-play-state",
+      "syntax": "running | paused",
+      "inherited": false,
+      "initial": "running",
+      "mode": "single",
+      "irType": "AnimationPlayStateIR"
+    },
+    "animation-timing-function": {
+      "name": "animation-timing-function",
+      "syntax": "<easing-function>#",
+      "inherited": false,
+      "initial": "ease",
+      "mode": "single",
+      "irType": "AnimationTimingFunctionIR"
+    },
     "background-attachment": {
       "name": "background-attachment",
       "syntax": "<attachment>#",

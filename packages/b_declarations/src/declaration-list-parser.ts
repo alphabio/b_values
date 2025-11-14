@@ -95,20 +95,17 @@ export function parseDeclarationList(css: string): ParseResult<DeclarationResult
 
   const hasErrors = allIssues.some((issue) => issue.severity === "error");
 
-  // If we have declarations AND no errors, it's a success.
-  // If we have no declarations but also no issues, it's an empty-but-valid success.
-  if ((declarations.length > 0 && !hasErrors) || (declarations.length === 0 && allIssues.length === 0)) {
+  if (hasErrors) {
     return {
-      ok: true,
+      ok: false,
       value: declarations,
       issues: allIssues,
     };
   }
 
-  // Otherwise, it's a failure (either partial or total).
   return {
-    ok: false,
-    value: declarations, // Still return partial value
+    ok: true,
+    value: declarations,
     issues: allIssues,
   };
 }

@@ -26,6 +26,14 @@
  */
 
 import { customProperty } from "./custom-property/definition";
+import { animationDelay } from "./animation-delay/definition";
+import { animationDirection } from "./animation-direction/definition";
+import { animationDuration } from "./animation-duration/definition";
+import { animationFillMode } from "./animation-fill-mode/definition";
+import { animationIterationCount } from "./animation-iteration-count/definition";
+import { animationName } from "./animation-name/definition";
+import { animationPlayState } from "./animation-play-state/definition";
+import { animationTimingFunction } from "./animation-timing-function/definition";
 import { backgroundAttachment } from "./background-attachment/definition";
 import { backgroundBlendMode } from "./background-blend-mode/definition";
 import { backgroundClip } from "./background-clip/definition";
@@ -79,6 +87,14 @@ import { transitionTimingFunction } from "./transition-timing-function/definitio
  */
 export const PROPERTY_DEFINITIONS = {
   "--*": customProperty,
+  "animation-delay": animationDelay,
+  "animation-direction": animationDirection,
+  "animation-duration": animationDuration,
+  "animation-fill-mode": animationFillMode,
+  "animation-iteration-count": animationIterationCount,
+  "animation-name": animationName,
+  "animation-play-state": animationPlayState,
+  "animation-timing-function": animationTimingFunction,
   "background-attachment": backgroundAttachment,
   "background-blend-mode": backgroundBlendMode,
   "background-clip": backgroundClip,
