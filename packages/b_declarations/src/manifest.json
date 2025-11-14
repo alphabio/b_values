@@ -1,6 +1,6 @@
 {
   "$schema": "./manifest.schema.json",
-  "generated": "2025-11-13T17:39:01.105Z",
+  "generated": "2025-11-14T10:31:45.181Z",
   "properties": {
     "background-attachment": {
       "name": "background-attachment",
@@ -281,6 +281,38 @@
       "initial": "0",
       "mode": "single",
       "irType": "PaddingTopIR"
+    },
+    "transition-delay": {
+      "name": "transition-delay",
+      "syntax": "<time>#",
+      "inherited": false,
+      "initial": "0s",
+      "mode": "single",
+      "irType": "TransitionDelayIR"
+    },
+    "transition-duration": {
+      "name": "transition-duration",
+      "syntax": "<time>#",
+      "inherited": false,
+      "initial": "0s",
+      "mode": "single",
+      "irType": "TransitionDurationIR"
+    },
+    "transition-property": {
+      "name": "transition-property",
+      "syntax": "none | <single-transition-property>#",
+      "inherited": false,
+      "initial": "all",
+      "mode": "single",
+      "irType": "TransitionPropertyIR"
+    },
+    "transition-timing-function": {
+      "name": "transition-timing-function",
+      "syntax": "<easing-function>#",
+      "inherited": false,
+      "initial": "ease",
+      "mode": "single",
+      "irType": "TransitionTimingFunctionIR"
     }
   }
 }

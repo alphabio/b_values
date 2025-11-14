@@ -5,3 +5,4 @@ export * from "./length-font";
 export * from "./length-viewport";
 export * from "./length";
 export * from "./percentage";
+export * from "./time";

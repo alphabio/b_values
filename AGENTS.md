@@ -137,6 +137,7 @@ Then proceed with the task, applying the rules above.
 We do NOT support shorthand properties. We ONLY support registered longhand properties.
 
 Examples:
+
 - ❌ `background` (shorthand) → ✅ `background-color`, `background-image` (longhands)
 - ❌ `padding` (shorthand) → ✅ `padding-top`, `padding-right`, etc. (longhands)
 - ❌ `border` (shorthand) → ✅ `border-top-width`, `border-top-style`, etc. (longhands)

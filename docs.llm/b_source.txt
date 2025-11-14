@@ -3700,6 +3700,10 @@ import { paddingBottom } from "./padding-bottom/definition";
 import { paddingLeft } from "./padding-left/definition";
 import { paddingRight } from "./padding-right/definition";
 import { paddingTop } from "./padding-top/definition";
+import { transitionDelay } from "./transition-delay/definition";
+import { transitionDuration } from "./transition-duration/definition";
+import { transitionProperty } from "./transition-property/definition";
+import { transitionTimingFunction } from "./transition-timing-function/definition";
 
 /**
  * Central definitions object.
@@ -3749,6 +3753,10 @@ export const PROPERTY_DEFINITIONS = {
   "padding-left": paddingLeft,
   "padding-right": paddingRight,
   "padding-top": paddingTop,
+  "transition-delay": transitionDelay,
+  "transition-duration": transitionDuration,
+  "transition-property": transitionProperty,
+  "transition-timing-function": transitionTimingFunction,
 } as const;
 
 /**
@@ -3802,6 +3810,10 @@ export * from "./padding-bottom";
 export * from "./padding-left";
 export * from "./padding-right";
 export * from "./padding-top";
+export * from "./transition-delay";
+export * from "./transition-duration";
+export * from "./transition-property";
+export * from "./transition-timing-function";
 
 // Mark registry as initialized after all properties are loaded
 // This is a side-effect import that happens when this module is imported
@@ -4678,6 +4690,424 @@ export type PaddingTopIR =
   | { kind: "value"; value: CssValue };
 
 
+=== File: packages/b_declarations/src/properties/transition-delay/definition.ts ===
+// b_path:: packages/b_declarations/src/properties/transition-delay/definition.ts
+
+import { defineProperty } from "../../core";
+import { parseTransitionDelay } from "./parser";
+import { generateTransitionDelay } from "./generator";
+import type { TransitionDelayIR } from "./types";
+
+export const transitionDelay = defineProperty<TransitionDelayIR>({
+  name: "transition-delay",
+  syntax: "<time>#",
+  parser: parseTransitionDelay,
+  generator: generateTransitionDelay,
+  inherited: false,
+  initial: "0s",
+});
+
+
+=== File: packages/b_declarations/src/properties/transition-delay/generator.ts ===
+// b_path:: packages/b_declarations/src/properties/transition-delay/generator.ts
+
+import { generateOk, type GenerateResult } from "@b/types";
+import * as Generators from "@b/generators";
+import type { TransitionDelayIR } from "./types";
+
+export function generateTransitionDelay(ir: TransitionDelayIR): GenerateResult {
+  if (ir.kind === "keyword") {
+    return generateOk(ir.value);
+  }
+
+  const result = Generators.Time.generate(ir.value);
+  return result;
+}
+
+
+=== File: packages/b_declarations/src/properties/transition-delay/index.ts ===
+// b_path:: packages/b_declarations/src/properties/transition-delay/index.ts
+
+export * from "./types";
+export * from "./parser";
+export * from "./generator";
+export * from "./definition";
+
+
+=== File: packages/b_declarations/src/properties/transition-delay/parser.ts ===
+// b_path:: packages/b_declarations/src/properties/transition-delay/parser.ts
+
+import type { ParseResult } from "@b/types";
+import * as Parsers from "@b/parsers";
+import type * as csstree from "@eslint/css-tree";
+import type { TransitionDelayIR } from "./types";
+
+export function parseTransitionDelay(ast: csstree.Value): ParseResult<TransitionDelayIR> {
+  const firstNode = ast.children.first;
+
+  if (!firstNode) {
+    return {
+      ok: false,
+      property: "transition-delay",
+      value: undefined,
+      issues: [{ code: "missing-value", severity: "error", message: "Empty value for transition-delay" }],
+    };
+  }
+
+  const timeResult = Parsers.Time.parseTimeNode(firstNode);
+
+  if (timeResult.ok) {
+    return {
+      ok: true,
+      property: "transition-delay",
+      value: { kind: "value", value: timeResult.value },
+      issues: timeResult.issues,
+    };
+  }
+
+  return timeResult as ParseResult<TransitionDelayIR>;
+}
+
+
+=== File: packages/b_declarations/src/properties/transition-delay/types.ts ===
+// b_path:: packages/b_declarations/src/properties/transition-delay/types.ts
+
+import { z } from "zod";
+import { timeSchema } from "@b/types";
+import * as Keywords from "@b/keywords";
+
+export const transitionDelayIRSchema = z.discriminatedUnion("kind", [
+  z.object({
+    kind: z.literal("keyword"),
+    value: Keywords.cssWide,
+  }),
+  z.object({
+    kind: z.literal("value"),
+    value: timeSchema,
+  }),
+]);
+
+export type TransitionDelayIR = z.infer<typeof transitionDelayIRSchema>;
+
+
+=== File: packages/b_declarations/src/properties/transition-duration/definition.ts ===
+// b_path:: packages/b_declarations/src/properties/transition-duration/definition.ts
+
+import { defineProperty } from "../../core";
+import { parseTransitionDuration } from "./parser";
+import { generateTransitionDuration } from "./generator";
+import type { TransitionDurationIR } from "./types";
+
+export const transitionDuration = defineProperty<TransitionDurationIR>({
+  name: "transition-duration",
+  syntax: "<time>#",
+  parser: parseTransitionDuration,
+  generator: generateTransitionDuration,
+  inherited: false,
+  initial: "0s",
+});
+
+
+=== File: packages/b_declarations/src/properties/transition-duration/generator.ts ===
+// b_path:: packages/b_declarations/src/properties/transition-duration/generator.ts
+
+import { generateOk, type GenerateResult } from "@b/types";
+import * as Generators from "@b/generators";
+import type { TransitionDurationIR } from "./types";
+
+export function generateTransitionDuration(ir: TransitionDurationIR): GenerateResult {
+  if (ir.kind === "keyword") {
+    return generateOk(ir.value);
+  }
+
+  const result = Generators.Time.generate(ir.value);
+  return result;
+}
+
+
+=== File: packages/b_declarations/src/properties/transition-duration/index.ts ===
+// b_path:: packages/b_declarations/src/properties/transition-duration/index.ts
+
+export * from "./types";
+export * from "./parser";
+export * from "./generator";
+export * from "./definition";
+
+
+=== File: packages/b_declarations/src/properties/transition-duration/parser.ts ===
+// b_path:: packages/b_declarations/src/properties/transition-duration/parser.ts
+
+import type { ParseResult } from "@b/types";
+import * as Parsers from "@b/parsers";
+import type * as csstree from "@eslint/css-tree";
+import type { TransitionDurationIR } from "./types";
+
+export function parseTransitionDuration(ast: csstree.Value): ParseResult<TransitionDurationIR> {
+  const firstNode = ast.children.first;
+
+  if (!firstNode) {
+    return {
+      ok: false,
+      property: "transition-duration",
+      value: undefined,
+      issues: [{ code: "missing-value", severity: "error", message: "Empty value for transition-duration" }],
+    };
+  }
+
+  const timeResult = Parsers.Time.parseTimeNode(firstNode);
+
+  if (timeResult.ok) {
+    return {
+      ok: true,
+      property: "transition-duration",
+      value: { kind: "value", value: timeResult.value },
+      issues: timeResult.issues,
+    };
+  }
+
+  return timeResult as ParseResult<TransitionDurationIR>;
+}
+
+
+=== File: packages/b_declarations/src/properties/transition-duration/types.ts ===
+// b_path:: packages/b_declarations/src/properties/transition-duration/types.ts
+
+import { z } from "zod";
+import { timeSchema } from "@b/types";
+import * as Keywords from "@b/keywords";
+
+export const transitionDurationIRSchema = z.discriminatedUnion("kind", [
+  z.object({
+    kind: z.literal("keyword"),
+    value: Keywords.cssWide,
+  }),
+  z.object({
+    kind: z.literal("value"),
+    value: timeSchema,
+  }),
+]);
+
+export type TransitionDurationIR = z.infer<typeof transitionDurationIRSchema>;
+
+
+=== File: packages/b_declarations/src/properties/transition-property/definition.ts ===
+// b_path:: packages/b_declarations/src/properties/transition-property/definition.ts
+
+import { defineProperty } from "../../core";
+import { parseTransitionProperty } from "./parser";
+import { generateTransitionProperty } from "./generator";
+import type { TransitionPropertyIR } from "./types";
+
+export const transitionProperty = defineProperty<TransitionPropertyIR>({
+  name: "transition-property",
+  syntax: "none | <single-transition-property>#",
+  parser: parseTransitionProperty,
+  generator: generateTransitionProperty,
+  inherited: false,
+  initial: "all",
+});
+
+
+=== File: packages/b_declarations/src/properties/transition-property/generator.ts ===
+// b_path:: packages/b_declarations/src/properties/transition-property/generator.ts
+
+import { generateOk, type GenerateResult } from "@b/types";
+import type { TransitionPropertyIR } from "./types";
+
+export function generateTransitionProperty(ir: TransitionPropertyIR): GenerateResult {
+  if (ir.kind === "keyword") {
+    return generateOk(ir.value);
+  }
+
+  return generateOk(ir.value);
+}
+
+
+=== File: packages/b_declarations/src/properties/transition-property/index.ts ===
+// b_path:: packages/b_declarations/src/properties/transition-property/index.ts
+
+export * from "./types";
+export * from "./parser";
+export * from "./generator";
+export * from "./definition";
+
+
+=== File: packages/b_declarations/src/properties/transition-property/parser.ts ===
+// b_path:: packages/b_declarations/src/properties/transition-property/parser.ts
+
+import type { ParseResult } from "@b/types";
+import * as Keywords from "@b/keywords";
+import type * as csstree from "@eslint/css-tree";
+import type { TransitionPropertyIR } from "./types";
+
+export function parseTransitionProperty(ast: csstree.Value): ParseResult<TransitionPropertyIR> {
+  const firstNode = ast.children.first;
+
+  if (!firstNode) {
+    return {
+      ok: false,
+      property: "transition-property",
+      value: undefined,
+      issues: [{ code: "missing-value", severity: "error", message: "Empty value for transition-property" }],
+    };
+  }
+
+  if (firstNode.type === "Identifier") {
+    const name = firstNode.name.toLowerCase();
+
+    // CSS-wide keywords
+    const cssWideResult = Keywords.cssWide.safeParse(name);
+    if (cssWideResult.success) {
+      return {
+        ok: true,
+        property: "transition-property",
+        value: { kind: "keyword", value: cssWideResult.data },
+        issues: [],
+      };
+    }
+
+    // Special keywords for transition-property
+    if (name === "none" || name === "all") {
+      return {
+        ok: true,
+        property: "transition-property",
+        value: { kind: "keyword", value: name },
+        issues: [],
+      };
+    }
+
+    // Custom identifier (property name)
+    return {
+      ok: true,
+      property: "transition-property",
+      value: { kind: "custom-ident", value: firstNode.name },
+      issues: [],
+    };
+  }
+
+  return {
+    ok: false,
+    property: "transition-property",
+    value: undefined,
+    issues: [{ code: "invalid-value", severity: "error", message: "Invalid transition-property value" }],
+  };
+}
+
+
+=== File: packages/b_declarations/src/properties/transition-property/types.ts ===
+// b_path:: packages/b_declarations/src/properties/transition-property/types.ts
+
+export type TransitionPropertyIR =
+  | {
+      kind: "keyword";
+      value: "initial" | "inherit" | "unset" | "revert" | "revert-layer" | "none" | "all";
+    }
+  | {
+      kind: "custom-ident";
+      value: string;
+    };
+
+
+=== File: packages/b_declarations/src/properties/transition-timing-function/definition.ts ===
+// b_path:: packages/b_declarations/src/properties/transition-timing-function/definition.ts
+
+import { defineProperty } from "../../core";
+import { parseTransitionTimingFunction } from "./parser";
+import { generateTransitionTimingFunction } from "./generator";
+import type { TransitionTimingFunctionIR } from "./types";
+
+export const transitionTimingFunction = defineProperty<TransitionTimingFunctionIR>({
+  name: "transition-timing-function",
+  syntax: "<easing-function>#",
+  parser: parseTransitionTimingFunction,
+  generator: generateTransitionTimingFunction,
+  inherited: false,
+  initial: "ease",
+});
+
+
+=== File: packages/b_declarations/src/properties/transition-timing-function/generator.ts ===
+// b_path:: packages/b_declarations/src/properties/transition-timing-function/generator.ts
+
+import { generateOk, type GenerateResult } from "@b/types";
+import * as Generators from "@b/generators";
+import type { TransitionTimingFunctionIR } from "./types";
+
+export function generateTransitionTimingFunction(ir: TransitionTimingFunctionIR): GenerateResult {
+  if (ir.kind === "keyword") {
+    return generateOk(ir.value);
+  }
+
+  const result = Generators.EasingFunction.generate(ir.value);
+  return result;
+}
+
+
+=== File: packages/b_declarations/src/properties/transition-timing-function/index.ts ===
+// b_path:: packages/b_declarations/src/properties/transition-timing-function/index.ts
+
+export * from "./types";
+export * from "./parser";
+export * from "./generator";
+export * from "./definition";
+
+
+=== File: packages/b_declarations/src/properties/transition-timing-function/parser.ts ===
+// b_path:: packages/b_declarations/src/properties/transition-timing-function/parser.ts
+
+import type { ParseResult } from "@b/types";
+import * as Parsers from "@b/parsers";
+import type * as csstree from "@eslint/css-tree";
+import type { TransitionTimingFunctionIR } from "./types";
+
+export function parseTransitionTimingFunction(ast: csstree.Value): ParseResult<TransitionTimingFunctionIR> {
+  const firstNode = ast.children.first;
+
+  if (!firstNode) {
+    return {
+      ok: false,
+      property: "transition-timing-function",
+      value: undefined,
+      issues: [{ code: "missing-value", severity: "error", message: "Empty value for transition-timing-function" }],
+    };
+  }
+
+  const easingResult = Parsers.EasingFunction.parseEasingFunctionNode(firstNode);
+
+  if (easingResult.ok) {
+    return {
+      ok: true,
+      property: "transition-timing-function",
+      value: { kind: "value", value: easingResult.value },
+      issues: easingResult.issues,
+    };
+  }
+
+  return easingResult as ParseResult<TransitionTimingFunctionIR>;
+}
+
+
+=== File: packages/b_declarations/src/properties/transition-timing-function/types.ts ===
+// b_path:: packages/b_declarations/src/properties/transition-timing-function/types.ts
+
+import { z } from "zod";
+import { easingFunctionSchema } from "@b/types";
+import * as Keywords from "@b/keywords";
+
+export const transitionTimingFunctionIRSchema = z.discriminatedUnion("kind", [
+  z.object({
+    kind: z.literal("keyword"),
+    value: Keywords.cssWide,
+  }),
+  z.object({
+    kind: z.literal("value"),
+    value: easingFunctionSchema,
+  }),
+]);
+
+export type TransitionTimingFunctionIR = z.infer<typeof transitionTimingFunctionIRSchema>;
+
+
 === File: packages/b_declarations/src/test/property-contract.ts ===
 // b_path:: packages/b_declarations/src/test/property-contract.ts
 
@@ -5103,117 +5533,6 @@ type MultiValueIRsHaveListVariant = {
 // If any property violates this, TypeScript will error here showing the property name
 // @ts-expect-error - Type-level contract check, intentionally unused
 type _AssertMultiValueContract = MultiValueIRsHaveListVariant extends true ? true : never;
-
-
-=== File: packages/b_declarations/src/utilities/index.ts ===
-// b_path:: packages/b_declarations/src/utilities/index.ts
-
-/**
- * Utilities - Reusable parsing logic (NOT registered as properties)
- *
- * These are shorthand parsers or complex structures used internally.
- * They are NOT exposed in PROPERTY_DEFINITIONS.
- */
-
-export * from "./position";
-
-
-=== File: packages/b_declarations/src/utilities/position/generator.ts ===
-// b_path:: packages/b_declarations/src/utilities/position/generator.ts
-
-import { generateOk, type GenerateResult } from "@b/types";
-import * as Generators from "@b/generators";
-import { generateValue } from "../../utils";
-import type { BackgroundPositionIR } from "./types";
-
-export function generateBackgroundPosition(ir: BackgroundPositionIR): GenerateResult {
-  if (ir.kind === "keyword") {
-    return generateOk(ir.value);
-  }
-
-  const layerStrings: string[] = [];
-  for (const value of ir.values) {
-    const result = generateValue(value, Generators.Position.generate);
-    if (!result.ok) return result;
-    layerStrings.push(result.value);
-  }
-
-  return generateOk(layerStrings.join(", "));
-}
-
-
-=== File: packages/b_declarations/src/utilities/position/index.ts ===
-// b_path:: packages/b_declarations/src/utilities/position/index.ts
-
-/**
- * Background-position utility - parsing/generation logic for shorthand
- * NOT registered as a property (it's a shorthand, expanded by b_short)
- */
-
-export * from "./types";
-export * from "./parser";
-export * from "./generator";
-
-
-=== File: packages/b_declarations/src/utilities/position/parser.ts ===
-// b_path:: packages/b_declarations/src/utilities/position/parser.ts
-
-import type { ParseResult, Position2D } from "@b/types";
-import * as Parsers from "@b/parsers";
-import { createMultiValueParser } from "../../utils";
-import type { BackgroundPositionIR } from "./types";
-import type * as csstree from "@eslint/css-tree";
-
-export const parseBackgroundPosition = createMultiValueParser<Position2D, BackgroundPositionIR>({
-  propertyName: "background-position",
-
-  itemParser(valueNode: csstree.Value): ParseResult<Position2D> {
-    const nodes = Array.from(valueNode.children);
-    const result = Parsers.Position.parsePosition2D(nodes, 0);
-    if (result.ok) {
-      return {
-        ok: true,
-        property: "background-position",
-        value: result.value.position,
-        issues: result.issues,
-      };
-    }
-    return result as ParseResult<Position2D>;
-  },
-
-  aggregator(values: Position2D[]): BackgroundPositionIR {
-    return { kind: "list", values };
-  },
-});
-
-
-=== File: packages/b_declarations/src/utilities/position/types.ts ===
-// b_path:: packages/b_declarations/src/utilities/position/types.ts
-
-import { z } from "zod";
-import { position2DSchema, cssValueSchema } from "@b/types";
-import * as Keywords from "@b/keywords";
-
-/**
- * background-position value with universal CSS function support.
- */
-const backgroundPositionValueSchema = z.union([position2DSchema, cssValueSchema]);
-
-/**
- * The final IR for the entire `background-position` property.
- */
-export const backgroundPositionIRSchema = z.discriminatedUnion("kind", [
-  z.object({
-    kind: z.literal("keyword"),
-    value: Keywords.cssWide,
-  }),
-  z.object({
-    kind: z.literal("list"),
-    values: z.array(backgroundPositionValueSchema).min(1),
-  }),
-]);
-
-export type BackgroundPositionIR = z.infer<typeof backgroundPositionIRSchema>;
 
 
 === File: packages/b_declarations/src/utils/create-multi-value-parser.ts ===
@@ -6507,6 +6826,33 @@ export function generate(color: unknown): GenerateResult {
 }
 
 
+=== File: packages/b_generators/src/easing-function.ts ===
+// b_path:: packages/b_generators/src/easing-function.ts
+import { generateOk, type GenerateResult } from "@b/types";
+import type * as Type from "@b/types";
+
+/**
+ * Generate CSS easing function string from EasingFunction IR
+ * @see https://drafts.csswg.org/css-easing-1/#typedef-easing-function
+ */
+export function generate(easing: Type.EasingFunction): GenerateResult {
+  if (easing.kind === "keyword") {
+    return generateOk(easing.value);
+  }
+
+  if (easing.kind === "cubic-bezier") {
+    return generateOk(`cubic-bezier(${easing.x1}, ${easing.y1}, ${easing.x2}, ${easing.y2})`);
+  }
+
+  if (easing.kind === "steps") {
+    const position = easing.position ? `, ${easing.position}` : "";
+    return generateOk(`steps(${easing.count}${position})`);
+  }
+
+  return generateOk("linear");
+}
+
+
 === File: packages/b_generators/src/gradient/color-stop.ts ===
 // b_path:: packages/b_generators/src/gradient/color-stop.ts
 import { generateOk, type GenerateResult, type GenerateContext } from "@b/types";
@@ -7080,10 +7426,12 @@ export * as Angle from "./angle";
 export * as Background from "./background";
 export * as BlendMode from "./blend-mode";
 export * as Color from "./color";
+export * as EasingFunction from "./easing-function";
 export * as Gradient from "./gradient";
 export * as Image from "./image";
 export * as Length from "./length";
 export * as Position from "./position";
+export * as Time from "./time";
 
 
 === File: packages/b_generators/src/length.ts ===
@@ -7138,6 +7486,20 @@ function generatePositionComponent(component: Type.CssValue | Type.PositionEdgeO
 
   // Simple value
   return cssValueToCss(component);
+}
+
+
+=== File: packages/b_generators/src/time.ts ===
+// b_path:: packages/b_generators/src/time.ts
+import { generateOk, type GenerateResult } from "@b/types";
+import type * as Type from "@b/types";
+
+/**
+ * Generate CSS time string from Time IR
+ * @see https://drafts.csswg.org/css-values-4/#time
+ */
+export function generate(time: Type.Time): GenerateResult {
+  return generateOk(`${time.value}${time.unit}`);
 }
 
 
@@ -7398,6 +7760,43 @@ export const cssWide = z.union([
 export type CssWide = z.infer<typeof cssWide>;
 
 
+=== File: packages/b_keywords/src/easing.ts ===
+// b_path:: packages/b_keywords/src/easing.ts
+
+import { z } from "zod";
+
+/**
+ * Easing function keywords
+ * @see https://drafts.csswg.org/css-easing-1/#typedef-easing-function
+ */
+export const easingKeywordSchema = z.union([
+  z.literal("linear"),
+  z.literal("ease"),
+  z.literal("ease-in"),
+  z.literal("ease-out"),
+  z.literal("ease-in-out"),
+  z.literal("step-start"),
+  z.literal("step-end"),
+]);
+
+export type EasingKeyword = z.infer<typeof easingKeywordSchema>;
+
+/**
+ * Steps position keywords
+ * @see https://drafts.csswg.org/css-easing-1/#step-position
+ */
+export const stepsPositionSchema = z.union([
+  z.literal("jump-start"),
+  z.literal("jump-end"),
+  z.literal("jump-none"),
+  z.literal("jump-both"),
+  z.literal("start"),
+  z.literal("end"),
+]);
+
+export type StepsPosition = z.infer<typeof stepsPositionSchema>;
+
+
 === File: packages/b_keywords/src/gradient-direction.ts ===
 // b_path:: packages/b_keywords/src/gradient-direction.ts
 import { z } from "zod";
@@ -7430,6 +7829,7 @@ export * from "./border-width";
 export * from "./color-interpolation";
 export * from "./color-space";
 export * from "./common";
+export * from "./easing";
 export * from "./gradient-direction";
 export * from "./named-colors";
 export * from "./none";
@@ -8676,6 +9076,115 @@ export function parseRgbFunction(node: csstree.FunctionNode): ParseResult<RGBCol
 }
 
 
+=== File: packages/b_parsers/src/easing-function.ts ===
+// b_path:: packages/b_parsers/src/easing-function.ts
+import type * as csstree from "@eslint/css-tree";
+import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
+import type * as Type from "@b/types";
+import * as Keywords from "@b/keywords";
+
+/**
+ * Parse easing function AST node from css-tree.
+ *
+ * @see https://drafts.csswg.org/css-easing-1/#typedef-easing-function
+ */
+export function parseEasingFunctionNode(node: csstree.CssNode): ParseResult<Type.EasingFunction> {
+  // Keyword easing functions
+  if (node.type === "Identifier") {
+    const parsed = Keywords.easingKeywordSchema.safeParse(node.name);
+    if (parsed.success) {
+      return parseOk({ kind: "keyword", value: parsed.data });
+    }
+    return parseErr("easing-function", createError("invalid-value", `Invalid easing keyword: '${node.name}'`));
+  }
+
+  // Function easing functions (cubic-bezier, steps)
+  if (node.type === "Function") {
+    const name = node.name.toLowerCase();
+
+    if (name === "cubic-bezier") {
+      return parseCubicBezier(node);
+    }
+
+    if (name === "steps") {
+      return parseSteps(node);
+    }
+
+    return parseErr("easing-function", createError("invalid-value", `Invalid easing function: '${node.name}'`));
+  }
+
+  return parseErr(
+    "easing-function",
+    createError("invalid-syntax", `Expected easing function, but got node type ${node.type}`),
+  );
+}
+
+function parseCubicBezier(node: csstree.FunctionNode): ParseResult<Type.EasingFunction> {
+  const children = node.children.toArray();
+
+  // Need exactly 4 number arguments
+  const numbers: number[] = [];
+  for (const child of children) {
+    if (child.type === "Number") {
+      const value = Number.parseFloat(child.value);
+      if (Number.isNaN(value)) {
+        return parseErr("easing-function", createError("invalid-value", "Invalid cubic-bezier parameter"));
+      }
+      numbers.push(value);
+    }
+  }
+
+  if (numbers.length !== 4) {
+    return parseErr(
+      "easing-function",
+      createError("invalid-value", `cubic-bezier requires 4 parameters, got ${numbers.length}`),
+    );
+  }
+
+  return parseOk({
+    kind: "cubic-bezier",
+    x1: numbers[0],
+    y1: numbers[1],
+    x2: numbers[2],
+    y2: numbers[3],
+  });
+}
+
+function parseSteps(node: csstree.FunctionNode): ParseResult<Type.EasingFunction> {
+  const children = node.children.toArray();
+
+  let count: number | undefined;
+  let position: Keywords.StepsPosition | undefined;
+
+  for (const child of children) {
+    if (child.type === "Number") {
+      const value = Number.parseFloat(child.value);
+      if (Number.isNaN(value) || !Number.isInteger(value) || value <= 0) {
+        return parseErr("easing-function", createError("invalid-value", "Steps count must be a positive integer"));
+      }
+      count = value;
+    } else if (child.type === "Identifier") {
+      const parsed = Keywords.stepsPositionSchema.safeParse(child.name);
+      if (parsed.success) {
+        position = parsed.data;
+      } else {
+        return parseErr("easing-function", createError("invalid-value", `Invalid steps position: '${child.name}'`));
+      }
+    }
+  }
+
+  if (count === undefined) {
+    return parseErr("easing-function", createError("invalid-value", "Steps function requires a count parameter"));
+  }
+
+  return parseOk({
+    kind: "steps",
+    count,
+    ...(position !== undefined && { position }),
+  });
+}
+
+
 === File: packages/b_parsers/src/gradient/color-stop.ts ===
 // b_path:: packages/b_parsers/src/gradient/color-stop.ts
 import type * as csstree from "@eslint/css-tree";
@@ -9881,10 +10390,12 @@ export * as Angle from "./angle";
 export * as Background from "./background";
 export * as BlendMode from "./blend-mode";
 export * as Color from "./color";
+export * as EasingFunction from "./easing-function";
 export * as Gradient from "./gradient";
 export * as Image from "./image";
 export * as Length from "./length";
 export * as Position from "./position";
+export * as Time from "./time";
 export * as Url from "./url";
 export * as Utils from "./utils";
 export * as Math from "./math";
@@ -10537,6 +11048,36 @@ function getEdgeKeyword(value: Type.CssValue): "left" | "right" | "top" | "botto
     }
   }
   return undefined;
+}
+
+
+=== File: packages/b_parsers/src/time.ts ===
+// b_path:: packages/b_parsers/src/time.ts
+import type * as csstree from "@eslint/css-tree";
+import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
+import type * as Type from "@b/types";
+import * as Unit from "@b/units";
+
+/**
+ * Parse time AST node from css-tree.
+ *
+ * @see https://drafts.csswg.org/css-values-4/#time
+ */
+export function parseTimeNode(node: csstree.CssNode): ParseResult<Type.Time> {
+  if (node.type !== "Dimension") {
+    return parseErr("time", createError("invalid-syntax", `Expected time dimension, but got node type ${node.type}`));
+  }
+
+  const value = Number.parseFloat(node.value);
+  if (Number.isNaN(value)) {
+    return parseErr("time", createError("invalid-value", "Invalid time value: not a number"));
+  }
+
+  if (!Unit.TIME_UNITS.includes(node.unit as (typeof Unit.TIME_UNITS)[number])) {
+    return parseErr("time", createError("invalid-value", `Invalid time unit: '${node.unit}'`));
+  }
+
+  return parseOk({ value, unit: node.unit as (typeof Unit.TIME_UNITS)[number] });
 }
 
 
@@ -11608,6 +12149,37 @@ export const specialColorSchema = z
 export type SpecialColor = z.infer<typeof specialColorSchema>;
 
 
+=== File: packages/b_types/src/easing-function.ts ===
+// b_path:: packages/b_types/src/easing-function.ts
+import { z } from "zod";
+import * as Keywords from "@b/keywords";
+
+/**
+ * Easing function type
+ * @see https://drafts.csswg.org/css-easing-1/#typedef-easing-function
+ */
+export const easingFunctionSchema = z.discriminatedUnion("kind", [
+  z.object({
+    kind: z.literal("keyword"),
+    value: Keywords.easingKeywordSchema,
+  }),
+  z.object({
+    kind: z.literal("cubic-bezier"),
+    x1: z.number(),
+    y1: z.number(),
+    x2: z.number(),
+    y2: z.number(),
+  }),
+  z.object({
+    kind: z.literal("steps"),
+    count: z.number().int().positive(),
+    position: Keywords.stepsPositionSchema.optional(),
+  }),
+]);
+
+export type EasingFunction = z.infer<typeof easingFunctionSchema>;
+
+
 === File: packages/b_types/src/gradient/conic.ts ===
 // b_path:: packages/b_types/src/gradient/conic.ts
 import { z } from "zod";
@@ -11839,6 +12411,8 @@ export * from "./color-stop";
 export * from "./color-interpolation-method";
 export * from "./gradient";
 export * from "./bg-size";
+export * from "./time";
+export * from "./easing-function";
 
 
 === File: packages/b_types/src/length-percentage.ts ===
@@ -12760,6 +13334,24 @@ export function combineResults<T>(results: ParseResult<T>[]): ParseResult<T[]> {
 }
 
 
+=== File: packages/b_types/src/time.ts ===
+// b_path:: packages/b_types/src/time.ts
+import { z } from "zod";
+import { timeUnitSchema } from "@b/units";
+
+/**
+ * @see https://developer.mozilla.org/en-US/docs/Web/CSS/time
+ */
+export const timeSchema = z
+  .object({
+    value: z.number(),
+    unit: timeUnitSchema,
+  })
+  .strict();
+
+export type Time = z.infer<typeof timeSchema>;
+
+
 === File: packages/b_types/src/url.ts ===
 // b_path:: packages/b_types/src/url.ts
 import { z } from "zod";
@@ -13073,6 +13665,7 @@ export * from "./length-font";
 export * from "./length-viewport";
 export * from "./length";
 export * from "./percentage";
+export * from "./time";
 
 
 === File: packages/b_units/src/length-absolute.ts ===
@@ -13190,6 +13783,20 @@ export const percentageUnitSchema = z.literal("%");
 export const PERCENTAGE_UNIT = "%" as const;
 
 export type PercentageUnit = z.infer<typeof percentageUnitSchema>;
+
+
+=== File: packages/b_units/src/time.ts ===
+// b_path:: packages/b_units/src/time.ts
+import { z } from "zod";
+
+/**
+ * @see https://developer.mozilla.org/en-US/docs/Web/CSS/time
+ */
+export const timeUnitSchema = z.union([z.literal("s"), z.literal("ms")]);
+
+export const TIME_UNITS = timeUnitSchema.options.map((option) => option.value);
+
+export type TimeUnit = z.infer<typeof timeUnitSchema>;
 
 
 === File: packages/b_units/tsup.config.ts ===

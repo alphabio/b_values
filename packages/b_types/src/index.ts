@@ -20,3 +20,5 @@ export * from "./color-stop";
 export * from "./color-interpolation-method";
 export * from "./gradient";
 export * from "./bg-size";
+export * from "./time";
+export * from "./easing-function";

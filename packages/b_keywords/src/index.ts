@@ -9,6 +9,7 @@ export * from "./border-width";
 export * from "./color-interpolation";
 export * from "./color-space";
 export * from "./common";
+export * from "./easing";
 export * from "./gradient-direction";
 export * from "./named-colors";
 export * from "./none";

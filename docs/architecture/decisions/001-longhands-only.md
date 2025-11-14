@@ -13,6 +13,7 @@
 ## Context
 
 CSS has two types of properties:
+
 - **Longhands:** Atomic properties (`background-color`, `padding-top`)
 - **Shorthands:** Expand to multiple longhands (`background`, `padding`)
 
@@ -31,18 +32,18 @@ If it's not registered → we don't support it.
 
 ```typescript
 // ✅ WE SUPPORT (longhands)
-background-color
-background-image
-padding-top
-padding-right
-border-top-width
-border-top-style
+background - color;
+background - image;
+padding - top;
+padding - right;
+border - top - width;
+border - top - style;
 
 // ❌ WE DON'T SUPPORT (shorthands)
-background
-padding
-border
-border-top
+background;
+padding;
+border;
+border - top;
 ```
 
 ## Rationale
@@ -55,12 +56,14 @@ border-top
 ## Consequences
 
 ### Positive
+
 - ✅ Type system matches runtime exactly
 - ✅ Clear scope and boundaries
 - ✅ Simpler implementation
 - ✅ No ambiguity
 
 ### Constraints
+
 - ⚠️ Users must use longhands
 - ⚠️ No shorthand parsing/expansion
 
@@ -89,6 +92,7 @@ Later, a `utilities/` directory was created with 500+ lines suggesting we suppor
 ## Enforcement
 
 This decision is enforced by:
+
 1. **Code:** Only longhands in `PROPERTY_DEFINITIONS`
 2. **Tests:** Integrity tests verify no shorthand references
 3. **Reviews:** Any shorthand suggestion is rejected

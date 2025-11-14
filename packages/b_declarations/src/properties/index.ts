@@ -41,6 +41,10 @@ export * from "./padding-bottom";
 export * from "./padding-left";
 export * from "./padding-right";
 export * from "./padding-top";
+export * from "./transition-delay";
+export * from "./transition-duration";
+export * from "./transition-property";
+export * from "./transition-timing-function";
 
 // Mark registry as initialized after all properties are loaded
 // This is a side-effect import that happens when this module is imported
