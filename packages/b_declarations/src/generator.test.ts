@@ -193,8 +193,8 @@ describe("generateDeclaration", () => {
   describe("important flag", () => {
     beforeEach(() => {
       defineProperty({
-        name: "color",
-        syntax: "<color>",
+        name: "test-prop",
+        syntax: "<string>",
         multiValue: false,
         parser: mockParser((value: string) => value.trim()),
         generator: (ir: string): GenerateResult => generateOk(ir),
@@ -205,37 +205,37 @@ describe("generateDeclaration", () => {
 
     it("should append !important when flag is true", () => {
       const result = generateDeclaration({
-        property: "color",
-        ir: { kind: "value", value: { kind: "named", name: "red" } },
+        property: "test-prop",
+        ir: "red",
         important: true,
       });
 
       expect(result.ok).toBe(true);
       if (!result.ok) return;
-      expect(result.value).toBe("color: red !important");
+      expect(result.value).toBe("test-prop: red !important");
     });
 
     it("should not append !important when flag is false", () => {
       const result = generateDeclaration({
-        property: "color",
-        ir: { kind: "value", value: { kind: "named", name: "blue" } },
+        property: "test-prop",
+        ir: "blue",
         important: false,
       });
 
       expect(result.ok).toBe(true);
       if (!result.ok) return;
-      expect(result.value).toBe("color: blue");
+      expect(result.value).toBe("test-prop: blue");
     });
 
     it("should not append !important when flag is undefined", () => {
       const result = generateDeclaration({
-        property: "color",
-        ir: { kind: "value", value: { kind: "named", name: "green" } },
+        property: "test-prop",
+        ir: "green",
       });
 
       expect(result.ok).toBe(true);
       if (!result.ok) return;
-      expect(result.value).toBe("color: green");
+      expect(result.value).toBe("test-prop: green");
     });
 
     it("should append !important even on generator errors", () => {
