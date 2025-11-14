@@ -1,3 +1,7 @@
+Excluding patterns: 
+Documentation for LLMs
+Excluding patterns: 
+Excluding patterns: -not -path */__pycache__/* -not -path */__tests__/* -not -path */.git/* -not -path */.idea/* -not -path */.next/* -not -path */.venv/* -not -path */.vscode/* -not -path */*.spec.py -not -path */*.spec.ts -not -path */*.spec.tsx -not -path */*.test.py -not -path */*.test.ts -not -path */*.test.tsx -not -path */*test.py -not -path */*test.ts -not -path */*test.tsx -not -path */build/* -not -path */dist/* -not -path */me.ts -not -path */node_modules/* -not -path */test_*.py -not -path */test.ts -not -path */test.ts -not -path */tests/* -not -path */venv/*
 === File: packages/b_declarations/src/core/index.ts ===
 // b_path:: packages/b_declarations/src/core/index.ts
 export * from "./registry";
@@ -4431,6 +4435,106 @@ export type BorderTopWidthIR =
   | { kind: "value"; value: CssValue };
 
 
+=== File: packages/b_declarations/src/properties/color/definition.ts ===
+// b_path:: packages/b_declarations/src/properties/color/definition.ts
+
+import { defineProperty } from "../../core";
+import { parseColor } from "./parser";
+import { generateColor } from "./generator";
+import type { ColorIR } from "./types";
+
+export const color = defineProperty<ColorIR>({
+  name: "color",
+  syntax: "<color>",
+  parser: parseColor,
+  generator: generateColor,
+  inherited: true,
+  initial: "canvastext",
+});
+
+
+=== File: packages/b_declarations/src/properties/color/generator.ts ===
+// b_path:: packages/b_declarations/src/properties/color/generator.ts
+
+import { generateOk, type GenerateResult } from "@b/types";
+import * as Generators from "@b/generators";
+import type { ColorIR } from "./types";
+
+export function generateColor(ir: ColorIR): GenerateResult {
+  if (ir.kind === "keyword") {
+    return generateOk(ir.value);
+  }
+
+  const result = Generators.Color.generate(ir.value);
+  return result;
+}
+
+
+=== File: packages/b_declarations/src/properties/color/index.ts ===
+// b_path:: packages/b_declarations/src/properties/color/index.ts
+
+export * from "./types";
+export * from "./parser";
+export * from "./generator";
+export * from "./definition";
+
+
+=== File: packages/b_declarations/src/properties/color/parser.ts ===
+// b_path:: packages/b_declarations/src/properties/color/parser.ts
+
+import type { ParseResult } from "@b/types";
+import * as Parsers from "@b/parsers";
+import type * as csstree from "@eslint/css-tree";
+import type { ColorIR } from "./types";
+
+export function parseColor(ast: csstree.Value): ParseResult<ColorIR> {
+  const firstNode = ast.children.first;
+
+  if (!firstNode) {
+    return {
+      ok: false,
+      property: "color",
+      value: undefined,
+      issues: [{ code: "missing-value", severity: "error", message: "Empty value for color" }],
+    };
+  }
+
+  const colorResult = Parsers.Color.parseNode(firstNode);
+
+  if (colorResult.ok) {
+    return {
+      ok: true,
+      property: "color",
+      value: { kind: "value", value: colorResult.value },
+      issues: colorResult.issues,
+    };
+  }
+
+  return colorResult as ParseResult<ColorIR>;
+}
+
+
+=== File: packages/b_declarations/src/properties/color/types.ts ===
+// b_path:: packages/b_declarations/src/properties/color/types.ts
+
+import { z } from "zod";
+import { colorSchema } from "@b/types";
+import * as Keywords from "@b/keywords";
+
+export const colorIRSchema = z.discriminatedUnion("kind", [
+  z.object({
+    kind: z.literal("keyword"),
+    value: Keywords.cssWide,
+  }),
+  z.object({
+    kind: z.literal("value"),
+    value: colorSchema,
+  }),
+]);
+
+export type ColorIR = z.infer<typeof colorIRSchema>;
+
+
 === File: packages/b_declarations/src/properties/custom-property/definition.ts ===
 // b_path:: packages/b_declarations/src/properties/custom-property/definition.ts
 import { defineProperty } from "../../core";
@@ -4574,19 +4678,26 @@ import { borderTopLeftRadius } from "./border-top-left-radius/definition";
 import { borderTopRightRadius } from "./border-top-right-radius/definition";
 import { borderTopStyle } from "./border-top-style/definition";
 import { borderTopWidth } from "./border-top-width/definition";
+import { color } from "./color/definition";
 import { marginBottom } from "./margin-bottom/definition";
 import { marginLeft } from "./margin-left/definition";
 import { marginRight } from "./margin-right/definition";
 import { marginTop } from "./margin-top/definition";
 import { mixBlendMode } from "./mix-blend-mode/definition";
+import { opacity } from "./opacity/definition";
 import { paddingBottom } from "./padding-bottom/definition";
 import { paddingLeft } from "./padding-left/definition";
 import { paddingRight } from "./padding-right/definition";
 import { paddingTop } from "./padding-top/definition";
+import { perspective } from "./perspective/definition";
+import { transform } from "./transform/definition";
+import { transformOrigin } from "./transform-origin/definition";
+import { transformStyle } from "./transform-style/definition";
 import { transitionDelay } from "./transition-delay/definition";
 import { transitionDuration } from "./transition-duration/definition";
 import { transitionProperty } from "./transition-property/definition";
 import { transitionTimingFunction } from "./transition-timing-function/definition";
+import { visibility } from "./visibility/definition";
 
 /**
  * Central definitions object.
@@ -4635,19 +4746,26 @@ export const PROPERTY_DEFINITIONS = {
   "border-top-right-radius": borderTopRightRadius,
   "border-top-style": borderTopStyle,
   "border-top-width": borderTopWidth,
+  color: color,
   "margin-bottom": marginBottom,
   "margin-left": marginLeft,
   "margin-right": marginRight,
   "margin-top": marginTop,
   "mix-blend-mode": mixBlendMode,
+  opacity: opacity,
   "padding-bottom": paddingBottom,
   "padding-left": paddingLeft,
   "padding-right": paddingRight,
   "padding-top": paddingTop,
+  perspective: perspective,
+  transform: transform,
+  "transform-origin": transformOrigin,
+  "transform-style": transformStyle,
   "transition-delay": transitionDelay,
   "transition-duration": transitionDuration,
   "transition-property": transitionProperty,
   "transition-timing-function": transitionTimingFunction,
+  visibility: visibility,
 } as const;
 
 /**
@@ -5225,6 +5343,139 @@ export const mixBlendModeIRSchema = z.discriminatedUnion("kind", [
 export type MixBlendModeIR = z.infer<typeof mixBlendModeIRSchema>;
 
 
+=== File: packages/b_declarations/src/properties/opacity/definition.ts ===
+// b_path:: packages/b_declarations/src/properties/opacity/definition.ts
+
+import { defineProperty } from "../../core";
+import { parseOpacity } from "./parser";
+import { generateOpacity } from "./generator";
+import type { OpacityIR } from "./types";
+
+export const opacity = defineProperty<OpacityIR>({
+  name: "opacity",
+  syntax: "<number>",
+  parser: parseOpacity,
+  generator: generateOpacity,
+  inherited: false,
+  initial: "1",
+});
+
+
+=== File: packages/b_declarations/src/properties/opacity/generator.ts ===
+// b_path:: packages/b_declarations/src/properties/opacity/generator.ts
+
+import { generateOk, type GenerateResult } from "@b/types";
+import type { OpacityIR } from "./types";
+
+export function generateOpacity(ir: OpacityIR): GenerateResult {
+  if (ir.kind === "keyword") {
+    return generateOk(ir.value);
+  }
+
+  return generateOk(ir.value.toString());
+}
+
+
+=== File: packages/b_declarations/src/properties/opacity/index.ts ===
+// b_path:: packages/b_declarations/src/properties/opacity/index.ts
+
+export * from "./types";
+export * from "./parser";
+export * from "./generator";
+export * from "./definition";
+
+
+=== File: packages/b_declarations/src/properties/opacity/parser.ts ===
+// b_path:: packages/b_declarations/src/properties/opacity/parser.ts
+
+import type { ParseResult } from "@b/types";
+import * as Keywords from "@b/keywords";
+import type * as csstree from "@eslint/css-tree";
+import type { OpacityIR } from "./types";
+
+export function parseOpacity(ast: csstree.Value): ParseResult<OpacityIR> {
+  const firstNode = ast.children.first;
+
+  if (!firstNode) {
+    return {
+      ok: false,
+      property: "opacity",
+      value: undefined,
+      issues: [{ code: "missing-value", severity: "error", message: "Empty value for opacity" }],
+    };
+  }
+
+  if (firstNode.type === "Identifier") {
+    const name = firstNode.name.toLowerCase();
+    const cssWideResult = Keywords.cssWide.safeParse(name);
+    if (cssWideResult.success) {
+      return {
+        ok: true,
+        property: "opacity",
+        value: { kind: "keyword", value: cssWideResult.data },
+        issues: [],
+      };
+    }
+  }
+
+  if (firstNode.type === "Number") {
+    const num = Number.parseFloat(firstNode.value);
+
+    if (Number.isNaN(num)) {
+      return {
+        ok: false,
+        property: "opacity",
+        value: undefined,
+        issues: [
+          {
+            code: "invalid-value",
+            severity: "error",
+            message: "opacity must be a valid number",
+          },
+        ],
+      };
+    }
+
+    return {
+      ok: true,
+      property: "opacity",
+      value: { kind: "number", value: num },
+      issues:
+        num < 0 || num > 1
+          ? [
+              {
+                code: "invalid-value",
+                severity: "warning",
+                message: "opacity should be between 0 and 1",
+              },
+            ]
+          : [],
+    };
+  }
+
+  return {
+    ok: false,
+    property: "opacity",
+    value: undefined,
+    issues: [{ code: "invalid-value", severity: "error", message: "Invalid opacity value" }],
+  };
+}
+
+
+=== File: packages/b_declarations/src/properties/opacity/types.ts ===
+// b_path:: packages/b_declarations/src/properties/opacity/types.ts
+
+export type OpacityIR =
+  | {
+      kind: "keyword";
+      value: "initial" | "inherit" | "unset" | "revert" | "revert-layer";
+    }
+  | {
+      kind: "number";
+      value: number;
+    };
+
+
 === File: packages/b_declarations/src/properties/padding-bottom/definition.ts ===
 // b_path:: packages/b_declarations/src/properties/padding-bottom/definition.ts
 
@@ -5579,6 +5830,506 @@ import type { CssValue } from "@b/types";
 export type PaddingTopIR =
   | { kind: "keyword"; value: "initial" | "inherit" | "unset" | "revert" | "revert-layer" }
   | { kind: "value"; value: CssValue };
+
+
+=== File: packages/b_declarations/src/properties/perspective/definition.ts ===
+// b_path:: packages/b_declarations/src/properties/perspective/definition.ts
+
+import { defineProperty } from "../../core";
+import { parsePerspective } from "./parser";
+import { generatePerspective } from "./generator";
+import type { PerspectiveIR } from "./types";
+
+export const perspective = defineProperty<PerspectiveIR>({
+  name: "perspective",
+  syntax: "<length [0,∞]> | none",
+  parser: parsePerspective,
+  generator: generatePerspective,
+  inherited: false,
+  initial: "none",
+});
+
+
+=== File: packages/b_declarations/src/properties/perspective/generator.ts ===
+// b_path:: packages/b_declarations/src/properties/perspective/generator.ts
+
+import { generateErr, generateOk, type GenerateResult } from "@b/types";
+import * as Generators from "@b/generators";
+import type { PerspectiveIR } from "./types";
+
+export function generatePerspective(ir: PerspectiveIR): GenerateResult {
+  if (ir.kind === "keyword") {
+    return generateOk(ir.value);
+  }
+
+  if (ir.kind === "length") {
+    const lengthResult = Generators.Length.generate(ir.value);
+    if (!lengthResult.ok) {
+      return lengthResult;
+    }
+    return generateOk(lengthResult.value);
+  }
+
+  return generateErr({ code: "invalid-value", severity: "error", message: "Invalid perspective IR" });
+}
+
+
+=== File: packages/b_declarations/src/properties/perspective/index.ts ===
+// b_path:: packages/b_declarations/src/properties/perspective/index.ts
+
+export * from "./types";
+export * from "./parser";
+export * from "./generator";
+export * from "./definition";
+
+
+=== File: packages/b_declarations/src/properties/perspective/parser.ts ===
+// b_path:: packages/b_declarations/src/properties/perspective/parser.ts
+
+import type { ParseResult } from "@b/types";
+import * as Keywords from "@b/keywords";
+import * as Parsers from "@b/parsers";
+import type * as csstree from "@eslint/css-tree";
+import type { PerspectiveIR } from "./types";
+
+export function parsePerspective(ast: csstree.Value): ParseResult<PerspectiveIR> {
+  const firstNode = ast.children.first;
+
+  if (!firstNode) {
+    return {
+      ok: false,
+      property: "perspective",
+      value: undefined,
+      issues: [{ code: "missing-value", severity: "error", message: "Empty value for perspective" }],
+    };
+  }
+
+  if (firstNode.type === "Identifier") {
+    const name = firstNode.name.toLowerCase();
+
+    const cssWideResult = Keywords.cssWide.safeParse(name);
+    if (cssWideResult.success) {
+      return {
+        ok: true,
+        property: "perspective",
+        value: { kind: "keyword", value: cssWideResult.data },
+        issues: [],
+      };
+    }
+
+    const noneResult = Keywords.none.safeParse(name);
+    if (noneResult.success) {
+      return {
+        ok: true,
+        property: "perspective",
+        value: { kind: "keyword", value: "none" },
+        issues: [],
+      };
+    }
+  }
+
+  if (firstNode.type === "Dimension") {
+    const lengthResult = Parsers.Length.parseLengthNode(firstNode);
+    if (lengthResult.ok) {
+      const value = lengthResult.value.value;
+      return {
+        ok: true,
+        property: "perspective",
+        value: { kind: "length", value: lengthResult.value },
+        issues:
+          value < 0
+            ? [
+                {
+                  code: "invalid-value",
+                  severity: "warning",
+                  message: "perspective should be non-negative",
+                },
+              ]
+            : [],
+      };
+    }
+    return {
+      ok: false,
+      property: "perspective",
+      value: undefined,
+      issues: lengthResult.issues,
+    };
+  }
+
+  return {
+    ok: false,
+    property: "perspective",
+    value: undefined,
+    issues: [{ code: "invalid-value", severity: "error", message: "Invalid perspective value" }],
+  };
+}
+
+
+=== File: packages/b_declarations/src/properties/perspective/types.ts ===
+// b_path:: packages/b_declarations/src/properties/perspective/types.ts
+
+import type * as Type from "@b/types";
+
+export type PerspectiveIR =
+  | {
+      kind: "keyword";
+      value: "initial" | "inherit" | "unset" | "revert" | "revert-layer" | "none";
+    }
+  | {
+      kind: "length";
+      value: Type.Length;
+    };
+
+
+=== File: packages/b_declarations/src/properties/transform-origin/definition.ts ===
+// b_path:: packages/b_declarations/src/properties/transform-origin/definition.ts
+
+import { defineProperty } from "../../core";
+import { parseTransformOrigin } from "./parser";
+import { generateTransformOrigin } from "./generator";
+import type { TransformOriginIR } from "./types";
+
+export const transformOrigin = defineProperty<TransformOriginIR>({
+  name: "transform-origin",
+  syntax: "<position>",
+  parser: parseTransformOrigin,
+  generator: generateTransformOrigin,
+  inherited: false,
+  initial: "50% 50%",
+});
+
+
+=== File: packages/b_declarations/src/properties/transform-origin/generator.ts ===
+// b_path:: packages/b_declarations/src/properties/transform-origin/generator.ts
+
+import { generateErr, generateOk, type GenerateResult } from "@b/types";
+import * as Generators from "@b/generators";
+import type { TransformOriginIR } from "./types";
+
+export function generateTransformOrigin(ir: TransformOriginIR): GenerateResult {
+  if (ir.kind === "keyword") {
+    return generateOk(ir.value);
+  }
+
+  if (ir.kind === "position") {
+    const positionResult = Generators.Position.generate(ir.value);
+    if (!positionResult.ok) {
+      return positionResult;
+    }
+    return generateOk(positionResult.value);
+  }
+
+  return generateErr({ code: "invalid-value", severity: "error", message: "Invalid transform-origin IR" });
+}
+
+
+=== File: packages/b_declarations/src/properties/transform-origin/index.ts ===
+// b_path:: packages/b_declarations/src/properties/transform-origin/index.ts
+
+export * from "./types";
+export * from "./parser";
+export * from "./generator";
+export * from "./definition";
+
+
+=== File: packages/b_declarations/src/properties/transform-origin/parser.ts ===
+// b_path:: packages/b_declarations/src/properties/transform-origin/parser.ts
+
+import type { ParseResult } from "@b/types";
+import * as Keywords from "@b/keywords";
+import * as Parsers from "@b/parsers";
+import type * as csstree from "@eslint/css-tree";
+import type { TransformOriginIR } from "./types";
+
+export function parseTransformOrigin(ast: csstree.Value): ParseResult<TransformOriginIR> {
+  const firstNode = ast.children.first;
+
+  if (!firstNode) {
+    return {
+      ok: false,
+      property: "transform-origin",
+      value: undefined,
+      issues: [{ code: "missing-value", severity: "error", message: "Empty value for transform-origin" }],
+    };
+  }
+
+  if (firstNode.type === "Identifier") {
+    const name = firstNode.name.toLowerCase();
+    const cssWideResult = Keywords.cssWide.safeParse(name);
+    if (cssWideResult.success) {
+      return {
+        ok: true,
+        property: "transform-origin",
+        value: { kind: "keyword", value: cssWideResult.data },
+        issues: [],
+      };
+    }
+  }
+
+  const nodes = Array.from(ast.children);
+  const positionResult = Parsers.Position.parsePosition2D(nodes, 0);
+
+  if (positionResult.ok) {
+    return {
+      ok: true,
+      property: "transform-origin",
+      value: { kind: "position", value: positionResult.value.position },
+      issues: positionResult.issues,
+    };
+  }
+
+  return {
+    ok: false,
+    property: "transform-origin",
+    value: undefined,
+    issues: positionResult.issues,
+  };
+}
+
+
+=== File: packages/b_declarations/src/properties/transform-origin/types.ts ===
+// b_path:: packages/b_declarations/src/properties/transform-origin/types.ts
+
+import type * as Type from "@b/types";
+
+export type TransformOriginIR =
+  | {
+      kind: "keyword";
+      value: "initial" | "inherit" | "unset" | "revert" | "revert-layer";
+    }
+  | {
+      kind: "position";
+      value: Type.Position2D;
+    };
+
+
+=== File: packages/b_declarations/src/properties/transform-style/definition.ts ===
+// b_path:: packages/b_declarations/src/properties/transform-style/definition.ts
+
+import { defineProperty } from "../../core";
+import { parseTransformStyle } from "./parser";
+import { generateTransformStyle } from "./generator";
+import type { TransformStyleIR } from "./types";
+
+export const transformStyle = defineProperty<TransformStyleIR>({
+  name: "transform-style",
+  syntax: "flat | preserve-3d",
+  parser: parseTransformStyle,
+  generator: generateTransformStyle,
+  inherited: false,
+  initial: "flat",
+});
+
+
+=== File: packages/b_declarations/src/properties/transform-style/generator.ts ===
+// b_path:: packages/b_declarations/src/properties/transform-style/generator.ts
+
+import { generateOk, type GenerateResult } from "@b/types";
+import type { TransformStyleIR } from "./types";
+
+export function generateTransformStyle(ir: TransformStyleIR): GenerateResult {
+  return generateOk(ir.value);
+}
+
+
+=== File: packages/b_declarations/src/properties/transform-style/index.ts ===
+// b_path:: packages/b_declarations/src/properties/transform-style/index.ts
+
+export * from "./types";
+export * from "./parser";
+export * from "./generator";
+export * from "./definition";
+
+
+=== File: packages/b_declarations/src/properties/transform-style/parser.ts ===
+// b_path:: packages/b_declarations/src/properties/transform-style/parser.ts
+
+import type { ParseResult } from "@b/types";
+import * as Keywords from "@b/keywords";
+import type * as csstree from "@eslint/css-tree";
+import type { TransformStyleIR } from "./types";
+
+export function parseTransformStyle(ast: csstree.Value): ParseResult<TransformStyleIR> {
+  const firstNode = ast.children.first;
+
+  if (!firstNode) {
+    return {
+      ok: false,
+      property: "transform-style",
+      value: undefined,
+      issues: [
+        {
+          code: "missing-value",
+          severity: "error",
+          message: "Empty value for transform-style",
+        },
+      ],
+    };
+  }
+
+  if (firstNode.type === "Identifier") {
+    const parsed = Keywords.transformStyleKeywordSchema.safeParse(firstNode.name);
+    if (parsed.success) {
+      return {
+        ok: true,
+        property: "transform-style",
+        value: { kind: "keyword", value: parsed.data },
+        issues: [],
+      };
+    }
+  }
+
+  return {
+    ok: false,
+    property: "transform-style",
+    value: undefined,
+    issues: [
+      {
+        code: "invalid-value",
+        severity: "error",
+        message: "Invalid transform-style value",
+      },
+    ],
+  };
+}
+
+
+=== File: packages/b_declarations/src/properties/transform-style/types.ts ===
+// b_path:: packages/b_declarations/src/properties/transform-style/types.ts
+
+import type * as Keywords from "@b/keywords";
+
+export type TransformStyleIR = {
+  kind: "keyword";
+  value: "initial" | "inherit" | "unset" | "revert" | "revert-layer" | Keywords.TransformStyleKeyword;
+};
+
+
+=== File: packages/b_declarations/src/properties/transform/definition.ts ===
+// b_path:: packages/b_declarations/src/properties/transform/definition.ts
+
+import { defineProperty } from "../../core";
+import { parseTransform } from "./parser";
+import { generateTransform } from "./generator";
+import type { TransformIR } from "./types";
+
+export const transform = defineProperty<TransformIR>({
+  name: "transform",
+  syntax: "none | <transform-list>",
+  parser: parseTransform,
+  generator: generateTransform,
+  inherited: false,
+  initial: "none",
+});
+
+
+=== File: packages/b_declarations/src/properties/transform/generator.ts ===
+// b_path:: packages/b_declarations/src/properties/transform/generator.ts
+
+import { generateErr, generateOk, type GenerateResult } from "@b/types";
+import * as Generators from "@b/generators";
+import type { TransformIR } from "./types";
+
+export function generateTransform(ir: TransformIR): GenerateResult {
+  if (ir.kind === "keyword") {
+    return generateOk(ir.value);
+  }
+
+  if (ir.kind === "transform-list") {
+    return Generators.Transform.generateList(ir.value);
+  }
+
+  return generateErr({ code: "invalid-value", severity: "error", message: "Invalid transform IR" });
+}
+
+
+=== File: packages/b_declarations/src/properties/transform/index.ts ===
+// b_path:: packages/b_declarations/src/properties/transform/index.ts
+
+export * from "./types";
+export * from "./parser";
+export * from "./generator";
+export * from "./definition";
+
+
+=== File: packages/b_declarations/src/properties/transform/parser.ts ===
+// b_path:: packages/b_declarations/src/properties/transform/parser.ts
+
+import type { ParseResult } from "@b/types";
+import * as Keywords from "@b/keywords";
+import * as Parsers from "@b/parsers";
+import type * as csstree from "@eslint/css-tree";
+import type { TransformIR } from "./types";
+
+export function parseTransform(ast: csstree.Value): ParseResult<TransformIR> {
+  const firstNode = ast.children.first;
+
+  if (!firstNode) {
+    return {
+      ok: false,
+      property: "transform",
+      value: undefined,
+      issues: [{ code: "missing-value", severity: "error", message: "Empty value for transform" }],
+    };
+  }
+
+  if (firstNode.type === "Identifier") {
+    const name = firstNode.name.toLowerCase();
+
+    const cssWideResult = Keywords.cssWide.safeParse(name);
+    if (cssWideResult.success) {
+      return {
+        ok: true,
+        property: "transform",
+        value: { kind: "keyword", value: cssWideResult.data },
+        issues: [],
+      };
+    }
+
+    const noneResult = Keywords.none.safeParse(name);
+    if (noneResult.success) {
+      return {
+        ok: true,
+        property: "transform",
+        value: { kind: "keyword", value: "none" },
+        issues: [],
+      };
+    }
+  }
+
+  const transformListResult = Parsers.Transform.parseTransformList(ast);
+  if (transformListResult.ok) {
+    return {
+      ok: true,
+      property: "transform",
+      value: { kind: "transform-list", value: transformListResult.value },
+      issues: transformListResult.issues,
+    };
+  }
+
+  return {
+    ok: false,
+    property: "transform",
+    value: undefined,
+    issues: transformListResult.issues,
+  };
+}
+
+
+=== File: packages/b_declarations/src/properties/transform/types.ts ===
+// b_path:: packages/b_declarations/src/properties/transform/types.ts
+
+import type * as Type from "@b/types";
+
+export type TransformIR =
+  | {
+      kind: "keyword";
+      value: "initial" | "inherit" | "unset" | "revert" | "revert-layer" | "none";
+    }
+  | {
+      kind: "transform-list";
+      value: Type.TransformList;
+    };
 
 
 === File: packages/b_declarations/src/properties/transition-delay/definition.ts ===
@@ -5997,6 +6748,108 @@ export const transitionTimingFunctionIRSchema = z.discriminatedUnion("kind", [
 ]);
 
 export type TransitionTimingFunctionIR = z.infer<typeof transitionTimingFunctionIRSchema>;
+
+
+=== File: packages/b_declarations/src/properties/visibility/definition.ts ===
+// b_path:: packages/b_declarations/src/properties/visibility/definition.ts
+
+import { defineProperty } from "../../core";
+import { parseVisibility } from "./parser";
+import { generateVisibility } from "./generator";
+import type { VisibilityIR } from "./types";
+
+export const visibility = defineProperty<VisibilityIR>({
+  name: "visibility",
+  syntax: "visible | hidden | collapse",
+  parser: parseVisibility,
+  generator: generateVisibility,
+  inherited: true,
+  initial: "visible",
+});
+
+
+=== File: packages/b_declarations/src/properties/visibility/generator.ts ===
+// b_path:: packages/b_declarations/src/properties/visibility/generator.ts
+
+import { generateOk, type GenerateResult } from "@b/types";
+import type { VisibilityIR } from "./types";
+
+export function generateVisibility(ir: VisibilityIR): GenerateResult {
+  return generateOk(ir.value);
+}
+
+
+=== File: packages/b_declarations/src/properties/visibility/index.ts ===
+// b_path:: packages/b_declarations/src/properties/visibility/index.ts
+
+export * from "./types";
+export * from "./parser";
+export * from "./generator";
+export * from "./definition";
+
+
+=== File: packages/b_declarations/src/properties/visibility/parser.ts ===
+// b_path:: packages/b_declarations/src/properties/visibility/parser.ts
+
+import type { ParseResult } from "@b/types";
+import * as Keywords from "@b/keywords";
+import type * as csstree from "@eslint/css-tree";
+import type { VisibilityIR } from "./types";
+
+export function parseVisibility(ast: csstree.Value): ParseResult<VisibilityIR> {
+  const firstNode = ast.children.first;
+
+  if (!firstNode) {
+    return {
+      ok: false,
+      property: "visibility",
+      value: undefined,
+      issues: [
+        {
+          code: "missing-value",
+          severity: "error",
+          message: "Empty value for visibility",
+        },
+      ],
+    };
+  }
+
+  if (firstNode.type === "Identifier") {
+    const parsed = Keywords.visibilityKeywordSchema.safeParse(firstNode.name);
+    if (parsed.success) {
+      return {
+        ok: true,
+        property: "visibility",
+        value: { kind: "keyword", value: parsed.data },
+        issues: [],
+      };
+    }
+  }
+
+  return {
+    ok: false,
+    property: "visibility",
+    value: undefined,
+    issues: [
+      {
+        code: "invalid-value",
+        severity: "error",
+        message: "Invalid visibility value",
+      },
+    ],
+  };
+}
+
+
+=== File: packages/b_declarations/src/properties/visibility/types.ts ===
+// b_path:: packages/b_declarations/src/properties/visibility/types.ts
+
+import type * as Keywords from "@b/keywords";
+
+export type VisibilityIR = {
+  kind: "keyword";
+  value: "initial" | "inherit" | "unset" | "revert" | "revert-layer" | Keywords.VisibilityKeyword;
+};
 
 
 === File: packages/b_declarations/src/test/property-contract.ts ===
@@ -6778,6 +7631,7 @@ export function splitByComma(value: string): string[] {
 // b_path:: packages/b_declarations/src/utils/type-guards.ts
 
 import type { CssValue } from "@b/types";
+import { UNIVERSAL_CSS_FUNCTIONS } from "@b/keywords";
 import type * as csstree from "@eslint/css-tree";
 
 /**
@@ -6836,20 +7690,6 @@ export function isCssValue(value: unknown): value is CssValue {
 }
 
 /**
- * Universal CSS functions that apply to all properties.
- * These are handled by the declaration layer, not property parsers.
- */
-const UNIVERSAL_FUNCTIONS = [
-  "var", // CSS Variables
-  "calc", // Math
-  "min", // Math
-  "max", // Math
-  "clamp", // Math
-  "attr", // Attribute references
-  "env", // Environment variables
-] as const;
-
-/**
  * Check if a CSS AST node is a universal function.
  *
  * Universal functions (var, calc, etc.) apply to ALL properties and
@@ -6869,7 +7709,7 @@ const UNIVERSAL_FUNCTIONS = [
 export function isUniversalFunction(node: csstree.CssNode): boolean {
   if (node.type !== "Function") return false;
   const funcName = (node as csstree.FunctionNode).name.toLowerCase();
-  return (UNIVERSAL_FUNCTIONS as ReadonlyArray<string>).includes(funcName);
+  return (UNIVERSAL_CSS_FUNCTIONS as readonly string[]).includes(funcName);
 }
 
 /**
@@ -8323,6 +9163,7 @@ export * as Image from "./image";
 export * as Length from "./length";
 export * as Position from "./position";
 export * as Time from "./time";
+export * as Transform from "./transform";
 
 
 === File: packages/b_generators/src/length.ts ===
@@ -8391,6 +9232,150 @@ import type * as Type from "@b/types";
  */
 export function generate(time: Type.Time): GenerateResult {
   return generateOk(`${time.value}${time.unit}`);
+}
+
+
+=== File: packages/b_generators/src/transform/index.ts ===
+// b_path:: packages/b_generators/src/transform/index.ts
+
+import { generateErr, generateOk, type GenerateResult } from "@b/types";
+import type * as Type from "@b/types";
+import * as Length from "../length";
+import * as Angle from "../angle";
+
+/**
+ * Generate transform function CSS from IR
+ */
+export function generate(ir: Type.TransformFunction): GenerateResult {
+  switch (ir.kind) {
+    case "translate": {
+      const x = Length.generateLengthPercentage(ir.x);
+      const y = Length.generateLengthPercentage(ir.y);
+      if (!x.ok) return x;
+      if (!y.ok) return y;
+      return generateOk(`translate(${x.value}, ${y.value})`);
+    }
+
+    case "translateX": {
+      const x = Length.generateLengthPercentage(ir.x);
+      if (!x.ok) return x;
+      return generateOk(`translateX(${x.value})`);
+    }
+
+    case "translateY": {
+      const y = Length.generateLengthPercentage(ir.y);
+      if (!y.ok) return y;
+      return generateOk(`translateY(${y.value})`);
+    }
+
+    case "translateZ": {
+      const z = Length.generateLengthPercentage(ir.z);
+      if (!z.ok) return z;
+      return generateOk(`translateZ(${z.value})`);
+    }
+
+    case "translate3d": {
+      const x = Length.generateLengthPercentage(ir.x);
+      const y = Length.generateLengthPercentage(ir.y);
+      const z = Length.generateLengthPercentage(ir.z);
+      if (!x.ok) return x;
+      if (!y.ok) return y;
+      if (!z.ok) return z;
+      return generateOk(`translate3d(${x.value}, ${y.value}, ${z.value})`);
+    }
+
+    case "rotate": {
+      const angle = Angle.generate(ir.angle);
+      if (!angle.ok) return angle;
+      return generateOk(`rotate(${angle.value})`);
+    }
+
+    case "rotateX": {
+      const angle = Angle.generate(ir.angle);
+      if (!angle.ok) return angle;
+      return generateOk(`rotateX(${angle.value})`);
+    }
+
+    case "rotateY": {
+      const angle = Angle.generate(ir.angle);
+      if (!angle.ok) return angle;
+      return generateOk(`rotateY(${angle.value})`);
+    }
+
+    case "rotateZ": {
+      const angle = Angle.generate(ir.angle);
+      if (!angle.ok) return angle;
+      return generateOk(`rotateZ(${angle.value})`);
+    }
+
+    case "rotate3d": {
+      const angle = Angle.generate(ir.angle);
+      if (!angle.ok) return angle;
+      return generateOk(`rotate3d(${ir.x}, ${ir.y}, ${ir.z}, ${angle.value})`);
+    }
+
+    case "scale":
+      return generateOk(`scale(${ir.x}, ${ir.y})`);
+
+    case "scaleX":
+      return generateOk(`scaleX(${ir.x})`);
+
+    case "scaleY":
+      return generateOk(`scaleY(${ir.y})`);
+
+    case "scaleZ":
+      return generateOk(`scaleZ(${ir.z})`);
+
+    case "scale3d":
+      return generateOk(`scale3d(${ir.x}, ${ir.y}, ${ir.z})`);
+
+    case "skew": {
+      const x = Angle.generate(ir.x);
+      const y = Angle.generate(ir.y);
+      if (!x.ok) return x;
+      if (!y.ok) return y;
+      return generateOk(`skew(${x.value}, ${y.value})`);
+    }
+
+    case "skewX": {
+      const x = Angle.generate(ir.x);
+      if (!x.ok) return x;
+      return generateOk(`skewX(${x.value})`);
+    }
+
+    case "skewY": {
+      const y = Angle.generate(ir.y);
+      if (!y.ok) return y;
+      return generateOk(`skewY(${y.value})`);
+    }
+
+    case "matrix":
+      return generateOk(`matrix(${ir.a}, ${ir.b}, ${ir.c}, ${ir.d}, ${ir.e}, ${ir.f})`);
+
+    case "matrix3d":
+      return generateOk(`matrix3d(${ir.values.join(", ")})`);
+
+    case "perspective": {
+      const length = Length.generate(ir.length);
+      if (!length.ok) return length;
+      return generateOk(`perspective(${length.value})`);
+    }
+
+    default:
+      return generateErr({ code: "unsupported-kind", severity: "error", message: "Unsupported transform function" });
+  }
+}
+
+/**
+ * Generate transform list CSS from IR
+ */
+export function generateList(ir: Type.TransformList): GenerateResult {
+  const results = ir.map(generate);
+  const failed = results.find((r) => !r.ok);
+  if (failed) return failed;
+
+  const values = results.map((r) => (r as { ok: true; value: string }).value);
+  return generateOk(values.join(" "));
 }
 
 
@@ -8782,7 +9767,10 @@ export * from "./none";
 export * from "./position";
 export * from "./radial-shape";
 export * from "./radial-size";
+export * from "./transform-style";
+export * from "./universal-functions";
 export * from "./utils";
+export * from "./visibility";
 
 
 === File: packages/b_keywords/src/named-colors.ts ===
@@ -9039,6 +10027,49 @@ export const radialSizeKeyword = z.union([
 export type RadialSizeKeyword = z.infer<typeof radialSizeKeyword>;
 
 
+=== File: packages/b_keywords/src/transform-style.ts ===
+// b_path:: packages/b_keywords/src/transform-style.ts
+
+import { z } from "zod";
+
+/**
+ * Transform style keywords
+ * @see https://drafts.csswg.org/css-transforms-2/#transform-style-property
+ */
+export const transformStyleKeywordSchema = z.union([z.literal("flat"), z.literal("preserve-3d")]);
+
+export type TransformStyleKeyword = z.infer<typeof transformStyleKeywordSchema>;
+
+
+=== File: packages/b_keywords/src/universal-functions.ts ===
+// b_path:: packages/b_keywords/src/universal-functions.ts
+
+/**
+ * Universal CSS functions that apply to all properties.
+ *
+ * These functions can appear in any CSS value context and should be
+ * handled at the declaration/wrapper level, not by individual property parsers.
+ *
+ * SINGLE SOURCE OF TRUTH - do not duplicate this list elsewhere.
+ *
+ * @see https://drafts.csswg.org/css-values-4/#functional-notation
+ */
+export const UNIVERSAL_CSS_FUNCTIONS = [
+  "var", // CSS Variables
+  "calc", // Math
+  "min", // Math
+  "max", // Math
+  "clamp", // Math
+  "attr", // Attribute references
+  "env", // Environment variables
+] as const;
+
+/**
+ * Type representing any universal CSS function name.
+ */
+export type UniversalCssFunction = (typeof UNIVERSAL_CSS_FUNCTIONS)[number];
+
+
 === File: packages/b_keywords/src/utils/index.ts ===
 // b_path:: packages/b_keywords/src/utils/index.ts
 export * from "./zod";
@@ -9066,6 +10097,20 @@ export function getLiteralValues(schema: z.core.$ZodType): string[] {
   }
   return [];
 }
+
+
+=== File: packages/b_keywords/src/visibility.ts ===
+// b_path:: packages/b_keywords/src/visibility.ts
+
+import { z } from "zod";
+
+/**
+ * Visibility keywords
+ * @see https://drafts.csswg.org/css-display/#visibility
+ */
+export const visibilityKeywordSchema = z.union([z.literal("visible"), z.literal("hidden"), z.literal("collapse")]);
+
+export type VisibilityKeyword = z.infer<typeof visibilityKeywordSchema>;
 
 
 === File: packages/b_keywords/tsup.config.ts ===
@@ -11342,6 +12387,7 @@ export * as Image from "./image";
 export * as Length from "./length";
 export * as Position from "./position";
 export * as Time from "./time";
+export * as Transform from "./transform";
 export * as Url from "./url";
 export * as Utils from "./utils";
 export * as Math from "./math";
@@ -12027,6 +13073,639 @@ export function parseTimeNode(node: csstree.CssNode): ParseResult<Type.Time> {
 }
 
 
+=== File: packages/b_parsers/src/transform/index.ts ===
+// b_path:: packages/b_parsers/src/transform/index.ts
+
+export * from "./translate";
+export * from "./rotate";
+export * from "./scale";
+export * from "./skew";
+export * from "./matrix";
+export * from "./perspective";
+
+import type * as csstree from "@eslint/css-tree";
+import { createError, parseErr, type ParseResult } from "@b/types";
+import type * as Type from "@b/types";
+import { parseTranslateFunction } from "./translate";
+import { parseRotateFunction } from "./rotate";
+import { parseScaleFunction } from "./scale";
+import { parseSkewFunction } from "./skew";
+import { parseMatrixFunction } from "./matrix";
+import { parsePerspectiveFunction } from "./perspective";
+
+/**
+ * Parse any transform function from css-tree AST
+ */
+export function parseTransformFunction(node: csstree.FunctionNode): ParseResult<Type.TransformFunction> {
+  const funcName = node.name.toLowerCase();
+
+  if (funcName.startsWith("translate")) {
+    return parseTranslateFunction(node);
+  }
+
+  if (funcName.startsWith("rotate")) {
+    return parseRotateFunction(node);
+  }
+
+  if (funcName.startsWith("scale")) {
+    return parseScaleFunction(node);
+  }
+
+  if (funcName.startsWith("skew")) {
+    return parseSkewFunction(node);
+  }
+
+  if (funcName.startsWith("matrix")) {
+    return parseMatrixFunction(node);
+  }
+
+  if (funcName === "perspective") {
+    return parsePerspectiveFunction(node);
+  }
+
+  return parseErr("transform", createError("unsupported-kind", `Unsupported transform function: ${funcName}`));
+}
+
+/**
+ * Parse transform list (space-separated transform functions)
+ */
+export function parseTransformList(ast: csstree.Value): ParseResult<Type.TransformList> {
+  const children = Array.from(ast.children);
+  const functions = children.filter((n) => n.type === "Function") as csstree.FunctionNode[];
+
+  if (functions.length === 0) {
+    return parseErr("transform", createError("missing-value", "No transform functions found"));
+  }
+
+  const results: Type.TransformFunction[] = [];
+  const issues: Type.Issue[] = [];
+
+  for (const func of functions) {
+    const result = parseTransformFunction(func);
+    if (result.ok) {
+      results.push(result.value);
+    }
+    issues.push(...result.issues);
+  }
+
+  return {
+    ok: results.length > 0,
+    value: results,
+    issues,
+  };
+}
+
+
+=== File: packages/b_parsers/src/transform/matrix.ts ===
+// b_path:: packages/b_parsers/src/transform/matrix.ts
+
+import type * as csstree from "@eslint/css-tree";
+import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
+import type * as Type from "@b/types";
+
+/**
+ * Parse matrix functions from css-tree AST
+ * @see https://drafts.csswg.org/css-transforms-2/#funcdef-matrix
+ */
+
+function parseNumber(node: csstree.CssNode): ParseResult<number> {
+  if (node.type !== "Number") {
+    return parseErr("transform", createError("invalid-syntax", "Expected number"));
+  }
+  const num = Number.parseFloat(node.value);
+  if (Number.isNaN(num)) {
+    return parseErr("transform", createError("invalid-value", "Invalid number"));
+  }
+  return parseOk(num);
+}
+
+export function parseMatrixFunction(node: csstree.FunctionNode): ParseResult<Type.MatrixFunction> {
+  const funcName = node.name.toLowerCase();
+  const children = Array.from(node.children);
+  const args = children.filter((n) => n.type !== "WhiteSpace");
+
+  if (funcName === "matrix") {
+    if (args.length !== 6) {
+      return parseErr("transform", createError("invalid-syntax", "matrix() requires 6 arguments"));
+    }
+
+    const results = args.map(parseNumber);
+    if (results.some((r) => !r.ok)) {
+      return parseErr("transform", createError("invalid-value", "Invalid matrix arguments"));
+    }
+
+    const [a, b, c, d, e, f] = results.map((r) => (r as { ok: true; value: number }).value);
+
+    return parseOk({
+      kind: "matrix",
+      a: a!,
+      b: b!,
+      c: c!,
+      d: d!,
+      e: e!,
+      f: f!,
+    });
+  }
+
+  if (funcName === "matrix3d") {
+    if (args.length !== 16) {
+      return parseErr("transform", createError("invalid-syntax", "matrix3d() requires 16 arguments"));
+    }
+
+    const results = args.map(parseNumber);
+    if (results.some((r) => !r.ok)) {
+      return parseErr("transform", createError("invalid-value", "Invalid matrix3d arguments"));
+    }
+
+    const values = results.map((r) => (r as { ok: true; value: number }).value) as [
+      number,
+      number,
+      number,
+      number,
+      number,
+      number,
+      number,
+      number,
+      number,
+      number,
+      number,
+      number,
+      number,
+      number,
+      number,
+      number,
+    ];
+
+    return parseOk({
+      kind: "matrix3d",
+      values,
+    });
+  }
+
+  return parseErr("transform", createError("unsupported-kind", `Unsupported matrix function: ${funcName}`));
+}
+
+
+=== File: packages/b_parsers/src/transform/perspective.ts ===
+// b_path:: packages/b_parsers/src/transform/perspective.ts
+
+import type * as csstree from "@eslint/css-tree";
+import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
+import type * as Type from "@b/types";
+import { parseLengthNode } from "../length";
+
+/**
+ * Parse perspective function from css-tree AST
+ * @see https://drafts.csswg.org/css-transforms-2/#funcdef-perspective
+ */
+
+export function parsePerspectiveFunction(node: csstree.FunctionNode): ParseResult<Type.PerspectiveFunction> {
+  const funcName = node.name.toLowerCase();
+  const children = Array.from(node.children);
+  const args = children.filter((n) => n.type !== "WhiteSpace");
+
+  if (funcName !== "perspective") {
+    return parseErr("transform", createError("unsupported-kind", `Expected perspective function, got ${funcName}`));
+  }
+
+  if (args.length !== 1) {
+    return parseErr("transform", createError("invalid-syntax", "perspective() requires 1 argument"));
+  }
+
+  const lengthResult = parseLengthNode(args[0]);
+  if (!lengthResult.ok) {
+    return parseErr("transform", lengthResult.issues[0] ?? createError("invalid-value", "Invalid length"));
+  }
+
+  return parseOk({
+    kind: "perspective",
+    length: lengthResult.value,
+  });
+}
+
+
+=== File: packages/b_parsers/src/transform/rotate.ts ===
+// b_path:: packages/b_parsers/src/transform/rotate.ts
+
+import type * as csstree from "@eslint/css-tree";
+import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
+import type * as Type from "@b/types";
+import { parseAngleNode } from "../angle";
+
+/**
+ * Parse rotate functions from css-tree AST
+ * @see https://drafts.csswg.org/css-transforms-2/#funcdef-rotate
+ */
+
+export function parseRotateFunction(node: csstree.FunctionNode): ParseResult<Type.RotateFunction> {
+  const funcName = node.name.toLowerCase();
+  const children = Array.from(node.children);
+  const args = children.filter((n) => n.type !== "WhiteSpace");
+
+  if (funcName === "rotate") {
+    if (args.length !== 1) {
+      return parseErr("transform", createError("invalid-syntax", "rotate() requires 1 argument"));
+    }
+    const angleResult = parseAngleNode(args[0]);
+    if (!angleResult.ok) {
+      return parseErr("transform", angleResult.issues[0] ?? createError("invalid-value", "Invalid angle"));
+    }
+    return parseOk({
+      kind: "rotate",
+      angle: angleResult.value,
+    });
+  }
+
+  if (funcName === "rotatex") {
+    if (args.length !== 1) {
+      return parseErr("transform", createError("invalid-syntax", "rotateX() requires 1 argument"));
+    }
+    const angleResult = parseAngleNode(args[0]);
+    if (!angleResult.ok) {
+      return parseErr("transform", angleResult.issues[0] ?? createError("invalid-value", "Invalid angle"));
+    }
+    return parseOk({
+      kind: "rotateX",
+      angle: angleResult.value,
+    });
+  }
+
+  if (funcName === "rotatey") {
+    if (args.length !== 1) {
+      return parseErr("transform", createError("invalid-syntax", "rotateY() requires 1 argument"));
+    }
+    const angleResult = parseAngleNode(args[0]);
+    if (!angleResult.ok) {
+      return parseErr("transform", angleResult.issues[0] ?? createError("invalid-value", "Invalid angle"));
+    }
+    return parseOk({
+      kind: "rotateY",
+      angle: angleResult.value,
+    });
+  }
+
+  if (funcName === "rotatez") {
+    if (args.length !== 1) {
+      return parseErr("transform", createError("invalid-syntax", "rotateZ() requires 1 argument"));
+    }
+    const angleResult = parseAngleNode(args[0]);
+    if (!angleResult.ok) {
+      return parseErr("transform", angleResult.issues[0] ?? createError("invalid-value", "Invalid angle"));
+    }
+    return parseOk({
+      kind: "rotateZ",
+      angle: angleResult.value,
+    });
+  }
+
+  if (funcName === "rotate3d") {
+    if (args.length !== 4) {
+      return parseErr("transform", createError("invalid-syntax", "rotate3d() requires 4 arguments"));
+    }
+
+    // Parse x, y, z as numbers
+    const parseNumber = (node: csstree.CssNode): ParseResult<number> => {
+      if (node.type !== "Number") {
+        return parseErr("transform", createError("invalid-syntax", "Expected number"));
+      }
+      const num = Number.parseFloat(node.value);
+      if (Number.isNaN(num)) {
+        return parseErr("transform", createError("invalid-value", "Invalid number"));
+      }
+      return parseOk(num);
+    };
+
+    const xResult = parseNumber(args[0]);
+    const yResult = parseNumber(args[1]);
+    const zResult = parseNumber(args[2]);
+    const angleResult = parseAngleNode(args[3]);
+
+    if (!xResult.ok || !yResult.ok || !zResult.ok || !angleResult.ok) {
+      return parseErr("transform", createError("invalid-value", "Invalid rotate3d arguments"));
+    }
+
+    return parseOk({
+      kind: "rotate3d",
+      x: xResult.value,
+      y: yResult.value,
+      z: zResult.value,
+      angle: angleResult.value,
+    });
+  }
+
+  return parseErr("transform", createError("unsupported-kind", `Unsupported rotate function: ${funcName}`));
+}
+
+
+=== File: packages/b_parsers/src/transform/scale.ts ===
+// b_path:: packages/b_parsers/src/transform/scale.ts
+
+import type * as csstree from "@eslint/css-tree";
+import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
+import type * as Type from "@b/types";
+
+/**
+ * Parse scale functions from css-tree AST
+ * @see https://drafts.csswg.org/css-transforms-2/#funcdef-scale
+ */
+
+function parseNumber(node: csstree.CssNode): ParseResult<number> {
+  if (node.type !== "Number") {
+    return parseErr("transform", createError("invalid-syntax", "Expected number"));
+  }
+  const num = Number.parseFloat(node.value);
+  if (Number.isNaN(num)) {
+    return parseErr("transform", createError("invalid-value", "Invalid number"));
+  }
+  return parseOk(num);
+}
+
+export function parseScaleFunction(node: csstree.FunctionNode): ParseResult<Type.ScaleFunction> {
+  const funcName = node.name.toLowerCase();
+  const children = Array.from(node.children);
+  const args = children.filter((n) => n.type !== "WhiteSpace");
+
+  if (funcName === "scale") {
+    if (args.length < 1) {
+      return parseErr("transform", createError("invalid-syntax", "scale() requires at least 1 argument"));
+    }
+
+    const xResult = parseNumber(args[0]);
+    if (!xResult.ok) {
+      return parseErr("transform", xResult.issues[0] ?? createError("invalid-value", "Invalid x value"));
+    }
+
+    // Y defaults to x if not provided
+    const y = args.length >= 2 ? parseNumber(args[1]) : xResult;
+    if (!y.ok) {
+      return parseErr("transform", y.issues[0] ?? createError("invalid-value", "Invalid y value"));
+    }
+
+    return parseOk({
+      kind: "scale",
+      x: xResult.value,
+      y: y.value,
+    });
+  }
+
+  if (funcName === "scalex") {
+    if (args.length !== 1) {
+      return parseErr("transform", createError("invalid-syntax", "scaleX() requires 1 argument"));
+    }
+    const xResult = parseNumber(args[0]);
+    if (!xResult.ok) {
+      return parseErr("transform", xResult.issues[0] ?? createError("invalid-value", "Invalid x value"));
+    }
+    return parseOk({
+      kind: "scaleX",
+      x: xResult.value,
+    });
+  }
+
+  if (funcName === "scaley") {
+    if (args.length !== 1) {
+      return parseErr("transform", createError("invalid-syntax", "scaleY() requires 1 argument"));
+    }
+    const yResult = parseNumber(args[0]);
+    if (!yResult.ok) {
+      return parseErr("transform", yResult.issues[0] ?? createError("invalid-value", "Invalid y value"));
+    }
+    return parseOk({
+      kind: "scaleY",
+      y: yResult.value,
+    });
+  }
+
+  if (funcName === "scalez") {
+    if (args.length !== 1) {
+      return parseErr("transform", createError("invalid-syntax", "scaleZ() requires 1 argument"));
+    }
+    const zResult = parseNumber(args[0]);
+    if (!zResult.ok) {
+      return parseErr("transform", zResult.issues[0] ?? createError("invalid-value", "Invalid z value"));
+    }
+    return parseOk({
+      kind: "scaleZ",
+      z: zResult.value,
+    });
+  }
+
+  if (funcName === "scale3d") {
+    if (args.length !== 3) {
+      return parseErr("transform", createError("invalid-syntax", "scale3d() requires 3 arguments"));
+    }
+
+    const xResult = parseNumber(args[0]);
+    const yResult = parseNumber(args[1]);
+    const zResult = parseNumber(args[2]);
+
+    if (!xResult.ok || !yResult.ok || !zResult.ok) {
+      return parseErr("transform", createError("invalid-value", "Invalid scale3d arguments"));
+    }
+
+    return parseOk({
+      kind: "scale3d",
+      x: xResult.value,
+      y: yResult.value,
+      z: zResult.value,
+    });
+  }
+
+  return parseErr("transform", createError("unsupported-kind", `Unsupported scale function: ${funcName}`));
+}
+
+
+=== File: packages/b_parsers/src/transform/skew.ts ===
+// b_path:: packages/b_parsers/src/transform/skew.ts
+
+import type * as csstree from "@eslint/css-tree";
+import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
+import type * as Type from "@b/types";
+import { parseAngleNode } from "../angle";
+
+/**
+ * Parse skew functions from css-tree AST
+ * @see https://drafts.csswg.org/css-transforms-2/#funcdef-skew
+ */
+
+export function parseSkewFunction(node: csstree.FunctionNode): ParseResult<Type.SkewFunction> {
+  const funcName = node.name.toLowerCase();
+  const children = Array.from(node.children);
+  const args = children.filter((n) => n.type !== "WhiteSpace");
+
+  if (funcName === "skew") {
+    if (args.length < 1 || args.length > 2) {
+      return parseErr("transform", createError("invalid-syntax", "skew() requires 1-2 arguments"));
+    }
+
+    const xResult = parseAngleNode(args[0]);
+    if (!xResult.ok) {
+      return parseErr("transform", xResult.issues[0] ?? createError("invalid-value", "Invalid x angle"));
+    }
+
+    // Y defaults to 0deg if not provided
+    let y: Type.Angle = { value: 0, unit: "deg" };
+    if (args.length === 2) {
+      const yResult = parseAngleNode(args[1]);
+      if (!yResult.ok) {
+        return parseErr("transform", yResult.issues[0] ?? createError("invalid-value", "Invalid y angle"));
+      }
+      y = yResult.value;
+    }
+
+    return parseOk({
+      kind: "skew",
+      x: xResult.value,
+      y,
+    });
+  }
+
+  if (funcName === "skewx") {
+    if (args.length !== 1) {
+      return parseErr("transform", createError("invalid-syntax", "skewX() requires 1 argument"));
+    }
+    const xResult = parseAngleNode(args[0]);
+    if (!xResult.ok) {
+      return parseErr("transform", xResult.issues[0] ?? createError("invalid-value", "Invalid x angle"));
+    }
+    return parseOk({
+      kind: "skewX",
+      x: xResult.value,
+    });
+  }
+
+  if (funcName === "skewy") {
+    if (args.length !== 1) {
+      return parseErr("transform", createError("invalid-syntax", "skewY() requires 1 argument"));
+    }
+    const yResult = parseAngleNode(args[0]);
+    if (!yResult.ok) {
+      return parseErr("transform", yResult.issues[0] ?? createError("invalid-value", "Invalid y angle"));
+    }
+    return parseOk({
+      kind: "skewY",
+      y: yResult.value,
+    });
+  }
+
+  return parseErr("transform", createError("unsupported-kind", `Unsupported skew function: ${funcName}`));
+}
+
+
+=== File: packages/b_parsers/src/transform/translate.ts ===
+// b_path:: packages/b_parsers/src/transform/translate.ts
+
+import type * as csstree from "@eslint/css-tree";
+import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
+import type * as Type from "@b/types";
+import { parseLengthPercentageNode } from "../length";
+
+/**
+ * Parse translate functions from css-tree AST
+ * @see https://drafts.csswg.org/css-transforms-2/#funcdef-translate
+ */
+
+export function parseTranslateFunction(node: csstree.FunctionNode): ParseResult<Type.TranslateFunction> {
+  const funcName = node.name.toLowerCase();
+  const children = Array.from(node.children);
+
+  // Filter out whitespace
+  const args = children.filter((n) => n.type !== "WhiteSpace");
+
+  if (funcName === "translate") {
+    // translate(x, y) - 2 args required
+    if (args.length < 1) {
+      return parseErr("transform", createError("invalid-syntax", "translate() requires at least 1 argument"));
+    }
+
+    const xResult = parseLengthPercentageNode(args[0]);
+    if (!xResult.ok) {
+      return parseErr("transform", xResult.issues[0] ?? createError("invalid-value", "Invalid x value"));
+    }
+
+    // Y defaults to 0 if not provided
+    let y: Type.LengthPercentage = { value: 0, unit: "px" };
+    if (args.length >= 2) {
+      const yResult = parseLengthPercentageNode(args[1]);
+      if (!yResult.ok) {
+        return parseErr("transform", yResult.issues[0] ?? createError("invalid-value", "Invalid y value"));
+      }
+      y = yResult.value;
+    }
+
+    return parseOk({
+      kind: "translate",
+      x: xResult.value,
+      y,
+    });
+  }
+
+  if (funcName === "translatex") {
+    if (args.length !== 1) {
+      return parseErr("transform", createError("invalid-syntax", "translateX() requires 1 argument"));
+    }
+    const xResult = parseLengthPercentageNode(args[0]);
+    if (!xResult.ok) {
+      return parseErr("transform", xResult.issues[0] ?? createError("invalid-value", "Invalid x value"));
+    }
+    return parseOk({
+      kind: "translateX",
+      x: xResult.value,
+    });
+  }
+
+  if (funcName === "translatey") {
+    if (args.length !== 1) {
+      return parseErr("transform", createError("invalid-syntax", "translateY() requires 1 argument"));
+    }
+    const yResult = parseLengthPercentageNode(args[0]);
+    if (!yResult.ok) {
+      return parseErr("transform", yResult.issues[0] ?? createError("invalid-value", "Invalid y value"));
+    }
+    return parseOk({
+      kind: "translateY",
+      y: yResult.value,
+    });
+  }
+
+  if (funcName === "translatez") {
+    if (args.length !== 1) {
+      return parseErr("transform", createError("invalid-syntax", "translateZ() requires 1 argument"));
+    }
+    const zResult = parseLengthPercentageNode(args[0]);
+    if (!zResult.ok) {
+      return parseErr("transform", zResult.issues[0] ?? createError("invalid-value", "Invalid z value"));
+    }
+    return parseOk({
+      kind: "translateZ",
+      z: zResult.value,
+    });
+  }
+
+  if (funcName === "translate3d") {
+    if (args.length !== 3) {
+      return parseErr("transform", createError("invalid-syntax", "translate3d() requires 3 arguments"));
+    }
+    const xResult = parseLengthPercentageNode(args[0]);
+    const yResult = parseLengthPercentageNode(args[1]);
+    const zResult = parseLengthPercentageNode(args[2]);
+
+    if (!xResult.ok || !yResult.ok || !zResult.ok) {
+      return parseErr("transform", createError("invalid-value", "Invalid translate3d arguments"));
+    }
+
+    return parseOk({
+      kind: "translate3d",
+      x: xResult.value,
+      y: yResult.value,
+      z: zResult.value,
+    });
+  }
+
+  return parseErr("transform", createError("unsupported-kind", `Unsupported translate function: ${funcName}`));
+}
+
+
 === File: packages/b_parsers/src/url.ts ===
 // b_path:: packages/b_parsers/src/url.ts
 import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
@@ -12411,14 +14090,15 @@ export function parseColorInterpolationMethod(
 === File: packages/b_parsers/src/utils/css-value-functions.ts ===
 // b_path:: packages/b_parsers/src/utils/css-value-functions.ts
 import type * as csstree from "@eslint/css-tree";
+import { UNIVERSAL_CSS_FUNCTIONS } from "@b/keywords";
 
 /**
- * Check if a Function node is a CSS value function (var, calc, clamp, min, max)
+ * Check if a Function node is a universal CSS function (var, calc, etc.)
  * and not a color function (rgb, hsl, hwb, lab, lch, oklch, oklab, etc.)
  *
  * This is useful for distinguishing between:
- * - CSS value functions that can appear in size/position contexts
- * - Color functions that should be treated as color stops
+ * - Universal CSS functions that can appear in any value context
+ * - Color functions that should be treated as color stops in gradients
  *
  * @example
  * isCssValueFunction(varNode) // true - var(--value)
@@ -12429,7 +14109,7 @@ import type * as csstree from "@eslint/css-tree";
 export function isCssValueFunction(node: csstree.CssNode): boolean {
   if (node.type !== "Function") return false;
   const funcName = node.name.toLowerCase();
-  return ["var", "calc", "clamp", "min", "max"].includes(funcName);
+  return (UNIVERSAL_CSS_FUNCTIONS as readonly string[]).includes(funcName);
 }
 
 
@@ -13359,6 +15039,7 @@ export * from "./gradient";
 export * from "./bg-size";
 export * from "./time";
 export * from "./easing-function";
+export * from "./transform";
 
 
 === File: packages/b_types/src/length-percentage.ts ===
@@ -14296,6 +15977,349 @@ export const timeSchema = z
   .strict();
 
 export type Time = z.infer<typeof timeSchema>;
+
+
+=== File: packages/b_types/src/transform/index.ts ===
+// b_path:: packages/b_types/src/transform/index.ts
+
+export * from "./translate";
+export * from "./rotate";
+export * from "./scale";
+export * from "./skew";
+export * from "./matrix";
+export * from "./perspective";
+
+import { z } from "zod";
+import { translateFunctionSchema } from "./translate";
+import { rotateFunctionSchema } from "./rotate";
+import { scaleFunctionSchema } from "./scale";
+import { skewFunctionSchema } from "./skew";
+import { matrixFunctionSchema } from "./matrix";
+import { perspectiveFunctionSchema } from "./perspective";
+
+/**
+ * Union of all transform functions
+ */
+export const transformFunctionSchema = z.union([
+  translateFunctionSchema,
+  rotateFunctionSchema,
+  scaleFunctionSchema,
+  skewFunctionSchema,
+  matrixFunctionSchema,
+  perspectiveFunctionSchema,
+]);
+
+export type TransformFunction = z.infer<typeof transformFunctionSchema>;
+
+/**
+ * Transform list (used by transform property)
+ */
+export const transformListSchema = z.array(transformFunctionSchema);
+
+export type TransformList = z.infer<typeof transformListSchema>;
+
+
+=== File: packages/b_types/src/transform/matrix.ts ===
+// b_path:: packages/b_types/src/transform/matrix.ts
+
+import { z } from "zod";
+
+/**
+ * Matrix transform functions
+ * @see https://drafts.csswg.org/css-transforms-2/#funcdef-matrix
+ */
+
+export const matrixSchema = z
+  .object({
+    kind: z.literal("matrix"),
+    a: z.number(),
+    b: z.number(),
+    c: z.number(),
+    d: z.number(),
+    e: z.number(),
+    f: z.number(),
+  })
+  .strict();
+
+export const matrix3dSchema = z
+  .object({
+    kind: z.literal("matrix3d"),
+    values: z.tuple([
+      z.number(),
+      z.number(),
+      z.number(),
+      z.number(),
+      z.number(),
+      z.number(),
+      z.number(),
+      z.number(),
+      z.number(),
+      z.number(),
+      z.number(),
+      z.number(),
+      z.number(),
+      z.number(),
+      z.number(),
+      z.number(),
+    ]),
+  })
+  .strict();
+
+export const matrixFunctionSchema = z.union([matrixSchema, matrix3dSchema]);
+
+export type Matrix = z.infer<typeof matrixSchema>;
+export type Matrix3d = z.infer<typeof matrix3dSchema>;
+export type MatrixFunction = z.infer<typeof matrixFunctionSchema>;
+
+
+=== File: packages/b_types/src/transform/perspective.ts ===
+// b_path:: packages/b_types/src/transform/perspective.ts
+
+import { z } from "zod";
+import { lengthSchema } from "../length";
+
+/**
+ * Perspective transform function
+ * @see https://drafts.csswg.org/css-transforms-2/#funcdef-perspective
+ */
+
+export const perspectiveFunctionSchema = z
+  .object({
+    kind: z.literal("perspective"),
+    length: lengthSchema,
+  })
+  .strict();
+
+export type PerspectiveFunction = z.infer<typeof perspectiveFunctionSchema>;
+
+
+=== File: packages/b_types/src/transform/rotate.ts ===
+// b_path:: packages/b_types/src/transform/rotate.ts
+
+import { z } from "zod";
+import { angleSchema } from "../angle";
+
+/**
+ * Rotate transform functions
+ * @see https://drafts.csswg.org/css-transforms-2/#funcdef-rotate
+ */
+
+export const rotateSchema = z
+  .object({
+    kind: z.literal("rotate"),
+    angle: angleSchema,
+  })
+  .strict();
+
+export const rotateXSchema = z
+  .object({
+    kind: z.literal("rotateX"),
+    angle: angleSchema,
+  })
+  .strict();
+
+export const rotateYSchema = z
+  .object({
+    kind: z.literal("rotateY"),
+    angle: angleSchema,
+  })
+  .strict();
+
+export const rotateZSchema = z
+  .object({
+    kind: z.literal("rotateZ"),
+    angle: angleSchema,
+  })
+  .strict();
+
+export const rotate3dSchema = z
+  .object({
+    kind: z.literal("rotate3d"),
+    x: z.number(),
+    y: z.number(),
+    z: z.number(),
+    angle: angleSchema,
+  })
+  .strict();
+
+export const rotateFunctionSchema = z.union([
+  rotateSchema,
+  rotateXSchema,
+  rotateYSchema,
+  rotateZSchema,
+  rotate3dSchema,
+]);
+
+export type Rotate = z.infer<typeof rotateSchema>;
+export type RotateX = z.infer<typeof rotateXSchema>;
+export type RotateY = z.infer<typeof rotateYSchema>;
+export type RotateZ = z.infer<typeof rotateZSchema>;
+export type Rotate3d = z.infer<typeof rotate3dSchema>;
+export type RotateFunction = z.infer<typeof rotateFunctionSchema>;
+
+
+=== File: packages/b_types/src/transform/scale.ts ===
+// b_path:: packages/b_types/src/transform/scale.ts
+
+import { z } from "zod";
+
+/**
+ * Scale transform functions
+ * @see https://drafts.csswg.org/css-transforms-2/#funcdef-scale
+ */
+
+export const scaleSchema = z
+  .object({
+    kind: z.literal("scale"),
+    x: z.number(),
+    y: z.number(),
+  })
+  .strict();
+
+export const scaleXSchema = z
+  .object({
+    kind: z.literal("scaleX"),
+    x: z.number(),
+  })
+  .strict();
+
+export const scaleYSchema = z
+  .object({
+    kind: z.literal("scaleY"),
+    y: z.number(),
+  })
+  .strict();
+
+export const scaleZSchema = z
+  .object({
+    kind: z.literal("scaleZ"),
+    z: z.number(),
+  })
+  .strict();
+
+export const scale3dSchema = z
+  .object({
+    kind: z.literal("scale3d"),
+    x: z.number(),
+    y: z.number(),
+    z: z.number(),
+  })
+  .strict();
+
+export const scaleFunctionSchema = z.union([scaleSchema, scaleXSchema, scaleYSchema, scaleZSchema, scale3dSchema]);
+
+export type Scale = z.infer<typeof scaleSchema>;
+export type ScaleX = z.infer<typeof scaleXSchema>;
+export type ScaleY = z.infer<typeof scaleYSchema>;
+export type ScaleZ = z.infer<typeof scaleZSchema>;
+export type Scale3d = z.infer<typeof scale3dSchema>;
+export type ScaleFunction = z.infer<typeof scaleFunctionSchema>;
+
+
+=== File: packages/b_types/src/transform/skew.ts ===
+// b_path:: packages/b_types/src/transform/skew.ts
+
+import { z } from "zod";
+import { angleSchema } from "../angle";
+
+/**
+ * Skew transform functions
+ * @see https://drafts.csswg.org/css-transforms-2/#funcdef-skew
+ */
+
+export const skewSchema = z
+  .object({
+    kind: z.literal("skew"),
+    x: angleSchema,
+    y: angleSchema,
+  })
+  .strict();
+
+export const skewXSchema = z
+  .object({
+    kind: z.literal("skewX"),
+    x: angleSchema,
+  })
+  .strict();
+
+export const skewYSchema = z
+  .object({
+    kind: z.literal("skewY"),
+    y: angleSchema,
+  })
+  .strict();
+
+export const skewFunctionSchema = z.union([skewSchema, skewXSchema, skewYSchema]);
+
+export type Skew = z.infer<typeof skewSchema>;
+export type SkewX = z.infer<typeof skewXSchema>;
+export type SkewY = z.infer<typeof skewYSchema>;
+export type SkewFunction = z.infer<typeof skewFunctionSchema>;
+
+
+=== File: packages/b_types/src/transform/translate.ts ===
+// b_path:: packages/b_types/src/transform/translate.ts
+
+import { z } from "zod";
+import { lengthPercentageSchema } from "../length-percentage";
+
+/**
+ * Translate transform functions
+ * @see https://drafts.csswg.org/css-transforms-2/#funcdef-translate
+ */
+
+export const translateSchema = z
+  .object({
+    kind: z.literal("translate"),
+    x: lengthPercentageSchema,
+    y: lengthPercentageSchema,
+  })
+  .strict();
+
+export const translateXSchema = z
+  .object({
+    kind: z.literal("translateX"),
+    x: lengthPercentageSchema,
+  })
+  .strict();
+
+export const translateYSchema = z
+  .object({
+    kind: z.literal("translateY"),
+    y: lengthPercentageSchema,
+  })
+  .strict();
+
+export const translateZSchema = z
+  .object({
+    kind: z.literal("translateZ"),
+    z: lengthPercentageSchema,
+  })
+  .strict();
+
+export const translate3dSchema = z
+  .object({
+    kind: z.literal("translate3d"),
+    x: lengthPercentageSchema,
+    y: lengthPercentageSchema,
+    z: lengthPercentageSchema,
+  })
+  .strict();
+
+export const translateFunctionSchema = z.union([
+  translateSchema,
+  translateXSchema,
+  translateYSchema,
+  translateZSchema,
+  translate3dSchema,
+]);
+
+export type Translate = z.infer<typeof translateSchema>;
+export type TranslateX = z.infer<typeof translateXSchema>;
+export type TranslateY = z.infer<typeof translateYSchema>;
+export type TranslateZ = z.infer<typeof translateZSchema>;
+export type Translate3d = z.infer<typeof translate3dSchema>;
+export type TranslateFunction = z.infer<typeof translateFunctionSchema>;
 
 
 === File: packages/b_types/src/url.ts ===
@@ -16054,56 +18078,6 @@ export * as Generate from "@b/generators";
 export * as Declarations from "@b/declarations";
 
 
-=== File: packages/b_values/src/test-bg-image-var.ts ===
-// b_path:: packages/b_values/src/test-bg-image-var.ts
-import * as decl from "@b/declarations";
-
-console.log(
-  JSON.stringify(
-    decl.parseDeclarationList(`
-    background-image: var(--gradient-overlay), url("pattern.svg"), none;
-  `),
-    null,
-    2,
-  ),
-);
-
-
-=== File: packages/b_values/src/test-original.ts ===
-// b_path:: packages/b_values/src/test-original.ts
-import * as decl from "@b/declarations";
-
-console.log(
-  JSON.stringify(
-    decl.parseDeclarationList(`
-    --brand-color: #0066cc;
-    --default-size: 100px;
-    --bg-repeat-val: no-repeat;
-
-    background-size: var(--special-size, 50%);
-    background-clip: var(--clip-type, border-box);
-    background-repeat: var(--bg-repeat-val, var(--fallback-repeat, repeat));
-  `),
-    null,
-    2,
-  ),
-);
-
-
-=== File: packages/b_values/src/test-var-comparison.ts ===
-// b_path:: packages/b_values/src/test-var-comparison.ts
-import * as decl from "@b/declarations";
-
-console.log("=== background-size (works) ===");
-console.log(JSON.stringify(decl.parseDeclaration("background-size: var(--size)"), null, 2));
-
-console.log("\n=== background-clip (fails) ===");
-console.log(JSON.stringify(decl.parseDeclaration("background-clip: var(--clip)"), null, 2));
-
-console.log("\n=== background-repeat (fails) ===");
-console.log(JSON.stringify(decl.parseDeclaration("background-repeat: var(--repeat)"), null, 2));
-
-
 === File: packages/b_values/tsup.config.ts ===
 // b_path:: packages/b_values/tsup.config.ts
 import { defineConfig } from "tsup";
@@ -16135,3 +18109,5 @@ export default defineConfig({
     },
   },
 });
+
+

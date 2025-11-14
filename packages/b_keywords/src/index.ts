@@ -20,5 +20,6 @@ export * from "./position";
 export * from "./radial-shape";
 export * from "./radial-size";
 export * from "./transform-style";
+export * from "./universal-functions";
 export * from "./utils";
 export * from "./visibility";

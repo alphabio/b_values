@@ -1,6 +1,7 @@
 // b_path:: packages/b_declarations/src/utils/type-guards.ts
 
 import type { CssValue } from "@b/types";
+import { UNIVERSAL_CSS_FUNCTIONS } from "@b/keywords";
 import type * as csstree from "@eslint/css-tree";
 
 /**
@@ -59,20 +60,6 @@ export function isCssValue(value: unknown): value is CssValue {
 }
 
 /**
- * Universal CSS functions that apply to all properties.
- * These are handled by the declaration layer, not property parsers.
- */
-const UNIVERSAL_FUNCTIONS = [
-  "var", // CSS Variables
-  "calc", // Math
-  "min", // Math
-  "max", // Math
-  "clamp", // Math
-  "attr", // Attribute references
-  "env", // Environment variables
-] as const;
-
-/**
  * Check if a CSS AST node is a universal function.
  *
  * Universal functions (var, calc, etc.) apply to ALL properties and
@@ -92,7 +79,7 @@ const UNIVERSAL_FUNCTIONS = [
 export function isUniversalFunction(node: csstree.CssNode): boolean {
   if (node.type !== "Function") return false;
   const funcName = (node as csstree.FunctionNode).name.toLowerCase();
-  return (UNIVERSAL_FUNCTIONS as ReadonlyArray<string>).includes(funcName);
+  return (UNIVERSAL_CSS_FUNCTIONS as readonly string[]).includes(funcName);
 }
 
 /**

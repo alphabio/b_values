@@ -37,6 +37,7 @@
    - `perspective` - Length or none
 
 **Metrics:**
+
 - **Properties:** 55 total (51 → 55, +4)
 - **Code:** +1,718 lines
 - **Commit:** `edc6d27` - feat(types,parsers,generators,declarations): add complete transform property support
@@ -47,6 +48,7 @@
 ## 📊 Current State
 
 **Working:**
+
 - ✅ 55 properties total (4 new transform properties)
 - ✅ All typecheck passing
 - ✅ All builds passing
@@ -60,6 +62,7 @@
 - ✅ Box model: 32 properties
 
 **Not working:**
+
 - None - all systems operational
 
 ---
@@ -74,6 +77,7 @@ From master plan (docs/sessions/075/MASTER_PLAN.md):
 2. `backdrop-filter` property (same as filter)
 
 **Infrastructure needed:**
+
 - Filter function types (blur, brightness, contrast, grayscale, hue-rotate, saturate, etc.)
 - Filter function parser/generator
 - Mostly reuses existing Length/Angle/Number handling
@@ -81,6 +85,7 @@ From master plan (docs/sessions/075/MASTER_PLAN.md):
 **Estimated:** 2 hours
 
 **Alternative priorities:**
+
 - Layout essentials (display, position, z-index) - 2 hours
 - Font/text properties (font-family, font-size, etc.) - 2 hours
 
