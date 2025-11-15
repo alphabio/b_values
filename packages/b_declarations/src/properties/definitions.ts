@@ -70,6 +70,9 @@ import { fontSize } from "./font-size/definition";
 import { fontStretch } from "./font-stretch/definition";
 import { fontStyle } from "./font-style/definition";
 import { fontVariant } from "./font-variant/definition";
+import { fontVariantCaps } from "./font-variant-caps/definition";
+import { fontVariantLigatures } from "./font-variant-ligatures/definition";
+import { fontVariantNumeric } from "./font-variant-numeric/definition";
 import { fontWeight } from "./font-weight/definition";
 import { lineHeight } from "./line-height/definition";
 import { marginBottom } from "./margin-bottom/definition";
@@ -150,6 +153,9 @@ export const PROPERTY_DEFINITIONS = {
   "font-stretch": fontStretch,
   "font-style": fontStyle,
   "font-variant": fontVariant,
+  "font-variant-caps": fontVariantCaps,
+  "font-variant-ligatures": fontVariantLigatures,
+  "font-variant-numeric": fontVariantNumeric,
   "font-weight": fontWeight,
   "line-height": lineHeight,
   "margin-bottom": marginBottom,
