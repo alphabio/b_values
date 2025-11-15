@@ -1,4 +1,5 @@
 // b_path:: packages/b_declarations/src/properties/custom-property/index.ts
+
 export * from "./types";
 export * from "./parser";
 export * from "./generator";

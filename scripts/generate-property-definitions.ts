@@ -189,6 +189,44 @@ propertyRegistry.markInitialized();
   console.log("✅ Generated index.ts");
 }
 
+async function generatePropertyIndexFiles(properties: PropertyInfo[]): Promise<void> {
+  let generated = 0;
+  let existing = 0;
+
+  for (const prop of properties) {
+    const propertyIndexPath = path.join(PROPERTIES_DIR, prop.folderName, "index.ts");
+
+    const content = `// b_path:: packages/b_declarations/src/properties/${prop.folderName}/index.ts
+
+export * from "./types";
+export * from "./parser";
+export * from "./generator";
+export * from "./definition";
+`;
+
+    try {
+      // Check if file exists and has correct content
+      const existingContent = await fs.readFile(propertyIndexPath, "utf-8");
+      if (existingContent.trim() === content.trim()) {
+        existing++;
+        continue;
+      }
+    } catch {
+      // File doesn't exist, will create it
+    }
+
+    await fs.writeFile(propertyIndexPath, content, "utf-8");
+    generated++;
+  }
+
+  if (generated > 0) {
+    console.log(`✅ Generated ${generated} property index.ts files`);
+  }
+  if (existing > 0) {
+    console.log(`   (${existing} already up-to-date)`);
+  }
+}
+
 async function generateManifestFile(properties: PropertyInfo[]): Promise<void> {
   const manifest: Record<string, unknown> = {
     $schema: "./manifest.schema.json",
@@ -257,6 +295,7 @@ async function main() {
   // Generate artifacts
   await generateDefinitionsFile(properties);
   await generateIndexFile(properties);
+  await generatePropertyIndexFiles(properties);
   await generateManifestFile(properties);
 
   console.log("\n✨ Generation complete!");

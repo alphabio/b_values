@@ -1,6 +1,6 @@
 {
   "$schema": "./manifest.schema.json",
-  "generated": "2025-11-15T08:50:47.936Z",
+  "generated": "2025-11-15T08:54:08.705Z",
   "properties": {
     "animation-delay": {
       "name": "animation-delay",

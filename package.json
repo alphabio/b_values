@@ -10,6 +10,7 @@
   "packageManager": "pnpm@10.20.0",
   "scripts": {
     "generate:definitions": "npx tsx scripts/generate-property-definitions.ts",
+    "scaffold:property": "npx tsx scripts/scaffold-property.ts",
     "audit-property": "npx tsx scripts/manifest/audit-property.ts",
     "clean": "rimraf dist node_modules pnpm-lock.yaml",
     "clean:all": "pnpm -r exec rimraf dist node_modules pnpm-lock.yaml && pnpm run clean",
