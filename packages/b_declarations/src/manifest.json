@@ -1,6 +1,6 @@
 {
   "$schema": "./manifest.schema.json",
-  "generated": "2025-11-15T08:02:54.432Z",
+  "generated": "2025-11-15T08:08:08.872Z",
   "properties": {
     "animation-delay": {
       "name": "animation-delay",
@@ -313,6 +313,14 @@
       "initial": "normal",
       "mode": "single",
       "irType": "FontVariantIR"
+    },
+    "font-weight": {
+      "name": "font-weight",
+      "syntax": "normal | bold | bolder | lighter | <number [1,1000]>",
+      "inherited": true,
+      "initial": "normal",
+      "mode": "single",
+      "irType": "FontWeightIR"
     },
     "margin-bottom": {
       "name": "margin-bottom",
