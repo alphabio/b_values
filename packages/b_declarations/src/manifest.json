@@ -1,6 +1,6 @@
 {
   "$schema": "./manifest.schema.json",
-  "generated": "2025-11-15T08:11:20.646Z",
+  "generated": "2025-11-15T08:15:23.800Z",
   "properties": {
     "animation-delay": {
       "name": "animation-delay",
@@ -297,6 +297,14 @@
       "initial": "none",
       "mode": "single",
       "irType": "FilterIR"
+    },
+    "font-size": {
+      "name": "font-size",
+      "syntax": "<absolute-size> | <relative-size> | <length-percentage [0,∞]> | math",
+      "inherited": true,
+      "initial": "medium",
+      "mode": "single",
+      "irType": "FontSizeIR"
     },
     "font-stretch": {
       "name": "font-stretch",
