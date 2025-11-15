@@ -1734,16 +1734,18 @@ export function parseBackdropFilter(ast: csstree.Value): ParseResult<BackdropFil
     }
   }
 
+  // Try filter list first (more specific than generic css-value)
+  const filterListResult = Parsers.Filter.parseFilterList(ast);
+  if (filterListResult.ok) {
+    return parseOk({ kind: "filter-list", value: filterListResult.value });
+  }
+
+  // Fallback to universal CSS functions (var, calc, etc.)
   if (firstNode.type === "Function") {
     const cssValueResult = Parsers.Utils.parseNodeToCssValue(firstNode);
     if (cssValueResult.ok) {
       return parseOk({ kind: "css-value", value: cssValueResult.value });
     }
-  }
-
-  const filterListResult = Parsers.Filter.parseFilterList(ast);
-  if (filterListResult.ok) {
-    return parseOk({ kind: "filter-list", value: filterListResult.value });
   }
 
   return parseErr(
@@ -4983,16 +4985,18 @@ export function parseFilter(ast: csstree.Value): ParseResult<FilterIR> {
     }
   }
 
+  // Try filter list first (more specific than generic css-value)
+  const filterListResult = Parsers.Filter.parseFilterList(ast);
+  if (filterListResult.ok) {
+    return parseOk({ kind: "filter-list", value: filterListResult.value });
+  }
+
+  // Fallback to universal CSS functions (var, calc, etc.)
   if (firstNode.type === "Function") {
     const cssValueResult = Parsers.Utils.parseNodeToCssValue(firstNode);
     if (cssValueResult.ok) {
       return parseOk({ kind: "css-value", value: cssValueResult.value });
     }
-  }
-
-  const filterListResult = Parsers.Filter.parseFilterList(ast);
-  if (filterListResult.ok) {
-    return parseOk({ kind: "filter-list", value: filterListResult.value });
   }
 
   return parseErr("filter", filterListResult.issues[0] ?? createError("invalid-value", "Invalid filter value"));
