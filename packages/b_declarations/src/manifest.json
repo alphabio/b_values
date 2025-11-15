@@ -1,6 +1,6 @@
 {
   "$schema": "./manifest.schema.json",
-  "generated": "2025-11-15T08:08:08.872Z",
+  "generated": "2025-11-15T08:11:20.646Z",
   "properties": {
     "animation-delay": {
       "name": "animation-delay",
@@ -305,6 +305,14 @@
       "initial": "normal",
       "mode": "single",
       "irType": "FontStretchIR"
+    },
+    "font-style": {
+      "name": "font-style",
+      "syntax": "normal | italic | oblique <angle [-90deg,90deg]>?",
+      "inherited": true,
+      "initial": "normal",
+      "mode": "single",
+      "irType": "FontStyleIR"
     },
     "font-variant": {
       "name": "font-variant",
