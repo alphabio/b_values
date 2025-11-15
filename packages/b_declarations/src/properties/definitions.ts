@@ -74,6 +74,7 @@ import { paddingLeft } from "./padding-left/definition";
 import { paddingRight } from "./padding-right/definition";
 import { paddingTop } from "./padding-top/definition";
 import { perspective } from "./perspective/definition";
+import { perspectiveOrigin } from "./perspective-origin/definition";
 import { transform } from "./transform/definition";
 import { transformOrigin } from "./transform-origin/definition";
 import { transformStyle } from "./transform-style/definition";
@@ -144,6 +145,7 @@ export const PROPERTY_DEFINITIONS = {
   "padding-right": paddingRight,
   "padding-top": paddingTop,
   perspective: perspective,
+  "perspective-origin": perspectiveOrigin,
   transform: transform,
   "transform-origin": transformOrigin,
   "transform-style": transformStyle,

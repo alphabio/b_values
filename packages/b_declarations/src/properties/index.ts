@@ -41,6 +41,8 @@ export * from "./padding-bottom";
 export * from "./padding-left";
 export * from "./padding-right";
 export * from "./padding-top";
+export * from "./perspective";
+export * from "./perspective-origin";
 export * from "./transition-delay";
 export * from "./transition-duration";
 export * from "./transition-property";

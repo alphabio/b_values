@@ -1,6 +1,6 @@
-Excluding patterns: 
+Excluding patterns:
 Documentation for LLMs
-Excluding patterns: 
+Excluding patterns:
 Excluding patterns: -not -path */__pycache__/* -not -path */__tests__/* -not -path */.git/* -not -path */.idea/* -not -path */.next/* -not -path */.venv/* -not -path */.vscode/* -not -path */*.spec.py -not -path */*.spec.ts -not -path */*.spec.tsx -not -path */*.test.py -not -path */*.test.ts -not -path */*.test.tsx -not -path */*test.py -not -path */*test.ts -not -path */*test.tsx -not -path */build/* -not -path */dist/* -not -path */me.ts -not -path */node_modules/* -not -path */test_*.py -not -path */test.ts -not -path */test.ts -not -path */tests/* -not -path */venv/*
 === File: packages/b_declarations/src/core/index.ts ===
 // b_path:: packages/b_declarations/src/core/index.ts
@@ -4815,6 +4815,7 @@ import { paddingLeft } from "./padding-left/definition";
 import { paddingRight } from "./padding-right/definition";
 import { paddingTop } from "./padding-top/definition";
 import { perspective } from "./perspective/definition";
+import { perspectiveOrigin } from "./perspective-origin/definition";
 import { transform } from "./transform/definition";
 import { transformOrigin } from "./transform-origin/definition";
 import { transformStyle } from "./transform-style/definition";
@@ -4885,6 +4886,7 @@ export const PROPERTY_DEFINITIONS = {
   "padding-right": paddingRight,
   "padding-top": paddingTop,
   perspective: perspective,
+  "perspective-origin": perspectiveOrigin,
   transform: transform,
   "transform-origin": transformOrigin,
   "transform-style": transformStyle,
@@ -5061,6 +5063,8 @@ export * from "./padding-bottom";
 export * from "./padding-left";
 export * from "./padding-right";
 export * from "./padding-top";
+export * from "./perspective";
+export * from "./perspective-origin";
 export * from "./transition-delay";
 export * from "./transition-duration";
 export * from "./transition-property";
@@ -6072,6 +6076,126 @@ import type { CssValue } from "@b/types";
 export type PaddingTopIR =
   | { kind: "keyword"; value: "initial" | "inherit" | "unset" | "revert" | "revert-layer" }
   | { kind: "value"; value: CssValue };
+
+
+=== File: packages/b_declarations/src/properties/perspective-origin/definition.ts ===
+// b_path:: packages/b_declarations/src/properties/perspective-origin/definition.ts
+
+import { defineProperty } from "../../core";
+import { parsePerspectiveOrigin } from "./parser";
+import { generatePerspectiveOrigin } from "./generator";
+import type { PerspectiveOriginIR } from "./types";
+
+export const perspectiveOrigin = defineProperty<PerspectiveOriginIR>({
+  name: "perspective-origin",
+  syntax: "<position>",
+  parser: parsePerspectiveOrigin,
+  generator: generatePerspectiveOrigin,
+  inherited: false,
+  initial: "50% 50%",
+});
+
+
+=== File: packages/b_declarations/src/properties/perspective-origin/generator.ts ===
+// b_path:: packages/b_declarations/src/properties/perspective-origin/generator.ts
+
+import { generateErr, generateOk, type GenerateResult } from "@b/types";
+import * as Generators from "@b/generators";
+import type { PerspectiveOriginIR } from "./types";
+
+export function generatePerspectiveOrigin(ir: PerspectiveOriginIR): GenerateResult {
+  if (ir.kind === "keyword") {
+    return generateOk(ir.value);
+  }
+
+  if (ir.kind === "position") {
+    const positionResult = Generators.Position.generate(ir.value);
+    if (!positionResult.ok) {
+      return positionResult;
+    }
+    return generateOk(positionResult.value);
+  }
+
+  return generateErr({ code: "invalid-value", severity: "error", message: "Invalid perspective-origin IR" });
+}
+
+
+=== File: packages/b_declarations/src/properties/perspective-origin/index.ts ===
+// b_path:: packages/b_declarations/src/properties/perspective-origin/index.ts
+
+export * from "./definition";
+export * from "./types";
+
+
+=== File: packages/b_declarations/src/properties/perspective-origin/parser.ts ===
+// b_path:: packages/b_declarations/src/properties/perspective-origin/parser.ts
+
+import type { ParseResult } from "@b/types";
+import * as Keywords from "@b/keywords";
+import * as Parsers from "@b/parsers";
+import type * as csstree from "@eslint/css-tree";
+import type { PerspectiveOriginIR } from "./types";
+
+export function parsePerspectiveOrigin(ast: csstree.Value): ParseResult<PerspectiveOriginIR> {
+  const firstNode = ast.children.first;
+
+  if (!firstNode) {
+    return {
+      ok: false,
+      property: "perspective-origin",
+      value: undefined,
+      issues: [{ code: "missing-value", severity: "error", message: "Empty value for perspective-origin" }],
+    };
+  }
+
+  if (firstNode.type === "Identifier") {
+    const name = firstNode.name.toLowerCase();
+    const cssWideResult = Keywords.cssWide.safeParse(name);
+    if (cssWideResult.success) {
+      return {
+        ok: true,
+        property: "perspective-origin",
+        value: { kind: "keyword", value: cssWideResult.data },
+        issues: [],
+      };
+    }
+  }
+
+  const nodes = Array.from(ast.children);
+  const positionResult = Parsers.Position.parsePosition2D(nodes, 0);
+
+  if (positionResult.ok) {
+    return {
+      ok: true,
+      property: "perspective-origin",
+      value: { kind: "position", value: positionResult.value.position },
+      issues: positionResult.issues,
+    };
+  }
+
+  return {
+    ok: false,
+    property: "perspective-origin",
+    value: undefined,
+    issues: positionResult.issues,
+  };
+}
+
+
+=== File: packages/b_declarations/src/properties/perspective-origin/types.ts ===
+// b_path:: packages/b_declarations/src/properties/perspective-origin/types.ts
+
+import type * as Type from "@b/types";
+
+export type PerspectiveOriginIR =
+  | {
+      kind: "keyword";
+      value: "initial" | "inherit" | "unset" | "revert" | "revert-layer";
+    }
+  | {
+      kind: "position";
+      value: Type.Position2D;
+    };
 
 
 === File: packages/b_declarations/src/properties/perspective/definition.ts ===
@@ -19258,5 +19382,3 @@ export default defineConfig({
     },
   },
 });
-
-

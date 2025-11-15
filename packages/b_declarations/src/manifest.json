@@ -1,6 +1,6 @@
 {
   "$schema": "./manifest.schema.json",
-  "generated": "2025-11-15T06:29:00.347Z",
+  "generated": "2025-11-15T06:38:15.520Z",
   "properties": {
     "animation-delay": {
       "name": "animation-delay",
@@ -385,6 +385,14 @@
       "initial": "none",
       "mode": "single",
       "irType": "PerspectiveIR"
+    },
+    "perspective-origin": {
+      "name": "perspective-origin",
+      "syntax": "<position>",
+      "inherited": false,
+      "initial": "50% 50%",
+      "mode": "single",
+      "irType": "PerspectiveOriginIR"
     },
     "transform": {
       "name": "transform",
