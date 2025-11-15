@@ -1,7 +1,3 @@
-Excluding patterns: 
-Documentation for LLMs
-Excluding patterns: 
-Excluding patterns: -not -path */__pycache__/* -not -path */__tests__/* -not -path */.git/* -not -path */.idea/* -not -path */.next/* -not -path */.venv/* -not -path */.vscode/* -not -path */*.spec.py -not -path */*.spec.ts -not -path */*.spec.tsx -not -path */*.test.py -not -path */*.test.ts -not -path */*.test.tsx -not -path */*test.py -not -path */*test.ts -not -path */*test.tsx -not -path */build/* -not -path */dist/* -not -path */me.ts -not -path */node_modules/* -not -path */test_*.py -not -path */test.ts -not -path */test.ts -not -path */tests/* -not -path */venv/*
 === File: packages/b_declarations/src/core/index.ts ===
 // b_path:: packages/b_declarations/src/core/index.ts
 export * from "./registry";
@@ -1821,6 +1817,7 @@ export function generateBackgroundAttachment(ir: BackgroundAttachmentIR): Genera
 
 === File: packages/b_declarations/src/properties/background-attachment/index.ts ===
 // b_path:: packages/b_declarations/src/properties/background-attachment/index.ts
+
 export * from "./types";
 export * from "./parser";
 export * from "./generator";
@@ -2047,6 +2044,7 @@ export function generateBackgroundClip(ir: BackgroundClipIR): GenerateResult {
 
 === File: packages/b_declarations/src/properties/background-clip/index.ts ===
 // b_path:: packages/b_declarations/src/properties/background-clip/index.ts
+
 export * from "./types";
 export * from "./parser";
 export * from "./generator";
@@ -2286,10 +2284,11 @@ export function generateBackgroundImage(ir: BackgroundImageIR): GenerateResult {
 
 === File: packages/b_declarations/src/properties/background-image/index.ts ===
 // b_path:: packages/b_declarations/src/properties/background-image/index.ts
-export * from "./definition";
-export * from "./generator";
-export * from "./parser";
+
 export * from "./types";
+export * from "./parser";
+export * from "./generator";
+export * from "./definition";
 
 
 === File: packages/b_declarations/src/properties/background-image/parser.ts ===
@@ -2408,6 +2407,7 @@ export function generateBackgroundOrigin(ir: BackgroundOriginIR): GenerateResult
 
 === File: packages/b_declarations/src/properties/background-origin/index.ts ===
 // b_path:: packages/b_declarations/src/properties/background-origin/index.ts
+
 export * from "./types";
 export * from "./parser";
 export * from "./generator";
@@ -2704,6 +2704,7 @@ export function generateBackgroundRepeat(ir: BackgroundRepeatIR): GenerateResult
 
 === File: packages/b_declarations/src/properties/background-repeat/index.ts ===
 // b_path:: packages/b_declarations/src/properties/background-repeat/index.ts
+
 export * from "./types";
 export * from "./parser";
 export * from "./generator";
@@ -4698,6 +4699,7 @@ export function generateCustomProperty(ir: CustomPropertyIR): GenerateResult {
 
 === File: packages/b_declarations/src/properties/custom-property/index.ts ===
 // b_path:: packages/b_declarations/src/properties/custom-property/index.ts
+
 export * from "./types";
 export * from "./parser";
 export * from "./generator";
@@ -4805,11 +4807,17 @@ import { borderTopWidth } from "./border-top-width/definition";
 import { color } from "./color/definition";
 import { filterProperty } from "./filter/definition";
 import { fontFamily } from "./font-family/definition";
+import { fontKerning } from "./font-kerning/definition";
+import { fontOpticalSizing } from "./font-optical-sizing/definition";
 import { fontSize } from "./font-size/definition";
 import { fontStretch } from "./font-stretch/definition";
 import { fontStyle } from "./font-style/definition";
 import { fontVariant } from "./font-variant/definition";
+import { fontVariantCaps } from "./font-variant-caps/definition";
+import { fontVariantLigatures } from "./font-variant-ligatures/definition";
+import { fontVariantNumeric } from "./font-variant-numeric/definition";
 import { fontWeight } from "./font-weight/definition";
+import { lineHeight } from "./line-height/definition";
 import { marginBottom } from "./margin-bottom/definition";
 import { marginLeft } from "./margin-left/definition";
 import { marginRight } from "./margin-right/definition";
@@ -4882,11 +4890,17 @@ export const PROPERTY_DEFINITIONS = {
   color: color,
   filter: filterProperty,
   "font-family": fontFamily,
+  "font-kerning": fontKerning,
+  "font-optical-sizing": fontOpticalSizing,
   "font-size": fontSize,
   "font-stretch": fontStretch,
   "font-style": fontStyle,
   "font-variant": fontVariant,
+  "font-variant-caps": fontVariantCaps,
+  "font-variant-ligatures": fontVariantLigatures,
+  "font-variant-numeric": fontVariantNumeric,
   "font-weight": fontWeight,
+  "line-height": lineHeight,
   "margin-bottom": marginBottom,
   "margin-left": marginLeft,
   "margin-right": marginRight,
@@ -5197,6 +5211,216 @@ export type FontFamilyIR =
       kind: "list";
       families: Array<Keywords.GenericFamily | string>;
     };
+
+
+=== File: packages/b_declarations/src/properties/font-kerning/definition.ts ===
+// b_path:: packages/b_declarations/src/properties/font-kerning/definition.ts
+
+import { defineProperty } from "../../core";
+import { parseFontKerning } from "./parser";
+import { generateFontKerning } from "./generator";
+import type { FontKerningIR } from "./types";
+
+export const fontKerning = defineProperty<FontKerningIR>({
+  name: "font-kerning",
+  syntax: "auto | normal | none",
+  parser: parseFontKerning,
+  generator: generateFontKerning,
+  inherited: true,
+  initial: "auto",
+});
+
+
+=== File: packages/b_declarations/src/properties/font-kerning/generator.ts ===
+// b_path:: packages/b_declarations/src/properties/font-kerning/generator.ts
+
+import { generateOk, type GenerateResult } from "@b/types";
+import type { FontKerningIR } from "./types";
+
+export function generateFontKerning(ir: FontKerningIR): GenerateResult {
+  return generateOk(ir.value);
+}
+
+
+=== File: packages/b_declarations/src/properties/font-kerning/index.ts ===
+// b_path:: packages/b_declarations/src/properties/font-kerning/index.ts
+
+export * from "./types";
+export * from "./parser";
+export * from "./generator";
+export * from "./definition";
+
+
+=== File: packages/b_declarations/src/properties/font-kerning/parser.ts ===
+// b_path:: packages/b_declarations/src/properties/font-kerning/parser.ts
+
+import type { ParseResult } from "@b/types";
+import * as Keywords from "@b/keywords";
+import type * as csstree from "@eslint/css-tree";
+import type { FontKerningIR } from "./types";
+
+export function parseFontKerning(ast: csstree.Value): ParseResult<FontKerningIR> {
+  const firstNode = ast.children.first;
+
+  if (!firstNode) {
+    return {
+      ok: false,
+      property: "font-kerning",
+      value: undefined,
+      issues: [{ code: "missing-value", severity: "error", message: "Empty value for font-kerning" }],
+    };
+  }
+
+  if (firstNode.type === "Identifier") {
+    const name = firstNode.name.toLowerCase();
+
+    const cssWideResult = Keywords.cssWide.safeParse(name);
+    if (cssWideResult.success) {
+      return {
+        ok: true,
+        property: "font-kerning",
+        value: { kind: "keyword", value: cssWideResult.data },
+        issues: [],
+      };
+    }
+
+    if (name === "auto" || name === "normal" || name === "none") {
+      return {
+        ok: true,
+        property: "font-kerning",
+        value: { kind: "keyword", value: name },
+        issues: [],
+      };
+    }
+  }
+
+  return {
+    ok: false,
+    property: "font-kerning",
+    value: undefined,
+    issues: [
+      {
+        code: "invalid-value",
+        severity: "error",
+        message: "Invalid value for font-kerning: expected auto, normal, or none",
+      },
+    ],
+  };
+}
+
+
+=== File: packages/b_declarations/src/properties/font-kerning/types.ts ===
+// b_path:: packages/b_declarations/src/properties/font-kerning/types.ts
+
+export type FontKerningIR = {
+  kind: "keyword";
+  value: "auto" | "normal" | "none" | "inherit" | "initial" | "revert" | "revert-layer" | "unset";
+};
+
+
+=== File: packages/b_declarations/src/properties/font-optical-sizing/definition.ts ===
+// b_path:: packages/b_declarations/src/properties/font-optical-sizing/definition.ts
+
+import { defineProperty } from "../../core";
+import { parseFontOpticalSizing } from "./parser";
+import { generateFontOpticalSizing } from "./generator";
+import type { FontOpticalSizingIR } from "./types";
+
+export const fontOpticalSizing = defineProperty<FontOpticalSizingIR>({
+  name: "font-optical-sizing",
+  syntax: "auto | none",
+  parser: parseFontOpticalSizing,
+  generator: generateFontOpticalSizing,
+  inherited: true,
+  initial: "auto",
+});
+
+
+=== File: packages/b_declarations/src/properties/font-optical-sizing/generator.ts ===
+// b_path:: packages/b_declarations/src/properties/font-optical-sizing/generator.ts
+
+import { generateOk, type GenerateResult } from "@b/types";
+import type { FontOpticalSizingIR } from "./types";
+
+export function generateFontOpticalSizing(ir: FontOpticalSizingIR): GenerateResult {
+  return generateOk(ir.value);
+}
+
+
+=== File: packages/b_declarations/src/properties/font-optical-sizing/index.ts ===
+// b_path:: packages/b_declarations/src/properties/font-optical-sizing/index.ts
+
+export * from "./types";
+export * from "./parser";
+export * from "./generator";
+export * from "./definition";
+
+
+=== File: packages/b_declarations/src/properties/font-optical-sizing/parser.ts ===
+// b_path:: packages/b_declarations/src/properties/font-optical-sizing/parser.ts
+
+import type { ParseResult } from "@b/types";
+import * as Keywords from "@b/keywords";
+import type * as csstree from "@eslint/css-tree";
+import type { FontOpticalSizingIR } from "./types";
+
+export function parseFontOpticalSizing(ast: csstree.Value): ParseResult<FontOpticalSizingIR> {
+  const firstNode = ast.children.first;
+
+  if (!firstNode) {
+    return {
+      ok: false,
+      property: "font-optical-sizing",
+      value: undefined,
+      issues: [{ code: "missing-value", severity: "error", message: "Empty value for font-optical-sizing" }],
+    };
+  }
+
+  if (firstNode.type === "Identifier") {
+    const name = firstNode.name.toLowerCase();
+
+    const cssWideResult = Keywords.cssWide.safeParse(name);
+    if (cssWideResult.success) {
+      return {
+        ok: true,
+        property: "font-optical-sizing",
+        value: { kind: "keyword", value: cssWideResult.data },
+        issues: [],
+      };
+    }
+
+    if (name === "auto" || name === "none") {
+      return {
+        ok: true,
+        property: "font-optical-sizing",
+        value: { kind: "keyword", value: name },
+        issues: [],
+      };
+    }
+  }
+
+  return {
+    ok: false,
+    property: "font-optical-sizing",
+    value: undefined,
+    issues: [
+      {
+        code: "invalid-value",
+        severity: "error",
+        message: "Invalid value for font-optical-sizing: expected auto or none",
+      },
+    ],
+  };
+}
+
+
+=== File: packages/b_declarations/src/properties/font-optical-sizing/types.ts ===
+// b_path:: packages/b_declarations/src/properties/font-optical-sizing/types.ts
+
+export type FontOpticalSizingIR = {
+  kind: "keyword";
+  value: "auto" | "none" | "inherit" | "initial" | "revert" | "revert-layer" | "unset";
+};
 
 
 === File: packages/b_declarations/src/properties/font-size/definition.ts ===
@@ -5583,6 +5807,381 @@ export type FontStyleIR =
     };
 
 
+=== File: packages/b_declarations/src/properties/font-variant-caps/definition.ts ===
+// b_path:: packages/b_declarations/src/properties/font-variant-caps/definition.ts
+
+import { defineProperty } from "../../core";
+import { parseFontVariantCaps } from "./parser";
+import { generateFontVariantCaps } from "./generator";
+import type { FontVariantCapsIR } from "./types";
+
+export const fontVariantCaps = defineProperty<FontVariantCapsIR>({
+  name: "font-variant-caps",
+  syntax: "normal | small-caps | all-small-caps | petite-caps | all-petite-caps | unicase | titling-caps",
+  parser: parseFontVariantCaps,
+  generator: generateFontVariantCaps,
+  inherited: true,
+  initial: "normal",
+});
+
+
+=== File: packages/b_declarations/src/properties/font-variant-caps/generator.ts ===
+// b_path:: packages/b_declarations/src/properties/font-variant-caps/generator.ts
+
+import { generateOk, type GenerateResult } from "@b/types";
+import type { FontVariantCapsIR } from "./types";
+
+export function generateFontVariantCaps(ir: FontVariantCapsIR): GenerateResult {
+  return generateOk(ir.value);
+}
+
+
+=== File: packages/b_declarations/src/properties/font-variant-caps/index.ts ===
+// b_path:: packages/b_declarations/src/properties/font-variant-caps/index.ts
+
+export * from "./types";
+export * from "./parser";
+export * from "./generator";
+export * from "./definition";
+
+
+=== File: packages/b_declarations/src/properties/font-variant-caps/parser.ts ===
+// b_path:: packages/b_declarations/src/properties/font-variant-caps/parser.ts
+
+import type { ParseResult } from "@b/types";
+import * as Keywords from "@b/keywords";
+import type * as csstree from "@eslint/css-tree";
+import type { FontVariantCapsIR } from "./types";
+
+const VALID_CAPS = [
+  "normal",
+  "small-caps",
+  "all-small-caps",
+  "petite-caps",
+  "all-petite-caps",
+  "unicase",
+  "titling-caps",
+] as const;
+
+export function parseFontVariantCaps(ast: csstree.Value): ParseResult<FontVariantCapsIR> {
+  const firstNode = ast.children.first;
+
+  if (!firstNode) {
+    return {
+      ok: false,
+      property: "font-variant-caps",
+      value: undefined,
+      issues: [{ code: "missing-value", severity: "error", message: "Empty value for font-variant-caps" }],
+    };
+  }
+
+  if (firstNode.type === "Identifier") {
+    const name = firstNode.name.toLowerCase();
+
+    const cssWideResult = Keywords.cssWide.safeParse(name);
+    if (cssWideResult.success) {
+      return {
+        ok: true,
+        property: "font-variant-caps",
+        value: { kind: "keyword", value: cssWideResult.data },
+        issues: [],
+      };
+    }
+
+    if (VALID_CAPS.includes(name as (typeof VALID_CAPS)[number])) {
+      return {
+        ok: true,
+        property: "font-variant-caps",
+        value: { kind: "keyword", value: name as FontVariantCapsIR["value"] },
+        issues: [],
+      };
+    }
+  }
+
+  return {
+    ok: false,
+    property: "font-variant-caps",
+    value: undefined,
+    issues: [{ code: "invalid-value", severity: "error", message: "Invalid font-variant-caps value" }],
+  };
+}
+
+
+=== File: packages/b_declarations/src/properties/font-variant-caps/types.ts ===
+// b_path:: packages/b_declarations/src/properties/font-variant-caps/types.ts
+
+export type FontVariantCapsIR = {
+  kind: "keyword";
+  value:
+    | "normal"
+    | "small-caps"
+    | "all-small-caps"
+    | "petite-caps"
+    | "all-petite-caps"
+    | "unicase"
+    | "titling-caps"
+    | "inherit"
+    | "initial"
+    | "revert"
+    | "revert-layer"
+    | "unset";
+};
+
+
+=== File: packages/b_declarations/src/properties/font-variant-ligatures/definition.ts ===
+// b_path:: packages/b_declarations/src/properties/font-variant-ligatures/definition.ts
+
+import { defineProperty } from "../../core";
+import { parseFontVariantLigatures } from "./parser";
+import { generateFontVariantLigatures } from "./generator";
+import type { FontVariantLigaturesIR } from "./types";
+
+export const fontVariantLigatures = defineProperty<FontVariantLigaturesIR>({
+  name: "font-variant-ligatures",
+  syntax:
+    "normal | none | [ common-ligatures | no-common-ligatures ] || [ discretionary-ligatures | no-discretionary-ligatures ] || [ historical-ligatures | no-historical-ligatures ] || [ contextual | no-contextual ]",
+  parser: parseFontVariantLigatures,
+  generator: generateFontVariantLigatures,
+  inherited: true,
+  initial: "normal",
+});
+
+
+=== File: packages/b_declarations/src/properties/font-variant-ligatures/generator.ts ===
+// b_path:: packages/b_declarations/src/properties/font-variant-ligatures/generator.ts
+
+import { generateOk, type GenerateResult } from "@b/types";
+import type { FontVariantLigaturesIR } from "./types";
+
+export function generateFontVariantLigatures(ir: FontVariantLigaturesIR): GenerateResult {
+  return generateOk(ir.value);
+}
+
+
+=== File: packages/b_declarations/src/properties/font-variant-ligatures/index.ts ===
+// b_path:: packages/b_declarations/src/properties/font-variant-ligatures/index.ts
+
+export * from "./types";
+export * from "./parser";
+export * from "./generator";
+export * from "./definition";
+
+
+=== File: packages/b_declarations/src/properties/font-variant-ligatures/parser.ts ===
+// b_path:: packages/b_declarations/src/properties/font-variant-ligatures/parser.ts
+
+import type { ParseResult } from "@b/types";
+import * as Keywords from "@b/keywords";
+import type * as csstree from "@eslint/css-tree";
+import type { FontVariantLigaturesIR } from "./types";
+
+const VALID_LIGATURES = [
+  "normal",
+  "none",
+  "common-ligatures",
+  "no-common-ligatures",
+  "discretionary-ligatures",
+  "no-discretionary-ligatures",
+  "historical-ligatures",
+  "no-historical-ligatures",
+  "contextual",
+  "no-contextual",
+] as const;
+
+export function parseFontVariantLigatures(ast: csstree.Value): ParseResult<FontVariantLigaturesIR> {
+  const firstNode = ast.children.first;
+
+  if (!firstNode) {
+    return {
+      ok: false,
+      property: "font-variant-ligatures",
+      value: undefined,
+      issues: [{ code: "missing-value", severity: "error", message: "Empty value for font-variant-ligatures" }],
+    };
+  }
+
+  if (firstNode.type === "Identifier") {
+    const name = firstNode.name.toLowerCase();
+
+    const cssWideResult = Keywords.cssWide.safeParse(name);
+    if (cssWideResult.success) {
+      return {
+        ok: true,
+        property: "font-variant-ligatures",
+        value: { kind: "keyword", value: cssWideResult.data },
+        issues: [],
+      };
+    }
+
+    if (VALID_LIGATURES.includes(name as (typeof VALID_LIGATURES)[number])) {
+      return {
+        ok: true,
+        property: "font-variant-ligatures",
+        value: { kind: "keyword", value: name as FontVariantLigaturesIR["value"] },
+        issues: [],
+      };
+    }
+  }
+
+  return {
+    ok: false,
+    property: "font-variant-ligatures",
+    value: undefined,
+    issues: [{ code: "invalid-value", severity: "error", message: "Invalid font-variant-ligatures value" }],
+  };
+}
+
+
+=== File: packages/b_declarations/src/properties/font-variant-ligatures/types.ts ===
+// b_path:: packages/b_declarations/src/properties/font-variant-ligatures/types.ts
+
+export type FontVariantLigaturesIR = {
+  kind: "keyword";
+  value:
+    | "normal"
+    | "none"
+    | "common-ligatures"
+    | "no-common-ligatures"
+    | "discretionary-ligatures"
+    | "no-discretionary-ligatures"
+    | "historical-ligatures"
+    | "no-historical-ligatures"
+    | "contextual"
+    | "no-contextual"
+    | "inherit"
+    | "initial"
+    | "revert"
+    | "revert-layer"
+    | "unset";
+};
+
+
+=== File: packages/b_declarations/src/properties/font-variant-numeric/definition.ts ===
+// b_path:: packages/b_declarations/src/properties/font-variant-numeric/definition.ts
+
+import { defineProperty } from "../../core";
+import { parseFontVariantNumeric } from "./parser";
+import { generateFontVariantNumeric } from "./generator";
+import type { FontVariantNumericIR } from "./types";
+
+export const fontVariantNumeric = defineProperty<FontVariantNumericIR>({
+  name: "font-variant-numeric",
+  syntax:
+    "normal | [ lining-nums | oldstyle-nums ] || [ proportional-nums | tabular-nums ] || [ diagonal-fractions | stacked-fractions ] || ordinal || slashed-zero",
+  parser: parseFontVariantNumeric,
+  generator: generateFontVariantNumeric,
+  inherited: true,
+  initial: "normal",
+});
+
+
+=== File: packages/b_declarations/src/properties/font-variant-numeric/generator.ts ===
+// b_path:: packages/b_declarations/src/properties/font-variant-numeric/generator.ts
+
+import { generateOk, type GenerateResult } from "@b/types";
+import type { FontVariantNumericIR } from "./types";
+
+export function generateFontVariantNumeric(ir: FontVariantNumericIR): GenerateResult {
+  return generateOk(ir.value);
+}
+
+
+=== File: packages/b_declarations/src/properties/font-variant-numeric/index.ts ===
+// b_path:: packages/b_declarations/src/properties/font-variant-numeric/index.ts
+
+export * from "./types";
+export * from "./parser";
+export * from "./generator";
+export * from "./definition";
+
+
+=== File: packages/b_declarations/src/properties/font-variant-numeric/parser.ts ===
+// b_path:: packages/b_declarations/src/properties/font-variant-numeric/parser.ts
+
+import type { ParseResult } from "@b/types";
+import * as Keywords from "@b/keywords";
+import type * as csstree from "@eslint/css-tree";
+import type { FontVariantNumericIR } from "./types";
+
+const VALID_NUMERIC = [
+  "normal",
+  "lining-nums",
+  "oldstyle-nums",
+  "proportional-nums",
+  "tabular-nums",
+  "diagonal-fractions",
+  "stacked-fractions",
+  "ordinal",
+  "slashed-zero",
+] as const;
+
+export function parseFontVariantNumeric(ast: csstree.Value): ParseResult<FontVariantNumericIR> {
+  const firstNode = ast.children.first;
+
+  if (!firstNode) {
+    return {
+      ok: false,
+      property: "font-variant-numeric",
+      value: undefined,
+      issues: [{ code: "missing-value", severity: "error", message: "Empty value for font-variant-numeric" }],
+    };
+  }
+
+  if (firstNode.type === "Identifier") {
+    const name = firstNode.name.toLowerCase();
+
+    const cssWideResult = Keywords.cssWide.safeParse(name);
+    if (cssWideResult.success) {
+      return {
+        ok: true,
+        property: "font-variant-numeric",
+        value: { kind: "keyword", value: cssWideResult.data },
+        issues: [],
+      };
+    }
+
+    if (VALID_NUMERIC.includes(name as (typeof VALID_NUMERIC)[number])) {
+      return {
+        ok: true,
+        property: "font-variant-numeric",
+        value: { kind: "keyword", value: name as FontVariantNumericIR["value"] },
+        issues: [],
+      };
+    }
+  }
+
+  return {
+    ok: false,
+    property: "font-variant-numeric",
+    value: undefined,
+    issues: [{ code: "invalid-value", severity: "error", message: "Invalid font-variant-numeric value" }],
+  };
+}
+
+
+=== File: packages/b_declarations/src/properties/font-variant-numeric/types.ts ===
+// b_path:: packages/b_declarations/src/properties/font-variant-numeric/types.ts
+
+export type FontVariantNumericIR = {
+  kind: "keyword";
+  value:
+    | "normal"
+    | "lining-nums"
+    | "oldstyle-nums"
+    | "proportional-nums"
+    | "tabular-nums"
+    | "diagonal-fractions"
+    | "stacked-fractions"
+    | "ordinal"
+    | "slashed-zero"
+    | "inherit"
+    | "initial"
+    | "revert"
+    | "revert-layer"
+    | "unset";
+};
+
+
 === File: packages/b_declarations/src/properties/font-variant/definition.ts ===
 // b_path:: packages/b_declarations/src/properties/font-variant/definition.ts
 
@@ -5834,12 +6433,29 @@ export type FontWeightIR =
 === File: packages/b_declarations/src/properties/index.ts ===
 // b_path:: packages/b_declarations/src/properties/index.ts
 
+/**
+ * Central property exports.
+ *
+ * ⚠️ THIS FILE IS AUTO-GENERATED. DO NOT EDIT MANUALLY.
+ *
+ * Run: pnpm generate:definitions
+ */
+
 // Central definitions export (single source of truth)
 export * from "./definitions";
 
 // Import before other properties that might depend on it
 export * from "./custom-property";
 
+export * from "./animation-delay";
+export * from "./animation-direction";
+export * from "./animation-duration";
+export * from "./animation-fill-mode";
+export * from "./animation-iteration-count";
+export * from "./animation-name";
+export * from "./animation-play-state";
+export * from "./animation-timing-function";
+export * from "./backdrop-filter";
 export * from "./background-attachment";
 export * from "./background-blend-mode";
 export * from "./background-clip";
@@ -5866,26 +6482,158 @@ export * from "./border-top-left-radius";
 export * from "./border-top-right-radius";
 export * from "./border-top-style";
 export * from "./border-top-width";
+export * from "./color";
+export * from "./filter";
+export * from "./font-family";
+export * from "./font-kerning";
+export * from "./font-optical-sizing";
+export * from "./font-size";
+export * from "./font-stretch";
+export * from "./font-style";
+export * from "./font-variant";
+export * from "./font-variant-caps";
+export * from "./font-variant-ligatures";
+export * from "./font-variant-numeric";
+export * from "./font-weight";
+export * from "./line-height";
 export * from "./margin-bottom";
 export * from "./margin-left";
 export * from "./margin-right";
 export * from "./margin-top";
 export * from "./mix-blend-mode";
+export * from "./opacity";
 export * from "./padding-bottom";
 export * from "./padding-left";
 export * from "./padding-right";
 export * from "./padding-top";
 export * from "./perspective";
 export * from "./perspective-origin";
+export * from "./transform";
+export * from "./transform-origin";
+export * from "./transform-style";
 export * from "./transition-delay";
 export * from "./transition-duration";
 export * from "./transition-property";
 export * from "./transition-timing-function";
+export * from "./visibility";
 
 // Mark registry as initialized after all properties are loaded
 // This is a side-effect import that happens when this module is imported
 import { propertyRegistry } from "../core/registry";
 propertyRegistry.markInitialized();
+
+
+=== File: packages/b_declarations/src/properties/line-height/definition.ts ===
+// b_path:: packages/b_declarations/src/properties/line-height/definition.ts
+
+import { defineProperty } from "../../core";
+import { parseLineHeight } from "./parser";
+import { generateLineHeight } from "./generator";
+import type { LineHeightIR } from "./types";
+
+export const lineHeight = defineProperty<LineHeightIR>({
+  name: "line-height",
+  syntax: "normal | <number [0,∞]> | <length-percentage [0,∞]> | math",
+  parser: parseLineHeight,
+  generator: generateLineHeight,
+  inherited: true,
+  initial: "normal",
+});
+
+
+=== File: packages/b_declarations/src/properties/line-height/generator.ts ===
+// b_path:: packages/b_declarations/src/properties/line-height/generator.ts
+
+import { generateOk, type GenerateResult } from "@b/types";
+import { cssValueToCss } from "@b/utils";
+import type { LineHeightIR } from "./types";
+
+export function generateLineHeight(ir: LineHeightIR): GenerateResult {
+  if (ir.kind === "keyword") {
+    return generateOk(ir.value);
+  }
+
+  const css = cssValueToCss(ir.value);
+  return generateOk(css);
+}
+
+
+=== File: packages/b_declarations/src/properties/line-height/index.ts ===
+// b_path:: packages/b_declarations/src/properties/line-height/index.ts
+
+export * from "./types";
+export * from "./parser";
+export * from "./generator";
+export * from "./definition";
+
+
+=== File: packages/b_declarations/src/properties/line-height/parser.ts ===
+// b_path:: packages/b_declarations/src/properties/line-height/parser.ts
+
+import type { ParseResult } from "@b/types";
+import * as Keywords from "@b/keywords";
+import * as Parsers from "@b/parsers";
+import type * as csstree from "@eslint/css-tree";
+import type { LineHeightIR } from "./types";
+
+export function parseLineHeight(ast: csstree.Value): ParseResult<LineHeightIR> {
+  const firstNode = ast.children.first;
+
+  if (!firstNode) {
+    return {
+      ok: false,
+      property: "line-height",
+      value: undefined,
+      issues: [{ code: "missing-value", severity: "error", message: "Empty value for line-height" }],
+    };
+  }
+
+  if (firstNode.type === "Identifier") {
+    const name = firstNode.name.toLowerCase();
+
+    const cssWideResult = Keywords.cssWide.safeParse(name);
+    if (cssWideResult.success) {
+      return {
+        ok: true,
+        property: "line-height",
+        value: { kind: "keyword", value: cssWideResult.data },
+        issues: [],
+      };
+    }
+
+    if (name === "normal") {
+      return {
+        ok: true,
+        property: "line-height",
+        value: { kind: "keyword", value: "normal" },
+        issues: [],
+      };
+    }
+  }
+
+  const valueResult = Parsers.Utils.parseNodeToCssValue(firstNode);
+
+  if (valueResult.ok) {
+    return {
+      ok: true,
+      property: "line-height",
+      value: { kind: "value", value: valueResult.value },
+      issues: valueResult.issues,
+    };
+  }
+
+  return valueResult as ParseResult<LineHeightIR>;
+}
+
+
+=== File: packages/b_declarations/src/properties/line-height/types.ts ===
+// b_path:: packages/b_declarations/src/properties/line-height/types.ts
+
+import type { CssValue } from "@b/types";
+
+export type LineHeightIR =
+  | { kind: "keyword"; value: "normal" | "inherit" | "initial" | "revert" | "revert-layer" | "unset" }
+  | { kind: "value"; value: CssValue };
 
 
 === File: packages/b_declarations/src/properties/margin-bottom/definition.ts ===
@@ -6935,8 +7683,10 @@ export function generatePerspectiveOrigin(ir: PerspectiveOriginIR): GenerateResu
 === File: packages/b_declarations/src/properties/perspective-origin/index.ts ===
 // b_path:: packages/b_declarations/src/properties/perspective-origin/index.ts
 
-export * from "./definition";
 export * from "./types";
+export * from "./parser";
+export * from "./generator";
+export * from "./definition";
 
 
 === File: packages/b_declarations/src/properties/perspective-origin/parser.ts ===
@@ -20352,5 +21102,3 @@ export default defineConfig({
     },
   },
 });
-
-

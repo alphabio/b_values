@@ -43,7 +43,7 @@
           "$ref": "#/definitions/Requirements"
         }
       },
-      "required": ["name", "syntax", "inherited", "initial", "mode", "requirements"]
+      "required": ["name", "syntax", "inherited", "initial", "mode"]
     },
     "Requirements": {
       "type": "object",
@@ -77,7 +77,7 @@
           "description": "CSS universal functions support: auto (include), none (exclude), explicit (manual)"
         }
       },
-      "required": ["types", "parser", "generator"]
+      "required": ["types"]
     }
   }
 }
