@@ -1,6 +1,6 @@
 {
   "$schema": "./manifest.schema.json",
-  "generated": "2025-11-15T08:41:24.366Z",
+  "generated": "2025-11-15T08:43:57.660Z",
   "properties": {
     "animation-delay": {
       "name": "animation-delay",
@@ -305,6 +305,22 @@
       "initial": "serif",
       "mode": "single",
       "irType": "FontFamilyIR"
+    },
+    "font-kerning": {
+      "name": "font-kerning",
+      "syntax": "auto | normal | none",
+      "inherited": true,
+      "initial": "auto",
+      "mode": "single",
+      "irType": "FontKerningIR"
+    },
+    "font-optical-sizing": {
+      "name": "font-optical-sizing",
+      "syntax": "auto | none",
+      "inherited": true,
+      "initial": "auto",
+      "mode": "single",
+      "irType": "FontOpticalSizingIR"
     },
     "font-size": {
       "name": "font-size",

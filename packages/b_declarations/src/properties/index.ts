@@ -33,6 +33,8 @@ export * from "./border-top-right-radius";
 export * from "./border-top-style";
 export * from "./border-top-width";
 export * from "./font-family";
+export * from "./font-kerning";
+export * from "./font-optical-sizing";
 export * from "./font-size";
 export * from "./font-stretch";
 export * from "./font-style";

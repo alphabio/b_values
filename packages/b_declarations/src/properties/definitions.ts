@@ -64,6 +64,8 @@ import { borderTopWidth } from "./border-top-width/definition";
 import { color } from "./color/definition";
 import { filterProperty } from "./filter/definition";
 import { fontFamily } from "./font-family/definition";
+import { fontKerning } from "./font-kerning/definition";
+import { fontOpticalSizing } from "./font-optical-sizing/definition";
 import { fontSize } from "./font-size/definition";
 import { fontStretch } from "./font-stretch/definition";
 import { fontStyle } from "./font-style/definition";
@@ -142,6 +144,8 @@ export const PROPERTY_DEFINITIONS = {
   color: color,
   filter: filterProperty,
   "font-family": fontFamily,
+  "font-kerning": fontKerning,
+  "font-optical-sizing": fontOpticalSizing,
   "font-size": fontSize,
   "font-stretch": fontStretch,
   "font-style": fontStyle,
