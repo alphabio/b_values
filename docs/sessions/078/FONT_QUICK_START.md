@@ -7,6 +7,7 @@
 ## 🎯 TL;DR
 
 **Implementing 7 font properties** (NO shorthands):
+
 - `font-family` ⭐⭐⭐ (hardest - quote logic)
 - `font-size` ⭐⭐⭐ (medium - multiple unions)
 - `font-weight` ⭐⭐ (medium - numeric validation)
@@ -22,11 +23,13 @@
 ## 📚 Prerequisites
 
 ### Read These Documents First
+
 1. `docs/architecture/decisions/001-longhands-only.md` - NO SHORTHANDS
 2. `docs/architecture/patterns/006-PROPERTY_CREATION_HANDBOOK.md` - How to create properties
 3. `TMP/FONT_MASTER_PLAN.md` - Full implementation plan
 
 ### Study Existing Patterns
+
 ```bash
 # Simple keyword property (like font-stretch)
 cat packages/b_declarations/src/properties/background-attachment/types.ts
@@ -66,6 +69,7 @@ cat packages/b_parsers/src/length.ts
 ## 🔑 Key Design Decisions
 
 ### Font-Family
+
 ```typescript
 // Three distinct types:
 // 1. String literal: "Times New Roman"
@@ -79,6 +83,7 @@ cat packages/b_parsers/src/length.ts
 ```
 
 ### Font-Weight
+
 ```typescript
 // Accept:
 // - Keywords: normal (400), bold (700), bolder, lighter
@@ -86,12 +91,12 @@ cat packages/b_parsers/src/length.ts
 
 // Validation:
 if (value < 1 || value > 1000) {
-  return parseErr("font-weight", createError("invalid-value", 
-    `Font weight must be between 1 and 1000, got ${value}`));
+  return parseErr("font-weight", createError("invalid-value", `Font weight must be between 1 and 1000, got ${value}`));
 }
 ```
 
 ### Font-Style
+
 ```typescript
 // Oblique with optional angle:
 // - "oblique" alone → no angle specified
@@ -99,12 +104,15 @@ if (value < 1 || value > 1000) {
 
 // Validation:
 if (angle < -90 || angle > 90) {
-  return parseErr("font-style", createError("invalid-value",
-    `Oblique angle must be between -90deg and 90deg, got ${angle}`));
+  return parseErr(
+    "font-style",
+    createError("invalid-value", `Oblique angle must be between -90deg and 90deg, got ${angle}`)
+  );
 }
 ```
 
 ### Font-Size
+
 ```typescript
 // Four union branches:
 // 1. absolute-size: xx-small, x-small, small, medium, large, x-large, xx-large, xxx-large
@@ -116,6 +124,7 @@ if (angle < -90 || angle > 90) {
 ```
 
 ### Line-Height
+
 ```typescript
 // Three union branches:
 // 1. normal keyword
@@ -124,8 +133,7 @@ if (angle < -90 || angle > 90) {
 
 // Validation: non-negative values only
 if (value < 0) {
-  return parseErr("line-height", createError("invalid-value",
-    `Line height must be non-negative, got ${value}`));
+  return parseErr("line-height", createError("invalid-value", `Line height must be non-negative, got ${value}`));
 }
 ```
 
@@ -149,6 +157,7 @@ packages/b_declarations/src/properties/font-{name}/
 ### Example: font-stretch (Simplest)
 
 **types.ts:**
+
 ```typescript
 import { z } from "zod";
 import * as Keywords from "@b/keywords";
@@ -162,6 +171,7 @@ export type FontStretchIR = z.infer<typeof fontStretchIRSchema>;
 ```
 
 **parser.ts:**
+
 ```typescript
 import type * as csstree from "@eslint/css-tree";
 import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
@@ -170,7 +180,7 @@ import type { FontStretchIR } from "./types";
 
 export function parseFontStretch(ast: csstree.Value): ParseResult<FontStretchIR> {
   const firstNode = ast.children.first;
-  
+
   if (!firstNode || firstNode.type !== "Identifier") {
     return parseErr("font-stretch", createError("invalid-syntax", "Expected keyword value"));
   }
@@ -249,6 +259,7 @@ For EACH property:
 5. **Line-height unitless**: Confirm it's a multiplier, not pixels
 
 **Resources:**
+
 - CSS Fonts Module Level 4: https://www.w3.org/TR/css-fonts-4/
 - MDN font properties: https://developer.mozilla.org/en-US/docs/Web/CSS/font
 

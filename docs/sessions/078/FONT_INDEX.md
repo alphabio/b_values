@@ -7,6 +7,7 @@
 ## 📄 Documents
 
 ### 1. **FONT_SUMMARY.txt** ⭐ START HERE
+
 - Visual roadmap with ASCII art
 - High-level overview of all 7 properties
 - Phase breakdown and time estimates
@@ -17,6 +18,7 @@
 ---
 
 ### 2. **FONT_QUICK_START.md** 🚀 DEVELOPER GUIDE
+
 - Implementation order and rationale
 - File structure templates
 - Example code snippets (font-stretch)
@@ -29,6 +31,7 @@
 ---
 
 ### 3. **FONT_MASTER_PLAN.md** 📖 FULL SPECIFICATION
+
 - Complete property inventory (7 properties)
 - Infrastructure requirements (keywords, types, parsers, generators)
 - Detailed design decisions with code examples
@@ -91,6 +94,7 @@ Total: ~15 hours
 ## 🔑 Key Insights
 
 ### Why this order?
+
 1. **font-stretch** (easiest) → Establish workflow
 2. **font-variant** (simple) → Build confidence
 3. **font-weight** (medium) → Learn numeric validation
@@ -99,13 +103,17 @@ Total: ~15 hours
 6. **font-family** (hardest) → Tackle quoting logic last
 
 ### What's the hardest part?
+
 **font-family quoting rules:**
+
 - String literals always quoted: `"Times New Roman"`
 - Custom-idents conditionally quoted: `Times New Roman` vs `"Special Font!"`
 - Generic families never quoted: `serif`, `sans-serif`
 
 ### What's the most important validation?
+
 **font-weight numeric range: 1-1000**
+
 - Accept: `1`, `400`, `700`, `1000`
 - Reject: `0`, `1001`, `-100`
 
@@ -127,7 +135,7 @@ Total: ~15 hours
    - Oblique default angle: Find spec value
 
 4. **Test coverage expectations**
-   - >90% coverage per property
+   - > 90% coverage per property
    - Parser + Generator test suites
 
 5. **Validation is non-negotiable**
@@ -140,10 +148,12 @@ Total: ~15 hours
 ## 📚 External Resources
 
 ### Specifications
+
 - CSS Fonts Module Level 4: https://www.w3.org/TR/css-fonts-4/
 - CSS Values and Units Level 4: https://www.w3.org/TR/css-values-4/
 
 ### MDN References
+
 - font-family: https://developer.mozilla.org/en-US/docs/Web/CSS/font-family
 - font-size: https://developer.mozilla.org/en-US/docs/Web/CSS/font-size
 - font-weight: https://developer.mozilla.org/en-US/docs/Web/CSS/font-weight
@@ -151,6 +161,7 @@ Total: ~15 hours
 - line-height: https://developer.mozilla.org/en-US/docs/Web/CSS/line-height
 
 ### Internal Docs
+
 - ADR 001: Longhands Only (`docs/architecture/decisions/001-longhands-only.md`)
 - Property Creation Handbook (`docs/architecture/patterns/006-PROPERTY_CREATION_HANDBOOK.md`)
 

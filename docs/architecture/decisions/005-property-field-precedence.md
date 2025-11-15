@@ -13,13 +13,13 @@ Both `ParseResult`/`GenerateResult` and individual `Issue` objects have an optio
 ```typescript
 type ParseResult<T> = {
   ok: boolean;
-  property?: string;  // Top-level property name
+  property?: string; // Top-level property name
   value?: T;
-  issues: Issue[];    // Each issue may have its own property field
+  issues: Issue[]; // Each issue may have its own property field
 };
 
 interface Issue {
-  property?: string;  // Issue-specific property name
+  property?: string; // Issue-specific property name
   // ...
 }
 ```
@@ -34,10 +34,8 @@ This dual presence creates ambiguity: when both are set, which one should consum
 
 1. **Issue.property (if set)** - Use this value. It's the most specific context.
    - Example: Nested color parser sets `issue.property = "color"` when parsing a gradient color stop
-   
 2. **Result.property (if set)** - Fallback for issues without specific property.
    - Example: Top-level `"background-image"` stamps all issues from nested parsers that don't set property
-   
 3. **Neither set** - Generic/reusable parser with no property context (rare)
 
 ### Implementation Pattern
@@ -46,9 +44,7 @@ The `stampIssues()` utility in `b_declarations/src/generator.ts` already impleme
 
 ```typescript
 function stampIssues(issues: Issue[], property: string): Issue[] {
-  return issues.map(issue => 
-    issue.property ? issue : { ...issue, property }
-  );
+  return issues.map((issue) => (issue.property ? issue : { ...issue, property }));
 }
 ```
 
@@ -103,8 +99,8 @@ stampIssues(result.issues, "transform");
 
 ```typescript
 createMultiValueParser({
-  propertyName: "background-size",  // Stamps result.property
-  itemParser: (ast) => parseBackgroundSize(ast)  // May set issue.property
+  propertyName: "background-size", // Stamps result.property
+  itemParser: (ast) => parseBackgroundSize(ast), // May set issue.property
 });
 
 // Result.property = "background-size" (fallback)
