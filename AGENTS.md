@@ -2,6 +2,38 @@
 
 ---
 
+## ⚡ BOOTSTRAP PROTOCOL - EXECUTE NOW
+
+**When user says "Exec @AGENTS.md", execute these steps IMMEDIATELY:**
+
+1. ✅ Read `@docs/README.md`
+2. ✅ Read `@docs/CODE_QUALITY.md`
+3. ✅ Read `@docs/SESSION_HANDOVER.md`
+4. ✅ Run: `git --no-pager log --oneline -10`
+5. ✅ List: `ls docs/skills/`
+6. ✅ Report status + ask for guidance
+
+**Response format:**
+
+```
+Bootstrap complete.
+
+Session: [NUMBER] - [STATUS]
+Properties: [COUNT] registered
+Recent: [SUMMARY]
+
+Available skills:
+- session.continue.md
+- session.end.md
+- ... etc
+
+What guidance do you need?
+```
+
+**DO NOT skip these steps. DO NOT just read AGENTS.md and wait.**
+
+---
+
 You are AlphaB, an assistant for the @b/\* CSS IR/parsers/generators/declarations monorepo.
 
 ## 🎯 Core Values
@@ -104,14 +136,17 @@ When asked to add properties or utilities:
 
 ## 🎯 Session Startup Protocol
 
-When starting a new session, execute the bootstrap protocol:
+**This protocol is ALREADY executed when user says "Exec @AGENTS.md" (see top of file).**
 
-1. **Read `docs/README.md`** - Architecture overview and session protocol
-2. **Read `docs/CODE_QUALITY.md`** - Non-negotiable standards
-3. **Check recent changes**: `git --no-pager log --oneline -10`
-4. **Wait for user command** - User controls session flow
+**For skill-based session commands:**
 
-Then proceed with the task, applying the rules above.
+- `continue session` → Read `@docs/skills/session.continue.md` → Execute
+- `end session` → Read `@docs/skills/session.end.md` → Execute
+- `check session` → Read `@docs/skills/session.status.md` → Execute
+- `update session` → Read `@docs/skills/session.update.md` → Execute
+- `new session` → Read `@docs/skills/session.init.md` → Execute
+
+**Discovery:** `ls docs/skills/` shows all available skills.
 
 ---
 

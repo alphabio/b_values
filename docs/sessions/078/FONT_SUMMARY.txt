@@ -107,8 +107,8 @@
 │ 📚 DOCUMENTATION CREATED                                                     │
 ├──────────────────────────────────────────────────────────────────────────────┤
 │                                                                               │
-│ ✅ TMP/FONT_MASTER_PLAN.md       (Full specification & design)              │
-│ ✅ TMP/FONT_QUICK_START.md       (Developer quick reference)                │
+│ ✅ docs/sessions/078/FONT_MASTER_PLAN.md       (Full specification & design)              │
+│ ✅ docs/sessions/078/FONT_QUICK_START.md       (Developer quick reference)                │
 │ ✅ This summary                   (High-level overview)                      │
 │                                                                               │
 └──────────────────────────────────────────────────────────────────────────────┘
@@ -117,7 +117,7 @@
 │ 🎯 NEXT STEPS                                                                │
 ├──────────────────────────────────────────────────────────────────────────────┤
 │                                                                               │
-│ 1. Read TMP/FONT_MASTER_PLAN.md (full context)                              │
+│ 1. Read docs/sessions/078/FONT_MASTER_PLAN.md (full context)                              │
 │ 2. Review ADR 001 (no shorthands!)                                          │
 │ 3. Study existing patterns (background-color, visibility, angle)            │
 │ 4. Start Phase 0: Create keywords + number type                             │
