@@ -34,6 +34,7 @@ import { animationIterationCount } from "./animation-iteration-count/definition"
 import { animationName } from "./animation-name/definition";
 import { animationPlayState } from "./animation-play-state/definition";
 import { animationTimingFunction } from "./animation-timing-function/definition";
+import { backdropFilterProperty } from "./backdrop-filter/definition";
 import { backgroundAttachment } from "./background-attachment/definition";
 import { backgroundBlendMode } from "./background-blend-mode/definition";
 import { backgroundClip } from "./background-clip/definition";
@@ -61,6 +62,7 @@ import { borderTopRightRadius } from "./border-top-right-radius/definition";
 import { borderTopStyle } from "./border-top-style/definition";
 import { borderTopWidth } from "./border-top-width/definition";
 import { color } from "./color/definition";
+import { filterProperty } from "./filter/definition";
 import { marginBottom } from "./margin-bottom/definition";
 import { marginLeft } from "./margin-left/definition";
 import { marginRight } from "./margin-right/definition";
@@ -102,6 +104,7 @@ export const PROPERTY_DEFINITIONS = {
   "animation-name": animationName,
   "animation-play-state": animationPlayState,
   "animation-timing-function": animationTimingFunction,
+  "backdrop-filter": backdropFilterProperty,
   "background-attachment": backgroundAttachment,
   "background-blend-mode": backgroundBlendMode,
   "background-clip": backgroundClip,
@@ -128,26 +131,27 @@ export const PROPERTY_DEFINITIONS = {
   "border-top-right-radius": borderTopRightRadius,
   "border-top-style": borderTopStyle,
   "border-top-width": borderTopWidth,
-  "color": color,
+  color: color,
+  filter: filterProperty,
   "margin-bottom": marginBottom,
   "margin-left": marginLeft,
   "margin-right": marginRight,
   "margin-top": marginTop,
   "mix-blend-mode": mixBlendMode,
-  "opacity": opacity,
+  opacity: opacity,
   "padding-bottom": paddingBottom,
   "padding-left": paddingLeft,
   "padding-right": paddingRight,
   "padding-top": paddingTop,
-  "perspective": perspective,
-  "transform": transform,
+  perspective: perspective,
+  transform: transform,
   "transform-origin": transformOrigin,
   "transform-style": transformStyle,
   "transition-delay": transitionDelay,
   "transition-duration": transitionDuration,
   "transition-property": transitionProperty,
   "transition-timing-function": transitionTimingFunction,
-  "visibility": visibility,
+  visibility: visibility,
 } as const;
 
 /**

@@ -1646,6 +1646,127 @@ export const animationTimingFunctionIRSchema = z.discriminatedUnion("kind", [
 export type AnimationTimingFunctionIR = z.infer<typeof animationTimingFunctionIRSchema>;
 
 
+=== File: packages/b_declarations/src/properties/backdrop-filter/definition.ts ===
+// b_path:: packages/b_declarations/src/properties/backdrop-filter/definition.ts
+
+import { defineProperty } from "../../core";
+import { parseBackdropFilter } from "./parser";
+import { generateBackdropFilter } from "./generator";
+import type { BackdropFilterIR } from "./types";
+
+export const backdropFilterProperty = defineProperty<BackdropFilterIR>({
+  name: "backdrop-filter",
+  syntax: "none | <filter-value-list>",
+  parser: parseBackdropFilter,
+  generator: generateBackdropFilter,
+  inherited: false,
+  initial: "none",
+});
+
+
+=== File: packages/b_declarations/src/properties/backdrop-filter/generator.ts ===
+// b_path:: packages/b_declarations/src/properties/backdrop-filter/generator.ts
+
+import { generateErr, generateOk, type GenerateResult } from "@b/types";
+import type { BackdropFilterIR } from "./types";
+import * as Generators from "@b/generators";
+import { cssValueToCss } from "@b/utils";
+
+export function generateBackdropFilter(ir: BackdropFilterIR): GenerateResult {
+  switch (ir.kind) {
+    case "keyword":
+      return generateOk(ir.value);
+
+    case "css-value":
+      return generateOk(cssValueToCss(ir.value));
+
+    case "filter-list":
+      return Generators.Filter.generateList(ir.value);
+
+    default:
+      return generateErr({ code: "unsupported-kind", severity: "error", message: "Unsupported backdrop-filter IR" });
+  }
+}
+
+
+=== File: packages/b_declarations/src/properties/backdrop-filter/index.ts ===
+// b_path:: packages/b_declarations/src/properties/backdrop-filter/index.ts
+
+export * from "./types";
+export * from "./parser";
+export * from "./generator";
+export * from "./definition";
+
+
+=== File: packages/b_declarations/src/properties/backdrop-filter/parser.ts ===
+// b_path:: packages/b_declarations/src/properties/backdrop-filter/parser.ts
+
+import type { ParseResult } from "@b/types";
+import * as Keywords from "@b/keywords";
+import * as Parsers from "@b/parsers";
+import type * as csstree from "@eslint/css-tree";
+import type { BackdropFilterIR } from "./types";
+import { createError, parseErr, parseOk } from "@b/types";
+
+export function parseBackdropFilter(ast: csstree.Value): ParseResult<BackdropFilterIR> {
+  const firstNode = ast.children.first;
+
+  if (!firstNode) {
+    return parseErr("backdrop-filter", createError("missing-value", "Empty value for backdrop-filter"));
+  }
+
+  if (firstNode.type === "Identifier") {
+    const name = firstNode.name.toLowerCase();
+
+    const cssWideResult = Keywords.cssWide.safeParse(name);
+    if (cssWideResult.success) {
+      return {
+        ok: true,
+        property: "backdrop-filter",
+        value: { kind: "keyword", value: cssWideResult.data },
+        issues: [],
+      };
+    }
+
+    const noneResult = Keywords.none.safeParse(name);
+    if (noneResult.success) {
+      return parseOk({ kind: "keyword", value: "none" });
+    }
+  }
+
+  if (firstNode.type === "Function") {
+    const cssValueResult = Parsers.Utils.parseNodeToCssValue(firstNode);
+    if (cssValueResult.ok) {
+      return parseOk({ kind: "css-value", value: cssValueResult.value });
+    }
+  }
+
+  const filterListResult = Parsers.Filter.parseFilterList(ast);
+  if (filterListResult.ok) {
+    return parseOk({ kind: "filter-list", value: filterListResult.value });
+  }
+
+  return parseErr(
+    "backdrop-filter",
+    filterListResult.issues[0] ?? createError("invalid-value", "Invalid backdrop-filter value"),
+  );
+}
+
+
+=== File: packages/b_declarations/src/properties/backdrop-filter/types.ts ===
+// b_path:: packages/b_declarations/src/properties/backdrop-filter/types.ts
+
+import type * as Type from "@b/types";
+
+export type BackdropFilterIR =
+  | {
+      kind: "keyword";
+      value: "initial" | "inherit" | "unset" | "revert" | "revert-layer" | "none";
+    }
+  | { kind: "css-value"; value: Type.CssValue }
+  | { kind: "filter-list"; value: Type.FilterList };
+
+
 === File: packages/b_declarations/src/properties/background-attachment/definition.ts ===
 // b_path:: packages/b_declarations/src/properties/background-attachment/definition.ts
 import { defineProperty } from "../../core";
@@ -4652,6 +4773,7 @@ import { animationIterationCount } from "./animation-iteration-count/definition"
 import { animationName } from "./animation-name/definition";
 import { animationPlayState } from "./animation-play-state/definition";
 import { animationTimingFunction } from "./animation-timing-function/definition";
+import { backdropFilterProperty } from "./backdrop-filter/definition";
 import { backgroundAttachment } from "./background-attachment/definition";
 import { backgroundBlendMode } from "./background-blend-mode/definition";
 import { backgroundClip } from "./background-clip/definition";
@@ -4679,6 +4801,7 @@ import { borderTopRightRadius } from "./border-top-right-radius/definition";
 import { borderTopStyle } from "./border-top-style/definition";
 import { borderTopWidth } from "./border-top-width/definition";
 import { color } from "./color/definition";
+import { filterProperty } from "./filter/definition";
 import { marginBottom } from "./margin-bottom/definition";
 import { marginLeft } from "./margin-left/definition";
 import { marginRight } from "./margin-right/definition";
@@ -4720,6 +4843,7 @@ export const PROPERTY_DEFINITIONS = {
   "animation-name": animationName,
   "animation-play-state": animationPlayState,
   "animation-timing-function": animationTimingFunction,
+  "backdrop-filter": backdropFilterProperty,
   "background-attachment": backgroundAttachment,
   "background-blend-mode": backgroundBlendMode,
   "background-clip": backgroundClip,
@@ -4747,6 +4871,7 @@ export const PROPERTY_DEFINITIONS = {
   "border-top-style": borderTopStyle,
   "border-top-width": borderTopWidth,
   color: color,
+  filter: filterProperty,
   "margin-bottom": marginBottom,
   "margin-left": marginLeft,
   "margin-right": marginRight,
@@ -4773,6 +4898,119 @@ export const PROPERTY_DEFINITIONS = {
  * Used for type-level operations.
  */
 export type PropertyDefinitions = typeof PROPERTY_DEFINITIONS;
+
+
+=== File: packages/b_declarations/src/properties/filter/definition.ts ===
+// b_path:: packages/b_declarations/src/properties/filter/definition.ts
+
+import { defineProperty } from "../../core";
+import { parseFilter } from "./parser";
+import { generateFilter } from "./generator";
+import type { FilterIR } from "./types";
+
+export const filterProperty = defineProperty<FilterIR>({
+  name: "filter",
+  syntax: "none | <filter-value-list>",
+  parser: parseFilter,
+  generator: generateFilter,
+  inherited: false,
+  initial: "none",
+});
+
+
+=== File: packages/b_declarations/src/properties/filter/generator.ts ===
+// b_path:: packages/b_declarations/src/properties/filter/generator.ts
+
+import { generateErr, generateOk, type GenerateResult } from "@b/types";
+import type { FilterIR } from "./types";
+import * as Generators from "@b/generators";
+import { cssValueToCss } from "@b/utils";
+
+export function generateFilter(ir: FilterIR): GenerateResult {
+  switch (ir.kind) {
+    case "keyword":
+      return generateOk(ir.value);
+
+    case "css-value":
+      return generateOk(cssValueToCss(ir.value));
+
+    case "filter-list":
+      return Generators.Filter.generateList(ir.value);
+
+    default:
+      return generateErr({ code: "unsupported-kind", severity: "error", message: "Unsupported filter IR" });
+  }
+}
+
+
+=== File: packages/b_declarations/src/properties/filter/index.ts ===
+// b_path:: packages/b_declarations/src/properties/filter/index.ts
+
+export * from "./types";
+export * from "./parser";
+export * from "./generator";
+export * from "./definition";
+
+
+=== File: packages/b_declarations/src/properties/filter/parser.ts ===
+// b_path:: packages/b_declarations/src/properties/filter/parser.ts
+
+import type { ParseResult } from "@b/types";
+import * as Keywords from "@b/keywords";
+import * as Parsers from "@b/parsers";
+import type * as csstree from "@eslint/css-tree";
+import type { FilterIR } from "./types";
+import { createError, parseErr, parseOk } from "@b/types";
+
+export function parseFilter(ast: csstree.Value): ParseResult<FilterIR> {
+  const firstNode = ast.children.first;
+
+  if (!firstNode) {
+    return parseErr("filter", createError("missing-value", "Empty value for filter"));
+  }
+
+  if (firstNode.type === "Identifier") {
+    const name = firstNode.name.toLowerCase();
+
+    const cssWideResult = Keywords.cssWide.safeParse(name);
+    if (cssWideResult.success) {
+      return { ok: true, property: "filter", value: { kind: "keyword", value: cssWideResult.data }, issues: [] };
+    }
+
+    const noneResult = Keywords.none.safeParse(name);
+    if (noneResult.success) {
+      return parseOk({ kind: "keyword", value: "none" });
+    }
+  }
+
+  if (firstNode.type === "Function") {
+    const cssValueResult = Parsers.Utils.parseNodeToCssValue(firstNode);
+    if (cssValueResult.ok) {
+      return parseOk({ kind: "css-value", value: cssValueResult.value });
+    }
+  }
+
+  const filterListResult = Parsers.Filter.parseFilterList(ast);
+  if (filterListResult.ok) {
+    return parseOk({ kind: "filter-list", value: filterListResult.value });
+  }
+
+  return parseErr("filter", filterListResult.issues[0] ?? createError("invalid-value", "Invalid filter value"));
+}
+
+
+=== File: packages/b_declarations/src/properties/filter/types.ts ===
+// b_path:: packages/b_declarations/src/properties/filter/types.ts
+
+import type * as Type from "@b/types";
+
+export type FilterIR =
+  | {
+      kind: "keyword";
+      value: "initial" | "inherit" | "unset" | "revert" | "revert-layer" | "none";
+    }
+  | { kind: "css-value"; value: Type.CssValue }
+  | { kind: "filter-list"; value: Type.FilterList };
 
 
 === File: packages/b_declarations/src/properties/index.ts ===
@@ -8584,6 +8822,133 @@ export function generate(easing: Type.EasingFunction): GenerateResult {
 }
 
 
+=== File: packages/b_generators/src/filter/index.ts ===
+// b_path:: packages/b_generators/src/filter/index.ts
+
+import { generateErr, generateOk, type GenerateResult } from "@b/types";
+import type * as Type from "@b/types";
+import * as Length from "../length";
+import * as Angle from "../angle";
+import * as Color from "../color";
+
+/**
+ * Generate filter function CSS from IR
+ */
+export function generate(ir: Type.FilterFunction): GenerateResult {
+  switch (ir.kind) {
+    case "blur": {
+      if (!ir.length) return generateOk("blur()");
+      const length = Length.generate(ir.length);
+      if (!length.ok) return length;
+      return generateOk(`blur(${length.value})`);
+    }
+
+    case "brightness": {
+      if (ir.value === undefined) return generateOk("brightness()");
+      if (typeof ir.value === "number") {
+        return generateOk(`brightness(${ir.value})`);
+      }
+      return generateOk(`brightness(${ir.value.value}${ir.value.unit})`);
+    }
+
+    case "contrast": {
+      if (ir.value === undefined) return generateOk("contrast()");
+      if (typeof ir.value === "number") {
+        return generateOk(`contrast(${ir.value})`);
+      }
+      return generateOk(`contrast(${ir.value.value}${ir.value.unit})`);
+    }
+
+    case "grayscale": {
+      if (ir.value === undefined) return generateOk("grayscale()");
+      if (typeof ir.value === "number") {
+        return generateOk(`grayscale(${ir.value})`);
+      }
+      return generateOk(`grayscale(${ir.value.value}${ir.value.unit})`);
+    }
+
+    case "hue-rotate": {
+      if (!ir.angle) return generateOk("hue-rotate()");
+      const angle = Angle.generate(ir.angle);
+      if (!angle.ok) return angle;
+      return generateOk(`hue-rotate(${angle.value})`);
+    }
+
+    case "invert": {
+      if (ir.value === undefined) return generateOk("invert()");
+      if (typeof ir.value === "number") {
+        return generateOk(`invert(${ir.value})`);
+      }
+      return generateOk(`invert(${ir.value.value}${ir.value.unit})`);
+    }
+
+    case "opacity": {
+      if (ir.value === undefined) return generateOk("opacity()");
+      if (typeof ir.value === "number") {
+        return generateOk(`opacity(${ir.value})`);
+      }
+      return generateOk(`opacity(${ir.value.value}${ir.value.unit})`);
+    }
+
+    case "saturate": {
+      if (ir.value === undefined) return generateOk("saturate()");
+      if (typeof ir.value === "number") {
+        return generateOk(`saturate(${ir.value})`);
+      }
+      return generateOk(`saturate(${ir.value.value}${ir.value.unit})`);
+    }
+
+    case "sepia": {
+      if (ir.value === undefined) return generateOk("sepia()");
+      if (typeof ir.value === "number") {
+        return generateOk(`sepia(${ir.value})`);
+      }
+      return generateOk(`sepia(${ir.value.value}${ir.value.unit})`);
+    }
+
+    case "drop-shadow": {
+      const parts: string[] = [];
+
+      // Color can come first
+      if (ir.color) {
+        const color = Color.generate(ir.color);
+        if (!color.ok) return color;
+        parts.push(color.value);
+      }
+
+      const x = Length.generate(ir.offsetX);
+      const y = Length.generate(ir.offsetY);
+      if (!x.ok) return x;
+      if (!y.ok) return y;
+      parts.push(x.value, y.value);
+
+      if (ir.blurRadius) {
+        const blur = Length.generate(ir.blurRadius);
+        if (!blur.ok) return blur;
+        parts.push(blur.value);
+      }
+
+      return generateOk(`drop-shadow(${parts.join(" ")})`);
+    }
+
+    default:
+      return generateErr({ code: "unsupported-kind", severity: "error", message: "Unsupported filter function" });
+  }
+}
+
+/**
+ * Generate filter list CSS from IR
+ */
+export function generateList(ir: Type.FilterList): GenerateResult {
+  const results = ir.map(generate);
+  const failed = results.find((r) => !r.ok);
+  if (failed) return failed;
+
+  const values = results.map((r) => (r as { ok: true; value: string }).value);
+  return generateOk(values.join(" "));
+}
+
+
 === File: packages/b_generators/src/gradient/color-stop.ts ===
 // b_path:: packages/b_generators/src/gradient/color-stop.ts
 import { generateOk, type GenerateResult, type GenerateContext } from "@b/types";
@@ -9164,6 +9529,7 @@ export * as Length from "./length";
 export * as Position from "./position";
 export * as Time from "./time";
 export * as Transform from "./transform";
+export * as Filter from "./filter";
 
 
 === File: packages/b_generators/src/length.ts ===
@@ -11176,6 +11542,517 @@ function parseSteps(node: csstree.FunctionNode): ParseResult<Type.EasingFunction
 }
 
 
+=== File: packages/b_parsers/src/filter/blur.ts ===
+// b_path:: packages/b_parsers/src/filter/blur.ts
+
+import type * as csstree from "@eslint/css-tree";
+import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
+import type * as Type from "@b/types";
+import { parseLengthNode } from "../length";
+
+/**
+ * Parse blur filter function from css-tree AST
+ * @see https://drafts.fxtf.org/filter-effects/#funcdef-filter-blur
+ */
+
+export function parseBlurFunction(node: csstree.FunctionNode): ParseResult<Type.BlurFunction> {
+  const funcName = node.name.toLowerCase();
+  const children = Array.from(node.children);
+  const args = children.filter((n) => n.type !== "WhiteSpace");
+
+  if (funcName !== "blur") {
+    return parseErr("filter", createError("unsupported-kind", `Expected blur function, got ${funcName}`));
+  }
+
+  if (args.length === 0) {
+    return parseOk({ kind: "blur" });
+  }
+
+  if (args.length !== 1) {
+    return parseErr("filter", createError("invalid-syntax", "blur() requires 0 or 1 argument"));
+  }
+
+  const lengthResult = parseLengthNode(args[0]);
+  if (!lengthResult.ok) {
+    return parseErr("filter", lengthResult.issues[0] ?? createError("invalid-value", "Invalid length"));
+  }
+
+  return parseOk({ kind: "blur", length: lengthResult.value });
+}
+
+
+=== File: packages/b_parsers/src/filter/brightness.ts ===
+// b_path:: packages/b_parsers/src/filter/brightness.ts
+
+import type * as csstree from "@eslint/css-tree";
+import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
+import type * as Type from "@b/types";
+import { parseNumberOrPercentage } from "./number-percentage";
+
+export function parseBrightnessFunction(node: csstree.FunctionNode): ParseResult<Type.BrightnessFunction> {
+  const funcName = node.name.toLowerCase();
+  const children = Array.from(node.children);
+  const args = children.filter((n) => n.type !== "WhiteSpace");
+
+  if (funcName !== "brightness") {
+    return parseErr("filter", createError("unsupported-kind", `Expected brightness function, got ${funcName}`));
+  }
+
+  if (args.length === 0) {
+    return parseOk({ kind: "brightness" });
+  }
+
+  if (args.length !== 1) {
+    return parseErr("filter", createError("invalid-syntax", "brightness() requires 0 or 1 argument"));
+  }
+
+  const valueResult = parseNumberOrPercentage(args[0]);
+  if (!valueResult.ok) {
+    return parseErr("filter", valueResult.issues[0] ?? createError("invalid-value", "Invalid value"));
+  }
+
+  return parseOk({ kind: "brightness", value: valueResult.value });
+}
+
+
+=== File: packages/b_parsers/src/filter/contrast.ts ===
+// b_path:: packages/b_parsers/src/filter/contrast.ts
+
+import type * as csstree from "@eslint/css-tree";
+import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
+import type * as Type from "@b/types";
+import { parseNumberOrPercentage } from "./number-percentage";
+
+export function parseContrastFunction(node: csstree.FunctionNode): ParseResult<Type.ContrastFunction> {
+  const funcName = node.name.toLowerCase();
+  const children = Array.from(node.children);
+  const args = children.filter((n) => n.type !== "WhiteSpace");
+
+  if (funcName !== "contrast") {
+    return parseErr("filter", createError("unsupported-kind", `Expected contrast function, got ${funcName}`));
+  }
+
+  if (args.length === 0) {
+    return parseOk({ kind: "contrast" });
+  }
+
+  if (args.length !== 1) {
+    return parseErr("filter", createError("invalid-syntax", "contrast() requires 0 or 1 argument"));
+  }
+
+  const valueResult = parseNumberOrPercentage(args[0]);
+  if (!valueResult.ok) {
+    return parseErr("filter", valueResult.issues[0] ?? createError("invalid-value", "Invalid value"));
+  }
+
+  return parseOk({ kind: "contrast", value: valueResult.value });
+}
+
+
+=== File: packages/b_parsers/src/filter/drop-shadow.ts ===
+// b_path:: packages/b_parsers/src/filter/drop-shadow.ts
+
+import type * as csstree from "@eslint/css-tree";
+import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
+import type * as Type from "@b/types";
+import { parseLengthNode } from "../length";
+import * as Color from "../color";
+
+/**
+ * Parse drop-shadow filter function from css-tree AST
+ * @see https://drafts.fxtf.org/filter-effects/#funcdef-filter-drop-shadow
+ */
+
+export function parseDropShadowFunction(node: csstree.FunctionNode): ParseResult<Type.DropShadowFunction> {
+  const funcName = node.name.toLowerCase();
+  const children = Array.from(node.children);
+  const args = children.filter((n) => n.type !== "WhiteSpace");
+
+  if (funcName !== "drop-shadow") {
+    return parseErr("filter", createError("unsupported-kind", `Expected drop-shadow function, got ${funcName}`));
+  }
+
+  if (args.length < 2 || args.length > 4) {
+    return parseErr("filter", createError("invalid-syntax", "drop-shadow() requires 2-4 arguments"));
+  }
+
+  // Parse arguments: color? length{2,3}
+  // Color can appear at start or end
+  let color: Type.Color | undefined;
+  const lengths: Type.Length[] = [];
+
+  for (const arg of args) {
+    // Try to parse as color
+    const colorResult = Color.parseNode(arg);
+    if (colorResult.ok) {
+      if (color) {
+        return parseErr("filter", createError("invalid-syntax", "drop-shadow() can only have one color"));
+      }
+      color = colorResult.value;
+      continue;
+    }
+
+    // Try to parse as length
+    const lengthResult = parseLengthNode(arg);
+    if (lengthResult.ok) {
+      lengths.push(lengthResult.value);
+      continue;
+    }
+
+    return parseErr("filter", createError("invalid-value", "Invalid argument in drop-shadow()"));
+  }
+
+  // Validate lengths (must be 2 or 3)
+  if (lengths.length < 2 || lengths.length > 3) {
+    return parseErr("filter", createError("invalid-syntax", "drop-shadow() requires 2 or 3 length values"));
+  }
+
+  return parseOk({
+    kind: "drop-shadow",
+    offsetX: lengths[0],
+    offsetY: lengths[1],
+    blurRadius: lengths[2],
+    color,
+  });
+}
+
+
+=== File: packages/b_parsers/src/filter/grayscale.ts ===
+// b_path:: packages/b_parsers/src/filter/grayscale.ts
+
+import type * as csstree from "@eslint/css-tree";
+import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
+import type * as Type from "@b/types";
+import { parseNumberOrPercentage } from "./number-percentage";
+
+export function parseGrayscaleFunction(node: csstree.FunctionNode): ParseResult<Type.GrayscaleFunction> {
+  const funcName = node.name.toLowerCase();
+  const children = Array.from(node.children);
+  const args = children.filter((n) => n.type !== "WhiteSpace");
+
+  if (funcName !== "grayscale") {
+    return parseErr("filter", createError("unsupported-kind", `Expected grayscale function, got ${funcName}`));
+  }
+
+  if (args.length === 0) {
+    return parseOk({ kind: "grayscale" });
+  }
+
+  if (args.length !== 1) {
+    return parseErr("filter", createError("invalid-syntax", "grayscale() requires 0 or 1 argument"));
+  }
+
+  const valueResult = parseNumberOrPercentage(args[0]);
+  if (!valueResult.ok) {
+    return parseErr("filter", valueResult.issues[0] ?? createError("invalid-value", "Invalid value"));
+  }
+
+  return parseOk({ kind: "grayscale", value: valueResult.value });
+}
+
+
+=== File: packages/b_parsers/src/filter/hue-rotate.ts ===
+// b_path:: packages/b_parsers/src/filter/hue-rotate.ts
+
+import type * as csstree from "@eslint/css-tree";
+import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
+import type * as Type from "@b/types";
+import { parseAngleNode } from "../angle";
+
+/**
+ * Parse hue-rotate filter function from css-tree AST
+ * @see https://drafts.fxtf.org/filter-effects/#funcdef-filter-hue-rotate
+ */
+
+export function parseHueRotateFunction(node: csstree.FunctionNode): ParseResult<Type.HueRotateFunction> {
+  const funcName = node.name.toLowerCase();
+  const children = Array.from(node.children);
+  const args = children.filter((n) => n.type !== "WhiteSpace");
+
+  if (funcName !== "hue-rotate") {
+    return parseErr("filter", createError("unsupported-kind", `Expected hue-rotate function, got ${funcName}`));
+  }
+
+  if (args.length === 0) {
+    return parseOk({ kind: "hue-rotate" });
+  }
+
+  if (args.length !== 1) {
+    return parseErr("filter", createError("invalid-syntax", "hue-rotate() requires 0 or 1 argument"));
+  }
+
+  const angleResult = parseAngleNode(args[0]);
+  if (!angleResult.ok) {
+    return parseErr("filter", angleResult.issues[0] ?? createError("invalid-value", "Invalid angle"));
+  }
+
+  return parseOk({ kind: "hue-rotate", angle: angleResult.value });
+}
+
+
+=== File: packages/b_parsers/src/filter/index.ts ===
+// b_path:: packages/b_parsers/src/filter/index.ts
+
+export * from "./blur";
+export * from "./brightness";
+export * from "./contrast";
+export * from "./grayscale";
+export * from "./hue-rotate";
+export * from "./invert";
+export * from "./opacity";
+export * from "./saturate";
+export * from "./sepia";
+export * from "./drop-shadow";
+
+import type * as csstree from "@eslint/css-tree";
+import { createError, parseErr, type ParseResult, type Issue } from "@b/types";
+import type * as Type from "@b/types";
+import { parseBlurFunction } from "./blur";
+import { parseBrightnessFunction } from "./brightness";
+import { parseContrastFunction } from "./contrast";
+import { parseGrayscaleFunction } from "./grayscale";
+import { parseHueRotateFunction } from "./hue-rotate";
+import { parseInvertFunction } from "./invert";
+import { parseOpacityFunction } from "./opacity";
+import { parseSaturateFunction } from "./saturate";
+import { parseSepiaFunction } from "./sepia";
+import { parseDropShadowFunction } from "./drop-shadow";
+
+/**
+ * Parse a single filter function from css-tree AST
+ */
+export function parseFilterFunction(node: csstree.FunctionNode): ParseResult<Type.FilterFunction> {
+  const funcName = node.name.toLowerCase();
+
+  switch (funcName) {
+    case "blur":
+      return parseBlurFunction(node);
+    case "brightness":
+      return parseBrightnessFunction(node);
+    case "contrast":
+      return parseContrastFunction(node);
+    case "grayscale":
+      return parseGrayscaleFunction(node);
+    case "hue-rotate":
+      return parseHueRotateFunction(node);
+    case "invert":
+      return parseInvertFunction(node);
+    case "opacity":
+      return parseOpacityFunction(node);
+    case "saturate":
+      return parseSaturateFunction(node);
+    case "sepia":
+      return parseSepiaFunction(node);
+    case "drop-shadow":
+      return parseDropShadowFunction(node);
+    default:
+      return parseErr("filter", createError("unsupported-kind", `Unknown filter function: ${funcName}`));
+  }
+}
+
+/**
+ * Parse filter list from css-tree AST
+ */
+export function parseFilterList(ast: csstree.Value): ParseResult<Type.FilterList> {
+  const children = Array.from(ast.children);
+  const nodes = children.filter((n) => n.type !== "WhiteSpace");
+
+  const filters: Type.FilterFunction[] = [];
+  const issues: Issue[] = [];
+
+  for (const node of nodes) {
+    if (node.type === "Function") {
+      const result = parseFilterFunction(node);
+      if (result.ok) {
+        filters.push(result.value);
+        issues.push(...result.issues);
+      } else {
+        return parseErr("filter", result.issues[0] ?? createError("invalid-value", "Failed to parse filter function"));
+      }
+    } else if (node.type === "Url") {
+      // SVG filter references - Phase 1: block with clear error
+      return parseErr("filter", createError("unsupported-kind", "url() filter references not yet supported"));
+    } else {
+      return parseErr("filter", createError("invalid-syntax", `Unexpected node type in filter list: ${node.type}`));
+    }
+  }
+
+  if (filters.length === 0) {
+    return parseErr("filter", createError("missing-value", "Empty filter list"));
+  }
+
+  return { ok: true, property: "filter", value: filters, issues };
+}
+
+
+=== File: packages/b_parsers/src/filter/invert.ts ===
+// b_path:: packages/b_parsers/src/filter/invert.ts
+
+import type * as csstree from "@eslint/css-tree";
+import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
+import type * as Type from "@b/types";
+import { parseNumberOrPercentage } from "./number-percentage";
+
+export function parseInvertFunction(node: csstree.FunctionNode): ParseResult<Type.InvertFunction> {
+  const funcName = node.name.toLowerCase();
+  const children = Array.from(node.children);
+  const args = children.filter((n) => n.type !== "WhiteSpace");
+
+  if (funcName !== "invert") {
+    return parseErr("filter", createError("unsupported-kind", `Expected invert function, got ${funcName}`));
+  }
+
+  if (args.length === 0) {
+    return parseOk({ kind: "invert" });
+  }
+
+  if (args.length !== 1) {
+    return parseErr("filter", createError("invalid-syntax", "invert() requires 0 or 1 argument"));
+  }
+
+  const valueResult = parseNumberOrPercentage(args[0]);
+  if (!valueResult.ok) {
+    return parseErr("filter", valueResult.issues[0] ?? createError("invalid-value", "Invalid value"));
+  }
+
+  return parseOk({ kind: "invert", value: valueResult.value });
+}
+
+
+=== File: packages/b_parsers/src/filter/number-percentage.ts ===
+// b_path:: packages/b_parsers/src/filter/number-percentage.ts
+
+import type * as csstree from "@eslint/css-tree";
+import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
+import type * as Type from "@b/types";
+import { parseNumberNode, parseLengthPercentageNode } from "../length";
+
+/**
+ * Parse number or percentage value (used by brightness, contrast, grayscale, invert, opacity, saturate, sepia)
+ */
+export function parseNumberOrPercentage(node: csstree.CssNode): ParseResult<number | Type.Percentage> {
+  // Try number first
+  if (node.type === "Number") {
+    const numberResult = parseNumberNode(node);
+    if (numberResult.ok) {
+      return parseOk(numberResult.value);
+    }
+  }
+
+  // Try percentage
+  if (node.type === "Percentage") {
+    const percentResult = parseLengthPercentageNode(node);
+    if (percentResult.ok && percentResult.value.unit === "%") {
+      return parseOk({ value: percentResult.value.value, unit: "%" });
+    }
+  }
+
+  return parseErr("filter", createError("invalid-value", "Expected number or percentage"));
+}
+
+
+=== File: packages/b_parsers/src/filter/opacity.ts ===
+// b_path:: packages/b_parsers/src/filter/opacity.ts
+
+import type * as csstree from "@eslint/css-tree";
+import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
+import type * as Type from "@b/types";
+import { parseNumberOrPercentage } from "./number-percentage";
+
+export function parseOpacityFunction(node: csstree.FunctionNode): ParseResult<Type.OpacityFunction> {
+  const funcName = node.name.toLowerCase();
+  const children = Array.from(node.children);
+  const args = children.filter((n) => n.type !== "WhiteSpace");
+
+  if (funcName !== "opacity") {
+    return parseErr("filter", createError("unsupported-kind", `Expected opacity function, got ${funcName}`));
+  }
+
+  if (args.length === 0) {
+    return parseOk({ kind: "opacity" });
+  }
+
+  if (args.length !== 1) {
+    return parseErr("filter", createError("invalid-syntax", "opacity() requires 0 or 1 argument"));
+  }
+
+  const valueResult = parseNumberOrPercentage(args[0]);
+  if (!valueResult.ok) {
+    return parseErr("filter", valueResult.issues[0] ?? createError("invalid-value", "Invalid value"));
+  }
+
+  return parseOk({ kind: "opacity", value: valueResult.value });
+}
+
+
+=== File: packages/b_parsers/src/filter/saturate.ts ===
+// b_path:: packages/b_parsers/src/filter/saturate.ts
+
+import type * as csstree from "@eslint/css-tree";
+import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
+import type * as Type from "@b/types";
+import { parseNumberOrPercentage } from "./number-percentage";
+
+export function parseSaturateFunction(node: csstree.FunctionNode): ParseResult<Type.SaturateFunction> {
+  const funcName = node.name.toLowerCase();
+  const children = Array.from(node.children);
+  const args = children.filter((n) => n.type !== "WhiteSpace");
+
+  if (funcName !== "saturate") {
+    return parseErr("filter", createError("unsupported-kind", `Expected saturate function, got ${funcName}`));
+  }
+
+  if (args.length === 0) {
+    return parseOk({ kind: "saturate" });
+  }
+
+  if (args.length !== 1) {
+    return parseErr("filter", createError("invalid-syntax", "saturate() requires 0 or 1 argument"));
+  }
+
+  const valueResult = parseNumberOrPercentage(args[0]);
+  if (!valueResult.ok) {
+    return parseErr("filter", valueResult.issues[0] ?? createError("invalid-value", "Invalid value"));
+  }
+
+  return parseOk({ kind: "saturate", value: valueResult.value });
+}
+
+
+=== File: packages/b_parsers/src/filter/sepia.ts ===
+// b_path:: packages/b_parsers/src/filter/sepia.ts
+
+import type * as csstree from "@eslint/css-tree";
+import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
+import type * as Type from "@b/types";
+import { parseNumberOrPercentage } from "./number-percentage";
+
+export function parseSepiaFunction(node: csstree.FunctionNode): ParseResult<Type.SepiaFunction> {
+  const funcName = node.name.toLowerCase();
+  const children = Array.from(node.children);
+  const args = children.filter((n) => n.type !== "WhiteSpace");
+
+  if (funcName !== "sepia") {
+    return parseErr("filter", createError("unsupported-kind", `Expected sepia function, got ${funcName}`));
+  }
+
+  if (args.length === 0) {
+    return parseOk({ kind: "sepia" });
+  }
+
+  if (args.length !== 1) {
+    return parseErr("filter", createError("invalid-syntax", "sepia() requires 0 or 1 argument"));
+  }
+
+  const valueResult = parseNumberOrPercentage(args[0]);
+  if (!valueResult.ok) {
+    return parseErr("filter", valueResult.issues[0] ?? createError("invalid-value", "Invalid value"));
+  }
+
+  return parseOk({ kind: "sepia", value: valueResult.value });
+}
+
+
 === File: packages/b_parsers/src/gradient/color-stop.ts ===
 // b_path:: packages/b_parsers/src/gradient/color-stop.ts
 import type * as csstree from "@eslint/css-tree";
@@ -12388,6 +13265,7 @@ export * as Length from "./length";
 export * as Position from "./position";
 export * as Time from "./time";
 export * as Transform from "./transform";
+export * as Filter from "./filter";
 export * as Url from "./url";
 export * as Utils from "./utils";
 export * as Math from "./math";
@@ -14806,6 +15684,272 @@ export const easingFunctionSchema = z.discriminatedUnion("kind", [
 export type EasingFunction = z.infer<typeof easingFunctionSchema>;
 
 
+=== File: packages/b_types/src/filter/blur.ts ===
+// b_path:: packages/b_types/src/filter/blur.ts
+
+import { z } from "zod";
+import { lengthSchema } from "../length";
+
+/**
+ * Blur filter function
+ * @see https://drafts.fxtf.org/filter-effects/#funcdef-filter-blur
+ */
+
+export const blurFunctionSchema = z
+  .object({
+    kind: z.literal("blur"),
+    length: lengthSchema.optional(),
+  })
+  .strict();
+
+export type BlurFunction = z.infer<typeof blurFunctionSchema>;
+
+
+=== File: packages/b_types/src/filter/brightness.ts ===
+// b_path:: packages/b_types/src/filter/brightness.ts
+
+import { z } from "zod";
+import { percentageSchema } from "../percentage";
+
+/**
+ * Brightness filter function
+ * @see https://drafts.fxtf.org/filter-effects/#funcdef-filter-brightness
+ */
+
+export const brightnessFunctionSchema = z
+  .object({
+    kind: z.literal("brightness"),
+    value: z.union([z.number(), percentageSchema]).optional(),
+  })
+  .strict();
+
+export type BrightnessFunction = z.infer<typeof brightnessFunctionSchema>;
+
+
+=== File: packages/b_types/src/filter/contrast.ts ===
+// b_path:: packages/b_types/src/filter/contrast.ts
+
+import { z } from "zod";
+import { percentageSchema } from "../percentage";
+
+/**
+ * Contrast filter function
+ * @see https://drafts.fxtf.org/filter-effects/#funcdef-filter-contrast
+ */
+
+export const contrastFunctionSchema = z
+  .object({
+    kind: z.literal("contrast"),
+    value: z.union([z.number(), percentageSchema]).optional(),
+  })
+  .strict();
+
+export type ContrastFunction = z.infer<typeof contrastFunctionSchema>;
+
+
+=== File: packages/b_types/src/filter/drop-shadow.ts ===
+// b_path:: packages/b_types/src/filter/drop-shadow.ts
+
+import { z } from "zod";
+import { lengthSchema } from "../length";
+import { colorSchema } from "../color";
+
+/**
+ * Drop-shadow filter function
+ * @see https://drafts.fxtf.org/filter-effects/#funcdef-filter-drop-shadow
+ */
+
+export const dropShadowFunctionSchema = z
+  .object({
+    kind: z.literal("drop-shadow"),
+    offsetX: lengthSchema,
+    offsetY: lengthSchema,
+    blurRadius: lengthSchema.optional(),
+    color: colorSchema.optional(),
+  })
+  .strict();
+
+export type DropShadowFunction = z.infer<typeof dropShadowFunctionSchema>;
+
+
+=== File: packages/b_types/src/filter/grayscale.ts ===
+// b_path:: packages/b_types/src/filter/grayscale.ts
+
+import { z } from "zod";
+import { percentageSchema } from "../percentage";
+
+/**
+ * Grayscale filter function
+ * @see https://drafts.fxtf.org/filter-effects/#funcdef-filter-grayscale
+ */
+
+export const grayscaleFunctionSchema = z
+  .object({
+    kind: z.literal("grayscale"),
+    value: z.union([z.number(), percentageSchema]).optional(),
+  })
+  .strict();
+
+export type GrayscaleFunction = z.infer<typeof grayscaleFunctionSchema>;
+
+
+=== File: packages/b_types/src/filter/hue-rotate.ts ===
+// b_path:: packages/b_types/src/filter/hue-rotate.ts
+
+import { z } from "zod";
+import { angleSchema } from "../angle";
+
+/**
+ * Hue-rotate filter function
+ * @see https://drafts.fxtf.org/filter-effects/#funcdef-filter-hue-rotate
+ */
+
+export const hueRotateFunctionSchema = z
+  .object({
+    kind: z.literal("hue-rotate"),
+    angle: angleSchema.optional(),
+  })
+  .strict();
+
+export type HueRotateFunction = z.infer<typeof hueRotateFunctionSchema>;
+
+
+=== File: packages/b_types/src/filter/index.ts ===
+// b_path:: packages/b_types/src/filter/index.ts
+
+export * from "./blur";
+export * from "./brightness";
+export * from "./contrast";
+export * from "./grayscale";
+export * from "./hue-rotate";
+export * from "./invert";
+export * from "./opacity";
+export * from "./saturate";
+export * from "./sepia";
+export * from "./drop-shadow";
+
+import { z } from "zod";
+import { blurFunctionSchema } from "./blur";
+import { brightnessFunctionSchema } from "./brightness";
+import { contrastFunctionSchema } from "./contrast";
+import { grayscaleFunctionSchema } from "./grayscale";
+import { hueRotateFunctionSchema } from "./hue-rotate";
+import { invertFunctionSchema } from "./invert";
+import { opacityFunctionSchema } from "./opacity";
+import { saturateFunctionSchema } from "./saturate";
+import { sepiaFunctionSchema } from "./sepia";
+import { dropShadowFunctionSchema } from "./drop-shadow";
+
+/**
+ * Union of all filter functions
+ */
+export const filterFunctionSchema = z.union([
+  blurFunctionSchema,
+  brightnessFunctionSchema,
+  contrastFunctionSchema,
+  grayscaleFunctionSchema,
+  hueRotateFunctionSchema,
+  invertFunctionSchema,
+  opacityFunctionSchema,
+  saturateFunctionSchema,
+  sepiaFunctionSchema,
+  dropShadowFunctionSchema,
+]);
+
+export type FilterFunction = z.infer<typeof filterFunctionSchema>;
+
+/**
+ * Filter list (used by filter and backdrop-filter properties)
+ */
+export const filterListSchema = z.array(filterFunctionSchema);
+
+export type FilterList = z.infer<typeof filterListSchema>;
+
+
+=== File: packages/b_types/src/filter/invert.ts ===
+// b_path:: packages/b_types/src/filter/invert.ts
+
+import { z } from "zod";
+import { percentageSchema } from "../percentage";
+
+/**
+ * Invert filter function
+ * @see https://drafts.fxtf.org/filter-effects/#funcdef-filter-invert
+ */
+
+export const invertFunctionSchema = z
+  .object({
+    kind: z.literal("invert"),
+    value: z.union([z.number(), percentageSchema]).optional(),
+  })
+  .strict();
+
+export type InvertFunction = z.infer<typeof invertFunctionSchema>;
+
+
+=== File: packages/b_types/src/filter/opacity.ts ===
+// b_path:: packages/b_types/src/filter/opacity.ts
+
+import { z } from "zod";
+import { percentageSchema } from "../percentage";
+
+/**
+ * Opacity filter function
+ * @see https://drafts.fxtf.org/filter-effects/#funcdef-filter-opacity
+ */
+
+export const opacityFunctionSchema = z
+  .object({
+    kind: z.literal("opacity"),
+    value: z.union([z.number(), percentageSchema]).optional(),
+  })
+  .strict();
+
+export type OpacityFunction = z.infer<typeof opacityFunctionSchema>;
+
+
+=== File: packages/b_types/src/filter/saturate.ts ===
+// b_path:: packages/b_types/src/filter/saturate.ts
+
+import { z } from "zod";
+import { percentageSchema } from "../percentage";
+
+/**
+ * Saturate filter function
+ * @see https://drafts.fxtf.org/filter-effects/#funcdef-filter-saturate
+ */
+
+export const saturateFunctionSchema = z
+  .object({
+    kind: z.literal("saturate"),
+    value: z.union([z.number(), percentageSchema]).optional(),
+  })
+  .strict();
+
+export type SaturateFunction = z.infer<typeof saturateFunctionSchema>;
+
+
+=== File: packages/b_types/src/filter/sepia.ts ===
+// b_path:: packages/b_types/src/filter/sepia.ts
+
+import { z } from "zod";
+import { percentageSchema } from "../percentage";
+
+/**
+ * Sepia filter function
+ * @see https://drafts.fxtf.org/filter-effects/#funcdef-filter-sepia
+ */
+
+export const sepiaFunctionSchema = z
+  .object({
+    kind: z.literal("sepia"),
+    value: z.union([z.number(), percentageSchema]).optional(),
+  })
+  .strict();
+
+export type SepiaFunction = z.infer<typeof sepiaFunctionSchema>;
+
+
 === File: packages/b_types/src/gradient/conic.ts ===
 // b_path:: packages/b_types/src/gradient/conic.ts
 import { z } from "zod";
@@ -15040,6 +16184,7 @@ export * from "./bg-size";
 export * from "./time";
 export * from "./easing-function";
 export * from "./transform";
+export * from "./filter";
 
 
 === File: packages/b_types/src/length-percentage.ts ===

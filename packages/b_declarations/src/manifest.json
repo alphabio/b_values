@@ -1,6 +1,6 @@
 {
   "$schema": "./manifest.schema.json",
-  "generated": "2025-11-14T15:40:03.700Z",
+  "generated": "2025-11-15T06:10:47.399Z",
   "properties": {
     "animation-delay": {
       "name": "animation-delay",
@@ -65,6 +65,14 @@
       "initial": "ease",
       "mode": "single",
       "irType": "AnimationTimingFunctionIR"
+    },
+    "backdrop-filter": {
+      "name": "backdrop-filter",
+      "syntax": "none | <filter-value-list>",
+      "inherited": false,
+      "initial": "none",
+      "mode": "single",
+      "irType": "BackdropFilterIR"
     },
     "background-attachment": {
       "name": "background-attachment",
@@ -281,6 +289,14 @@
       "initial": "canvastext",
       "mode": "single",
       "irType": "ColorIR"
+    },
+    "filter": {
+      "name": "filter",
+      "syntax": "none | <filter-value-list>",
+      "inherited": false,
+      "initial": "none",
+      "mode": "single",
+      "irType": "FilterIR"
     },
     "margin-bottom": {
       "name": "margin-bottom",
