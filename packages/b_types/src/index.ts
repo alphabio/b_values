@@ -10,6 +10,7 @@ export * from "./values";
 export * from "./color";
 export * from "./angle";
 export * from "./length";
+export * from "./number";
 export * from "./percentage";
 export * from "./length-percentage";
 export * from "./position";
