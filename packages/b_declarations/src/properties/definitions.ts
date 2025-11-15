@@ -69,6 +69,7 @@ import { fontStretch } from "./font-stretch/definition";
 import { fontStyle } from "./font-style/definition";
 import { fontVariant } from "./font-variant/definition";
 import { fontWeight } from "./font-weight/definition";
+import { lineHeight } from "./line-height/definition";
 import { marginBottom } from "./margin-bottom/definition";
 import { marginLeft } from "./margin-left/definition";
 import { marginRight } from "./margin-right/definition";
@@ -146,6 +147,7 @@ export const PROPERTY_DEFINITIONS = {
   "font-style": fontStyle,
   "font-variant": fontVariant,
   "font-weight": fontWeight,
+  "line-height": lineHeight,
   "margin-bottom": marginBottom,
   "margin-left": marginLeft,
   "margin-right": marginRight,

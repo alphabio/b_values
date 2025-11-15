@@ -11,6 +11,7 @@
 ### 🏆 All 6 Core Font Longhands Shipped
 
 **Infrastructure (from Session 079):**
+
 - ✅ Created `CSSNumber` type + schema (`@b/types/number.ts`)
 - ✅ Created Number generator with 6 tests (`@b/generators/number.ts`)
 - ✅ Created 6 font keyword files in `@b/keywords`
@@ -25,6 +26,7 @@
 6. ✅ **font-family** - List parsing + quoting rules (474 lines, 30 tests)
 
 **Session Stats:**
+
 - **2,261 lines** of production code
 - **139 tests** passing (100% pass rate)
 - **6 atomic commits** with clean history
@@ -49,8 +51,9 @@
 **Properties count:** 59 → 65 (+6 font properties)
 
 **All checks passing:**
+
 - ✅ Format
-- ✅ Lint  
+- ✅ Lint
 - ✅ Typecheck
 - ✅ Build
 - ✅ Tests (139 new tests, 100% pass rate)
@@ -64,11 +67,13 @@
 **Remaining CSS Fonts Level 4 longhands:**
 
 **Typography Control:**
+
 - `line-height` ⭐⭐ - normal | number | length-percentage
 - `font-kerning` ⭐ - auto | normal | none
 - `font-optical-sizing` ⭐ - auto | none
 
-**Variant Properties (font-variant-*):**
+**Variant Properties (font-variant-\*):**
+
 - `font-variant-caps` ⭐⭐ - small-caps, all-caps, petite-caps, etc.
 - `font-variant-numeric` ⭐⭐ - lining-nums, oldstyle-nums, tabular-nums, etc.
 - `font-variant-ligatures` ⭐⭐ - common-ligatures, discretionary-ligatures, etc.
@@ -78,6 +83,7 @@
 - `font-variant-emoji` ⭐ - normal | text | emoji | unicode
 
 **Font Synthesis:**
+
 - `font-synthesis` ⭐⭐ - Shorthand (skip)
 - `font-synthesis-weight` ⭐ - auto | none
 - `font-synthesis-style` ⭐ - auto | none
@@ -85,6 +91,7 @@
 - `font-synthesis-position` ⭐ - auto | none (Experimental)
 
 **Advanced Features:**
+
 - `font-feature-settings` ⭐⭐⭐ - Complex: "liga" 1, "dlig" 0, etc.
 - `font-variation-settings` ⭐⭐⭐ - Complex: "wght" 400, "ital" 1, etc.
 - `font-size-adjust` ⭐⭐ - none | number | from-font
@@ -92,10 +99,12 @@
 - `font-language-override` ⭐ - normal | string
 
 **Deprecated/Non-standard:**
+
 - ❌ `font-smooth` - Non-standard (skip)
 - ⚠️ `font-stretch` - Already done (CSS2.1)
 
 **Priority Recommendation:**
+
 1. **line-height** (needed by many layouts)
 2. **font-kerning** (simple, high-impact)
 3. **font-variant-caps** (common use case)
@@ -107,22 +116,26 @@
 ## 💡 Key Decisions
 
 **Architectural:**
+
 - **Longhands only** - No shorthand support (per `AGENTS.md`)
 - **CSS2.1 core complete** - Solid foundation before Level 4 features
 - **Copy-paste-modify workflow** - Perfected across 6 properties
 
 **Technical:**
+
 - **Number type** - Created for font-weight, reusable for line-height
 - **Angle parsing** - Integrated for font-style oblique
 - **List parsing** - Mastered for font-family comma-separated lists
 - **Smart quoting** - Auto-quote family names when needed
 
 **Velocity:**
+
 - Started: 1 property/1h estimate
-- Finished: 6 properties/90min actual  
+- Finished: 6 properties/90min actual
 - **6x acceleration** through pattern recognition
 
 **Quality:**
+
 - 139 tests, 100% passing
 - All checks green (format, lint, typecheck, build)
 - Zero tech debt introduced
