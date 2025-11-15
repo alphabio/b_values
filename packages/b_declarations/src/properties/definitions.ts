@@ -63,6 +63,12 @@ import { borderTopStyle } from "./border-top-style/definition";
 import { borderTopWidth } from "./border-top-width/definition";
 import { color } from "./color/definition";
 import { filterProperty } from "./filter/definition";
+import { fontFamily } from "./font-family/definition";
+import { fontSize } from "./font-size/definition";
+import { fontStretch } from "./font-stretch/definition";
+import { fontStyle } from "./font-style/definition";
+import { fontVariant } from "./font-variant/definition";
+import { fontWeight } from "./font-weight/definition";
 import { marginBottom } from "./margin-bottom/definition";
 import { marginLeft } from "./margin-left/definition";
 import { marginRight } from "./margin-right/definition";
@@ -134,6 +140,12 @@ export const PROPERTY_DEFINITIONS = {
   "border-top-width": borderTopWidth,
   color: color,
   filter: filterProperty,
+  "font-family": fontFamily,
+  "font-size": fontSize,
+  "font-stretch": fontStretch,
+  "font-style": fontStyle,
+  "font-variant": fontVariant,
+  "font-weight": fontWeight,
   "margin-bottom": marginBottom,
   "margin-left": marginLeft,
   "margin-right": marginRight,

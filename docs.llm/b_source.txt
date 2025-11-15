@@ -1,6 +1,6 @@
-Excluding patterns:
+Excluding patterns: 
 Documentation for LLMs
-Excluding patterns:
+Excluding patterns: 
 Excluding patterns: -not -path */__pycache__/* -not -path */__tests__/* -not -path */.git/* -not -path */.idea/* -not -path */.next/* -not -path */.venv/* -not -path */.vscode/* -not -path */*.spec.py -not -path */*.spec.ts -not -path */*.spec.tsx -not -path */*.test.py -not -path */*.test.ts -not -path */*.test.tsx -not -path */*test.py -not -path */*test.ts -not -path */*test.tsx -not -path */build/* -not -path */dist/* -not -path */me.ts -not -path */node_modules/* -not -path */test_*.py -not -path */test.ts -not -path */test.ts -not -path */tests/* -not -path */venv/*
 === File: packages/b_declarations/src/core/index.ts ===
 // b_path:: packages/b_declarations/src/core/index.ts
@@ -4804,6 +4804,12 @@ import { borderTopStyle } from "./border-top-style/definition";
 import { borderTopWidth } from "./border-top-width/definition";
 import { color } from "./color/definition";
 import { filterProperty } from "./filter/definition";
+import { fontFamily } from "./font-family/definition";
+import { fontSize } from "./font-size/definition";
+import { fontStretch } from "./font-stretch/definition";
+import { fontStyle } from "./font-style/definition";
+import { fontVariant } from "./font-variant/definition";
+import { fontWeight } from "./font-weight/definition";
 import { marginBottom } from "./margin-bottom/definition";
 import { marginLeft } from "./margin-left/definition";
 import { marginRight } from "./margin-right/definition";
@@ -4875,6 +4881,12 @@ export const PROPERTY_DEFINITIONS = {
   "border-top-width": borderTopWidth,
   color: color,
   filter: filterProperty,
+  "font-family": fontFamily,
+  "font-size": fontSize,
+  "font-stretch": fontStretch,
+  "font-style": fontStyle,
+  "font-variant": fontVariant,
+  "font-weight": fontWeight,
   "margin-bottom": marginBottom,
   "margin-left": marginLeft,
   "margin-right": marginRight,
@@ -5017,6 +5029,806 @@ export type FilterIR =
     }
   | { kind: "css-value"; value: Type.CssValue }
   | { kind: "filter-list"; value: Type.FilterList };
+
+
+=== File: packages/b_declarations/src/properties/font-family/definition.ts ===
+// b_path:: packages/b_declarations/src/properties/font-family/definition.ts
+
+import { defineProperty } from "../../core";
+import { parseFontFamily } from "./parser";
+import { generateFontFamily } from "./generator";
+import type { FontFamilyIR } from "./types";
+
+export const fontFamily = defineProperty<FontFamilyIR>({
+  name: "font-family",
+  syntax: "[ <family-name> | <generic-family> ]#",
+  parser: parseFontFamily,
+  generator: generateFontFamily,
+  inherited: true,
+  initial: "serif",
+});
+
+
+=== File: packages/b_declarations/src/properties/font-family/generator.ts ===
+// b_path:: packages/b_declarations/src/properties/font-family/generator.ts
+
+import { generateOk, type GenerateResult } from "@b/types";
+import * as Keywords from "@b/keywords";
+import type { FontFamilyIR } from "./types";
+
+export function generateFontFamily(ir: FontFamilyIR): GenerateResult {
+  if (ir.kind === "keyword") {
+    return generateOk(ir.value);
+  }
+
+  const parts = ir.families.map((family) => {
+    // Check if it's a generic family (no quotes needed)
+    const isGeneric = Keywords.genericFamilySchema.safeParse(family).success;
+    if (isGeneric) {
+      return family;
+    }
+
+    // Check if the family name needs quotes
+    // Needs quotes if: contains spaces, starts with digit, or contains special chars
+    const needsQuotes = /\s/.test(family) || /^\d/.test(family) || /[^a-zA-Z0-9-]/.test(family);
+
+    if (needsQuotes) {
+      // Escape any quotes in the name
+      const escaped = family.replace(/"/g, '\\"');
+      return `"${escaped}"`;
+    }
+
+    return family;
+  });
+
+  return generateOk(parts.join(", "));
+}
+
+
+=== File: packages/b_declarations/src/properties/font-family/index.ts ===
+// b_path:: packages/b_declarations/src/properties/font-family/index.ts
+
+export * from "./types";
+export * from "./parser";
+export * from "./generator";
+export * from "./definition";
+
+
+=== File: packages/b_declarations/src/properties/font-family/parser.ts ===
+// b_path:: packages/b_declarations/src/properties/font-family/parser.ts
+
+import type { ParseResult } from "@b/types";
+import * as Keywords from "@b/keywords";
+import type * as csstree from "@eslint/css-tree";
+import type { FontFamilyIR } from "./types";
+
+export function parseFontFamily(ast: csstree.Value): ParseResult<FontFamilyIR> {
+  const firstNode = ast.children.first;
+
+  if (!firstNode) {
+    return {
+      ok: false,
+      property: "font-family",
+      value: undefined,
+      issues: [{ code: "missing-value", severity: "error", message: "Empty value for font-family" }],
+    };
+  }
+
+  // Check for CSS-wide keywords first (single identifier)
+  if (ast.children.size === 1 && firstNode.type === "Identifier") {
+    const name = firstNode.name.toLowerCase();
+    const cssWideResult = Keywords.cssWide.safeParse(name);
+    if (cssWideResult.success) {
+      return {
+        ok: true,
+        property: "font-family",
+        value: { kind: "keyword", value: cssWideResult.data },
+        issues: [],
+      };
+    }
+  }
+
+  // Parse comma-separated list of families
+  const families: Array<Keywords.GenericFamily | string> = [];
+  const nodes = ast.children.toArray();
+  let currentFamily: string[] = [];
+
+  for (let i = 0; i < nodes.length; i++) {
+    const node = nodes[i];
+
+    if (node.type === "Operator" && node.value === ",") {
+      // End of current family
+      if (currentFamily.length > 0) {
+        const familyName = currentFamily.join(" ").trim();
+        if (familyName) {
+          // Check if it's a generic family
+          const genericResult = Keywords.genericFamilySchema.safeParse(familyName.toLowerCase());
+          families.push(genericResult.success ? genericResult.data : familyName);
+        }
+        currentFamily = [];
+      }
+    } else if (node.type === "Identifier") {
+      currentFamily.push(node.name);
+    } else if (node.type === "String") {
+      // Quoted string - use as-is
+      families.push(node.value);
+      currentFamily = [];
+    }
+  }
+
+  // Don't forget the last family
+  if (currentFamily.length > 0) {
+    const familyName = currentFamily.join(" ").trim();
+    if (familyName) {
+      const genericResult = Keywords.genericFamilySchema.safeParse(familyName.toLowerCase());
+      families.push(genericResult.success ? genericResult.data : familyName);
+    }
+  }
+
+  if (families.length === 0) {
+    return {
+      ok: false,
+      property: "font-family",
+      value: undefined,
+      issues: [{ code: "invalid-value", severity: "error", message: "No valid font families found" }],
+    };
+  }
+
+  return {
+    ok: true,
+    property: "font-family",
+    value: { kind: "list", families },
+    issues: [],
+  };
+}
+
+
+=== File: packages/b_declarations/src/properties/font-family/types.ts ===
+// b_path:: packages/b_declarations/src/properties/font-family/types.ts
+
+import type * as Keywords from "@b/keywords";
+
+export type FontFamilyIR =
+  | {
+      kind: "keyword";
+      value: "initial" | "inherit" | "unset" | "revert" | "revert-layer";
+    }
+  | {
+      kind: "list";
+      families: Array<Keywords.GenericFamily | string>;
+    };
+
+
+=== File: packages/b_declarations/src/properties/font-size/definition.ts ===
+// b_path:: packages/b_declarations/src/properties/font-size/definition.ts
+
+import { defineProperty } from "../../core";
+import { parseFontSize } from "./parser";
+import { generateFontSize } from "./generator";
+import type { FontSizeIR } from "./types";
+
+export const fontSize = defineProperty<FontSizeIR>({
+  name: "font-size",
+  syntax: "<absolute-size> | <relative-size> | <length-percentage [0,∞]> | math",
+  parser: parseFontSize,
+  generator: generateFontSize,
+  inherited: true,
+  initial: "medium",
+});
+
+
+=== File: packages/b_declarations/src/properties/font-size/generator.ts ===
+// b_path:: packages/b_declarations/src/properties/font-size/generator.ts
+
+import { generateOk, type GenerateResult } from "@b/types";
+import { cssValueToCss } from "@b/utils";
+import type { FontSizeIR } from "./types";
+
+export function generateFontSize(ir: FontSizeIR): GenerateResult {
+  if (ir.kind === "keyword") {
+    return generateOk(ir.value);
+  }
+
+  const css = cssValueToCss(ir.value);
+  return generateOk(css);
+}
+
+
+=== File: packages/b_declarations/src/properties/font-size/index.ts ===
+// b_path:: packages/b_declarations/src/properties/font-size/index.ts
+
+export * from "./types";
+export * from "./parser";
+export * from "./generator";
+export * from "./definition";
+
+
+=== File: packages/b_declarations/src/properties/font-size/parser.ts ===
+// b_path:: packages/b_declarations/src/properties/font-size/parser.ts
+
+import type { ParseResult } from "@b/types";
+import * as Keywords from "@b/keywords";
+import * as Parsers from "@b/parsers";
+import type * as csstree from "@eslint/css-tree";
+import type { FontSizeIR } from "./types";
+
+export function parseFontSize(ast: csstree.Value): ParseResult<FontSizeIR> {
+  const firstNode = ast.children.first;
+
+  if (!firstNode) {
+    return {
+      ok: false,
+      property: "font-size",
+      value: undefined,
+      issues: [{ code: "missing-value", severity: "error", message: "Empty value for font-size" }],
+    };
+  }
+
+  if (firstNode.type === "Identifier") {
+    const name = firstNode.name.toLowerCase();
+
+    const cssWideResult = Keywords.cssWide.safeParse(name);
+    if (cssWideResult.success) {
+      return {
+        ok: true,
+        property: "font-size",
+        value: { kind: "keyword", value: cssWideResult.data },
+        issues: [],
+      };
+    }
+
+    const absoluteResult = Keywords.absoluteSizeSchema.safeParse(name);
+    if (absoluteResult.success) {
+      return {
+        ok: true,
+        property: "font-size",
+        value: { kind: "keyword", value: absoluteResult.data },
+        issues: [],
+      };
+    }
+
+    const relativeResult = Keywords.relativeSizeSchema.safeParse(name);
+    if (relativeResult.success) {
+      return {
+        ok: true,
+        property: "font-size",
+        value: { kind: "keyword", value: relativeResult.data },
+        issues: [],
+      };
+    }
+  }
+
+  const valueResult = Parsers.Utils.parseNodeToCssValue(firstNode);
+
+  if (valueResult.ok) {
+    return {
+      ok: true,
+      property: "font-size",
+      value: { kind: "value", value: valueResult.value },
+      issues: valueResult.issues,
+    };
+  }
+
+  return valueResult as ParseResult<FontSizeIR>;
+}
+
+
+=== File: packages/b_declarations/src/properties/font-size/types.ts ===
+// b_path:: packages/b_declarations/src/properties/font-size/types.ts
+
+import type * as Keywords from "@b/keywords";
+import type { CssValue } from "@b/types";
+
+export type FontSizeIR =
+  | {
+      kind: "keyword";
+      value:
+        | "initial"
+        | "inherit"
+        | "unset"
+        | "revert"
+        | "revert-layer"
+        | Keywords.AbsoluteSize
+        | Keywords.RelativeSize;
+    }
+  | {
+      kind: "value";
+      value: CssValue;
+    };
+
+
+=== File: packages/b_declarations/src/properties/font-stretch/definition.ts ===
+// b_path:: packages/b_declarations/src/properties/font-stretch/definition.ts
+
+import { defineProperty } from "../../core";
+import { parseFontStretch } from "./parser";
+import { generateFontStretch } from "./generator";
+import type { FontStretchIR } from "./types";
+
+export const fontStretch = defineProperty<FontStretchIR>({
+  name: "font-stretch",
+  syntax:
+    "normal | ultra-condensed | extra-condensed | condensed | semi-condensed | semi-expanded | expanded | extra-expanded | ultra-expanded",
+  parser: parseFontStretch,
+  generator: generateFontStretch,
+  inherited: true,
+  initial: "normal",
+});
+
+
+=== File: packages/b_declarations/src/properties/font-stretch/generator.ts ===
+// b_path:: packages/b_declarations/src/properties/font-stretch/generator.ts
+
+import { generateOk, type GenerateResult } from "@b/types";
+import type { FontStretchIR } from "./types";
+
+export function generateFontStretch(ir: FontStretchIR): GenerateResult {
+  return generateOk(ir.value);
+}
+
+
+=== File: packages/b_declarations/src/properties/font-stretch/index.ts ===
+// b_path:: packages/b_declarations/src/properties/font-stretch/index.ts
+
+export * from "./types";
+export * from "./parser";
+export * from "./generator";
+export * from "./definition";
+
+
+=== File: packages/b_declarations/src/properties/font-stretch/parser.ts ===
+// b_path:: packages/b_declarations/src/properties/font-stretch/parser.ts
+
+import type { ParseResult } from "@b/types";
+import * as Keywords from "@b/keywords";
+import type * as csstree from "@eslint/css-tree";
+import type { FontStretchIR } from "./types";
+
+export function parseFontStretch(ast: csstree.Value): ParseResult<FontStretchIR> {
+  const firstNode = ast.children.first;
+
+  if (!firstNode) {
+    return {
+      ok: false,
+      property: "font-stretch",
+      value: undefined,
+      issues: [{ code: "missing-value", severity: "error", message: "Empty value for font-stretch" }],
+    };
+  }
+
+  if (firstNode.type === "Identifier") {
+    const name = firstNode.name.toLowerCase();
+
+    const cssWideResult = Keywords.cssWide.safeParse(name);
+    if (cssWideResult.success) {
+      return {
+        ok: true,
+        property: "font-stretch",
+        value: { kind: "keyword", value: cssWideResult.data },
+        issues: [],
+      };
+    }
+
+    const parsed = Keywords.fontStretchKeywordSchema.safeParse(name);
+    if (parsed.success) {
+      return {
+        ok: true,
+        property: "font-stretch",
+        value: { kind: "keyword", value: parsed.data },
+        issues: [],
+      };
+    }
+  }
+
+  return {
+    ok: false,
+    property: "font-stretch",
+    value: undefined,
+    issues: [{ code: "invalid-value", severity: "error", message: "Invalid font-stretch value" }],
+  };
+}
+
+
+=== File: packages/b_declarations/src/properties/font-stretch/types.ts ===
+// b_path:: packages/b_declarations/src/properties/font-stretch/types.ts
+
+import type * as Keywords from "@b/keywords";
+
+export type FontStretchIR = {
+  kind: "keyword";
+  value: "initial" | "inherit" | "unset" | "revert" | "revert-layer" | Keywords.FontStretchKeyword;
+};
+
+
+=== File: packages/b_declarations/src/properties/font-style/definition.ts ===
+// b_path:: packages/b_declarations/src/properties/font-style/definition.ts
+
+import { defineProperty } from "../../core";
+import { parseFontStyle } from "./parser";
+import { generateFontStyle } from "./generator";
+import type { FontStyleIR } from "./types";
+
+export const fontStyle = defineProperty<FontStyleIR>({
+  name: "font-style",
+  syntax: "normal | italic | oblique <angle [-90deg,90deg]>?",
+  parser: parseFontStyle,
+  generator: generateFontStyle,
+  inherited: true,
+  initial: "normal",
+});
+
+
+=== File: packages/b_declarations/src/properties/font-style/generator.ts ===
+// b_path:: packages/b_declarations/src/properties/font-style/generator.ts
+
+import { generateOk, type GenerateResult } from "@b/types";
+import * as Generator from "@b/generators";
+import type { FontStyleIR } from "./types";
+
+export function generateFontStyle(ir: FontStyleIR): GenerateResult {
+  if (ir.kind === "keyword") {
+    return generateOk(ir.value);
+  }
+
+  if (ir.angle) {
+    const angleResult = Generator.Angle.generate(ir.angle);
+    if (!angleResult.ok) {
+      return angleResult;
+    }
+    return generateOk(`oblique ${angleResult.value}`);
+  }
+
+  return generateOk("oblique");
+}
+
+
+=== File: packages/b_declarations/src/properties/font-style/index.ts ===
+// b_path:: packages/b_declarations/src/properties/font-style/index.ts
+
+export * from "./types";
+export * from "./parser";
+export * from "./generator";
+export * from "./definition";
+
+
+=== File: packages/b_declarations/src/properties/font-style/parser.ts ===
+// b_path:: packages/b_declarations/src/properties/font-style/parser.ts
+
+import type { ParseResult } from "@b/types";
+import * as Keywords from "@b/keywords";
+import * as Parser from "@b/parsers";
+import type * as csstree from "@eslint/css-tree";
+import type { FontStyleIR } from "./types";
+
+export function parseFontStyle(ast: csstree.Value): ParseResult<FontStyleIR> {
+  const firstNode = ast.children.first;
+
+  if (!firstNode) {
+    return {
+      ok: false,
+      property: "font-style",
+      value: undefined,
+      issues: [{ code: "missing-value", severity: "error", message: "Empty value for font-style" }],
+    };
+  }
+
+  if (firstNode.type === "Identifier") {
+    const name = firstNode.name.toLowerCase();
+
+    const cssWideResult = Keywords.cssWide.safeParse(name);
+    if (cssWideResult.success) {
+      return {
+        ok: true,
+        property: "font-style",
+        value: { kind: "keyword", value: cssWideResult.data },
+        issues: [],
+      };
+    }
+
+    if (name === "normal" || name === "italic") {
+      return {
+        ok: true,
+        property: "font-style",
+        value: { kind: "keyword", value: name },
+        issues: [],
+      };
+    }
+
+    if (name === "oblique") {
+      const secondNode = ast.children.toArray()[1];
+
+      if (secondNode) {
+        const angleResult = Parser.Angle.parseAngleNode(secondNode);
+        if (angleResult.ok) {
+          return {
+            ok: true,
+            property: "font-style",
+            value: { kind: "oblique", angle: angleResult.value },
+            issues: angleResult.issues,
+          };
+        }
+      }
+
+      return {
+        ok: true,
+        property: "font-style",
+        value: { kind: "oblique" },
+        issues: [],
+      };
+    }
+  }
+
+  return {
+    ok: false,
+    property: "font-style",
+    value: undefined,
+    issues: [{ code: "invalid-value", severity: "error", message: "Invalid font-style value" }],
+  };
+}
+
+
+=== File: packages/b_declarations/src/properties/font-style/types.ts ===
+// b_path:: packages/b_declarations/src/properties/font-style/types.ts
+
+import type * as Type from "@b/types";
+
+export type FontStyleIR =
+  | {
+      kind: "keyword";
+      value: "initial" | "inherit" | "unset" | "revert" | "revert-layer" | "normal" | "italic";
+    }
+  | {
+      kind: "oblique";
+      angle?: Type.Angle;
+    };
+
+
+=== File: packages/b_declarations/src/properties/font-variant/definition.ts ===
+// b_path:: packages/b_declarations/src/properties/font-variant/definition.ts
+
+import { defineProperty } from "../../core";
+import { parseFontVariant } from "./parser";
+import { generateFontVariant } from "./generator";
+import type { FontVariantIR } from "./types";
+
+export const fontVariant = defineProperty<FontVariantIR>({
+  name: "font-variant",
+  syntax: "normal | small-caps",
+  parser: parseFontVariant,
+  generator: generateFontVariant,
+  inherited: true,
+  initial: "normal",
+});
+
+
+=== File: packages/b_declarations/src/properties/font-variant/generator.ts ===
+// b_path:: packages/b_declarations/src/properties/font-variant/generator.ts
+
+import { generateOk, type GenerateResult } from "@b/types";
+import type { FontVariantIR } from "./types";
+
+export function generateFontVariant(ir: FontVariantIR): GenerateResult {
+  return generateOk(ir.value);
+}
+
+
+=== File: packages/b_declarations/src/properties/font-variant/index.ts ===
+// b_path:: packages/b_declarations/src/properties/font-variant/index.ts
+
+export * from "./types";
+export * from "./parser";
+export * from "./generator";
+export * from "./definition";
+
+
+=== File: packages/b_declarations/src/properties/font-variant/parser.ts ===
+// b_path:: packages/b_declarations/src/properties/font-variant/parser.ts
+
+import type { ParseResult } from "@b/types";
+import * as Keywords from "@b/keywords";
+import type * as csstree from "@eslint/css-tree";
+import type { FontVariantIR } from "./types";
+
+export function parseFontVariant(ast: csstree.Value): ParseResult<FontVariantIR> {
+  const firstNode = ast.children.first;
+
+  if (!firstNode) {
+    return {
+      ok: false,
+      property: "font-variant",
+      value: undefined,
+      issues: [{ code: "missing-value", severity: "error", message: "Empty value for font-variant" }],
+    };
+  }
+
+  if (firstNode.type === "Identifier") {
+    const name = firstNode.name.toLowerCase();
+
+    const cssWideResult = Keywords.cssWide.safeParse(name);
+    if (cssWideResult.success) {
+      return {
+        ok: true,
+        property: "font-variant",
+        value: { kind: "keyword", value: cssWideResult.data },
+        issues: [],
+      };
+    }
+
+    const parsed = Keywords.fontVariantKeywordSchema.safeParse(name);
+    if (parsed.success) {
+      return {
+        ok: true,
+        property: "font-variant",
+        value: { kind: "keyword", value: parsed.data },
+        issues: [],
+      };
+    }
+  }
+
+  return {
+    ok: false,
+    property: "font-variant",
+    value: undefined,
+    issues: [{ code: "invalid-value", severity: "error", message: "Invalid font-variant value" }],
+  };
+}
+
+
+=== File: packages/b_declarations/src/properties/font-variant/types.ts ===
+// b_path:: packages/b_declarations/src/properties/font-variant/types.ts
+
+import type * as Keywords from "@b/keywords";
+
+export type FontVariantIR = {
+  kind: "keyword";
+  value: "initial" | "inherit" | "unset" | "revert" | "revert-layer" | Keywords.FontVariantKeyword;
+};
+
+
+=== File: packages/b_declarations/src/properties/font-weight/definition.ts ===
+// b_path:: packages/b_declarations/src/properties/font-weight/definition.ts
+
+import { defineProperty } from "../../core";
+import { parseFontWeight } from "./parser";
+import { generateFontWeight } from "./generator";
+import type { FontWeightIR } from "./types";
+
+export const fontWeight = defineProperty<FontWeightIR>({
+  name: "font-weight",
+  syntax: "normal | bold | bolder | lighter | <number [1,1000]>",
+  parser: parseFontWeight,
+  generator: generateFontWeight,
+  inherited: true,
+  initial: "normal",
+});
+
+
+=== File: packages/b_declarations/src/properties/font-weight/generator.ts ===
+// b_path:: packages/b_declarations/src/properties/font-weight/generator.ts
+
+import { generateOk, type GenerateResult } from "@b/types";
+import type { FontWeightIR } from "./types";
+
+export function generateFontWeight(ir: FontWeightIR): GenerateResult {
+  if (ir.kind === "keyword") {
+    return generateOk(ir.value);
+  }
+
+  return generateOk(ir.value.toString());
+}
+
+
+=== File: packages/b_declarations/src/properties/font-weight/index.ts ===
+// b_path:: packages/b_declarations/src/properties/font-weight/index.ts
+
+export * from "./types";
+export * from "./parser";
+export * from "./generator";
+export * from "./definition";
+
+
+=== File: packages/b_declarations/src/properties/font-weight/parser.ts ===
+// b_path:: packages/b_declarations/src/properties/font-weight/parser.ts
+
+import type { ParseResult } from "@b/types";
+import * as Keywords from "@b/keywords";
+import type * as csstree from "@eslint/css-tree";
+import type { FontWeightIR } from "./types";
+
+export function parseFontWeight(ast: csstree.Value): ParseResult<FontWeightIR> {
+  const firstNode = ast.children.first;
+
+  if (!firstNode) {
+    return {
+      ok: false,
+      property: "font-weight",
+      value: undefined,
+      issues: [{ code: "missing-value", severity: "error", message: "Empty value for font-weight" }],
+    };
+  }
+
+  if (firstNode.type === "Identifier") {
+    const name = firstNode.name.toLowerCase();
+
+    const cssWideResult = Keywords.cssWide.safeParse(name);
+    if (cssWideResult.success) {
+      return {
+        ok: true,
+        property: "font-weight",
+        value: { kind: "keyword", value: cssWideResult.data },
+        issues: [],
+      };
+    }
+
+    const parsed = Keywords.fontWeightKeywordSchema.safeParse(name);
+    if (parsed.success) {
+      return {
+        ok: true,
+        property: "font-weight",
+        value: { kind: "keyword", value: parsed.data },
+        issues: [],
+      };
+    }
+  }
+
+  if (firstNode.type === "Number") {
+    const num = Number.parseFloat(firstNode.value);
+
+    if (Number.isNaN(num)) {
+      return {
+        ok: false,
+        property: "font-weight",
+        value: undefined,
+        issues: [
+          {
+            code: "invalid-value",
+            severity: "error",
+            message: "font-weight must be a valid number",
+          },
+        ],
+      };
+    }
+
+    return {
+      ok: true,
+      property: "font-weight",
+      value: { kind: "number", value: num },
+      issues:
+        num < 1 || num > 1000
+          ? [
+              {
+                code: "invalid-value",
+                severity: "warning",
+                message: "font-weight should be between 1 and 1000",
+              },
+            ]
+          : [],
+    };
+  }
+
+  return {
+    ok: false,
+    property: "font-weight",
+    value: undefined,
+    issues: [{ code: "invalid-value", severity: "error", message: "Invalid font-weight value" }],
+  };
+}
+
+
+=== File: packages/b_declarations/src/properties/font-weight/types.ts ===
+// b_path:: packages/b_declarations/src/properties/font-weight/types.ts
+
+import type * as Keywords from "@b/keywords";
+
+export type FontWeightIR =
+  | {
+      kind: "keyword";
+      value: "initial" | "inherit" | "unset" | "revert" | "revert-layer" | Keywords.FontWeightKeyword;
+    }
+  | {
+      kind: "number";
+      value: number;
+    };
 
 
 === File: packages/b_declarations/src/properties/index.ts ===
@@ -9654,6 +10466,7 @@ export * as EasingFunction from "./easing-function";
 export * as Gradient from "./gradient";
 export * as Image from "./image";
 export * as Length from "./length";
+export * as Number from "./number";
 export * as Position from "./position";
 export * as Time from "./time";
 export * as Transform from "./transform";
@@ -9679,6 +10492,19 @@ export function generate(length: Type.Length): GenerateResult {
  */
 export function generateLengthPercentage(lengthPercentage: Type.LengthPercentage): GenerateResult {
   return generateOk(`${lengthPercentage.value}${lengthPercentage.unit}`);
+}
+
+
+=== File: packages/b_generators/src/number.ts ===
+// b_path:: packages/b_generators/src/number.ts
+import { generateOk, type GenerateResult } from "@b/types";
+
+/**
+ * Generate CSS number from numeric value
+ * @see https://drafts.csswg.org/css-values-4/#numbers
+ */
+export function generate(value: number): GenerateResult {
+  return generateOk(String(value));
 }
 
 
@@ -10219,6 +11045,130 @@ export const stepsPositionSchema = z.union([
 export type StepsPosition = z.infer<typeof stepsPositionSchema>;
 
 
+=== File: packages/b_keywords/src/font-family.ts ===
+// b_path:: packages/b_keywords/src/font-family.ts
+import { z } from "zod";
+
+/**
+ * Generic font families
+ * @see https://drafts.csswg.org/css-fonts-4/#generic-font-families
+ */
+export const genericFamilySchema = z.union([
+  z.literal("serif"),
+  z.literal("sans-serif"),
+  z.literal("monospace"),
+  z.literal("cursive"),
+  z.literal("fantasy"),
+  z.literal("system-ui"),
+  z.literal("ui-serif"),
+  z.literal("ui-sans-serif"),
+  z.literal("ui-monospace"),
+  z.literal("ui-rounded"),
+  z.literal("math"),
+  z.literal("emoji"),
+  z.literal("fangsong"),
+]);
+
+export type GenericFamily = z.infer<typeof genericFamilySchema>;
+
+
+=== File: packages/b_keywords/src/font-size.ts ===
+// b_path:: packages/b_keywords/src/font-size.ts
+import { z } from "zod";
+
+/**
+ * Absolute font size keywords
+ * @see https://drafts.csswg.org/css-fonts-4/#absolute-size-value
+ */
+export const absoluteSizeSchema = z.union([
+  z.literal("xx-small"),
+  z.literal("x-small"),
+  z.literal("small"),
+  z.literal("medium"),
+  z.literal("large"),
+  z.literal("x-large"),
+  z.literal("xx-large"),
+  z.literal("xxx-large"),
+]);
+
+export type AbsoluteSize = z.infer<typeof absoluteSizeSchema>;
+
+/**
+ * Relative font size keywords
+ * @see https://drafts.csswg.org/css-fonts-4/#relative-size-value
+ */
+export const relativeSizeSchema = z.union([z.literal("smaller"), z.literal("larger")]);
+
+export type RelativeSize = z.infer<typeof relativeSizeSchema>;
+
+
+=== File: packages/b_keywords/src/font-stretch.ts ===
+// b_path:: packages/b_keywords/src/font-stretch.ts
+import { z } from "zod";
+
+/**
+ * Font stretch keywords
+ * @see https://drafts.csswg.org/css-fonts-4/#font-stretch-prop
+ */
+export const fontStretchKeywordSchema = z.union([
+  z.literal("normal"),
+  z.literal("ultra-condensed"),
+  z.literal("extra-condensed"),
+  z.literal("condensed"),
+  z.literal("semi-condensed"),
+  z.literal("semi-expanded"),
+  z.literal("expanded"),
+  z.literal("extra-expanded"),
+  z.literal("ultra-expanded"),
+]);
+
+export type FontStretchKeyword = z.infer<typeof fontStretchKeywordSchema>;
+
+
+=== File: packages/b_keywords/src/font-style.ts ===
+// b_path:: packages/b_keywords/src/font-style.ts
+import { z } from "zod";
+
+/**
+ * Font style keywords
+ * @see https://drafts.csswg.org/css-fonts-4/#font-style-prop
+ */
+export const fontStyleKeywordSchema = z.union([z.literal("normal"), z.literal("italic"), z.literal("oblique")]);
+
+export type FontStyleKeyword = z.infer<typeof fontStyleKeywordSchema>;
+
+
+=== File: packages/b_keywords/src/font-variant.ts ===
+// b_path:: packages/b_keywords/src/font-variant.ts
+import { z } from "zod";
+
+/**
+ * Font variant keywords (CSS2.1 legacy)
+ * @see https://drafts.csswg.org/css-fonts-4/#font-variant-css21-values
+ */
+export const fontVariantKeywordSchema = z.union([z.literal("normal"), z.literal("small-caps")]);
+
+export type FontVariantKeyword = z.infer<typeof fontVariantKeywordSchema>;
+
+
+=== File: packages/b_keywords/src/font-weight.ts ===
+// b_path:: packages/b_keywords/src/font-weight.ts
+import { z } from "zod";
+
+/**
+ * Font weight keywords
+ * @see https://drafts.csswg.org/css-fonts-4/#font-weight-prop
+ */
+export const fontWeightKeywordSchema = z.union([
+  z.literal("normal"),
+  z.literal("bold"),
+  z.literal("bolder"),
+  z.literal("lighter"),
+]);
+
+export type FontWeightKeyword = z.infer<typeof fontWeightKeywordSchema>;
+
+
 === File: packages/b_keywords/src/gradient-direction.ts ===
 // b_path:: packages/b_keywords/src/gradient-direction.ts
 import { z } from "zod";
@@ -10255,6 +11205,12 @@ export * from "./color-interpolation";
 export * from "./color-space";
 export * from "./common";
 export * from "./easing";
+export * from "./font-family";
+export * from "./font-size";
+export * from "./font-stretch";
+export * from "./font-style";
+export * from "./font-variant";
+export * from "./font-weight";
 export * from "./gradient-direction";
 export * from "./named-colors";
 export * from "./none";
@@ -16299,6 +17255,7 @@ export * from "./values";
 export * from "./color";
 export * from "./angle";
 export * from "./length";
+export * from "./number";
 export * from "./percentage";
 export * from "./length-percentage";
 export * from "./position";
@@ -16345,6 +17302,19 @@ export const lengthSchema = z
   .strict();
 
 export type Length = z.infer<typeof lengthSchema>;
+
+
+=== File: packages/b_types/src/number.ts ===
+// b_path:: packages/b_types/src/number.ts
+import { z } from "zod";
+
+/**
+ * CSS <number> type - unitless numeric value
+ * @see https://drafts.csswg.org/css-values-4/#numbers
+ */
+export const numberSchema = z.number();
+
+export type CSSNumber = z.infer<typeof numberSchema>;
 
 
 === File: packages/b_types/src/percentage.ts ===
@@ -19382,3 +20352,5 @@ export default defineConfig({
     },
   },
 });
+
+
