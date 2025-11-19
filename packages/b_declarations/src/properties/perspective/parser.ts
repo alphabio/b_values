@@ -42,38 +42,16 @@ export function parsePerspective(ast: csstree.Value): ParseResult<PerspectiveIR>
     }
   }
 
-  if (firstNode.type === "Dimension") {
-    const lengthResult = Parsers.Length.parseLengthNode(firstNode);
-    if (lengthResult.ok) {
-      const value = lengthResult.value.value;
-      return {
-        ok: true,
-        property: "perspective",
-        value: { kind: "length", value: lengthResult.value },
-        issues:
-          value < 0
-            ? [
-                {
-                  code: "invalid-value",
-                  severity: "warning",
-                  message: "perspective should be non-negative",
-                },
-              ]
-            : [],
-      };
-    }
+  const valueResult = Parsers.Utils.parseNodeToCssValue(firstNode);
+
+  if (valueResult.ok) {
     return {
-      ok: false,
+      ok: true,
       property: "perspective",
-      value: undefined,
-      issues: lengthResult.issues,
+      value: { kind: "value", value: valueResult.value },
+      issues: valueResult.issues,
     };
   }
 
-  return {
-    ok: false,
-    property: "perspective",
-    value: undefined,
-    issues: [{ code: "invalid-value", severity: "error", message: "Invalid perspective value" }],
-  };
+  return valueResult as ParseResult<PerspectiveIR>;
 }

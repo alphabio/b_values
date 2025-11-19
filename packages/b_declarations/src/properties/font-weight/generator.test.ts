@@ -45,7 +45,7 @@ describe("generateFontWeight", () => {
 
   describe("numeric values", () => {
     it("generates integer weight 400", () => {
-      const ir: FontWeightIR = { kind: "number", value: 400 };
+      const ir: FontWeightIR = { kind: "value", value: { kind: "literal", value: 400 } };
       const result = generateFontWeight(ir);
       expect(result.ok).toBe(true);
       if (result.ok) {
@@ -54,7 +54,7 @@ describe("generateFontWeight", () => {
     });
 
     it("generates integer weight 700", () => {
-      const ir: FontWeightIR = { kind: "number", value: 700 };
+      const ir: FontWeightIR = { kind: "value", value: { kind: "literal", value: 700 } };
       const result = generateFontWeight(ir);
       expect(result.ok).toBe(true);
       if (result.ok) {
@@ -63,7 +63,7 @@ describe("generateFontWeight", () => {
     });
 
     it("generates decimal weight 350.5", () => {
-      const ir: FontWeightIR = { kind: "number", value: 350.5 };
+      const ir: FontWeightIR = { kind: "value", value: { kind: "literal", value: 350.5 } };
       const result = generateFontWeight(ir);
       expect(result.ok).toBe(true);
       if (result.ok) {
@@ -72,7 +72,7 @@ describe("generateFontWeight", () => {
     });
 
     it("generates minimum weight 1", () => {
-      const ir: FontWeightIR = { kind: "number", value: 1 };
+      const ir: FontWeightIR = { kind: "value", value: { kind: "literal", value: 1 } };
       const result = generateFontWeight(ir);
       expect(result.ok).toBe(true);
       if (result.ok) {
@@ -81,7 +81,7 @@ describe("generateFontWeight", () => {
     });
 
     it("generates maximum weight 1000", () => {
-      const ir: FontWeightIR = { kind: "number", value: 1000 };
+      const ir: FontWeightIR = { kind: "value", value: { kind: "literal", value: 1000 } };
       const result = generateFontWeight(ir);
       expect(result.ok).toBe(true);
       if (result.ok) {

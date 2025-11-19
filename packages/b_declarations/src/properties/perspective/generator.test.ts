@@ -15,7 +15,7 @@ describe("generatePerspective", () => {
   });
 
   it("generates pixel length", () => {
-    const ir: PerspectiveIR = { kind: "length", value: { value: 500, unit: "px" } };
+    const ir: PerspectiveIR = { kind: "value", value: { kind: "literal", value: 500, unit: "px" } };
     const result = generatePerspective(ir);
     expect(result.ok).toBe(true);
     if (result.ok) {
@@ -24,7 +24,7 @@ describe("generatePerspective", () => {
   });
 
   it("generates em length", () => {
-    const ir: PerspectiveIR = { kind: "length", value: { value: 10, unit: "em" } };
+    const ir: PerspectiveIR = { kind: "value", value: { kind: "literal", value: 10, unit: "em" } };
     const result = generatePerspective(ir);
     expect(result.ok).toBe(true);
     if (result.ok) {
@@ -33,7 +33,7 @@ describe("generatePerspective", () => {
   });
 
   it("generates rem length", () => {
-    const ir: PerspectiveIR = { kind: "length", value: { value: 2.5, unit: "rem" } };
+    const ir: PerspectiveIR = { kind: "value", value: { kind: "literal", value: 2.5, unit: "rem" } };
     const result = generatePerspective(ir);
     expect(result.ok).toBe(true);
     if (result.ok) {
@@ -42,7 +42,7 @@ describe("generatePerspective", () => {
   });
 
   it("generates viewport units", () => {
-    const ir: PerspectiveIR = { kind: "length", value: { value: 50, unit: "vh" } };
+    const ir: PerspectiveIR = { kind: "value", value: { kind: "literal", value: 50, unit: "vh" } };
     const result = generatePerspective(ir);
     expect(result.ok).toBe(true);
     if (result.ok) {
@@ -63,7 +63,7 @@ describe("generatePerspective", () => {
   });
 
   it("generates decimal lengths", () => {
-    const ir: PerspectiveIR = { kind: "length", value: { value: 123.456, unit: "px" } };
+    const ir: PerspectiveIR = { kind: "value", value: { kind: "literal", value: 123.456, unit: "px" } };
     const result = generatePerspective(ir);
     expect(result.ok).toBe(true);
     if (result.ok) {

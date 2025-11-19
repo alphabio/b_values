@@ -1,3 +1,7 @@
+Excluding patterns: 
+Documentation for LLMs
+Excluding patterns: 
+Excluding patterns: -not -path */__pycache__/* -not -path */__tests__/* -not -path */.git/* -not -path */.idea/* -not -path */.next/* -not -path */.venv/* -not -path */.vscode/* -not -path */*.spec.py -not -path */*.spec.ts -not -path */*.spec.tsx -not -path */*.test.py -not -path */*.test.ts -not -path */*.test.tsx -not -path */*test.py -not -path */*test.ts -not -path */*test.tsx -not -path */build/* -not -path */dist/* -not -path */me.ts -not -path */node_modules/* -not -path */test_*.py -not -path */test.ts -not -path */test.ts -not -path */tests/* -not -path */venv/*
 === File: packages/b_declarations/src/core/index.ts ===
 // b_path:: packages/b_declarations/src/core/index.ts
 export * from "./registry";
@@ -954,11 +958,12 @@ export function parseAnimationDirection(ast: csstree.Value): ParseResult<Animati
 === File: packages/b_declarations/src/properties/animation-direction/types.ts ===
 // b_path:: packages/b_declarations/src/properties/animation-direction/types.ts
 
+import type { z } from "zod";
 import type * as Keywords from "@b/keywords";
 
 export type AnimationDirectionIR = {
   kind: "keyword";
-  value: "initial" | "inherit" | "unset" | "revert" | "revert-layer" | Keywords.AnimationDirectionKeyword;
+  value: z.infer<typeof Keywords.cssWide> | z.infer<typeof Keywords.animationDirectionKeywordSchema>;
 };
 
 
@@ -1162,11 +1167,12 @@ export function parseAnimationFillMode(ast: csstree.Value): ParseResult<Animatio
 === File: packages/b_declarations/src/properties/animation-fill-mode/types.ts ===
 // b_path:: packages/b_declarations/src/properties/animation-fill-mode/types.ts
 
+import type { z } from "zod";
 import type * as Keywords from "@b/keywords";
 
 export type AnimationFillModeIR = {
   kind: "keyword";
-  value: "initial" | "inherit" | "unset" | "revert" | "revert-layer" | Keywords.AnimationFillModeKeyword;
+  value: z.infer<typeof Keywords.cssWide> | z.infer<typeof Keywords.animationFillModeKeywordSchema>;
 };
 
 
@@ -1528,11 +1534,12 @@ export function parseAnimationPlayState(ast: csstree.Value): ParseResult<Animati
 === File: packages/b_declarations/src/properties/animation-play-state/types.ts ===
 // b_path:: packages/b_declarations/src/properties/animation-play-state/types.ts
 
+import type { z } from "zod";
 import type * as Keywords from "@b/keywords";
 
 export type AnimationPlayStateIR = {
   kind: "keyword";
-  value: "initial" | "inherit" | "unset" | "revert" | "revert-layer" | Keywords.AnimationPlayStateKeyword;
+  value: z.infer<typeof Keywords.cssWide> | z.infer<typeof Keywords.animationPlayStateKeywordSchema>;
 };
 
 
@@ -3310,11 +3317,12 @@ export function parseBorderBottomStyle(ast: csstree.Value): ParseResult<BorderBo
 === File: packages/b_declarations/src/properties/border-bottom-style/types.ts ===
 // b_path:: packages/b_declarations/src/properties/border-bottom-style/types.ts
 
+import type { z } from "zod";
 import type * as Keywords from "@b/keywords";
 
 export type BorderBottomStyleIR = {
   kind: "keyword";
-  value: "initial" | "inherit" | "unset" | "revert" | "revert-layer" | Keywords.BorderStyleKeyword;
+  value: z.infer<typeof Keywords.cssWide> | z.infer<typeof Keywords.borderStyleKeywordSchema>;
 };
 
 
@@ -3414,13 +3422,14 @@ export function parseBorderBottomWidth(ast: csstree.Value): ParseResult<BorderBo
 === File: packages/b_declarations/src/properties/border-bottom-width/types.ts ===
 // b_path:: packages/b_declarations/src/properties/border-bottom-width/types.ts
 
+import type { z } from "zod";
 import type { CssValue } from "@b/types";
 import type * as Keywords from "@b/keywords";
 
 export type BorderBottomWidthIR =
   | {
       kind: "keyword";
-      value: "initial" | "inherit" | "unset" | "revert" | "revert-layer" | Keywords.LineWidthKeyword;
+      value: z.infer<typeof Keywords.cssWide> | z.infer<typeof Keywords.lineWidthKeywordSchema>;
     }
   | { kind: "value"; value: CssValue };
 
@@ -3610,11 +3619,12 @@ export function parseBorderLeftStyle(ast: csstree.Value): ParseResult<BorderLeft
 === File: packages/b_declarations/src/properties/border-left-style/types.ts ===
 // b_path:: packages/b_declarations/src/properties/border-left-style/types.ts
 
+import type { z } from "zod";
 import type * as Keywords from "@b/keywords";
 
 export type BorderLeftStyleIR = {
   kind: "keyword";
-  value: "initial" | "inherit" | "unset" | "revert" | "revert-layer" | Keywords.BorderStyleKeyword;
+  value: z.infer<typeof Keywords.cssWide> | z.infer<typeof Keywords.borderStyleKeywordSchema>;
 };
 
 
@@ -3714,13 +3724,14 @@ export function parseBorderLeftWidth(ast: csstree.Value): ParseResult<BorderLeft
 === File: packages/b_declarations/src/properties/border-left-width/types.ts ===
 // b_path:: packages/b_declarations/src/properties/border-left-width/types.ts
 
+import type { z } from "zod";
 import type { CssValue } from "@b/types";
 import type * as Keywords from "@b/keywords";
 
 export type BorderLeftWidthIR =
   | {
       kind: "keyword";
-      value: "initial" | "inherit" | "unset" | "revert" | "revert-layer" | Keywords.LineWidthKeyword;
+      value: z.infer<typeof Keywords.cssWide> | z.infer<typeof Keywords.lineWidthKeywordSchema>;
     }
   | { kind: "value"; value: CssValue };
 
@@ -3910,11 +3921,12 @@ export function parseBorderRightStyle(ast: csstree.Value): ParseResult<BorderRig
 === File: packages/b_declarations/src/properties/border-right-style/types.ts ===
 // b_path:: packages/b_declarations/src/properties/border-right-style/types.ts
 
+import type { z } from "zod";
 import type * as Keywords from "@b/keywords";
 
 export type BorderRightStyleIR = {
   kind: "keyword";
-  value: "initial" | "inherit" | "unset" | "revert" | "revert-layer" | Keywords.BorderStyleKeyword;
+  value: z.infer<typeof Keywords.cssWide> | z.infer<typeof Keywords.borderStyleKeywordSchema>;
 };
 
 
@@ -4014,13 +4026,14 @@ export function parseBorderRightWidth(ast: csstree.Value): ParseResult<BorderRig
 === File: packages/b_declarations/src/properties/border-right-width/types.ts ===
 // b_path:: packages/b_declarations/src/properties/border-right-width/types.ts
 
+import type { z } from "zod";
 import type { CssValue } from "@b/types";
 import type * as Keywords from "@b/keywords";
 
 export type BorderRightWidthIR =
   | {
       kind: "keyword";
-      value: "initial" | "inherit" | "unset" | "revert" | "revert-layer" | Keywords.LineWidthKeyword;
+      value: z.infer<typeof Keywords.cssWide> | z.infer<typeof Keywords.lineWidthKeywordSchema>;
     }
   | { kind: "value"; value: CssValue };
 
@@ -4444,11 +4457,12 @@ export function parseBorderTopStyle(ast: csstree.Value): ParseResult<BorderTopSt
 === File: packages/b_declarations/src/properties/border-top-style/types.ts ===
 // b_path:: packages/b_declarations/src/properties/border-top-style/types.ts
 
+import type { z } from "zod";
 import type * as Keywords from "@b/keywords";
 
 export type BorderTopStyleIR = {
   kind: "keyword";
-  value: "initial" | "inherit" | "unset" | "revert" | "revert-layer" | Keywords.BorderStyleKeyword;
+  value: z.infer<typeof Keywords.cssWide> | z.infer<typeof Keywords.borderStyleKeywordSchema>;
 };
 
 
@@ -4548,13 +4562,14 @@ export function parseBorderTopWidth(ast: csstree.Value): ParseResult<BorderTopWi
 === File: packages/b_declarations/src/properties/border-top-width/types.ts ===
 // b_path:: packages/b_declarations/src/properties/border-top-width/types.ts
 
+import type { z } from "zod";
 import type { CssValue } from "@b/types";
 import type * as Keywords from "@b/keywords";
 
 export type BorderTopWidthIR =
   | {
       kind: "keyword";
-      value: "initial" | "inherit" | "unset" | "revert" | "revert-layer" | Keywords.LineWidthKeyword;
+      value: z.infer<typeof Keywords.cssWide> | z.infer<typeof Keywords.lineWidthKeywordSchema>;
     }
   | { kind: "value"; value: CssValue };
 
@@ -5214,16 +5229,17 @@ export function parseFontFamily(ast: csstree.Value): ParseResult<FontFamilyIR> {
 === File: packages/b_declarations/src/properties/font-family/types.ts ===
 // b_path:: packages/b_declarations/src/properties/font-family/types.ts
 
+import type { z } from "zod";
 import type * as Keywords from "@b/keywords";
 
 export type FontFamilyIR =
   | {
       kind: "keyword";
-      value: "initial" | "inherit" | "unset" | "revert" | "revert-layer";
+      value: z.infer<typeof Keywords.cssWide>;
     }
   | {
       kind: "list";
-      families: Array<Keywords.GenericFamily | string>;
+      families: Array<z.infer<typeof Keywords.genericFamilySchema> | string>;
     };
 
 
@@ -5554,6 +5570,7 @@ export function parseFontSize(ast: csstree.Value): ParseResult<FontSizeIR> {
 === File: packages/b_declarations/src/properties/font-size/types.ts ===
 // b_path:: packages/b_declarations/src/properties/font-size/types.ts
 
+import type { z } from "zod";
 import type * as Keywords from "@b/keywords";
 import type { CssValue } from "@b/types";
 
@@ -5561,13 +5578,9 @@ export type FontSizeIR =
   | {
       kind: "keyword";
       value:
-        | "initial"
-        | "inherit"
-        | "unset"
-        | "revert"
-        | "revert-layer"
-        | Keywords.AbsoluteSize
-        | Keywords.RelativeSize;
+        | z.infer<typeof Keywords.cssWide>
+        | z.infer<typeof Keywords.absoluteSizeSchema>
+        | z.infer<typeof Keywords.relativeSizeSchema>;
     }
   | {
       kind: "value";
@@ -5670,11 +5683,12 @@ export function parseFontStretch(ast: csstree.Value): ParseResult<FontStretchIR>
 === File: packages/b_declarations/src/properties/font-stretch/types.ts ===
 // b_path:: packages/b_declarations/src/properties/font-stretch/types.ts
 
+import type { z } from "zod";
 import type * as Keywords from "@b/keywords";
 
 export type FontStretchIR = {
   kind: "keyword";
-  value: "initial" | "inherit" | "unset" | "revert" | "revert-layer" | Keywords.FontStretchKeyword;
+  value: z.infer<typeof Keywords.cssWide> | z.infer<typeof Keywords.fontStretchKeywordSchema>;
 };
 
 
@@ -5808,12 +5822,14 @@ export function parseFontStyle(ast: csstree.Value): ParseResult<FontStyleIR> {
 === File: packages/b_declarations/src/properties/font-style/types.ts ===
 // b_path:: packages/b_declarations/src/properties/font-style/types.ts
 
+import type { z } from "zod";
+import type * as Keywords from "@b/keywords";
 import type * as Type from "@b/types";
 
 export type FontStyleIR =
   | {
       kind: "keyword";
-      value: "initial" | "inherit" | "unset" | "revert" | "revert-layer" | "normal" | "italic";
+      value: z.infer<typeof Keywords.cssWide> | z.infer<typeof Keywords.fontStyleKeywordSchema>;
     }
   | {
       kind: "oblique";
@@ -6290,11 +6306,12 @@ export function parseFontVariant(ast: csstree.Value): ParseResult<FontVariantIR>
 === File: packages/b_declarations/src/properties/font-variant/types.ts ===
 // b_path:: packages/b_declarations/src/properties/font-variant/types.ts
 
+import type { z } from "zod";
 import type * as Keywords from "@b/keywords";
 
 export type FontVariantIR = {
   kind: "keyword";
-  value: "initial" | "inherit" | "unset" | "revert" | "revert-layer" | Keywords.FontVariantKeyword;
+  value: z.infer<typeof Keywords.cssWide> | z.infer<typeof Keywords.fontVariantKeywordSchema>;
 };
 
 
@@ -6431,12 +6448,13 @@ export function parseFontWeight(ast: csstree.Value): ParseResult<FontWeightIR> {
 === File: packages/b_declarations/src/properties/font-weight/types.ts ===
 // b_path:: packages/b_declarations/src/properties/font-weight/types.ts
 
+import type { z } from "zod";
 import type * as Keywords from "@b/keywords";
 
 export type FontWeightIR =
   | {
       kind: "keyword";
-      value: "initial" | "inherit" | "unset" | "revert" | "revert-layer" | Keywords.FontWeightKeyword;
+      value: z.infer<typeof Keywords.cssWide> | z.infer<typeof Keywords.fontWeightKeywordSchema>;
     }
   | {
       kind: "number";
@@ -8137,11 +8155,12 @@ export function parseTextAlign(ast: csstree.Value): ParseResult<TextAlignIR> {
 === File: packages/b_declarations/src/properties/text-align/types.ts ===
 // b_path:: packages/b_declarations/src/properties/text-align/types.ts
 
+import type { z } from "zod";
 import type * as Keywords from "@b/keywords";
 
 export type TextAlignIR = {
   kind: "keyword";
-  value: "initial" | "inherit" | "unset" | "revert" | "revert-layer" | Keywords.TextAlignKeyword;
+  value: z.infer<typeof Keywords.cssWide> | z.infer<typeof Keywords.textAlignKeywordSchema>;
 };
 
 
@@ -8227,10 +8246,12 @@ export function parseTextIndent(ast: csstree.Value): ParseResult<TextIndentIR> {
 === File: packages/b_declarations/src/properties/text-indent/types.ts ===
 // b_path:: packages/b_declarations/src/properties/text-indent/types.ts
 
+import type { z } from "zod";
 import type { CssValue } from "@b/types";
+import type * as Keywords from "@b/keywords";
 
 export type TextIndentIR =
-  | { kind: "keyword"; value: "initial" | "inherit" | "unset" | "revert" | "revert-layer" }
+  | { kind: "keyword"; value: z.infer<typeof Keywords.cssWide> }
   | { kind: "value"; value: CssValue };
 
 
@@ -8328,11 +8349,12 @@ export function parseTextOverflow(ast: csstree.Value): ParseResult<TextOverflowI
 === File: packages/b_declarations/src/properties/text-overflow/types.ts ===
 // b_path:: packages/b_declarations/src/properties/text-overflow/types.ts
 
+import type { z } from "zod";
 import type * as Keywords from "@b/keywords";
 
 export type TextOverflowIR = {
   kind: "keyword";
-  value: "initial" | "inherit" | "unset" | "revert" | "revert-layer" | Keywords.TextOverflowKeyword;
+  value: z.infer<typeof Keywords.cssWide> | z.infer<typeof Keywords.textOverflowKeywordSchema>;
 };
 
 
@@ -8430,11 +8452,12 @@ export function parseTextTransform(ast: csstree.Value): ParseResult<TextTransfor
 === File: packages/b_declarations/src/properties/text-transform/types.ts ===
 // b_path:: packages/b_declarations/src/properties/text-transform/types.ts
 
+import type { z } from "zod";
 import type * as Keywords from "@b/keywords";
 
 export type TextTransformIR = {
   kind: "keyword";
-  value: "initial" | "inherit" | "unset" | "revert" | "revert-layer" | Keywords.TextTransformKeyword;
+  value: z.infer<typeof Keywords.cssWide> | z.infer<typeof Keywords.textTransformKeywordSchema>;
 };
 
 
@@ -8654,11 +8677,12 @@ export function parseTransformStyle(ast: csstree.Value): ParseResult<TransformSt
 === File: packages/b_declarations/src/properties/transform-style/types.ts ===
 // b_path:: packages/b_declarations/src/properties/transform-style/types.ts
 
+import type { z } from "zod";
 import type * as Keywords from "@b/keywords";
 
 export type TransformStyleIR = {
   kind: "keyword";
-  value: "initial" | "inherit" | "unset" | "revert" | "revert-layer" | Keywords.TransformStyleKeyword;
+  value: z.infer<typeof Keywords.cssWide> | z.infer<typeof Keywords.transformStyleKeywordSchema>;
 };
 
 
@@ -9301,11 +9325,12 @@ export function parseVisibility(ast: csstree.Value): ParseResult<VisibilityIR> {
 === File: packages/b_declarations/src/properties/visibility/types.ts ===
 // b_path:: packages/b_declarations/src/properties/visibility/types.ts
 
+import type { z } from "zod";
 import type * as Keywords from "@b/keywords";
 
 export type VisibilityIR = {
   kind: "keyword";
-  value: "initial" | "inherit" | "unset" | "revert" | "revert-layer" | Keywords.VisibilityKeyword;
+  value: z.infer<typeof Keywords.cssWide> | z.infer<typeof Keywords.visibilityKeywordSchema>;
 };
 
 
@@ -9403,11 +9428,12 @@ export function parseWhiteSpace(ast: csstree.Value): ParseResult<WhiteSpaceIR> {
 === File: packages/b_declarations/src/properties/white-space/types.ts ===
 // b_path:: packages/b_declarations/src/properties/white-space/types.ts
 
+import type { z } from "zod";
 import type * as Keywords from "@b/keywords";
 
 export type WhiteSpaceIR = {
   kind: "keyword";
-  value: "initial" | "inherit" | "unset" | "revert" | "revert-layer" | Keywords.WhiteSpaceKeyword;
+  value: z.infer<typeof Keywords.cssWide> | z.infer<typeof Keywords.whiteSpaceKeywordSchema>;
 };
 
 
@@ -21924,3 +21950,5 @@ export default defineConfig({
     },
   },
 });
+
+

@@ -5,5 +5,5 @@ import type * as Keywords from "@b/keywords";
 
 export type WhiteSpaceIR = {
   kind: "keyword";
-  value: z.infer<typeof Keywords.cssWide> | Keywords.WhiteSpaceKeyword;
+  value: z.infer<typeof Keywords.cssWide> | z.infer<typeof Keywords.whiteSpaceKeywordSchema>;
 };

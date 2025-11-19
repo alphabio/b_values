@@ -2,6 +2,7 @@
 
 import type { ParseResult } from "@b/types";
 import * as Keywords from "@b/keywords";
+import * as Parsers from "@b/parsers";
 import type * as csstree from "@eslint/css-tree";
 import type { FontWeightIR } from "./types";
 
@@ -41,45 +42,16 @@ export function parseFontWeight(ast: csstree.Value): ParseResult<FontWeightIR> {
     }
   }
 
-  if (firstNode.type === "Number") {
-    const num = Number.parseFloat(firstNode.value);
+  const valueResult = Parsers.Utils.parseNodeToCssValue(firstNode);
 
-    if (Number.isNaN(num)) {
-      return {
-        ok: false,
-        property: "font-weight",
-        value: undefined,
-        issues: [
-          {
-            code: "invalid-value",
-            severity: "error",
-            message: "font-weight must be a valid number",
-          },
-        ],
-      };
-    }
-
+  if (valueResult.ok) {
     return {
       ok: true,
       property: "font-weight",
-      value: { kind: "number", value: num },
-      issues:
-        num < 1 || num > 1000
-          ? [
-              {
-                code: "invalid-value",
-                severity: "warning",
-                message: "font-weight should be between 1 and 1000",
-              },
-            ]
-          : [],
+      value: { kind: "value", value: valueResult.value },
+      issues: valueResult.issues,
     };
   }
 
-  return {
-    ok: false,
-    property: "font-weight",
-    value: undefined,
-    issues: [{ code: "invalid-value", severity: "error", message: "Invalid font-weight value" }],
-  };
+  return valueResult as ParseResult<FontWeightIR>;
 }

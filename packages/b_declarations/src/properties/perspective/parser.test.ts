@@ -107,6 +107,7 @@ describe("parsePerspective", () => {
   it("rejects unitless non-zero", () => {
     const ast = parseCSSValue("100");
     const result = parsePerspective(ast);
+    console.log(result);
     expect(result.ok).toBe(false);
   });
 });

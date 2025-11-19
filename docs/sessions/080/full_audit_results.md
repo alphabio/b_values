@@ -8,5 +8,5 @@
 ## ❌ Failures
 
 ### custom-property
-- parser.ts: Failed check "Imports Parsers or Keywords"
 
+- parser.ts: Failed check "Imports Parsers or Keywords"

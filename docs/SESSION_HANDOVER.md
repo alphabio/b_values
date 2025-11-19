@@ -48,3 +48,34 @@ Focus on **planning** and **QA** activities:
 ## 📝 Notes
 
 _To be added as session progresses_
+
+---
+
+## 🔄 Session 080 Update (2025-11-19T13:32:10Z)
+
+**Phase 1 & 2 Complete:** ✅ All 35 violations remediated
+
+**New Investigation:** 🔴 CssValue API Design Issue
+
+**Problem Identified:**
+
+- Current pattern: `{ kind: "value"; value: CssValue }` causes "value.value" repetition
+- User concern: Poor DX with nested value property
+- Affects: 27 properties
+
+**Investigation Document:** `docs/sessions/080/cssvalue-api-investigation.md`
+
+**Options Under Consideration:**
+
+1. `{ kind: "value"; cssValue: CssValue }` - Change property name
+2. `{ kind: "cssValue"; value: CssValue }` - Change discriminator (RECOMMENDED)
+3. `{ kind: "value"; data: CssValue }` - Generic payload name
+4. `{ type: "cssValue"; cssValue: CssValue }` - Different discriminator + property
+
+**Status:** 🟡 BLOCKED - Awaiting user decision on API redesign
+
+**Impact:** ~108 files (27 properties × 4 files each)
+
+**Philosophy:** "We break things to make them consistent" - No deprecation cycles
+
+**Next Agent:** Review investigation document, await user decision, execute chosen option

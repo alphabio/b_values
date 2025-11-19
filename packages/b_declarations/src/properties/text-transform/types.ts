@@ -5,5 +5,5 @@ import type * as Keywords from "@b/keywords";
 
 export type TextTransformIR = {
   kind: "keyword";
-  value: z.infer<typeof Keywords.cssWide> | Keywords.TextTransformKeyword;
+  value: z.infer<typeof Keywords.cssWide> | z.infer<typeof Keywords.textTransformKeywordSchema>;
 };

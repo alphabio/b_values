@@ -1,7 +1,7 @@
 // b_path:: packages/b_declarations/src/properties/transition-delay/generator.ts
 
 import { generateOk, type GenerateResult } from "@b/types";
-import * as Generators from "@b/generators";
+import { cssValueToCss } from "@b/utils";
 import type { TransitionDelayIR } from "./types";
 
 export function generateTransitionDelay(ir: TransitionDelayIR): GenerateResult {
@@ -9,6 +9,6 @@ export function generateTransitionDelay(ir: TransitionDelayIR): GenerateResult {
     return generateOk(ir.value);
   }
 
-  const result = Generators.Time.generate(ir.value);
-  return result;
+  const css = cssValueToCss(ir.value);
+  return generateOk(css);
 }
