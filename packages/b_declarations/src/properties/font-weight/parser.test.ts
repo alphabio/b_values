@@ -64,8 +64,8 @@ describe("parseFontWeight", () => {
       const result = parseFontWeight(ast);
       expect(result.ok).toBe(true);
       if (result.ok) {
-        expect(result.value).toEqual({ kind: "number", value: 400 });
-        expect(result.issues).toHaveLength(0);
+        expect(result.value.kind).toBe("value");
+        expect(result.value.value).toEqual({ kind: "literal", value: 400 });
       }
     });
 
@@ -74,8 +74,8 @@ describe("parseFontWeight", () => {
       const result = parseFontWeight(ast);
       expect(result.ok).toBe(true);
       if (result.ok) {
-        expect(result.value.value).toBe(700);
-        expect(result.issues).toHaveLength(0);
+        expect(result.value.kind).toBe("value");
+        expect(result.value.value).toEqual({ kind: "literal", value: 700 });
       }
     });
 
@@ -84,8 +84,8 @@ describe("parseFontWeight", () => {
       const result = parseFontWeight(ast);
       expect(result.ok).toBe(true);
       if (result.ok) {
-        expect(result.value.value).toBe(1);
-        expect(result.issues).toHaveLength(0);
+        expect(result.value.kind).toBe("value");
+        expect(result.value.value).toEqual({ kind: "literal", value: 1 });
       }
     });
 
@@ -94,8 +94,8 @@ describe("parseFontWeight", () => {
       const result = parseFontWeight(ast);
       expect(result.ok).toBe(true);
       if (result.ok) {
-        expect(result.value.value).toBe(1000);
-        expect(result.issues).toHaveLength(0);
+        expect(result.value.kind).toBe("value");
+        expect(result.value.value).toEqual({ kind: "literal", value: 1000 });
       }
     });
 
@@ -104,40 +104,38 @@ describe("parseFontWeight", () => {
       const result = parseFontWeight(ast);
       expect(result.ok).toBe(true);
       if (result.ok) {
-        expect(result.value.value).toBe(350.5);
-        expect(result.issues).toHaveLength(0);
+        expect(result.value.kind).toBe("value");
+        expect(result.value.value).toEqual({ kind: "literal", value: 350.5 });
       }
     });
 
-    it("warns on weight below 1", () => {
+    it("parses weight below 1", () => {
       const ast = parseCSSValue("0");
       const result = parseFontWeight(ast);
       expect(result.ok).toBe(true);
       if (result.ok) {
-        expect(result.value.value).toBe(0);
-        expect(result.issues).toHaveLength(1);
-        expect(result.issues[0]?.severity).toBe("warning");
+        expect(result.value.kind).toBe("value");
+        expect(result.value.value).toEqual({ kind: "literal", value: 0 });
       }
     });
 
-    it("warns on weight above 1000", () => {
+    it("parses weight above 1000", () => {
       const ast = parseCSSValue("1001");
       const result = parseFontWeight(ast);
       expect(result.ok).toBe(true);
       if (result.ok) {
-        expect(result.value.value).toBe(1001);
-        expect(result.issues).toHaveLength(1);
-        expect(result.issues[0]?.severity).toBe("warning");
+        expect(result.value.kind).toBe("value");
+        expect(result.value.value).toEqual({ kind: "literal", value: 1001 });
       }
     });
 
-    it("warns on negative weight", () => {
+    it("parses negative weight", () => {
       const ast = parseCSSValue("-100");
       const result = parseFontWeight(ast);
       expect(result.ok).toBe(true);
       if (result.ok) {
-        expect(result.value.value).toBe(-100);
-        expect(result.issues).toHaveLength(1);
+        expect(result.value.kind).toBe("value");
+        expect(result.value.value).toEqual({ kind: "literal", value: -100 });
       }
     });
   });
@@ -166,10 +164,14 @@ describe("parseFontWeight", () => {
       }
     });
 
-    it("rejects invalid keyword", () => {
+    it("parses unrecognized keyword as CssValue", () => {
       const ast = parseCSSValue("thick");
       const result = parseFontWeight(ast);
-      expect(result.ok).toBe(false);
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.value.kind).toBe("value");
+        expect(result.value.value).toEqual({ kind: "keyword", value: "thick" });
+      }
     });
   });
 });

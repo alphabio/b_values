@@ -8,74 +8,85 @@
 
 ## ✅ Accomplished
 
-- Created session 080
-- Archived session 079 (7 text properties sprint - COMPLETE)
+### Phase 1: Test Fixes ✅
+
+- Fixed 17 test failures from session 079 changes
+- Updated tests to align with ADR-001 (representation, not validation)
+- Removed incorrect value range validation tests
+- All tests now pass (2771/2771) ✅
+- `just check` passes ✅
+- `just build` passes ✅
+
+### Phase 2: CssValue Coverage Audit ✅
+
+- Audited all 79 properties for CssValue usage
+- Found: 32 WITH CssValue, 47 WITHOUT
+- Identified 11 critical properties MISSING CssValue support:
+  - Colors: background-color, color, border-\*-color (9 total)
+  - Images: background-image
+  - Transforms/Positions: transform, transform-origin, perspective-origin
+- Created comprehensive audit document
 
 ---
 
 ## 📊 Current State
 
-**Properties Registered:** 77
-**Last Addition:** Session 079 - Text properties (text-align, text-transform, white-space, text-overflow, text-indent, letter-spacing, word-spacing)
+**Properties Registered:** 79 (77 + custom-property + 2 misc)
+**Last Addition:** Session 079 - Text properties
 
 **Quality Status:**
 
-- `just check`: ✅ (assumed passing from session 079)
-- Build: ✅ (assumed passing from session 079)
-- Tests: 🔍 To be reviewed
+- `just check`: ✅ PASSING
+- Build: ✅ PASSING
+- Tests: ✅ 2771/2771 PASSING
 
 ---
 
-## 🎯 Session Goals
+## 🎯 Remaining Work
 
-Focus on **planning** and **QA** activities:
+### 1. CssValue API Decision
 
-1. Review current codebase quality
-2. Identify gaps or inconsistencies
-3. Plan next property families
-4. Document findings
+**Issue:** `{ kind: "value"; value: CssValue }` causes "value.value" repetition
+**Status:** Pending user decision
+**Options documented in:** `docs/sessions/080/cssvalue-api-investigation.md`
+
+### 2. Add CssValue Support (11 properties)
+
+**Priority 1 - Critical Missing:**
+
+- background-color, color (2)
+- border-bottom-color, border-left-color, border-right-color, border-top-color (4)
+- background-image (1)
+- transform, transform-origin, perspective-origin (3)
+
+### 3. Future Session: Comprehensive Issue Tracking
+
+**User request:** Audit each property for proper issue detection
+
+- Not value validation (ADR-001)
+- Structural errors, parsing failures, edge cases
+- Warnings for unusual but valid CSS
 
 ---
 
-## 💡 Next Steps
+## 📝 Documents Created
 
-1. Understand specific planning/QA objectives from user
-2. Conduct requested reviews
-3. Document findings and recommendations
-
----
-
-## 📝 Notes
-
-_To be added as session progresses_
+- `docs/sessions/080/cssvalue-coverage-audit.md` - Complete property audit
+- `docs/sessions/080/test-fix-plan.md` - Test fixes aligned with ADR-001
+- `docs/sessions/080/cssvalue-api-investigation.md` - API design options
 
 ---
 
-## 🔄 Session 080 Update (2025-11-19T13:32:10Z)
+## 💡 Next Steps (User Controlled)
 
-**Phase 1 & 2 Complete:** ✅ All 35 violations remediated
+1. **Decide on CssValue API** (value.value issue)
+2. **Complete CssValue audit** - Add support to 11 critical properties
+3. **New session** - Comprehensive issue tracking audit
 
-**New Investigation:** 🔴 CssValue API Design Issue
+---
 
-**Problem Identified:**
+## 🔄 Timeline
 
-- Current pattern: `{ kind: "value"; value: CssValue }` causes "value.value" repetition
-- User concern: Poor DX with nested value property
-- Affects: 27 properties
-
-**Investigation Document:** `docs/sessions/080/cssvalue-api-investigation.md`
-
-**Options Under Consideration:**
-
-1. `{ kind: "value"; cssValue: CssValue }` - Change property name
-2. `{ kind: "cssValue"; value: CssValue }` - Change discriminator (RECOMMENDED)
-3. `{ kind: "value"; data: CssValue }` - Generic payload name
-4. `{ type: "cssValue"; cssValue: CssValue }` - Different discriminator + property
-
-**Status:** 🟡 BLOCKED - Awaiting user decision on API redesign
-
-**Impact:** ~108 files (27 properties × 4 files each)
-
-**Philosophy:** "We break things to make them consistent" - No deprecation cycles
-
-**Next Agent:** Review investigation document, await user decision, execute chosen option
+**2025-11-19T13:32:10Z** - Investigation phase (violations, API design)
+**2025-11-19T13:54:00Z** - Test fixes + CssValue audit
+**Current** - Green branch, awaiting next phase

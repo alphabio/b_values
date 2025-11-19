@@ -1,4 +1,3 @@
-// b_path:: apps/basic/src/app/routeTree.gen.ts
 /* eslint-disable */
 
 // @ts-nocheck

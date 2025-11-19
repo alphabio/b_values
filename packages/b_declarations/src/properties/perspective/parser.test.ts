@@ -25,8 +25,8 @@ describe("parsePerspective", () => {
     const result = parsePerspective(ast);
     expect(result.ok).toBe(true);
     if (result.ok) {
-      expect(result.value.kind).toBe("length");
-      expect(result.value.value).toEqual({ value: 500, unit: "px" });
+      expect(result.value.kind).toBe("value");
+      expect(result.value.value).toEqual({ kind: "literal", value: 500, unit: "px" });
     }
   });
 
@@ -35,8 +35,8 @@ describe("parsePerspective", () => {
     const result = parsePerspective(ast);
     expect(result.ok).toBe(true);
     if (result.ok) {
-      expect(result.value.kind).toBe("length");
-      expect(result.value.value).toEqual({ value: 10, unit: "em" });
+      expect(result.value.kind).toBe("value");
+      expect(result.value.value).toEqual({ kind: "literal", value: 10, unit: "em" });
     }
   });
 
@@ -45,8 +45,8 @@ describe("parsePerspective", () => {
     const result = parsePerspective(ast);
     expect(result.ok).toBe(true);
     if (result.ok) {
-      expect(result.value.kind).toBe("length");
-      expect(result.value.value).toEqual({ value: 2.5, unit: "rem" });
+      expect(result.value.kind).toBe("value");
+      expect(result.value.value).toEqual({ kind: "literal", value: 2.5, unit: "rem" });
     }
   });
 
@@ -55,19 +55,18 @@ describe("parsePerspective", () => {
     const result = parsePerspective(ast);
     expect(result.ok).toBe(true);
     if (result.ok) {
-      expect(result.value.kind).toBe("length");
-      expect(result.value.value).toEqual({ value: 50, unit: "vh" });
+      expect(result.value.kind).toBe("value");
+      expect(result.value.value).toEqual({ kind: "literal", value: 50, unit: "vh" });
     }
   });
 
-  it("warns on negative length", () => {
+  it("parses negative length", () => {
     const ast = parseCSSValue("-100px");
     const result = parsePerspective(ast);
     expect(result.ok).toBe(true);
     if (result.ok) {
-      expect(result.issues).toHaveLength(1);
-      expect(result.issues[0]?.severity).toBe("warning");
-      expect(result.issues[0]?.message).toContain("non-negative");
+      expect(result.value.kind).toBe("value");
+      expect(result.value.value).toEqual({ kind: "literal", value: -100, unit: "px" });
     }
   });
 
@@ -92,22 +91,33 @@ describe("parsePerspective", () => {
     }
   });
 
-  it("rejects invalid keyword", () => {
+  it("parses keyword as CssValue", () => {
     const ast = parseCSSValue("auto");
     const result = parsePerspective(ast);
-    expect(result.ok).toBe(false);
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value.kind).toBe("value");
+      expect(result.value.value).toEqual({ kind: "keyword", value: "auto" });
+    }
   });
 
-  it("rejects percentage", () => {
+  it("parses percentage as CssValue", () => {
     const ast = parseCSSValue("50%");
     const result = parsePerspective(ast);
-    expect(result.ok).toBe(false);
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value.kind).toBe("value");
+      expect(result.value.value).toEqual({ kind: "literal", value: 50, unit: "%" });
+    }
   });
 
-  it("rejects unitless non-zero", () => {
+  it("parses unitless number as CssValue", () => {
     const ast = parseCSSValue("100");
     const result = parsePerspective(ast);
-    console.log(result);
-    expect(result.ok).toBe(false);
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value.kind).toBe("value");
+      expect(result.value.value).toEqual({ kind: "literal", value: 100 });
+    }
   });
 });
