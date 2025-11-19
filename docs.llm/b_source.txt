@@ -4817,6 +4817,7 @@ import { fontVariantCaps } from "./font-variant-caps/definition";
 import { fontVariantLigatures } from "./font-variant-ligatures/definition";
 import { fontVariantNumeric } from "./font-variant-numeric/definition";
 import { fontWeight } from "./font-weight/definition";
+import { letterSpacing } from "./letter-spacing/definition";
 import { lineHeight } from "./line-height/definition";
 import { marginBottom } from "./margin-bottom/definition";
 import { marginLeft } from "./margin-left/definition";
@@ -4830,6 +4831,10 @@ import { paddingRight } from "./padding-right/definition";
 import { paddingTop } from "./padding-top/definition";
 import { perspective } from "./perspective/definition";
 import { perspectiveOrigin } from "./perspective-origin/definition";
+import { textAlign } from "./text-align/definition";
+import { textIndent } from "./text-indent/definition";
+import { textOverflow } from "./text-overflow/definition";
+import { textTransform } from "./text-transform/definition";
 import { transform } from "./transform/definition";
 import { transformOrigin } from "./transform-origin/definition";
 import { transformStyle } from "./transform-style/definition";
@@ -4838,6 +4843,8 @@ import { transitionDuration } from "./transition-duration/definition";
 import { transitionProperty } from "./transition-property/definition";
 import { transitionTimingFunction } from "./transition-timing-function/definition";
 import { visibility } from "./visibility/definition";
+import { whiteSpace } from "./white-space/definition";
+import { wordSpacing } from "./word-spacing/definition";
 
 /**
  * Central definitions object.
@@ -4900,6 +4907,7 @@ export const PROPERTY_DEFINITIONS = {
   "font-variant-ligatures": fontVariantLigatures,
   "font-variant-numeric": fontVariantNumeric,
   "font-weight": fontWeight,
+  "letter-spacing": letterSpacing,
   "line-height": lineHeight,
   "margin-bottom": marginBottom,
   "margin-left": marginLeft,
@@ -4913,6 +4921,10 @@ export const PROPERTY_DEFINITIONS = {
   "padding-top": paddingTop,
   perspective: perspective,
   "perspective-origin": perspectiveOrigin,
+  "text-align": textAlign,
+  "text-indent": textIndent,
+  "text-overflow": textOverflow,
+  "text-transform": textTransform,
   transform: transform,
   "transform-origin": transformOrigin,
   "transform-style": transformStyle,
@@ -4921,6 +4933,8 @@ export const PROPERTY_DEFINITIONS = {
   "transition-property": transitionProperty,
   "transition-timing-function": transitionTimingFunction,
   visibility: visibility,
+  "white-space": whiteSpace,
+  "word-spacing": wordSpacing,
 } as const;
 
 /**
@@ -6495,6 +6509,7 @@ export * from "./font-variant-caps";
 export * from "./font-variant-ligatures";
 export * from "./font-variant-numeric";
 export * from "./font-weight";
+export * from "./letter-spacing";
 export * from "./line-height";
 export * from "./margin-bottom";
 export * from "./margin-left";
@@ -6508,6 +6523,10 @@ export * from "./padding-right";
 export * from "./padding-top";
 export * from "./perspective";
 export * from "./perspective-origin";
+export * from "./text-align";
+export * from "./text-indent";
+export * from "./text-overflow";
+export * from "./text-transform";
 export * from "./transform";
 export * from "./transform-origin";
 export * from "./transform-style";
@@ -6516,11 +6535,126 @@ export * from "./transition-duration";
 export * from "./transition-property";
 export * from "./transition-timing-function";
 export * from "./visibility";
+export * from "./white-space";
+export * from "./word-spacing";
 
 // Mark registry as initialized after all properties are loaded
 // This is a side-effect import that happens when this module is imported
 import { propertyRegistry } from "../core/registry";
 propertyRegistry.markInitialized();
+
+
+=== File: packages/b_declarations/src/properties/letter-spacing/definition.ts ===
+// b_path:: packages/b_declarations/src/properties/letter-spacing/definition.ts
+
+import { defineProperty } from "../../core";
+import { parseLetterSpacing } from "./parser";
+import { generateLetterSpacing } from "./generator";
+import type { LetterSpacingIR } from "./types";
+
+export const letterSpacing = defineProperty<LetterSpacingIR>({
+  name: "letter-spacing",
+  syntax: "normal | <length>",
+  parser: parseLetterSpacing,
+  generator: generateLetterSpacing,
+  inherited: true,
+  initial: "normal",
+});
+
+
+=== File: packages/b_declarations/src/properties/letter-spacing/generator.ts ===
+// b_path:: packages/b_declarations/src/properties/letter-spacing/generator.ts
+
+import { generateOk, type GenerateResult } from "@b/types";
+import { cssValueToCss } from "@b/utils";
+import type { LetterSpacingIR } from "./types";
+
+export function generateLetterSpacing(ir: LetterSpacingIR): GenerateResult {
+  if (ir.kind === "keyword") {
+    return generateOk(ir.value);
+  }
+
+  const css = cssValueToCss(ir.value);
+  return generateOk(css);
+}
+
+
+=== File: packages/b_declarations/src/properties/letter-spacing/index.ts ===
+// b_path:: packages/b_declarations/src/properties/letter-spacing/index.ts
+
+export * from "./types";
+export * from "./parser";
+export * from "./generator";
+export * from "./definition";
+
+
+=== File: packages/b_declarations/src/properties/letter-spacing/parser.ts ===
+// b_path:: packages/b_declarations/src/properties/letter-spacing/parser.ts
+
+import type { ParseResult } from "@b/types";
+import * as Keywords from "@b/keywords";
+import * as Parsers from "@b/parsers";
+import type * as csstree from "@eslint/css-tree";
+import type { LetterSpacingIR } from "./types";
+
+export function parseLetterSpacing(ast: csstree.Value): ParseResult<LetterSpacingIR> {
+  const firstNode = ast.children.first;
+
+  if (!firstNode) {
+    return {
+      ok: false,
+      property: "letter-spacing",
+      value: undefined,
+      issues: [{ code: "missing-value", severity: "error", message: "Empty value for letter-spacing" }],
+    };
+  }
+
+  if (firstNode.type === "Identifier") {
+    const name = firstNode.name.toLowerCase();
+
+    const cssWideResult = Keywords.cssWide.safeParse(name);
+    if (cssWideResult.success) {
+      return {
+        ok: true,
+        property: "letter-spacing",
+        value: { kind: "keyword", value: cssWideResult.data },
+        issues: [],
+      };
+    }
+
+    if (name === "normal") {
+      return {
+        ok: true,
+        property: "letter-spacing",
+        value: { kind: "keyword", value: "normal" },
+        issues: [],
+      };
+    }
+  }
+
+  const valueResult = Parsers.Utils.parseNodeToCssValue(firstNode);
+
+  if (valueResult.ok) {
+    return {
+      ok: true,
+      property: "letter-spacing",
+      value: { kind: "value", value: valueResult.value },
+      issues: valueResult.issues,
+    };
+  }
+
+  return valueResult as ParseResult<LetterSpacingIR>;
+}
+
+
+=== File: packages/b_declarations/src/properties/letter-spacing/types.ts ===
+// b_path:: packages/b_declarations/src/properties/letter-spacing/types.ts
+
+import type { CssValue } from "@b/types";
+
+export type LetterSpacingIR =
+  | { kind: "keyword"; value: "normal" | "inherit" | "initial" | "revert" | "revert-layer" | "unset" }
+  | { kind: "value"; value: CssValue };
 
 
 === File: packages/b_declarations/src/properties/line-height/definition.ts ===
@@ -7909,6 +8043,401 @@ export type PerspectiveIR =
     };
 
 
+=== File: packages/b_declarations/src/properties/text-align/definition.ts ===
+// b_path:: packages/b_declarations/src/properties/text-align/definition.ts
+
+import { defineProperty } from "../../core";
+import { parseTextAlign } from "./parser";
+import { generateTextAlign } from "./generator";
+import type { TextAlignIR } from "./types";
+
+export const textAlign = defineProperty<TextAlignIR>({
+  name: "text-align",
+  syntax: "start | end | left | right | center | justify | match-parent",
+  parser: parseTextAlign,
+  generator: generateTextAlign,
+  inherited: true,
+  initial: "start",
+});
+
+
+=== File: packages/b_declarations/src/properties/text-align/generator.ts ===
+// b_path:: packages/b_declarations/src/properties/text-align/generator.ts
+
+import { generateOk, type GenerateResult } from "@b/types";
+import type { TextAlignIR } from "./types";
+
+export function generateTextAlign(ir: TextAlignIR): GenerateResult {
+  return generateOk(ir.value);
+}
+
+
+=== File: packages/b_declarations/src/properties/text-align/index.ts ===
+// b_path:: packages/b_declarations/src/properties/text-align/index.ts
+
+export * from "./types";
+export * from "./parser";
+export * from "./generator";
+export * from "./definition";
+
+
+=== File: packages/b_declarations/src/properties/text-align/parser.ts ===
+// b_path:: packages/b_declarations/src/properties/text-align/parser.ts
+
+import type { ParseResult } from "@b/types";
+import * as Keywords from "@b/keywords";
+import type * as csstree from "@eslint/css-tree";
+import type { TextAlignIR } from "./types";
+
+export function parseTextAlign(ast: csstree.Value): ParseResult<TextAlignIR> {
+  const firstNode = ast.children.first;
+
+  if (!firstNode) {
+    return {
+      ok: false,
+      property: "text-align",
+      value: undefined,
+      issues: [{ code: "missing-value", severity: "error", message: "Empty value for text-align" }],
+    };
+  }
+
+  if (firstNode.type === "Identifier") {
+    const name = firstNode.name.toLowerCase();
+
+    const cssWideResult = Keywords.cssWide.safeParse(name);
+    if (cssWideResult.success) {
+      return {
+        ok: true,
+        property: "text-align",
+        value: { kind: "keyword", value: cssWideResult.data },
+        issues: [],
+      };
+    }
+
+    const parsed = Keywords.textAlignKeywordSchema.safeParse(name);
+    if (parsed.success) {
+      return {
+        ok: true,
+        property: "text-align",
+        value: { kind: "keyword", value: parsed.data },
+        issues: [],
+      };
+    }
+  }
+
+  return {
+    ok: false,
+    property: "text-align",
+    value: undefined,
+    issues: [{ code: "invalid-value", severity: "error", message: "Invalid text-align value" }],
+  };
+}
+
+
+=== File: packages/b_declarations/src/properties/text-align/types.ts ===
+// b_path:: packages/b_declarations/src/properties/text-align/types.ts
+
+import type * as Keywords from "@b/keywords";
+
+export type TextAlignIR = {
+  kind: "keyword";
+  value: "initial" | "inherit" | "unset" | "revert" | "revert-layer" | Keywords.TextAlignKeyword;
+};
+
+
+=== File: packages/b_declarations/src/properties/text-indent/definition.ts ===
+// b_path:: packages/b_declarations/src/properties/text-indent/definition.ts
+
+import { defineProperty } from "../../core";
+import { parseTextIndent } from "./parser";
+import { generateTextIndent } from "./generator";
+import type { TextIndentIR } from "./types";
+
+export const textIndent = defineProperty<TextIndentIR>({
+  name: "text-indent",
+  syntax: "<length-percentage>",
+  parser: parseTextIndent,
+  generator: generateTextIndent,
+  inherited: true,
+  initial: "0",
+});
+
+
+=== File: packages/b_declarations/src/properties/text-indent/generator.ts ===
+// b_path:: packages/b_declarations/src/properties/text-indent/generator.ts
+
+import { generateOk, type GenerateResult } from "@b/types";
+import { cssValueToCss } from "@b/utils";
+import type { TextIndentIR } from "./types";
+
+export function generateTextIndent(ir: TextIndentIR): GenerateResult {
+  if (ir.kind === "keyword") {
+    return generateOk(ir.value);
+  }
+
+  const css = cssValueToCss(ir.value);
+  return generateOk(css);
+}
+
+
+=== File: packages/b_declarations/src/properties/text-indent/index.ts ===
+// b_path:: packages/b_declarations/src/properties/text-indent/index.ts
+
+export * from "./types";
+export * from "./parser";
+export * from "./generator";
+export * from "./definition";
+
+
+=== File: packages/b_declarations/src/properties/text-indent/parser.ts ===
+// b_path:: packages/b_declarations/src/properties/text-indent/parser.ts
+
+import type { ParseResult } from "@b/types";
+import * as Parsers from "@b/parsers";
+import type * as csstree from "@eslint/css-tree";
+import type { TextIndentIR } from "./types";
+
+export function parseTextIndent(ast: csstree.Value): ParseResult<TextIndentIR> {
+  const firstNode = ast.children.first;
+
+  if (!firstNode) {
+    return {
+      ok: false,
+      property: "text-indent",
+      value: undefined,
+      issues: [{ code: "missing-value", severity: "error", message: "Empty value for text-indent" }],
+    };
+  }
+
+  const valueResult = Parsers.Utils.parseNodeToCssValue(firstNode);
+
+  if (valueResult.ok) {
+    return {
+      ok: true,
+      property: "text-indent",
+      value: { kind: "value", value: valueResult.value },
+      issues: valueResult.issues,
+    };
+  }
+
+  return valueResult as ParseResult<TextIndentIR>;
+}
+
+
+=== File: packages/b_declarations/src/properties/text-indent/types.ts ===
+// b_path:: packages/b_declarations/src/properties/text-indent/types.ts
+
+import type { CssValue } from "@b/types";
+
+export type TextIndentIR =
+  | { kind: "keyword"; value: "initial" | "inherit" | "unset" | "revert" | "revert-layer" }
+  | { kind: "value"; value: CssValue };
+
+
+=== File: packages/b_declarations/src/properties/text-overflow/definition.ts ===
+// b_path:: packages/b_declarations/src/properties/text-overflow/definition.ts
+
+import { defineProperty } from "../../core";
+import { parseTextOverflow } from "./parser";
+import { generateTextOverflow } from "./generator";
+import type { TextOverflowIR } from "./types";
+
+export const textOverflow = defineProperty<TextOverflowIR>({
+  name: "text-overflow",
+  syntax: "clip | ellipsis",
+  parser: parseTextOverflow,
+  generator: generateTextOverflow,
+  inherited: false,
+  initial: "clip",
+});
+
+
+=== File: packages/b_declarations/src/properties/text-overflow/generator.ts ===
+// b_path:: packages/b_declarations/src/properties/text-overflow/generator.ts
+
+import { generateOk, type GenerateResult } from "@b/types";
+import type { TextOverflowIR } from "./types";
+
+export function generateTextOverflow(ir: TextOverflowIR): GenerateResult {
+  return generateOk(ir.value);
+}
+
+
+=== File: packages/b_declarations/src/properties/text-overflow/index.ts ===
+// b_path:: packages/b_declarations/src/properties/text-overflow/index.ts
+
+export * from "./types";
+export * from "./parser";
+export * from "./generator";
+export * from "./definition";
+
+
+=== File: packages/b_declarations/src/properties/text-overflow/parser.ts ===
+// b_path:: packages/b_declarations/src/properties/text-overflow/parser.ts
+
+import type { ParseResult } from "@b/types";
+import * as Keywords from "@b/keywords";
+import type * as csstree from "@eslint/css-tree";
+import type { TextOverflowIR } from "./types";
+
+export function parseTextOverflow(ast: csstree.Value): ParseResult<TextOverflowIR> {
+  const firstNode = ast.children.first;
+
+  if (!firstNode) {
+    return {
+      ok: false,
+      property: "text-overflow",
+      value: undefined,
+      issues: [{ code: "missing-value", severity: "error", message: "Empty value for text-overflow" }],
+    };
+  }
+
+  if (firstNode.type === "Identifier") {
+    const name = firstNode.name.toLowerCase();
+
+    const cssWideResult = Keywords.cssWide.safeParse(name);
+    if (cssWideResult.success) {
+      return {
+        ok: true,
+        property: "text-overflow",
+        value: { kind: "keyword", value: cssWideResult.data },
+        issues: [],
+      };
+    }
+
+    const parsed = Keywords.textOverflowKeywordSchema.safeParse(name);
+    if (parsed.success) {
+      return {
+        ok: true,
+        property: "text-overflow",
+        value: { kind: "keyword", value: parsed.data },
+        issues: [],
+      };
+    }
+  }
+
+  return {
+    ok: false,
+    property: "text-overflow",
+    value: undefined,
+    issues: [{ code: "invalid-value", severity: "error", message: "Invalid text-overflow value" }],
+  };
+}
+
+
+=== File: packages/b_declarations/src/properties/text-overflow/types.ts ===
+// b_path:: packages/b_declarations/src/properties/text-overflow/types.ts
+
+import type * as Keywords from "@b/keywords";
+
+export type TextOverflowIR = {
+  kind: "keyword";
+  value: "initial" | "inherit" | "unset" | "revert" | "revert-layer" | Keywords.TextOverflowKeyword;
+};
+
+
+=== File: packages/b_declarations/src/properties/text-transform/definition.ts ===
+// b_path:: packages/b_declarations/src/properties/text-transform/definition.ts
+
+import { defineProperty } from "../../core";
+import { parseTextTransform } from "./parser";
+import { generateTextTransform } from "./generator";
+import type { TextTransformIR } from "./types";
+
+export const textTransform = defineProperty<TextTransformIR>({
+  name: "text-transform",
+  syntax: "none | capitalize | uppercase | lowercase | full-width | full-size-kana",
+  parser: parseTextTransform,
+  generator: generateTextTransform,
+  inherited: true,
+  initial: "none",
+});
+
+
+=== File: packages/b_declarations/src/properties/text-transform/generator.ts ===
+// b_path:: packages/b_declarations/src/properties/text-transform/generator.ts
+
+import { generateOk, type GenerateResult } from "@b/types";
+import type { TextTransformIR } from "./types";
+
+export function generateTextTransform(ir: TextTransformIR): GenerateResult {
+  return generateOk(ir.value);
+}
+
+
+=== File: packages/b_declarations/src/properties/text-transform/index.ts ===
+// b_path:: packages/b_declarations/src/properties/text-transform/index.ts
+
+export * from "./types";
+export * from "./parser";
+export * from "./generator";
+export * from "./definition";
+
+
+=== File: packages/b_declarations/src/properties/text-transform/parser.ts ===
+// b_path:: packages/b_declarations/src/properties/text-transform/parser.ts
+
+import type { ParseResult } from "@b/types";
+import * as Keywords from "@b/keywords";
+import type * as csstree from "@eslint/css-tree";
+import type { TextTransformIR } from "./types";
+
+export function parseTextTransform(ast: csstree.Value): ParseResult<TextTransformIR> {
+  const firstNode = ast.children.first;
+
+  if (!firstNode) {
+    return {
+      ok: false,
+      property: "text-transform",
+      value: undefined,
+      issues: [{ code: "missing-value", severity: "error", message: "Empty value for text-transform" }],
+    };
+  }
+
+  if (firstNode.type === "Identifier") {
+    const name = firstNode.name.toLowerCase();
+
+    const cssWideResult = Keywords.cssWide.safeParse(name);
+    if (cssWideResult.success) {
+      return {
+        ok: true,
+        property: "text-transform",
+        value: { kind: "keyword", value: cssWideResult.data },
+        issues: [],
+      };
+    }
+
+    const parsed = Keywords.textTransformKeywordSchema.safeParse(name);
+    if (parsed.success) {
+      return {
+        ok: true,
+        property: "text-transform",
+        value: { kind: "keyword", value: parsed.data },
+        issues: [],
+      };
+    }
+  }
+
+  return {
+    ok: false,
+    property: "text-transform",
+    value: undefined,
+    issues: [{ code: "invalid-value", severity: "error", message: "Invalid text-transform value" }],
+  };
+}
+
+
+=== File: packages/b_declarations/src/properties/text-transform/types.ts ===
+// b_path:: packages/b_declarations/src/properties/text-transform/types.ts
+
+import type * as Keywords from "@b/keywords";
+
+export type TextTransformIR = {
+  kind: "keyword";
+  value: "initial" | "inherit" | "unset" | "revert" | "revert-layer" | Keywords.TextTransformKeyword;
+};
+
+
 === File: packages/b_declarations/src/properties/transform-origin/definition.ts ===
 // b_path:: packages/b_declarations/src/properties/transform-origin/definition.ts
 
@@ -8778,6 +9307,221 @@ export type VisibilityIR = {
   kind: "keyword";
   value: "initial" | "inherit" | "unset" | "revert" | "revert-layer" | Keywords.VisibilityKeyword;
 };
+
+
+=== File: packages/b_declarations/src/properties/white-space/definition.ts ===
+// b_path:: packages/b_declarations/src/properties/white-space/definition.ts
+
+import { defineProperty } from "../../core";
+import { parseWhiteSpace } from "./parser";
+import { generateWhiteSpace } from "./generator";
+import type { WhiteSpaceIR } from "./types";
+
+export const whiteSpace = defineProperty<WhiteSpaceIR>({
+  name: "white-space",
+  syntax: "normal | pre | nowrap | pre-wrap | pre-line | break-spaces",
+  parser: parseWhiteSpace,
+  generator: generateWhiteSpace,
+  inherited: true,
+  initial: "normal",
+});
+
+
+=== File: packages/b_declarations/src/properties/white-space/generator.ts ===
+// b_path:: packages/b_declarations/src/properties/white-space/generator.ts
+
+import { generateOk, type GenerateResult } from "@b/types";
+import type { WhiteSpaceIR } from "./types";
+
+export function generateWhiteSpace(ir: WhiteSpaceIR): GenerateResult {
+  return generateOk(ir.value);
+}
+
+
+=== File: packages/b_declarations/src/properties/white-space/index.ts ===
+// b_path:: packages/b_declarations/src/properties/white-space/index.ts
+
+export * from "./types";
+export * from "./parser";
+export * from "./generator";
+export * from "./definition";
+
+
+=== File: packages/b_declarations/src/properties/white-space/parser.ts ===
+// b_path:: packages/b_declarations/src/properties/white-space/parser.ts
+
+import type { ParseResult } from "@b/types";
+import * as Keywords from "@b/keywords";
+import type * as csstree from "@eslint/css-tree";
+import type { WhiteSpaceIR } from "./types";
+
+export function parseWhiteSpace(ast: csstree.Value): ParseResult<WhiteSpaceIR> {
+  const firstNode = ast.children.first;
+
+  if (!firstNode) {
+    return {
+      ok: false,
+      property: "white-space",
+      value: undefined,
+      issues: [{ code: "missing-value", severity: "error", message: "Empty value for white-space" }],
+    };
+  }
+
+  if (firstNode.type === "Identifier") {
+    const name = firstNode.name.toLowerCase();
+
+    const cssWideResult = Keywords.cssWide.safeParse(name);
+    if (cssWideResult.success) {
+      return {
+        ok: true,
+        property: "white-space",
+        value: { kind: "keyword", value: cssWideResult.data },
+        issues: [],
+      };
+    }
+
+    const parsed = Keywords.whiteSpaceKeywordSchema.safeParse(name);
+    if (parsed.success) {
+      return {
+        ok: true,
+        property: "white-space",
+        value: { kind: "keyword", value: parsed.data },
+        issues: [],
+      };
+    }
+  }
+
+  return {
+    ok: false,
+    property: "white-space",
+    value: undefined,
+    issues: [{ code: "invalid-value", severity: "error", message: "Invalid white-space value" }],
+  };
+}
+
+
+=== File: packages/b_declarations/src/properties/white-space/types.ts ===
+// b_path:: packages/b_declarations/src/properties/white-space/types.ts
+
+import type * as Keywords from "@b/keywords";
+
+export type WhiteSpaceIR = {
+  kind: "keyword";
+  value: "initial" | "inherit" | "unset" | "revert" | "revert-layer" | Keywords.WhiteSpaceKeyword;
+};
+
+
+=== File: packages/b_declarations/src/properties/word-spacing/definition.ts ===
+// b_path:: packages/b_declarations/src/properties/word-spacing/definition.ts
+
+import { defineProperty } from "../../core";
+import { parseWordSpacing } from "./parser";
+import { generateWordSpacing } from "./generator";
+import type { WordSpacingIR } from "./types";
+
+export const wordSpacing = defineProperty<WordSpacingIR>({
+  name: "word-spacing",
+  syntax: "normal | <length-percentage>",
+  parser: parseWordSpacing,
+  generator: generateWordSpacing,
+  inherited: true,
+  initial: "normal",
+});
+
+
+=== File: packages/b_declarations/src/properties/word-spacing/generator.ts ===
+// b_path:: packages/b_declarations/src/properties/word-spacing/generator.ts
+
+import { generateOk, type GenerateResult } from "@b/types";
+import { cssValueToCss } from "@b/utils";
+import type { WordSpacingIR } from "./types";
+
+export function generateWordSpacing(ir: WordSpacingIR): GenerateResult {
+  if (ir.kind === "keyword") {
+    return generateOk(ir.value);
+  }
+
+  const css = cssValueToCss(ir.value);
+  return generateOk(css);
+}
+
+
+=== File: packages/b_declarations/src/properties/word-spacing/index.ts ===
+// b_path:: packages/b_declarations/src/properties/word-spacing/index.ts
+
+export * from "./types";
+export * from "./parser";
+export * from "./generator";
+export * from "./definition";
+
+
+=== File: packages/b_declarations/src/properties/word-spacing/parser.ts ===
+// b_path:: packages/b_declarations/src/properties/word-spacing/parser.ts
+
+import type { ParseResult } from "@b/types";
+import * as Keywords from "@b/keywords";
+import * as Parsers from "@b/parsers";
+import type * as csstree from "@eslint/css-tree";
+import type { WordSpacingIR } from "./types";
+
+export function parseWordSpacing(ast: csstree.Value): ParseResult<WordSpacingIR> {
+  const firstNode = ast.children.first;
+
+  if (!firstNode) {
+    return {
+      ok: false,
+      property: "word-spacing",
+      value: undefined,
+      issues: [{ code: "missing-value", severity: "error", message: "Empty value for word-spacing" }],
+    };
+  }
+
+  if (firstNode.type === "Identifier") {
+    const name = firstNode.name.toLowerCase();
+
+    const cssWideResult = Keywords.cssWide.safeParse(name);
+    if (cssWideResult.success) {
+      return {
+        ok: true,
+        property: "word-spacing",
+        value: { kind: "keyword", value: cssWideResult.data },
+        issues: [],
+      };
+    }
+
+    if (name === "normal") {
+      return {
+        ok: true,
+        property: "word-spacing",
+        value: { kind: "keyword", value: "normal" },
+        issues: [],
+      };
+    }
+  }
+
+  const valueResult = Parsers.Utils.parseNodeToCssValue(firstNode);
+
+  if (valueResult.ok) {
+    return {
+      ok: true,
+      property: "word-spacing",
+      value: { kind: "value", value: valueResult.value },
+      issues: valueResult.issues,
+    };
+  }
+
+  return valueResult as ParseResult<WordSpacingIR>;
+}
+
+
+=== File: packages/b_declarations/src/properties/word-spacing/types.ts ===
+// b_path:: packages/b_declarations/src/properties/word-spacing/types.ts
+
+import type { CssValue } from "@b/types";
+
+export type WordSpacingIR =
+  | { kind: "keyword"; value: "normal" | "inherit" | "initial" | "revert" | "revert-layer" | "unset" }
+  | { kind: "value"; value: CssValue };
 
 
 === File: packages/b_declarations/src/test/property-contract.ts ===
@@ -11967,10 +12711,14 @@ export * from "./none";
 export * from "./position";
 export * from "./radial-shape";
 export * from "./radial-size";
+export * from "./text-align";
+export * from "./text-overflow";
+export * from "./text-transform";
 export * from "./transform-style";
 export * from "./universal-functions";
 export * from "./utils";
 export * from "./visibility";
+export * from "./white-space";
 
 
 === File: packages/b_keywords/src/named-colors.ts ===
@@ -12227,6 +12975,60 @@ export const radialSizeKeyword = z.union([
 export type RadialSizeKeyword = z.infer<typeof radialSizeKeyword>;
 
 
+=== File: packages/b_keywords/src/text-align.ts ===
+// b_path:: packages/b_keywords/src/text-align.ts
+import { z } from "zod";
+
+/**
+ * Text alignment keywords
+ * @see https://drafts.csswg.org/css-text/#text-align-property
+ */
+export const textAlignKeywordSchema = z.union([
+  z.literal("start"),
+  z.literal("end"),
+  z.literal("left"),
+  z.literal("right"),
+  z.literal("center"),
+  z.literal("justify"),
+  z.literal("match-parent"),
+]);
+
+export type TextAlignKeyword = z.infer<typeof textAlignKeywordSchema>;
+
+
+=== File: packages/b_keywords/src/text-overflow.ts ===
+// b_path:: packages/b_keywords/src/text-overflow.ts
+import { z } from "zod";
+
+/**
+ * Text overflow keywords
+ * @see https://drafts.csswg.org/css-overflow/#text-overflow
+ */
+export const textOverflowKeywordSchema = z.union([z.literal("clip"), z.literal("ellipsis")]);
+
+export type TextOverflowKeyword = z.infer<typeof textOverflowKeywordSchema>;
+
+
+=== File: packages/b_keywords/src/text-transform.ts ===
+// b_path:: packages/b_keywords/src/text-transform.ts
+import { z } from "zod";
+
+/**
+ * Text transform keywords
+ * @see https://drafts.csswg.org/css-text/#text-transform-property
+ */
+export const textTransformKeywordSchema = z.union([
+  z.literal("none"),
+  z.literal("capitalize"),
+  z.literal("uppercase"),
+  z.literal("lowercase"),
+  z.literal("full-width"),
+  z.literal("full-size-kana"),
+]);
+
+export type TextTransformKeyword = z.infer<typeof textTransformKeywordSchema>;
+
+
 === File: packages/b_keywords/src/transform-style.ts ===
 // b_path:: packages/b_keywords/src/transform-style.ts
 
@@ -12311,6 +13113,26 @@ import { z } from "zod";
 export const visibilityKeywordSchema = z.union([z.literal("visible"), z.literal("hidden"), z.literal("collapse")]);
 
 export type VisibilityKeyword = z.infer<typeof visibilityKeywordSchema>;
+
+
+=== File: packages/b_keywords/src/white-space.ts ===
+// b_path:: packages/b_keywords/src/white-space.ts
+import { z } from "zod";
+
+/**
+ * White space handling keywords
+ * @see https://drafts.csswg.org/css-text/#white-space-property
+ */
+export const whiteSpaceKeywordSchema = z.union([
+  z.literal("normal"),
+  z.literal("pre"),
+  z.literal("nowrap"),
+  z.literal("pre-wrap"),
+  z.literal("pre-line"),
+  z.literal("break-spaces"),
+]);
+
+export type WhiteSpaceKeyword = z.infer<typeof whiteSpaceKeywordSchema>;
 
 
 === File: packages/b_keywords/tsup.config.ts ===

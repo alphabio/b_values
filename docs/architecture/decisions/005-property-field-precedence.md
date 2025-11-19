@@ -1,7 +1,7 @@
 # ADR 005: Property Field Precedence in Results and Issues
 
-**Status:** Accepted  
-**Date:** 2025-11-15  
+**Status:** Accepted
+**Date:** 2025-11-15
 **Context:** Session audit of feedback items
 
 ---
