@@ -67,10 +67,10 @@
 - font-weight
 - line-height
 
-**Special Cases (6):**
-- filter (verify: already has filter-list?)
-- backdrop-filter (verify: already has filter-list?)
-- Border radius (4) - verify CssValue usage is correct
+**Special Cases (6) - ✅ VERIFIED CORRECT:**
+- filter - Has filter-list discriminator, proper pattern
+- backdrop-filter - Has filter-list discriminator, proper pattern
+- Border radius (4) - Shape discrimination + CssValue leaves is valid pattern
 
 ---
 
@@ -94,21 +94,29 @@
 
 **Session 081:**
 - `docs/sessions/081/concrete-type-audit.md` - Full analysis with examples (236 lines)
-- `docs/sessions/081/TODO.md` - Prioritized implementation plan (216 lines)
+- `docs/sessions/081/TODO.md` - Prioritized implementation plan with parser details (235 lines)
 - `docs/sessions/081/SUMMARY.md` - Quick reference (135 lines)
+- `docs/sessions/081/special-cases-analysis.md` - Verification of 6 properties + infrastructure audit (220 lines)
 
 ---
 
 ## 🎯 Next Steps
 
-### Immediate: Architectural Decisions
+### Immediate: Architectural Decisions ✅ PARTIALLY RESOLVED
 
-Before implementing fixes, clarify:
+**Resolved:**
+3. ✅ **Border radius:** Verified correct - shape discrimination is the discriminator, CssValue as leaf is valid
+6. ✅ **filter/backdrop-filter:** Verified correct - have filter-list discriminator, proper fallback pattern
 
-1. **Number type strategy:** Should `opacity: 0.5` produce `{ kind: "number", value: 0.5 }` or is CssValue acceptable?
-2. **line-height special case:** Unitless `1.5` vs sized `20px` - one type or two?
-3. **Border radius:** Are circular/elliptical already correct by using CssValue as leaf?
+**Still Need Decisions:**
+1. **Number type strategy:** Should `opacity: 0.5` produce `{ kind: "number", value: 0.5 }` or keep as CssValue?
+   - Parser available: `Parsers.Length.parseNumberNode(node)` ✅
+   - Type available: `Type.CSSNumber` (plain number) ✅
+2. **line-height special case:** Support both unitless `1.5` AND sized `20px`?
+   - `{ kind: "number"; value: number }` + `{ kind: "length-percentage"; value: LengthPercentage }`
+   - Or single type? Both parsers available ✅
 4. **Position properties:** What concrete type should background-position-x/y use?
+   - Need to check `Parsers.Position.*` exports and `Type.Position` structure
 
 ### Priority 1: Time Properties (4)
 
@@ -187,10 +195,18 @@ if (colorResult.ok) {
 
 **Audit:**
 - Properties Analyzed: 32
-- Documentation: 587 lines across 3 files
-- Estimated Remaining Work: 7 hours across 2-3 sessions
+- Properties Verified Correct: 6 (filter, backdrop-filter, border-radius ×4)
+- Properties Need Fixing: 26
+- Documentation: 820 lines across 4 files
+- Estimated Remaining Work: 6 hours across 2-3 sessions
+
+**Infrastructure Audit:**
+- ✅ All parsers available (Time, Length, Angle, Number, Position, etc.)
+- ✅ All types defined (Time, Length, LengthPercentage, Angle, CSSNumber, etc.)
+- ✅ All keywords/units present (no gaps)
+- ✅ No new packages or infrastructure needed
 
 **Breaking Changes:**
-- IR structure will change for 28+ properties
+- IR structure will change for 26 properties
 - Per AGENTS.md: "We break things to make them consistent"
 - No external consumers (greenfield)
