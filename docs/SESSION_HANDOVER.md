@@ -44,7 +44,7 @@
 #### Breakdown by Category
 
 **Time Properties (4):**
-- `animation-delay` ✅ Type exists, parser broken
+- `animation-delay` ❌ Type missing (was demo only)
 - `animation-duration` ❌ Type missing
 - `transition-delay` ❌ Type missing
 - `transition-duration` ❌ Type missing
