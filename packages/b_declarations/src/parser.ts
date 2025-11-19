@@ -1,15 +1,7 @@
 // b_path:: packages/b_declarations/src/parser.ts
 import * as csstree from "@eslint/css-tree";
 import * as Keywords from "@b/keywords";
-import {
-  createError,
-  parseErr,
-  parseOk,
-  forwardParseErr,
-  type ParseResult,
-  type Issue,
-  type GenerateResult,
-} from "@b/types";
+import { createError, parseErr, parseOk, type ParseResult, type Issue, type GenerateResult } from "@b/types";
 import { getPropertyDefinition, isCustomProperty } from "./core";
 import type { CSSDeclaration, DeclarationResult } from "./types";
 import { generateDeclaration } from "./generator";
@@ -49,7 +41,16 @@ export function parseDeclaration(input: string | CSSDeclaration): ParseResult<De
   if (typeof input === "string") {
     const parsed = parseDeclarationString(input);
     if (!parsed.ok) {
-      return forwardParseErr<DeclarationResult>(parsed);
+      // Enrich issues with property context before returning
+      const enrichedIssues = parsed.issues.map((issue) => ({
+        ...issue,
+        property: parsed.property,
+      }));
+      return {
+        ok: false,
+        issues: enrichedIssues,
+        property: parsed.property,
+      };
     }
     property = parsed.value.property;
     value = parsed.value.value;
@@ -82,7 +83,7 @@ export function parseDeclaration(input: string | CSSDeclaration): ParseResult<De
   const definition = getPropertyDefinition(property);
 
   if (!definition) {
-    return parseErr("declaration", createError("invalid-value", `Unknown CSS property: ${property}`));
+    return parseErr(property, { ...createError("invalid-value", `Unknown CSS property: ${property}`), property });
   }
 
   // Step 2: Pre-validate keywords if allowedKeywords is defined
@@ -140,7 +141,7 @@ export function parseDeclaration(input: string | CSSDeclaration): ParseResult<De
     } catch (e: unknown) {
       // Fatal syntax error for single-value property
       const error = e as Error;
-      return parseErr("declaration", createError("invalid-syntax", error.message));
+      return parseErr(property, createError("invalid-syntax", error.message));
     }
 
     // Pass validated AST to parser
@@ -235,20 +236,20 @@ function parseDeclarationString(input: string): ParseResult<CSSDeclaration> {
     } else {
       // Malformed !important syntax
       return parseErr(
-        "declaration",
+        property,
         createError("invalid-syntax", `Invalid !important syntax: got "!${importantValue}", expected "!important"`),
       );
     }
   }
 
   if (!valueNode) {
-    return parseErr("declaration", createError("missing-value", `Missing value for property: ${property}`));
+    return parseErr(property, createError("missing-value", `Missing value for property: ${property}`));
   }
 
   const value = csstree.generate(valueNode).trim();
 
   if (!value) {
-    return parseErr("declaration", createError("missing-value", `Empty value for property: ${property}`));
+    return parseErr(property, createError("missing-value", `Empty value for property: ${property}`));
   }
 
   return parseOk({ property, value, important });
