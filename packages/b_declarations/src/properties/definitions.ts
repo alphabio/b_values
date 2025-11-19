@@ -74,6 +74,7 @@ import { fontVariantCaps } from "./font-variant-caps/definition";
 import { fontVariantLigatures } from "./font-variant-ligatures/definition";
 import { fontVariantNumeric } from "./font-variant-numeric/definition";
 import { fontWeight } from "./font-weight/definition";
+import { letterSpacing } from "./letter-spacing/definition";
 import { lineHeight } from "./line-height/definition";
 import { marginBottom } from "./margin-bottom/definition";
 import { marginLeft } from "./margin-left/definition";
@@ -87,6 +88,10 @@ import { paddingRight } from "./padding-right/definition";
 import { paddingTop } from "./padding-top/definition";
 import { perspective } from "./perspective/definition";
 import { perspectiveOrigin } from "./perspective-origin/definition";
+import { textAlign } from "./text-align/definition";
+import { textIndent } from "./text-indent/definition";
+import { textOverflow } from "./text-overflow/definition";
+import { textTransform } from "./text-transform/definition";
 import { transform } from "./transform/definition";
 import { transformOrigin } from "./transform-origin/definition";
 import { transformStyle } from "./transform-style/definition";
@@ -95,6 +100,8 @@ import { transitionDuration } from "./transition-duration/definition";
 import { transitionProperty } from "./transition-property/definition";
 import { transitionTimingFunction } from "./transition-timing-function/definition";
 import { visibility } from "./visibility/definition";
+import { whiteSpace } from "./white-space/definition";
+import { wordSpacing } from "./word-spacing/definition";
 
 /**
  * Central definitions object.
@@ -157,6 +164,7 @@ export const PROPERTY_DEFINITIONS = {
   "font-variant-ligatures": fontVariantLigatures,
   "font-variant-numeric": fontVariantNumeric,
   "font-weight": fontWeight,
+  "letter-spacing": letterSpacing,
   "line-height": lineHeight,
   "margin-bottom": marginBottom,
   "margin-left": marginLeft,
@@ -170,6 +178,10 @@ export const PROPERTY_DEFINITIONS = {
   "padding-top": paddingTop,
   perspective: perspective,
   "perspective-origin": perspectiveOrigin,
+  "text-align": textAlign,
+  "text-indent": textIndent,
+  "text-overflow": textOverflow,
+  "text-transform": textTransform,
   transform: transform,
   "transform-origin": transformOrigin,
   "transform-style": transformStyle,
@@ -178,6 +190,8 @@ export const PROPERTY_DEFINITIONS = {
   "transition-property": transitionProperty,
   "transition-timing-function": transitionTimingFunction,
   visibility: visibility,
+  "white-space": whiteSpace,
+  "word-spacing": wordSpacing,
 } as const;
 
 /**

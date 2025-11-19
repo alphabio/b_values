@@ -62,6 +62,7 @@ export * from "./font-variant-caps";
 export * from "./font-variant-ligatures";
 export * from "./font-variant-numeric";
 export * from "./font-weight";
+export * from "./letter-spacing";
 export * from "./line-height";
 export * from "./margin-bottom";
 export * from "./margin-left";
@@ -75,6 +76,10 @@ export * from "./padding-right";
 export * from "./padding-top";
 export * from "./perspective";
 export * from "./perspective-origin";
+export * from "./text-align";
+export * from "./text-indent";
+export * from "./text-overflow";
+export * from "./text-transform";
 export * from "./transform";
 export * from "./transform-origin";
 export * from "./transform-style";
@@ -83,6 +88,8 @@ export * from "./transition-duration";
 export * from "./transition-property";
 export * from "./transition-timing-function";
 export * from "./visibility";
+export * from "./white-space";
+export * from "./word-spacing";
 
 // Mark registry as initialized after all properties are loaded
 // This is a side-effect import that happens when this module is imported

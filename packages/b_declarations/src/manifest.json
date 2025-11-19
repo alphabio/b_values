@@ -1,6 +1,6 @@
 {
   "$schema": "./manifest.schema.json",
-  "generated": "2025-11-18T13:12:46.826Z",
+  "generated": "2025-11-19T02:03:15.108Z",
   "properties": {
     "animation-delay": {
       "name": "animation-delay",
@@ -386,6 +386,14 @@
       "mode": "single",
       "irType": "FontWeightIR"
     },
+    "letter-spacing": {
+      "name": "letter-spacing",
+      "syntax": "normal | <length>",
+      "inherited": true,
+      "initial": "normal",
+      "mode": "single",
+      "irType": "LetterSpacingIR"
+    },
     "line-height": {
       "name": "line-height",
       "syntax": "normal | <number [0,∞]> | <length-percentage [0,∞]> | math",
@@ -490,6 +498,38 @@
       "mode": "single",
       "irType": "PerspectiveOriginIR"
     },
+    "text-align": {
+      "name": "text-align",
+      "syntax": "start | end | left | right | center | justify | match-parent",
+      "inherited": true,
+      "initial": "start",
+      "mode": "single",
+      "irType": "TextAlignIR"
+    },
+    "text-indent": {
+      "name": "text-indent",
+      "syntax": "<length-percentage>",
+      "inherited": true,
+      "initial": "0",
+      "mode": "single",
+      "irType": "TextIndentIR"
+    },
+    "text-overflow": {
+      "name": "text-overflow",
+      "syntax": "clip | ellipsis",
+      "inherited": false,
+      "initial": "clip",
+      "mode": "single",
+      "irType": "TextOverflowIR"
+    },
+    "text-transform": {
+      "name": "text-transform",
+      "syntax": "none | capitalize | uppercase | lowercase | full-width | full-size-kana",
+      "inherited": true,
+      "initial": "none",
+      "mode": "single",
+      "irType": "TextTransformIR"
+    },
     "transform": {
       "name": "transform",
       "syntax": "none | <transform-list>",
@@ -553,6 +593,22 @@
       "initial": "visible",
       "mode": "single",
       "irType": "VisibilityIR"
+    },
+    "white-space": {
+      "name": "white-space",
+      "syntax": "normal | pre | nowrap | pre-wrap | pre-line | break-spaces",
+      "inherited": true,
+      "initial": "normal",
+      "mode": "single",
+      "irType": "WhiteSpaceIR"
+    },
+    "word-spacing": {
+      "name": "word-spacing",
+      "syntax": "normal | <length-percentage>",
+      "inherited": true,
+      "initial": "normal",
+      "mode": "single",
+      "irType": "WordSpacingIR"
     }
   }
 }
