@@ -28,7 +28,8 @@ cat docs/SESSION_HANDOVER.md | grep "^Status:"
 
 ```bash
 # Find session numbers
-PREV=$(find docs/sessions -maxdepth 1 -type d -name "[0-9]*" | wc -l | xargs)
+PREV=$(find docs/sessions -maxdepth 1 -type d | wc -l | xargs)
+PREV=$((PREV + 1))
 NEXT=$((PREV + 1))
 PREV_DIR="docs/sessions/$(printf "%03d" $PREV)"
 SESSION_DIR="docs/sessions/$(printf "%03d" $NEXT)"
