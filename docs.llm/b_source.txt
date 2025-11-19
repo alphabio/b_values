@@ -802,16 +802,23 @@ export const animationDelay = defineProperty<AnimationDelayIR>({
 // b_path:: packages/b_declarations/src/properties/animation-delay/generator.ts
 
 import { generateOk, type GenerateResult } from "@b/types";
+import * as Generators from "@b/generators";
 import { cssValueToCss } from "@b/utils";
 import type { AnimationDelayIR } from "./types";
 
 export function generateAnimationDelay(ir: AnimationDelayIR): GenerateResult {
-  if (ir.kind === "keyword") {
-    return generateOk(ir.value);
-  }
+  switch (ir.kind) {
+    case "keyword":
+      return generateOk(ir.value);
 
-  const css = cssValueToCss(ir.value);
-  return generateOk(css);
+    case "time":
+      return Generators.Time.generate(ir.value);
+
+    case "value": {
+      const css = cssValueToCss(ir.value);
+      return generateOk(css);
+    }
+  }
 }
 
 
@@ -858,31 +865,46 @@ export function parseAnimationDelay(ast: csstree.Value): ParseResult<AnimationDe
     }
   }
 
-  const valueResult = Parsers.Utils.parseNodeToCssValue(firstNode);
-
-  if (valueResult.ok) {
+  // Try concrete Time first
+  const timeResult = Parsers.Time.parseTimeNode(firstNode);
+  if (timeResult.ok) {
     return {
       ok: true,
       property: "animation-delay",
-      value: { kind: "value", value: valueResult.value },
-      issues: valueResult.issues,
+      value: { kind: "time", value: timeResult.value },
+      issues: timeResult.issues,
     };
   }
 
-  return valueResult as ParseResult<AnimationDelayIR>;
+  // Fallback to CssValue (var, calc, etc.)
+  const cssValueResult = Parsers.Utils.parseNodeToCssValue(firstNode);
+  if (cssValueResult.ok) {
+    return {
+      ok: true,
+      property: "animation-delay",
+      value: { kind: "value", value: cssValueResult.value },
+      issues: cssValueResult.issues,
+    };
+  }
+
+  return cssValueResult as ParseResult<AnimationDelayIR>;
 }
 
 
 === File: packages/b_declarations/src/properties/animation-delay/types.ts ===
 // b_path:: packages/b_declarations/src/properties/animation-delay/types.ts
 
-import type { z } from "zod";
-import type { CssValue } from "@b/types";
-import type * as Keywords from "@b/keywords";
+import { z } from "zod";
+import { timeSchema, type CssValue } from "@b/types";
+import * as Keywords from "@b/keywords";
 
-export type AnimationDelayIR =
-  | { kind: "keyword"; value: z.infer<typeof Keywords.cssWide> }
-  | { kind: "value"; value: CssValue };
+export const animationDelayIRSchema = z.discriminatedUnion("kind", [
+  z.object({ kind: z.literal("keyword"), value: Keywords.cssWide }),
+  z.object({ kind: z.literal("time"), value: timeSchema }),
+  z.object({ kind: z.literal("value"), value: z.custom<CssValue>() }),
+]);
+
+export type AnimationDelayIR = z.infer<typeof animationDelayIRSchema>;
 
 
 === File: packages/b_declarations/src/properties/animation-direction/definition.ts ===
@@ -1010,16 +1032,23 @@ export const animationDuration = defineProperty<AnimationDurationIR>({
 // b_path:: packages/b_declarations/src/properties/animation-duration/generator.ts
 
 import { generateOk, type GenerateResult } from "@b/types";
+import * as Generators from "@b/generators";
 import { cssValueToCss } from "@b/utils";
 import type { AnimationDurationIR } from "./types";
 
 export function generateAnimationDuration(ir: AnimationDurationIR): GenerateResult {
-  if (ir.kind === "keyword") {
-    return generateOk(ir.value);
-  }
+  switch (ir.kind) {
+    case "keyword":
+      return generateOk(ir.value);
 
-  const css = cssValueToCss(ir.value);
-  return generateOk(css);
+    case "time":
+      return Generators.Time.generate(ir.value);
+
+    case "value": {
+      const css = cssValueToCss(ir.value);
+      return generateOk(css);
+    }
+  }
 }
 
 
@@ -1072,31 +1101,46 @@ export function parseAnimationDuration(ast: csstree.Value): ParseResult<Animatio
     }
   }
 
-  const valueResult = Parsers.Utils.parseNodeToCssValue(firstNode);
-
-  if (valueResult.ok) {
+  // Try concrete Time first
+  const timeResult = Parsers.Time.parseTimeNode(firstNode);
+  if (timeResult.ok) {
     return {
       ok: true,
       property: "animation-duration",
-      value: { kind: "value", value: valueResult.value },
-      issues: valueResult.issues,
+      value: { kind: "time", value: timeResult.value },
+      issues: timeResult.issues,
     };
   }
 
-  return valueResult as ParseResult<AnimationDurationIR>;
+  // Fallback to CssValue (var, calc, etc.)
+  const cssValueResult = Parsers.Utils.parseNodeToCssValue(firstNode);
+  if (cssValueResult.ok) {
+    return {
+      ok: true,
+      property: "animation-duration",
+      value: { kind: "value", value: cssValueResult.value },
+      issues: cssValueResult.issues,
+    };
+  }
+
+  return cssValueResult as ParseResult<AnimationDurationIR>;
 }
 
 
 === File: packages/b_declarations/src/properties/animation-duration/types.ts ===
 // b_path:: packages/b_declarations/src/properties/animation-duration/types.ts
 
-import type { z } from "zod";
-import type { CssValue } from "@b/types";
-import type * as Keywords from "@b/keywords";
+import { z } from "zod";
+import { timeSchema, type CssValue } from "@b/types";
+import * as Keywords from "@b/keywords";
 
-export type AnimationDurationIR =
-  | { kind: "keyword"; value: z.infer<typeof Keywords.cssWide> }
-  | { kind: "value"; value: CssValue };
+export const animationDurationIRSchema = z.discriminatedUnion("kind", [
+  z.object({ kind: z.literal("keyword"), value: Keywords.cssWide }),
+  z.object({ kind: z.literal("time"), value: timeSchema }),
+  z.object({ kind: z.literal("value"), value: z.custom<CssValue>() }),
+]);
+
+export type AnimationDurationIR = z.infer<typeof animationDurationIRSchema>;
 
 
 === File: packages/b_declarations/src/properties/animation-fill-mode/definition.ts ===
@@ -8744,16 +8788,23 @@ export const transitionDelay = defineProperty<TransitionDelayIR>({
 // b_path:: packages/b_declarations/src/properties/transition-delay/generator.ts
 
 import { generateOk, type GenerateResult } from "@b/types";
+import * as Generators from "@b/generators";
 import { cssValueToCss } from "@b/utils";
 import type { TransitionDelayIR } from "./types";
 
 export function generateTransitionDelay(ir: TransitionDelayIR): GenerateResult {
-  if (ir.kind === "keyword") {
-    return generateOk(ir.value);
-  }
+  switch (ir.kind) {
+    case "keyword":
+      return generateOk(ir.value);
 
-  const css = cssValueToCss(ir.value);
-  return generateOk(css);
+    case "time":
+      return Generators.Time.generate(ir.value);
+
+    case "value": {
+      const css = cssValueToCss(ir.value);
+      return generateOk(css);
+    }
+  }
 }
 
 
@@ -8800,31 +8851,46 @@ export function parseTransitionDelay(ast: csstree.Value): ParseResult<Transition
     }
   }
 
-  const valueResult = Parsers.Utils.parseNodeToCssValue(firstNode);
-
-  if (valueResult.ok) {
+  // Try concrete Time first
+  const timeResult = Parsers.Time.parseTimeNode(firstNode);
+  if (timeResult.ok) {
     return {
       ok: true,
       property: "transition-delay",
-      value: { kind: "value", value: valueResult.value },
-      issues: valueResult.issues,
+      value: { kind: "time", value: timeResult.value },
+      issues: timeResult.issues,
     };
   }
 
-  return valueResult as ParseResult<TransitionDelayIR>;
+  // Fallback to CssValue (var, calc, etc.)
+  const cssValueResult = Parsers.Utils.parseNodeToCssValue(firstNode);
+  if (cssValueResult.ok) {
+    return {
+      ok: true,
+      property: "transition-delay",
+      value: { kind: "value", value: cssValueResult.value },
+      issues: cssValueResult.issues,
+    };
+  }
+
+  return cssValueResult as ParseResult<TransitionDelayIR>;
 }
 
 
 === File: packages/b_declarations/src/properties/transition-delay/types.ts ===
 // b_path:: packages/b_declarations/src/properties/transition-delay/types.ts
 
-import type { z } from "zod";
-import type { CssValue } from "@b/types";
-import type * as Keywords from "@b/keywords";
+import { z } from "zod";
+import { timeSchema, type CssValue } from "@b/types";
+import * as Keywords from "@b/keywords";
 
-export type TransitionDelayIR =
-  | { kind: "keyword"; value: z.infer<typeof Keywords.cssWide> }
-  | { kind: "value"; value: CssValue };
+export const transitionDelayIRSchema = z.discriminatedUnion("kind", [
+  z.object({ kind: z.literal("keyword"), value: Keywords.cssWide }),
+  z.object({ kind: z.literal("time"), value: timeSchema }),
+  z.object({ kind: z.literal("value"), value: z.custom<CssValue>() }),
+]);
+
+export type TransitionDelayIR = z.infer<typeof transitionDelayIRSchema>;
 
 
 === File: packages/b_declarations/src/properties/transition-duration/definition.ts ===
@@ -8849,16 +8915,23 @@ export const transitionDuration = defineProperty<TransitionDurationIR>({
 // b_path:: packages/b_declarations/src/properties/transition-duration/generator.ts
 
 import { generateOk, type GenerateResult } from "@b/types";
+import * as Generators from "@b/generators";
 import { cssValueToCss } from "@b/utils";
 import type { TransitionDurationIR } from "./types";
 
 export function generateTransitionDuration(ir: TransitionDurationIR): GenerateResult {
-  if (ir.kind === "keyword") {
-    return generateOk(ir.value);
-  }
+  switch (ir.kind) {
+    case "keyword":
+      return generateOk(ir.value);
 
-  const css = cssValueToCss(ir.value);
-  return generateOk(css);
+    case "time":
+      return Generators.Time.generate(ir.value);
+
+    case "value": {
+      const css = cssValueToCss(ir.value);
+      return generateOk(css);
+    }
+  }
 }
 
 
@@ -8905,31 +8978,46 @@ export function parseTransitionDuration(ast: csstree.Value): ParseResult<Transit
     }
   }
 
-  const valueResult = Parsers.Utils.parseNodeToCssValue(firstNode);
-
-  if (valueResult.ok) {
+  // Try concrete Time first
+  const timeResult = Parsers.Time.parseTimeNode(firstNode);
+  if (timeResult.ok) {
     return {
       ok: true,
       property: "transition-duration",
-      value: { kind: "value", value: valueResult.value },
-      issues: valueResult.issues,
+      value: { kind: "time", value: timeResult.value },
+      issues: timeResult.issues,
     };
   }
 
-  return valueResult as ParseResult<TransitionDurationIR>;
+  // Fallback to CssValue (var, calc, etc.)
+  const cssValueResult = Parsers.Utils.parseNodeToCssValue(firstNode);
+  if (cssValueResult.ok) {
+    return {
+      ok: true,
+      property: "transition-duration",
+      value: { kind: "value", value: cssValueResult.value },
+      issues: cssValueResult.issues,
+    };
+  }
+
+  return cssValueResult as ParseResult<TransitionDurationIR>;
 }
 
 
 === File: packages/b_declarations/src/properties/transition-duration/types.ts ===
 // b_path:: packages/b_declarations/src/properties/transition-duration/types.ts
 
-import type { z } from "zod";
-import type { CssValue } from "@b/types";
-import type * as Keywords from "@b/keywords";
+import { z } from "zod";
+import { timeSchema, type CssValue } from "@b/types";
+import * as Keywords from "@b/keywords";
 
-export type TransitionDurationIR =
-  | { kind: "keyword"; value: z.infer<typeof Keywords.cssWide> }
-  | { kind: "value"; value: CssValue };
+export const transitionDurationIRSchema = z.discriminatedUnion("kind", [
+  z.object({ kind: z.literal("keyword"), value: Keywords.cssWide }),
+  z.object({ kind: z.literal("time"), value: timeSchema }),
+  z.object({ kind: z.literal("value"), value: z.custom<CssValue>() }),
+]);
+
+export type TransitionDurationIR = z.infer<typeof transitionDurationIRSchema>;
 
 
 === File: packages/b_declarations/src/properties/transition-property/definition.ts ===

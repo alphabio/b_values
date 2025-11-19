@@ -1,3 +1,4 @@
+// b_path:: docs/sessions/081/test-roundtrip.ts
 // Verify round-trip: parse → generate → parse
 
 import { parseDeclaration, generateDeclaration } from "@b/declarations";

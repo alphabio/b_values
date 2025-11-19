@@ -1,3 +1,4 @@
+// b_path:: docs/sessions/081/test-animation-delay.ts
 // Quick verification that animation-delay now produces concrete Time type
 
 import { parseDeclaration } from "@b/declarations";
