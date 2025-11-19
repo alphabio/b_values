@@ -37,16 +37,27 @@ export function parseAnimationDuration(ast: csstree.Value): ParseResult<Animatio
     }
   }
 
-  const valueResult = Parsers.Utils.parseNodeToCssValue(firstNode);
-
-  if (valueResult.ok) {
+  // Try concrete Time first
+  const timeResult = Parsers.Time.parseTimeNode(firstNode);
+  if (timeResult.ok) {
     return {
       ok: true,
       property: "animation-duration",
-      value: { kind: "value", value: valueResult.value },
-      issues: valueResult.issues,
+      value: { kind: "time", value: timeResult.value },
+      issues: timeResult.issues,
     };
   }
 
-  return valueResult as ParseResult<AnimationDurationIR>;
+  // Fallback to CssValue (var, calc, etc.)
+  const cssValueResult = Parsers.Utils.parseNodeToCssValue(firstNode);
+  if (cssValueResult.ok) {
+    return {
+      ok: true,
+      property: "animation-duration",
+      value: { kind: "value", value: cssValueResult.value },
+      issues: cssValueResult.issues,
+    };
+  }
+
+  return cssValueResult as ParseResult<AnimationDurationIR>;
 }
