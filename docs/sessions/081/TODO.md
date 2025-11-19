@@ -64,9 +64,11 @@
 - [ ] perspective - Add concrete type + parser
 - [ ] font-size - Add concrete type + parser
 
-**Question:** What parser should we use?
-- `Parsers.Length.parseLengthPercentage(node)`?
-- Check what this returns and if it handles both length and percentage
+**Available Parsers:**
+- `Parsers.Length.parseLengthNode(node): ParseResult<Type.Length>`
+- `Parsers.Length.parseLengthPercentageNode(node): ParseResult<Type.LengthPercentage>`
+- Returns concrete type, does NOT handle CssValue internally
+- Need explicit fallback to `parseNodeToCssValue`
 
 ---
 
@@ -74,17 +76,18 @@
 
 ### animation-iteration-count
 - [ ] Decide: Add `{ kind: "number"; value: number }` or keep as CssValue?
-- [ ] If adding: Parse plain numbers separately from CssValue
+- [ ] Parser available: `Parsers.Length.parseNumberNode(node): ParseResult<number>` ✅
 - [ ] Test: `animation-iteration-count: 3`
 
 ### opacity
-- [ ] Decide: Use `AlphaValue` or plain `number`?
-- [ ] Check if `AlphaValue` type exists in @b/types
-- [ ] Add concrete type + parser
+- [ ] Decide: Use plain `number` (0-1 range, no validation per ADR-001)
+- [ ] No AlphaValue type exists - use `Type.CSSNumber` (plain number)
+- [ ] Parser available: `Parsers.Length.parseNumberNode(node)` ✅
 - [ ] Test: `opacity: 0.5`
 
 ### font-weight
 - [ ] Decide: Add `{ kind: "number"; value: number }` for 100-900?
+- [ ] Parser available: `Parsers.Length.parseNumberNode(node)` ✅
 - [ ] Or keep as keyword + CssValue?
 - [ ] Test: `font-weight: 400`
 
@@ -92,7 +95,7 @@
 - [ ] Decide: Support both unitless number AND length-percentage?
 - [ ] `{ kind: "number"; value: number }` for `line-height: 1.5`
 - [ ] `{ kind: "length-percentage"; value: LengthPercentage }` for `line-height: 20px`
-- [ ] Or merge into single type?
+- [ ] Both parsers available ✅
 
 ---
 
@@ -110,22 +113,21 @@
 
 ## Priority 5: Special Cases 🎨
 
-### filter
-- [ ] **Verify:** Already has `filter-list` concrete type
-- [ ] Check parser uses `Parsers.Filter.*`
-- [ ] Confirm no action needed
+### filter ✅ VERIFIED CORRECT
+- [x] Has `filter-list` concrete type discriminator
+- [x] Parser tries `Parsers.Filter.parseFilterList()` before CssValue fallback
+- [x] No action needed - follows correct pattern
 
-### backdrop-filter
-- [ ] **Verify:** Already has `filter-list` concrete type
-- [ ] Check parser uses `Parsers.Filter.*`
-- [ ] Confirm no action needed
+### backdrop-filter ✅ VERIFIED CORRECT
+- [x] Has `filter-list` concrete type discriminator
+- [x] Parser tries `Parsers.Filter.parseFilterList()` before CssValue fallback
+- [x] No action needed - follows correct pattern
 
-### border-radius (4 properties)
-- [ ] **Verify:** Using CssValue in circular/elliptical is correct
-- [ ] `{ kind: "circular"; radius: CssValue }`
-- [ ] `{ kind: "elliptical"; horizontal: CssValue; vertical: CssValue }`
-- [ ] These already have discriminators, just values are CssValue
-- [ ] Confirm this is architecturally correct (CssValue as leaf node)
+### border-radius (4 properties) ✅ VERIFIED CORRECT
+- [x] Shape discrimination at IR level (`circular` vs `elliptical`)
+- [x] CssValue as leaf is architecturally correct here
+- [x] Discriminator provides semantic info, CssValue provides flexibility
+- [x] No action needed - follows valid pattern
 
 ---
 
@@ -206,10 +208,19 @@ Before proceeding, we need clarity on:
 
 ## Completion Metrics 📊
 
-- **Total Properties:** 32
-- **Verified Correct:** 0
-- **Need Type + Parser:** ~28
-- **Need Parser Only:** 1 (animation-delay)
-- **Need Verification:** 4 (border-radius, filter, backdrop-filter)
+- **Total Properties Analyzed:** 32
+- **Verified Correct:** 6 (filter, backdrop-filter, border-radius ×4) ✅
+- **Need Type + Parser Fix:** 25
+  - Time: 3 (animation-duration, transition-delay, transition-duration)
+  - Length/Percentage: 16
+  - Position: 2
+  - Numeric: 4 (pending decisions)
+- **Need Parser Only:** 1 (animation-delay - type exists)
 
 **Estimate:** 2-3 sessions to complete all fixes
+
+**All Required Infrastructure Exists:**
+- ✅ All parsers available
+- ✅ All types defined
+- ✅ All keywords/units present
+- ✅ No new packages needed
