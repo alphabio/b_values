@@ -2,7 +2,7 @@
 
 **Date:** 2025-11-19
 **Focus:** Bug fix + systematic audit of missing concrete types
-**Status:** 🟢 COMPLETE
+**Status:** 🟡 IN-PROGRESS
 
 ---
 
@@ -13,17 +13,20 @@
 **Issue:** User reported `parseDeclaration("--valid: red !mportant")` returned `property: "declaration"` instead of `"--valid"`
 
 **Root Cause:**
+
 - Multiple error paths used hardcoded `"declaration"` string
 - Issues from `parseDeclarationString` weren't enriched with property context before early return
 - Issue enrichment (step 6) only ran for successful parsing paths
 
 **Fixed (5 error paths):**
+
 1. **Line 94:** Unknown property error - enrich issue manually
 2. **Lines 51-61:** `parseDeclarationString` errors - manual enrichment before return
 3. **Lines 143, 237, 245, 251:** Various syntax/validation errors - use actual property name
 4. **Cleanup:** Removed unused `forwardParseErr` import
 
 **Tests Added:**
+
 - Malformed `!important` for regular properties
 - Malformed `!important` for custom properties
 - Unknown property errors
@@ -44,30 +47,35 @@
 #### Breakdown by Category
 
 **Time Properties (4):**
+
 - `animation-delay` ❌ Type missing (was demo only)
 - `animation-duration` ❌ Type missing
 - `transition-delay` ❌ Type missing
 - `transition-duration` ❌ Type missing
 
 **Length/Percentage Properties (20):**
+
 - Margins (4): margin-bottom/left/right/top
 - Paddings (4): padding-bottom/left/right/top
 - Border Widths (4): border-{bottom,left,right,top}-width
-- Border Radius (4): border-*-radius (special case - verify)
+- Border Radius (4): border-\*-radius (special case - verify)
 - Spacing (3): letter-spacing, text-indent, word-spacing
 - Other (2): perspective, font-size
 
 **Position Properties (2):**
+
 - background-position-x
 - background-position-y
 
 **Numeric Properties (2+):**
+
 - opacity
 - animation-iteration-count
 - font-weight
 - line-height
 
 **Special Cases (6) - ✅ VERIFIED CORRECT:**
+
 - filter - Has filter-list discriminator, proper pattern
 - backdrop-filter - Has filter-list discriminator, proper pattern
 - Border radius (4) - Shape discrimination + CssValue leaves is valid pattern
@@ -79,12 +87,14 @@
 **Properties Registered:** 77
 
 **Quality Status:**
+
 - Build: ✅ GREEN
 - Tests: ✅ 2779/2779 PASSING
 - Linting: ✅ CLEAN
 - TypeScript: ✅ NO ERRORS
 
 **Commits:**
+
 1. `fix(declarations): parseDeclaration now includes property name in all error issues`
 2. `docs(session-081): audit 32 properties missing concrete type layer`
 
@@ -93,6 +103,7 @@
 ## 📝 Documents Created
 
 **Session 081:**
+
 - `docs/sessions/081/concrete-type-audit.md` - Full analysis with examples (236 lines)
 - `docs/sessions/081/TODO.md` - Prioritized implementation plan with parser details (235 lines)
 - `docs/sessions/081/SUMMARY.md` - Quick reference (135 lines)
@@ -104,18 +115,17 @@
 
 ### Immediate: Architectural Decisions ✅ PARTIALLY RESOLVED
 
-**Resolved:**
-3. ✅ **Border radius:** Verified correct - shape discrimination is the discriminator, CssValue as leaf is valid
-6. ✅ **filter/backdrop-filter:** Verified correct - have filter-list discriminator, proper fallback pattern
+**Resolved:** 3. ✅ **Border radius:** Verified correct - shape discrimination is the discriminator, CssValue as leaf is valid 6. ✅ **filter/backdrop-filter:** Verified correct - have filter-list discriminator, proper fallback pattern
 
 **Still Need Decisions:**
+
 1. **Number type strategy:** Should `opacity: 0.5` produce `{ kind: "number", value: 0.5 }` or keep as CssValue?
    - Parser available: `Parsers.Length.parseNumberNode(node)` ✅
    - Type available: `Type.CSSNumber` (plain number) ✅
 2. **line-height special case:** Support both unitless `1.5` AND sized `20px`?
    - `{ kind: "number"; value: number }` + `{ kind: "length-percentage"; value: LengthPercentage }`
    - Or single type? Both parsers available ✅
-4. **Position properties:** What concrete type should background-position-x/y use?
+3. **Position properties:** What concrete type should background-position-x/y use?
    - Need to check `Parsers.Position.*` exports and `Type.Position` structure
 
 ### Priority 1: Time Properties (4)
@@ -123,6 +133,7 @@
 **Estimated:** 1 hour for all 4 properties
 
 **Pattern to apply:**
+
 ```typescript
 // 1. Parse concrete type first
 const timeResult = Parsers.Time.parseTimeNode(firstNode);
@@ -138,6 +149,7 @@ if (cssValueResult.ok) {
 ```
 
 **For each property:**
+
 1. Add `{ kind: "time"; value: Type.Time }` to type (if missing)
 2. Update parser to use Time parser first
 3. Add tests (concrete value + var/calc fallback)
@@ -162,6 +174,7 @@ if (cssValueResult.ok) {
 ### Reference Implementation: background-color
 
 **Why it's correct:**
+
 ```typescript
 // parser.ts
 const colorResult = Parsers.Color.parseNode(firstNode);
@@ -189,11 +202,13 @@ if (colorResult.ok) {
 ## 📈 Session Statistics
 
 **Bug Fix:**
+
 - Files Changed: 2 (parser.ts, parser.test.ts)
 - Tests Added: 4
 - Lines Changed: ~50
 
 **Audit:**
+
 - Properties Analyzed: 32
 - Properties Verified Correct: 6 (filter, backdrop-filter, border-radius ×4)
 - Properties Need Fixing: 26
@@ -201,12 +216,14 @@ if (colorResult.ok) {
 - Estimated Remaining Work: 6 hours across 2-3 sessions
 
 **Infrastructure Audit:**
+
 - ✅ All parsers available (Time, Length, Angle, Number, Position, etc.)
 - ✅ All types defined (Time, Length, LengthPercentage, Angle, CSSNumber, etc.)
 - ✅ All keywords/units present (no gaps)
 - ✅ No new packages or infrastructure needed
 
 **Breaking Changes:**
+
 - IR structure will change for 26 properties
 - Per AGENTS.md: "We break things to make them consistent"
 - No external consumers (greenfield)

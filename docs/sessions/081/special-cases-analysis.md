@@ -12,6 +12,7 @@
 ### Implementation Pattern
 
 **Type Definition (filter):**
+
 ```typescript
 export type FilterIR =
   | { kind: "keyword"; value: "initial" | "inherit" | ... | "none" }
@@ -20,16 +21,19 @@ export type FilterIR =
 ```
 
 **Parser Flow:**
+
 1. Check for keywords (cssWide, none) ✅
 2. Try concrete type: `Parsers.Filter.parseFilterList(ast)` ✅
 3. Fallback to CssValue for var()/calc() ✅
 
 **Why it's correct:**
+
 - Has concrete type discriminator: `{ kind: "filter-list" }`
 - Parser tries concrete parsing BEFORE CssValue
 - Proper fallback to `css-value` discriminator for var()/calc()
 
 **Verification:**
+
 ```typescript
 filter: blur(5px)           → { kind: "filter-list", value: [...] }
 filter: var(--blur)         → { kind: "css-value", value: { kind: "var", ... } }
@@ -45,6 +49,7 @@ backdrop-filter: blur(5px)  → { kind: "filter-list", value: [...] }
 **Status:** These are architecturally CORRECT. CssValue as leaf node is intentional.
 
 ### Properties
+
 - border-bottom-left-radius
 - border-bottom-right-radius
 - border-top-left-radius
@@ -53,6 +58,7 @@ backdrop-filter: blur(5px)  → { kind: "filter-list", value: [...] }
 ### Implementation Pattern
 
 **Type Definition:**
+
 ```typescript
 export type BorderBottomLeftRadiusIR =
   | { kind: "keyword"; value: "initial" | "inherit" | ... }
@@ -61,30 +67,32 @@ export type BorderBottomLeftRadiusIR =
 ```
 
 **Parser Flow:**
+
 1. Parse first value with `parseNodeToCssValue()` → always CssValue
 2. Single value → `{ kind: "circular", radius: CssValue }`
 3. Two values → `{ kind: "elliptical", horizontal: CssValue, vertical: CssValue }`
 
 **Why CssValue is correct here:**
+
 - The discriminator is at the **shape level** (`circular` vs `elliptical`), not the value level
 - `CssValue` includes both concrete values (`literal`) AND CSS functions (`var`, `calc`)
 - This is the correct abstraction: shape discrimination + flexible value system
 
 **Comparison to incorrect pattern:**
+
 ```typescript
 // ❌ WRONG: Missing shape discrimination
-type BadRadius = 
-  | { kind: "keyword" }
-  | { kind: "value"; value: CssValue }  // Lost circular/elliptical info!
+type BadRadius = { kind: "keyword" } | { kind: "value"; value: CssValue }; // Lost circular/elliptical info!
 
 // ✅ CORRECT: Shape + flexible value
-type GoodRadius = 
+type GoodRadius =
   | { kind: "keyword" }
-  | { kind: "circular"; radius: CssValue }      // Shape info preserved
-  | { kind: "elliptical"; horizontal: CssValue; vertical: CssValue }
+  | { kind: "circular"; radius: CssValue } // Shape info preserved
+  | { kind: "elliptical"; horizontal: CssValue; vertical: CssValue };
 ```
 
 **Verification:**
+
 ```typescript
 border-radius: 5px              → { kind: "circular", radius: { kind: "literal", value: 5, unit: "px" } }
 border-radius: 5px 10px         → { kind: "elliptical", horizontal: {...}, vertical: {...} }
@@ -101,29 +109,37 @@ border-radius: calc(5px + 10%)  → { kind: "circular", radius: { kind: "calc", 
 ### ✅ Parsers Available
 
 **Time:**
+
 - `Parsers.Time.parseTimeNode(node): ParseResult<Type.Time>`
 
 **Length/Percentage:**
+
 - `Parsers.Length.parseLengthNode(node): ParseResult<Type.Length>`
 - `Parsers.Length.parseLengthPercentageNode(node): ParseResult<Type.LengthPercentage>`
 - `Parsers.Length.parseNumberNode(node): ParseResult<number>` ← For unitless numbers!
 
 **Angle:**
+
 - `Parsers.Angle.parseAngleNode(node): ParseResult<Type.Angle>`
 
 **Position:**
+
 - `Parsers.Position.*` - Need to investigate exports
 
 **Color:**
+
 - `Parsers.Color.parseNode(node): ParseResult<Type.Color>` (handles concrete + CssValue internally)
 
 **Filter:**
+
 - `Parsers.Filter.parseFilterList(ast): ParseResult<Type.FilterList>`
 
 **Image:**
+
 - `Parsers.Image.*` - Already used by background-image
 
 **Utils:**
+
 - `Parsers.Utils.parseNodeToCssValue(node): ParseResult<CssValue>` - Generic fallback
 
 ---
@@ -131,6 +147,7 @@ border-radius: calc(5px + 10%)  → { kind: "circular", radius: { kind: "calc", 
 ### ✅ Types Available
 
 **Concrete Types:**
+
 - `Type.Time` - `{ value: number, unit: TimeUnit }`
 - `Type.Length` - `{ value: number, unit: LengthUnit }`
 - `Type.LengthPercentage` - Union of Length | Percentage
@@ -142,6 +159,7 @@ border-radius: calc(5px + 10%)  → { kind: "circular", radius: { kind: "calc", 
 - `Type.Position` - Position type (need to check structure)
 
 **Generic Type:**
+
 - `Type.CssValue` - Universal type for var(), calc(), literals, etc.
 
 ---
@@ -149,7 +167,9 @@ border-radius: calc(5px + 10%)  → { kind: "circular", radius: { kind: "calc", 
 ## Missing Types/Keywords/Units? ❌ NONE
 
 ### Units - All Present ✅
+
 From `@b/units`:
+
 - `TIME_UNITS`: s, ms
 - `ANGLE_UNITS`: deg, grad, rad, turn
 - `ABSOLUTE_LENGTH_UNITS`: px, cm, mm, in, pt, pc
@@ -158,7 +178,9 @@ From `@b/units`:
 - `PERCENTAGE_UNIT`: %
 
 ### Keywords - All Present ✅
+
 From `@b/keywords`:
+
 - `cssWide` - inherit, initial, unset, revert, revert-layer
 - `none` - none keyword
 - `absoluteSizeSchema` - xx-small, x-small, small, medium, large, x-large, xx-large
@@ -168,7 +190,9 @@ From `@b/keywords`:
 - Many others...
 
 ### Types - All Present ✅
+
 From `@b/types`:
+
 - All concrete types listed above
 - `CssValue` with discriminated union for var/calc/literals
 - Result types: ParseResult, GenerateResult
@@ -186,7 +210,7 @@ From `@b/types`:
 
 ```typescript
 // Type
-type PropertyIR = 
+type PropertyIR =
   | { kind: "keyword"; value: ... }
   | { kind: "time"; value: Type.Time }      // Concrete type here
   | { kind: "value"; value: CssValue };     // Fallback
@@ -210,7 +234,7 @@ return { kind: "value", value: cssValueResult.value };
 
 ```typescript
 // Type
-type PropertyIR = 
+type PropertyIR =
   | { kind: "keyword"; value: ... }
   | { kind: "circular"; radius: CssValue }           // Shape discriminator
   | { kind: "elliptical"; horizontal: CssValue; vertical: CssValue };
@@ -234,7 +258,7 @@ if (singleValue) {
 
 ```typescript
 // Type
-type PropertyIR = 
+type PropertyIR =
   | { kind: "keyword"; value: ... }
   | { kind: "value"; value: ConcreteType };  // ConcreteType = Concrete | CssValue
 
@@ -250,6 +274,7 @@ return { kind: "value", value: concreteResult.value };
 ## Final Verdict
 
 ### ✅ No Changes Needed (6 properties)
+
 1. filter - Correct discriminated union with filter-list
 2. backdrop-filter - Correct discriminated union with filter-list
 3. border-bottom-left-radius - Correct shape discrimination
@@ -258,7 +283,9 @@ return { kind: "value", value: concreteResult.value };
 6. border-top-right-radius - Correct shape discrimination
 
 ### ❌ Need Fixes (26 properties)
+
 See main TODO.md for full list:
+
 - Time (4): animation-delay (type exists), animation-duration, transition-delay, transition-duration
 - Length/Percentage (16): margins, paddings, border-widths, spacing, perspective, font-size
 - Position (2): background-position-x/y

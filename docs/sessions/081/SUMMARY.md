@@ -20,13 +20,13 @@ User reported: `animation-delay` type declares `{ kind: "time"; value: Type.Time
 
 ### Breakdown by Category
 
-| Category | Count | Examples |
-|----------|-------|----------|
-| Time | 4 | animation-delay, transition-duration |
-| Length/Percentage | 20 | margins, paddings, borders, spacing |
-| Position | 2 | background-position-x/y |
-| Number | 2+ | opacity, animation-iteration-count |
-| Special | 6 | filter, backdrop-filter, border-radius (4) |
+| Category          | Count | Examples                                   |
+| ----------------- | ----- | ------------------------------------------ |
+| Time              | 4     | animation-delay, transition-duration       |
+| Length/Percentage | 20    | margins, paddings, borders, spacing        |
+| Position          | 2     | background-position-x/y                    |
+| Number            | 2+    | opacity, animation-iteration-count         |
+| Special           | 6     | filter, backdrop-filter, border-radius (4) |
 
 ---
 
@@ -38,12 +38,12 @@ User reported: `animation-delay` type declares `{ kind: "time"; value: Type.Time
 // types.ts - Declares concrete type
 export type AnimationDelayIR =
   | { kind: "keyword"; value: CssWide }
-  | { kind: "time"; value: Type.Time }     // ← Never produced!
+  | { kind: "time"; value: Type.Time } // ← Never produced!
   | { kind: "value"; value: CssValue };
 
 // parser.ts - Skips concrete type
 const valueResult = Parsers.Utils.parseNodeToCssValue(firstNode);
-return { kind: "value", value: valueResult.value };  // ← Always CssValue
+return { kind: "value", value: valueResult.value }; // ← Always CssValue
 ```
 
 **Result:** `animation-delay: 1s` produces `{ kind: "value", value: { kind: "literal", value: 1, unit: "s" } }`
@@ -57,11 +57,11 @@ return { kind: "value", value: valueResult.value };  // ← Always CssValue
 // types.ts
 export const backgroundColorIRSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("keyword"), value: Keywords.cssWide }),
-  z.object({ kind: z.literal("value"), value: colorSchema }),  // ← Color includes concrete + CssValue
+  z.object({ kind: z.literal("value"), value: colorSchema }), // ← Color includes concrete + CssValue
 ]);
 
 // parser.ts
-const colorResult = Parsers.Color.parseNode(firstNode);  // ← Tries concrete first, then CssValue
+const colorResult = Parsers.Color.parseNode(firstNode); // ← Tries concrete first, then CssValue
 if (colorResult.ok) {
   return { kind: "value", value: colorResult.value };
 }
@@ -76,6 +76,7 @@ if (colorResult.ok) {
 **For each broken property:**
 
 1. **Parse concrete type first:**
+
    ```typescript
    const concreteResult = Parsers.Time.parseTimeNode(firstNode);
    if (concreteResult.ok) {
@@ -84,6 +85,7 @@ if (colorResult.ok) {
    ```
 
 2. **Fallback to CssValue:**
+
    ```typescript
    const cssValueResult = Parsers.Utils.parseNodeToCssValue(firstNode);
    if (cssValueResult.ok) {
@@ -114,12 +116,14 @@ if (colorResult.ok) {
 ## Impact
 
 **Benefits of fixing:**
+
 - Proper type discrimination in IR
 - More semantic representation (time vs generic value)
 - Better tooling support (LSP, analyzers)
 - Consistent with architecture (concrete types before CssValue)
 
 **Breaking changes:**
+
 - IR structure changes for affected properties
 - But we're greenfield, no external consumers
 - Per AGENTS.md: "We break things to make them consistent"

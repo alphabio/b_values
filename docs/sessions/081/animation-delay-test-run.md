@@ -8,6 +8,7 @@
 ## What We Did
 
 Attempted to implement concrete Time type for animation-delay:
+
 1. ✅ Added `{ kind: "time"; value: Type.Time }` to types
 2. ✅ Updated parser to call `Parsers.Time.parseTimeNode()` first
 3. ✅ Updated generator to handle time discriminator
@@ -18,16 +19,19 @@ Attempted to implement concrete Time type for animation-delay:
 ## Failures Encountered
 
 ### 1. CssValue Discriminator Unknown
+
 **Test:** Expected `{ kind: "var" }`, got `{ kind: "variable" }`
 **Issue:** Didn't check actual CssValue schema discriminators before writing tests
 **Need:** Audit `packages/b_types/src/values/index.ts` for correct discriminators
 
 ### 2. Error Cases Misunderstood
+
 **Test:** Expected "invalid" to be rejected
 **Reality:** Per ADR-001, we represent not validate - "invalid" becomes literal
 **Need:** Understand representation vs validation boundary
 
 ### 3. Other Unit Failures
+
 **Tests:** "1px", "1" (unitless non-zero) still failing
 **Need:** Check what these actually produce vs expectations
 
@@ -36,15 +40,19 @@ Attempted to implement concrete Time type for animation-delay:
 ## Critical Intelligence Needed BEFORE Next Attempt
 
 ### 1. CssValue Schema Structure ⚠️ REQUIRED
+
 **Location:** `packages/b_types/src/values/index.ts`
 **Questions:**
+
 - What are the actual discriminator values? (`"var"` vs `"variable"`?)
 - What does `"literal"` look like?
 - What does `"calc"` produce?
 - How are custom identifiers represented?
 
 ### 2. Example Property Pattern 🔍 REQUIRED
+
 **Find a working property that:**
+
 - Uses concrete type discriminator (like `background-color`)
 - Has tests showing CssValue fallback
 - Shows round-trip parse → generate
@@ -52,14 +60,18 @@ Attempted to implement concrete Time type for animation-delay:
 **Candidate:** `background-color` - uses Color which handles concrete + CssValue
 
 ### 3. Error Behavior Understanding 📋 REQUIRED
+
 **Questions:**
+
 - What does Time parser return for "1px" (wrong unit)?
 - What does Time parser return for "1" (unitless)?
 - Does parseNodeToCssValue accept these? What does it produce?
 - Where do errors vs representations live?
 
 ### 4. Generator Patterns 🔧 REQUIRED
+
 **Questions:**
+
 - How does `cssValueToCss()` work?
 - Does it handle all CssValue discriminators?
 - Are there edge cases in generation?
@@ -69,18 +81,22 @@ Attempted to implement concrete Time type for animation-delay:
 ## Correct Approach for Next Session
 
 ### Step 0: Intelligence Gathering (30 minutes)
+
 1. **Read CssValue schema completely**
+
    ```bash
    cat packages/b_types/src/values/index.ts
    ```
 
 2. **Find working example with tests**
+
    ```bash
    ls packages/b_declarations/src/properties/background-color/
    cat packages/b_declarations/src/properties/background-color/*.test.ts
    ```
 
 3. **Test parsers manually**
+
    ```bash
    # Create small test script to see actual output
    # - Time parser with valid/invalid inputs
@@ -92,16 +108,19 @@ Attempted to implement concrete Time type for animation-delay:
    - Create reference: "Time parser error cases produce: ..."
 
 ### Step 1: Implementation (15 minutes)
+
 - Copy working pattern exactly
 - Use documented discriminators
 - Follow established conventions
 
 ### Step 2: Tests (15 minutes)
+
 - Copy test structure from working example
 - Use correct discriminators
 - Test concrete + CssValue + errors
 
 ### Step 3: Verify (5 minutes)
+
 - Run tests
 - Run full suite
 - Check for regressions
@@ -111,6 +130,7 @@ Attempted to implement concrete Time type for animation-delay:
 ## Estimated Scope per Property
 
 **With intelligence gathering complete:**
+
 - **Time properties (4):** 15 min each = 1 hour
 - **Length/Percentage (16):** 10 min each = 2.5 hours (can batch)
 - **Others:** TBD after decisions
