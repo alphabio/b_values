@@ -1,7 +1,7 @@
-# Session 081: parseDeclaration Bug + Concrete Type Audit
+# Session 081: parseDeclaration Bug + Concrete Type Audit + Time Properties
 
 **Date:** 2025-11-19
-**Focus:** Bug fix + systematic audit of missing concrete types
+**Focus:** Bug fix + systematic audit + Priority 1 implementation (Time properties)
 **Status:** 🟡 IN-PROGRESS
 
 ---
