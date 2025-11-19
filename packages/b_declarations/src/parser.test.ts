@@ -86,7 +86,7 @@ background-image: url(image.png);
       expect(result.ok).toBe(false);
       if (result.ok) return;
 
-      expect(result.issues[0]?.message).toContain("missing colon");
+      expect(result.issues[0]?.message).toContain("Colon is expected");
     });
 
     it("should fail for string with empty property", () => {
@@ -95,7 +95,7 @@ background-image: url(image.png);
       expect(result.ok).toBe(false);
       if (result.ok) return;
 
-      expect(result.issues[0]?.message).toContain("empty property");
+      expect(result.issues[0]?.message).toContain("Identifier is expected");
     });
 
     it("should fail for string with empty value", () => {
@@ -104,7 +104,27 @@ background-image: url(image.png);
       expect(result.ok).toBe(false);
       if (result.ok) return;
 
-      expect(result.issues[0]?.message).toContain("empty value");
+      expect(result.issues[0]?.message).toContain("Empty value");
+    });
+
+    it("should fail for malformed !important", () => {
+      const result = parseDeclaration("background-color: red !xxx");
+
+      expect(result.ok).toBe(false);
+      if (result.ok) return;
+
+      expect(result.issues[0]?.code).toBe("invalid-syntax");
+      expect(result.issues[0]?.message).toContain('Invalid !important syntax: got "!xxx"');
+    });
+
+    it("should fail for bare exclamation mark", () => {
+      const result = parseDeclaration("background-color: red !");
+
+      expect(result.ok).toBe(false);
+      if (result.ok) return;
+
+      expect(result.issues[0]?.code).toBe("invalid-syntax");
+      expect(result.issues[0]?.message).toContain("Identifier is expected");
     });
   });
 

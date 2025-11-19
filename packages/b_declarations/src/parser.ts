@@ -197,48 +197,58 @@ export function parseDeclaration(input: string | CSSDeclaration): ParseResult<De
  * Parse a CSS declaration string into property and value.
  * Handles both formats: "property: value;" and "property: value"
  *
+ * Uses css-tree for consistent parsing with parseDeclarationList.
+ * This ensures proper handling of !important and malformed syntax.
+ *
  * @internal
  */
 function parseDeclarationString(input: string): ParseResult<CSSDeclaration> {
   const trimmed = input.trim();
 
-  // Remove trailing semicolon if present
+  // Remove trailing semicolon if present for css-tree
   const cleaned = trimmed.endsWith(";") ? trimmed.slice(0, -1) : trimmed;
 
-  // Split on first colon
-  const colonIndex = cleaned.indexOf(":");
-
-  if (colonIndex === -1) {
-    return parseErr(
-      "declaration",
-      createError("invalid-syntax", `Invalid CSS declaration: missing colon in "${input}"`),
-    );
+  // Parse with css-tree using declaration context
+  let ast: csstree.Declaration;
+  try {
+    ast = csstree.parse(cleaned, {
+      context: "declaration",
+      positions: true,
+    }) as csstree.Declaration;
+  } catch (e: unknown) {
+    const error = e as Error;
+    return parseErr("declaration", createError("invalid-syntax", error.message));
   }
 
-  const property = cleaned.slice(0, colonIndex).trim();
-  let value = cleaned.slice(colonIndex + 1).trim();
+  // Extract property, value, and important from AST
+  const property = ast.property;
+  const valueNode = ast.value;
 
-  if (!property) {
-    return parseErr(
-      "declaration",
-      createError("missing-value", `Invalid CSS declaration: empty property in "${input}"`),
-    );
-  }
-
-  if (!value) {
-    return parseErr("declaration", createError("missing-value", `Invalid CSS declaration: empty value in "${input}"`));
-  }
-
-  const importantPattern = /\s*!important$/i;
+  // Validate !important syntax
+  // css-tree returns true for valid "!important", or the string value for malformed (e.g., "!xxx" → "xxx")
+  const importantValue = ast.important;
   let important = false;
 
-  if (importantPattern.test(value)) {
-    important = true;
-    value = value.replace(importantPattern, "").trim();
+  if (importantValue) {
+    if (importantValue === true) {
+      important = true;
+    } else {
+      // Malformed !important syntax
+      return parseErr(
+        "declaration",
+        createError("invalid-syntax", `Invalid !important syntax: got "!${importantValue}", expected "!important"`),
+      );
+    }
   }
 
+  if (!valueNode) {
+    return parseErr("declaration", createError("missing-value", `Missing value for property: ${property}`));
+  }
+
+  const value = csstree.generate(valueNode).trim();
+
   if (!value) {
-    return parseErr("declaration", createError("missing-value", `Invalid CSS declaration: empty value in "${input}"`));
+    return parseErr("declaration", createError("missing-value", `Empty value for property: ${property}`));
   }
 
   return parseOk({ property, value, important });

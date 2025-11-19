@@ -1,6 +1,7 @@
 // b_path:: packages/b_types/src/transform/scale.ts
 
 import { z } from "zod";
+import { cssValueSchema } from "../values";
 
 /**
  * Scale transform functions
@@ -10,38 +11,38 @@ import { z } from "zod";
 export const scaleSchema = z
   .object({
     kind: z.literal("scale"),
-    x: z.number(),
-    y: z.number(),
+    x: cssValueSchema,
+    y: cssValueSchema,
   })
   .strict();
 
 export const scaleXSchema = z
   .object({
     kind: z.literal("scaleX"),
-    x: z.number(),
+    x: cssValueSchema,
   })
   .strict();
 
 export const scaleYSchema = z
   .object({
     kind: z.literal("scaleY"),
-    y: z.number(),
+    y: cssValueSchema,
   })
   .strict();
 
 export const scaleZSchema = z
   .object({
     kind: z.literal("scaleZ"),
-    z: z.number(),
+    z: cssValueSchema,
   })
   .strict();
 
 export const scale3dSchema = z
   .object({
     kind: z.literal("scale3d"),
-    x: z.number(),
-    y: z.number(),
-    z: z.number(),
+    x: cssValueSchema,
+    y: cssValueSchema,
+    z: cssValueSchema,
   })
   .strict();
 

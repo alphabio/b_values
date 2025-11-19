@@ -1,7 +1,7 @@
 // b_path:: packages/b_types/src/transform/perspective.ts
 
 import { z } from "zod";
-import { lengthSchema } from "../length";
+import { cssValueSchema } from "../values";
 
 /**
  * Perspective transform function
@@ -11,7 +11,7 @@ import { lengthSchema } from "../length";
 export const perspectiveFunctionSchema = z
   .object({
     kind: z.literal("perspective"),
-    length: lengthSchema,
+    length: cssValueSchema,
   })
   .strict();
 

@@ -4,6 +4,7 @@ import { generateDeclarationList } from "./declaration-list-generator";
 import { parseDeclarationList } from "./declaration-list-parser";
 import "./properties/custom-property"; // Ensure custom property is registered
 import "./properties/background-image"; // Ensure background-image is registered
+import type { AnyDeclarationInput } from "./types";
 
 describe("generateDeclarationList", () => {
   describe("basic generation", () => {
@@ -12,7 +13,7 @@ describe("generateDeclarationList", () => {
       expect(parseResult.ok).toBe(true);
 
       if (parseResult.ok) {
-        const result = generateDeclarationList(parseResult.value);
+        const result = generateDeclarationList(parseResult.value as AnyDeclarationInput[]);
         expect(result.ok).toBe(true);
         if (result.ok) {
           expect(result.value).toBe("--color: red");
@@ -25,7 +26,7 @@ describe("generateDeclarationList", () => {
       expect(parseResult.ok).toBe(true);
 
       if (parseResult.ok) {
-        const result = generateDeclarationList(parseResult.value);
+        const result = generateDeclarationList(parseResult.value as AnyDeclarationInput[]);
         expect(result.ok).toBe(true);
         if (result.ok) {
           expect(result.value).toBe("--color: red; --size: 10px");
@@ -38,7 +39,7 @@ describe("generateDeclarationList", () => {
       expect(parseResult.ok).toBe(true);
 
       if (parseResult.ok) {
-        const result = generateDeclarationList(parseResult.value);
+        const result = generateDeclarationList(parseResult.value as AnyDeclarationInput[]);
         expect(result.ok).toBe(true);
         if (result.ok) {
           expect(result.value).toBe("--a: 1; --b: 2; --c: 3");
@@ -63,7 +64,7 @@ describe("generateDeclarationList", () => {
 
       expect(parseResult.ok).toBe(true);
       if (parseResult.ok) {
-        const genResult = generateDeclarationList(parseResult.value);
+        const genResult = generateDeclarationList(parseResult.value as AnyDeclarationInput[]);
         expect(genResult.ok).toBe(true);
         if (genResult.ok) {
           expect(genResult.value).toBe(input);
@@ -77,7 +78,7 @@ describe("generateDeclarationList", () => {
 
       expect(parseResult.ok).toBe(true);
       if (parseResult.ok) {
-        const genResult = generateDeclarationList(parseResult.value);
+        const genResult = generateDeclarationList(parseResult.value as AnyDeclarationInput[]);
         expect(genResult.ok).toBe(true);
         if (genResult.ok) {
           // Round-trip should preserve structure
@@ -93,7 +94,7 @@ describe("generateDeclarationList", () => {
 
       expect(parseResult.ok).toBe(true);
       if (parseResult.ok) {
-        const genResult = generateDeclarationList(parseResult.value);
+        const genResult = generateDeclarationList(parseResult.value as AnyDeclarationInput[]);
         expect(genResult.ok).toBe(true);
         if (genResult.ok) {
           expect(genResult.value).toBe(input);
@@ -108,7 +109,7 @@ describe("generateDeclarationList", () => {
 
       expect(parseResult.ok).toBe(true);
       if (parseResult.ok) {
-        const result = generateDeclarationList(parseResult.value);
+        const result = generateDeclarationList(parseResult.value as AnyDeclarationInput[]);
         expect(result.ok).toBe(true);
         if (result.ok) {
           expect(result.value).toBe("--color: red; --size: 14px; --weight: bold");
@@ -121,7 +122,7 @@ describe("generateDeclarationList", () => {
 
       expect(parseResult.ok).toBe(true);
       if (parseResult.ok) {
-        const result = generateDeclarationList(parseResult.value);
+        const result = generateDeclarationList(parseResult.value as AnyDeclarationInput[]);
         expect(result.ok).toBe(true);
         if (result.ok) {
           expect(result.value).toBe("--theme: dark; --spacing: 20px");

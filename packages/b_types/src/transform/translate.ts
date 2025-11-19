@@ -1,7 +1,7 @@
 // b_path:: packages/b_types/src/transform/translate.ts
 
 import { z } from "zod";
-import { lengthPercentageSchema } from "../length-percentage";
+import { cssValueSchema } from "../values";
 
 /**
  * Translate transform functions
@@ -11,38 +11,38 @@ import { lengthPercentageSchema } from "../length-percentage";
 export const translateSchema = z
   .object({
     kind: z.literal("translate"),
-    x: lengthPercentageSchema,
-    y: lengthPercentageSchema,
+    x: cssValueSchema,
+    y: cssValueSchema,
   })
   .strict();
 
 export const translateXSchema = z
   .object({
     kind: z.literal("translateX"),
-    x: lengthPercentageSchema,
+    x: cssValueSchema,
   })
   .strict();
 
 export const translateYSchema = z
   .object({
     kind: z.literal("translateY"),
-    y: lengthPercentageSchema,
+    y: cssValueSchema,
   })
   .strict();
 
 export const translateZSchema = z
   .object({
     kind: z.literal("translateZ"),
-    z: lengthPercentageSchema,
+    z: cssValueSchema,
   })
   .strict();
 
 export const translate3dSchema = z
   .object({
     kind: z.literal("translate3d"),
-    x: lengthPercentageSchema,
-    y: lengthPercentageSchema,
-    z: lengthPercentageSchema,
+    x: cssValueSchema,
+    y: cssValueSchema,
+    z: cssValueSchema,
   })
   .strict();
 

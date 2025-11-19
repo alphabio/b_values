@@ -158,25 +158,18 @@ export function getPropertyDefinition(name: string): PropertyDefinition | undefi
 // b_path:: packages/b_declarations/src/declaration-list-generator.ts
 import { createError, generateOk, type GenerateResult, type Issue } from "@b/types";
 import { generateDeclaration } from "./generator";
-import type { DeclarationResult } from "./types";
+import type { AnyDeclarationInput } from "./types";
 
 /**
- * Generate CSS declaration list from array of DeclarationResult.
+ * Generate CSS declaration list from array of typed declaration inputs.
  * Produces semicolon-separated declarations.
  *
- * @param declarations - Array of DeclarationResult to generate from
+ * @param declarations - Array of typed declarations to generate from
  * @returns GenerateResult with semicolon-separated string
  *
  * @example
- * ```ts
- * const result = generateDeclarationList([
- *   { property: "color", ir: colorIR },
- *   { property: "font-size", ir: fontSizeIR }
- * ]);
- * // Result: "color: red; font-size: 16px"
- * ```
  */
-export function generateDeclarationList(declarations: DeclarationResult[]): GenerateResult {
+export function generateDeclarationList(declarations: AnyDeclarationInput[]): GenerateResult {
   // Handle empty array
   if (declarations.length === 0) {
     return generateOk("");
@@ -187,16 +180,10 @@ export function generateDeclarationList(declarations: DeclarationResult[]): Gene
 
   // Generate each declaration
   for (const decl of declarations) {
-    // Note: Don't pass important flag here to avoid double appending
-    const result = generateDeclaration({
-      property: decl.property as never,
-      ir: decl.ir as never,
-    });
+    const result = generateDeclaration(decl);
 
     if (result.ok) {
-      // Append !important based on DeclarationResult flag
-      const cssText = decl.important ? `${result.value} !important` : result.value;
-      results.push(cssText);
+      results.push(result.value);
     }
 
     if (result.issues.length > 0) {
@@ -290,7 +277,25 @@ export function parseDeclarationList(css: string): ParseResult<DeclarationResult
     // Extract property and value from AST node
     const property = node.property;
     const valueNode = node.value;
-    const important = Boolean(node.important);
+
+    // Validate !important syntax
+    // css-tree returns true for valid "!important", or the string value for malformed (e.g., "!xxx" → "xxx")
+    const importantValue = node.important;
+    let important = false;
+
+    if (importantValue) {
+      if (importantValue === true) {
+        important = true;
+      } else {
+        // Malformed !important syntax - add error and skip this declaration
+        allIssues.push(
+          createError("invalid-syntax", `Invalid !important syntax: got "!${importantValue}", expected "!important"`, {
+            property,
+          }),
+        );
+        return;
+      }
+    }
 
     if (!valueNode) {
       allIssues.push(createError("missing-value", `Missing value for property: ${property}`, { property }));
@@ -662,48 +667,58 @@ export function parseDeclaration(input: string | CSSDeclaration): ParseResult<De
  * Parse a CSS declaration string into property and value.
  * Handles both formats: "property: value;" and "property: value"
  *
+ * Uses css-tree for consistent parsing with parseDeclarationList.
+ * This ensures proper handling of !important and malformed syntax.
+ *
  * @internal
  */
 function parseDeclarationString(input: string): ParseResult<CSSDeclaration> {
   const trimmed = input.trim();
 
-  // Remove trailing semicolon if present
+  // Remove trailing semicolon if present for css-tree
   const cleaned = trimmed.endsWith(";") ? trimmed.slice(0, -1) : trimmed;
 
-  // Split on first colon
-  const colonIndex = cleaned.indexOf(":");
-
-  if (colonIndex === -1) {
-    return parseErr(
-      "declaration",
-      createError("invalid-syntax", `Invalid CSS declaration: missing colon in "${input}"`),
-    );
+  // Parse with css-tree using declaration context
+  let ast: csstree.Declaration;
+  try {
+    ast = csstree.parse(cleaned, {
+      context: "declaration",
+      positions: true,
+    }) as csstree.Declaration;
+  } catch (e: unknown) {
+    const error = e as Error;
+    return parseErr("declaration", createError("invalid-syntax", error.message));
   }
 
-  const property = cleaned.slice(0, colonIndex).trim();
-  let value = cleaned.slice(colonIndex + 1).trim();
+  // Extract property, value, and important from AST
+  const property = ast.property;
+  const valueNode = ast.value;
 
-  if (!property) {
-    return parseErr(
-      "declaration",
-      createError("missing-value", `Invalid CSS declaration: empty property in "${input}"`),
-    );
-  }
-
-  if (!value) {
-    return parseErr("declaration", createError("missing-value", `Invalid CSS declaration: empty value in "${input}"`));
-  }
-
-  const importantPattern = /\s*!important$/i;
+  // Validate !important syntax
+  // css-tree returns true for valid "!important", or the string value for malformed (e.g., "!xxx" → "xxx")
+  const importantValue = ast.important;
   let important = false;
 
-  if (importantPattern.test(value)) {
-    important = true;
-    value = value.replace(importantPattern, "").trim();
+  if (importantValue) {
+    if (importantValue === true) {
+      important = true;
+    } else {
+      // Malformed !important syntax
+      return parseErr(
+        "declaration",
+        createError("invalid-syntax", `Invalid !important syntax: got "!${importantValue}", expected "!important"`),
+      );
+    }
   }
 
+  if (!valueNode) {
+    return parseErr("declaration", createError("missing-value", `Missing value for property: ${property}`));
+  }
+
+  const value = csstree.generate(valueNode).trim();
+
   if (!value) {
-    return parseErr("declaration", createError("missing-value", `Invalid CSS declaration: empty value in "${input}"`));
+    return parseErr("declaration", createError("missing-value", `Empty value for property: ${property}`));
   }
 
   return parseOk({ property, value, important });
@@ -786,7 +801,7 @@ export const animationDelay = defineProperty<AnimationDelayIR>({
 // b_path:: packages/b_declarations/src/properties/animation-delay/generator.ts
 
 import { generateOk, type GenerateResult } from "@b/types";
-import * as Generators from "@b/generators";
+import { cssValueToCss } from "@b/utils";
 import type { AnimationDelayIR } from "./types";
 
 export function generateAnimationDelay(ir: AnimationDelayIR): GenerateResult {
@@ -794,8 +809,8 @@ export function generateAnimationDelay(ir: AnimationDelayIR): GenerateResult {
     return generateOk(ir.value);
   }
 
-  const result = Generators.Time.generate(ir.value);
-  return result;
+  const css = cssValueToCss(ir.value);
+  return generateOk(css);
 }
 
 
@@ -812,6 +827,7 @@ export * from "./definition";
 // b_path:: packages/b_declarations/src/properties/animation-delay/parser.ts
 
 import type { ParseResult } from "@b/types";
+import * as Keywords from "@b/keywords";
 import * as Parsers from "@b/parsers";
 import type * as csstree from "@eslint/css-tree";
 import type { AnimationDelayIR } from "./types";
@@ -828,40 +844,44 @@ export function parseAnimationDelay(ast: csstree.Value): ParseResult<AnimationDe
     };
   }
 
-  const timeResult = Parsers.Time.parseTimeNode(firstNode);
+  if (firstNode.type === "Identifier") {
+    const name = firstNode.name.toLowerCase();
+    const cssWideResult = Keywords.cssWide.safeParse(name);
+    if (cssWideResult.success) {
+      return {
+        ok: true,
+        property: "animation-delay",
+        value: { kind: "keyword", value: cssWideResult.data },
+        issues: [],
+      };
+    }
+  }
 
-  if (timeResult.ok) {
+  const valueResult = Parsers.Utils.parseNodeToCssValue(firstNode);
+
+  if (valueResult.ok) {
     return {
       ok: true,
       property: "animation-delay",
-      value: { kind: "value", value: timeResult.value },
-      issues: timeResult.issues,
+      value: { kind: "value", value: valueResult.value },
+      issues: valueResult.issues,
     };
   }
 
-  return timeResult as ParseResult<AnimationDelayIR>;
+  return valueResult as ParseResult<AnimationDelayIR>;
 }
 
 
 === File: packages/b_declarations/src/properties/animation-delay/types.ts ===
 // b_path:: packages/b_declarations/src/properties/animation-delay/types.ts
 
-import { z } from "zod";
-import { timeSchema } from "@b/types";
-import * as Keywords from "@b/keywords";
+import type { z } from "zod";
+import type { CssValue } from "@b/types";
+import type * as Keywords from "@b/keywords";
 
-export const animationDelayIRSchema = z.discriminatedUnion("kind", [
-  z.object({
-    kind: z.literal("keyword"),
-    value: Keywords.cssWide,
-  }),
-  z.object({
-    kind: z.literal("value"),
-    value: timeSchema,
-  }),
-]);
-
-export type AnimationDelayIR = z.infer<typeof animationDelayIRSchema>;
+export type AnimationDelayIR =
+  | { kind: "keyword"; value: z.infer<typeof Keywords.cssWide> }
+  | { kind: "value"; value: CssValue };
 
 
 === File: packages/b_declarations/src/properties/animation-direction/definition.ts ===
@@ -989,7 +1009,7 @@ export const animationDuration = defineProperty<AnimationDurationIR>({
 // b_path:: packages/b_declarations/src/properties/animation-duration/generator.ts
 
 import { generateOk, type GenerateResult } from "@b/types";
-import * as Generators from "@b/generators";
+import { cssValueToCss } from "@b/utils";
 import type { AnimationDurationIR } from "./types";
 
 export function generateAnimationDuration(ir: AnimationDurationIR): GenerateResult {
@@ -997,8 +1017,8 @@ export function generateAnimationDuration(ir: AnimationDurationIR): GenerateResu
     return generateOk(ir.value);
   }
 
-  const result = Generators.Time.generate(ir.value);
-  return result;
+  const css = cssValueToCss(ir.value);
+  return generateOk(css);
 }
 
 
@@ -1015,6 +1035,7 @@ export * from "./definition";
 // b_path:: packages/b_declarations/src/properties/animation-duration/parser.ts
 
 import type { ParseResult } from "@b/types";
+import * as Keywords from "@b/keywords";
 import * as Parsers from "@b/parsers";
 import type * as csstree from "@eslint/css-tree";
 import type { AnimationDurationIR } from "./types";
@@ -1037,40 +1058,44 @@ export function parseAnimationDuration(ast: csstree.Value): ParseResult<Animatio
     };
   }
 
-  const timeResult = Parsers.Time.parseTimeNode(firstNode);
+  if (firstNode.type === "Identifier") {
+    const name = firstNode.name.toLowerCase();
+    const cssWideResult = Keywords.cssWide.safeParse(name);
+    if (cssWideResult.success) {
+      return {
+        ok: true,
+        property: "animation-duration",
+        value: { kind: "keyword", value: cssWideResult.data },
+        issues: [],
+      };
+    }
+  }
 
-  if (timeResult.ok) {
+  const valueResult = Parsers.Utils.parseNodeToCssValue(firstNode);
+
+  if (valueResult.ok) {
     return {
       ok: true,
       property: "animation-duration",
-      value: { kind: "value", value: timeResult.value },
-      issues: timeResult.issues,
+      value: { kind: "value", value: valueResult.value },
+      issues: valueResult.issues,
     };
   }
 
-  return timeResult as ParseResult<AnimationDurationIR>;
+  return valueResult as ParseResult<AnimationDurationIR>;
 }
 
 
 === File: packages/b_declarations/src/properties/animation-duration/types.ts ===
 // b_path:: packages/b_declarations/src/properties/animation-duration/types.ts
 
-import { z } from "zod";
-import { timeSchema } from "@b/types";
-import * as Keywords from "@b/keywords";
+import type { z } from "zod";
+import type { CssValue } from "@b/types";
+import type * as Keywords from "@b/keywords";
 
-export const animationDurationIRSchema = z.discriminatedUnion("kind", [
-  z.object({
-    kind: z.literal("keyword"),
-    value: Keywords.cssWide,
-  }),
-  z.object({
-    kind: z.literal("value"),
-    value: timeSchema,
-  }),
-]);
-
-export type AnimationDurationIR = z.infer<typeof animationDurationIRSchema>;
+export type AnimationDurationIR =
+  | { kind: "keyword"; value: z.infer<typeof Keywords.cssWide> }
+  | { kind: "value"; value: CssValue };
 
 
 === File: packages/b_declarations/src/properties/animation-fill-mode/definition.ts ===
@@ -1198,6 +1223,7 @@ export const animationIterationCount = defineProperty<AnimationIterationCountIR>
 // b_path:: packages/b_declarations/src/properties/animation-iteration-count/generator.ts
 
 import { generateOk, type GenerateResult } from "@b/types";
+import { cssValueToCss } from "@b/utils";
 import type { AnimationIterationCountIR } from "./types";
 
 export function generateAnimationIterationCount(ir: AnimationIterationCountIR): GenerateResult {
@@ -1205,7 +1231,8 @@ export function generateAnimationIterationCount(ir: AnimationIterationCountIR): 
     return generateOk(ir.value);
   }
 
-  return generateOk(ir.value.toString());
+  const css = cssValueToCss(ir.value);
+  return generateOk(css);
 }
 
 
@@ -1223,6 +1250,7 @@ export * from "./definition";
 
 import type { ParseResult } from "@b/types";
 import * as Keywords from "@b/keywords";
+import * as Parsers from "@b/parsers";
 import type * as csstree from "@eslint/css-tree";
 import type { AnimationIterationCountIR } from "./types";
 
@@ -1267,59 +1295,31 @@ export function parseAnimationIterationCount(ast: csstree.Value): ParseResult<An
     }
   }
 
-  if (firstNode.type === "Number") {
-    const num = Number.parseFloat(firstNode.value);
+  const valueResult = Parsers.Utils.parseNodeToCssValue(firstNode);
 
-    if (Number.isNaN(num) || num < 0) {
-      return {
-        ok: false,
-        property: "animation-iteration-count",
-        value: undefined,
-        issues: [
-          {
-            code: "invalid-value",
-            severity: "error",
-            message: "animation-iteration-count must be a non-negative number",
-          },
-        ],
-      };
-    }
-
+  if (valueResult.ok) {
     return {
       ok: true,
       property: "animation-iteration-count",
-      value: { kind: "number", value: num },
-      issues: [],
+      value: { kind: "value", value: valueResult.value },
+      issues: valueResult.issues,
     };
   }
 
-  return {
-    ok: false,
-    property: "animation-iteration-count",
-    value: undefined,
-    issues: [
-      {
-        code: "invalid-value",
-        severity: "error",
-        message: "Invalid animation-iteration-count value",
-      },
-    ],
-  };
+  return valueResult as ParseResult<AnimationIterationCountIR>;
 }
 
 
 === File: packages/b_declarations/src/properties/animation-iteration-count/types.ts ===
 // b_path:: packages/b_declarations/src/properties/animation-iteration-count/types.ts
 
+import type { z } from "zod";
+import type { CssValue } from "@b/types";
+import type * as Keywords from "@b/keywords";
+
 export type AnimationIterationCountIR =
-  | {
-      kind: "keyword";
-      value: "initial" | "inherit" | "unset" | "revert" | "revert-layer" | "infinite";
-    }
-  | {
-      kind: "number";
-      value: number;
-    };
+  | { kind: "keyword"; value: z.infer<typeof Keywords.cssWide> | "infinite" }
+  | { kind: "value"; value: CssValue };
 
 
 === File: packages/b_declarations/src/properties/animation-name/definition.ts ===
@@ -6337,6 +6337,7 @@ export const fontWeight = defineProperty<FontWeightIR>({
 // b_path:: packages/b_declarations/src/properties/font-weight/generator.ts
 
 import { generateOk, type GenerateResult } from "@b/types";
+import { cssValueToCss } from "@b/utils";
 import type { FontWeightIR } from "./types";
 
 export function generateFontWeight(ir: FontWeightIR): GenerateResult {
@@ -6344,7 +6345,8 @@ export function generateFontWeight(ir: FontWeightIR): GenerateResult {
     return generateOk(ir.value);
   }
 
-  return generateOk(ir.value.toString());
+  const css = cssValueToCss(ir.value);
+  return generateOk(css);
 }
 
 
@@ -6362,6 +6364,7 @@ export * from "./definition";
 
 import type { ParseResult } from "@b/types";
 import * as Keywords from "@b/keywords";
+import * as Parsers from "@b/parsers";
 import type * as csstree from "@eslint/css-tree";
 import type { FontWeightIR } from "./types";
 
@@ -6401,47 +6404,18 @@ export function parseFontWeight(ast: csstree.Value): ParseResult<FontWeightIR> {
     }
   }
 
-  if (firstNode.type === "Number") {
-    const num = Number.parseFloat(firstNode.value);
+  const valueResult = Parsers.Utils.parseNodeToCssValue(firstNode);
 
-    if (Number.isNaN(num)) {
-      return {
-        ok: false,
-        property: "font-weight",
-        value: undefined,
-        issues: [
-          {
-            code: "invalid-value",
-            severity: "error",
-            message: "font-weight must be a valid number",
-          },
-        ],
-      };
-    }
-
+  if (valueResult.ok) {
     return {
       ok: true,
       property: "font-weight",
-      value: { kind: "number", value: num },
-      issues:
-        num < 1 || num > 1000
-          ? [
-              {
-                code: "invalid-value",
-                severity: "warning",
-                message: "font-weight should be between 1 and 1000",
-              },
-            ]
-          : [],
+      value: { kind: "value", value: valueResult.value },
+      issues: valueResult.issues,
     };
   }
 
-  return {
-    ok: false,
-    property: "font-weight",
-    value: undefined,
-    issues: [{ code: "invalid-value", severity: "error", message: "Invalid font-weight value" }],
-  };
+  return valueResult as ParseResult<FontWeightIR>;
 }
 
 
@@ -6449,17 +6423,12 @@ export function parseFontWeight(ast: csstree.Value): ParseResult<FontWeightIR> {
 // b_path:: packages/b_declarations/src/properties/font-weight/types.ts
 
 import type { z } from "zod";
+import type { CssValue } from "@b/types";
 import type * as Keywords from "@b/keywords";
 
 export type FontWeightIR =
-  | {
-      kind: "keyword";
-      value: z.infer<typeof Keywords.cssWide> | z.infer<typeof Keywords.fontWeightKeywordSchema>;
-    }
-  | {
-      kind: "number";
-      value: number;
-    };
+  | { kind: "keyword"; value: z.infer<typeof Keywords.cssWide> | z.infer<typeof Keywords.fontWeightKeywordSchema> }
+  | { kind: "value"; value: CssValue };
 
 
 === File: packages/b_declarations/src/properties/index.ts ===
@@ -7323,6 +7292,7 @@ export const opacity = defineProperty<OpacityIR>({
 // b_path:: packages/b_declarations/src/properties/opacity/generator.ts
 
 import { generateOk, type GenerateResult } from "@b/types";
+import { cssValueToCss } from "@b/utils";
 import type { OpacityIR } from "./types";
 
 export function generateOpacity(ir: OpacityIR): GenerateResult {
@@ -7330,7 +7300,8 @@ export function generateOpacity(ir: OpacityIR): GenerateResult {
     return generateOk(ir.value);
   }
 
-  return generateOk(ir.value.toString());
+  const css = cssValueToCss(ir.value);
+  return generateOk(css);
 }
 
 
@@ -7348,6 +7319,7 @@ export * from "./definition";
 
 import type { ParseResult } from "@b/types";
 import * as Keywords from "@b/keywords";
+import * as Parsers from "@b/parsers";
 import type * as csstree from "@eslint/css-tree";
 import type { OpacityIR } from "./types";
 
@@ -7376,62 +7348,31 @@ export function parseOpacity(ast: csstree.Value): ParseResult<OpacityIR> {
     }
   }
 
-  if (firstNode.type === "Number") {
-    const num = Number.parseFloat(firstNode.value);
+  const valueResult = Parsers.Utils.parseNodeToCssValue(firstNode);
 
-    if (Number.isNaN(num)) {
-      return {
-        ok: false,
-        property: "opacity",
-        value: undefined,
-        issues: [
-          {
-            code: "invalid-value",
-            severity: "error",
-            message: "opacity must be a valid number",
-          },
-        ],
-      };
-    }
-
+  if (valueResult.ok) {
     return {
       ok: true,
       property: "opacity",
-      value: { kind: "number", value: num },
-      issues:
-        num < 0 || num > 1
-          ? [
-              {
-                code: "invalid-value",
-                severity: "warning",
-                message: "opacity should be between 0 and 1",
-              },
-            ]
-          : [],
+      value: { kind: "value", value: valueResult.value },
+      issues: valueResult.issues,
     };
   }
 
-  return {
-    ok: false,
-    property: "opacity",
-    value: undefined,
-    issues: [{ code: "invalid-value", severity: "error", message: "Invalid opacity value" }],
-  };
+  return valueResult as ParseResult<OpacityIR>;
 }
 
 
 === File: packages/b_declarations/src/properties/opacity/types.ts ===
 // b_path:: packages/b_declarations/src/properties/opacity/types.ts
 
+import type { z } from "zod";
+import type { CssValue } from "@b/types";
+import type * as Keywords from "@b/keywords";
+
 export type OpacityIR =
-  | {
-      kind: "keyword";
-      value: "initial" | "inherit" | "unset" | "revert" | "revert-layer";
-    }
-  | {
-      kind: "number";
-      value: number;
-    };
+  | { kind: "keyword"; value: z.infer<typeof Keywords.cssWide> }
+  | { kind: "value"; value: CssValue };
 
 
 === File: packages/b_declarations/src/properties/padding-bottom/definition.ts ===
@@ -7933,8 +7874,8 @@ export const perspective = defineProperty<PerspectiveIR>({
 === File: packages/b_declarations/src/properties/perspective/generator.ts ===
 // b_path:: packages/b_declarations/src/properties/perspective/generator.ts
 
-import { generateErr, generateOk, type GenerateResult } from "@b/types";
-import * as Generators from "@b/generators";
+import { generateOk, type GenerateResult } from "@b/types";
+import { cssValueToCss } from "@b/utils";
 import type { PerspectiveIR } from "./types";
 
 export function generatePerspective(ir: PerspectiveIR): GenerateResult {
@@ -7942,15 +7883,8 @@ export function generatePerspective(ir: PerspectiveIR): GenerateResult {
     return generateOk(ir.value);
   }
 
-  if (ir.kind === "length") {
-    const lengthResult = Generators.Length.generate(ir.value);
-    if (!lengthResult.ok) {
-      return lengthResult;
-    }
-    return generateOk(lengthResult.value);
-  }
-
-  return generateErr({ code: "invalid-value", severity: "error", message: "Invalid perspective IR" });
+  const css = cssValueToCss(ir.value);
+  return generateOk(css);
 }
 
 
@@ -8008,57 +7942,31 @@ export function parsePerspective(ast: csstree.Value): ParseResult<PerspectiveIR>
     }
   }
 
-  if (firstNode.type === "Dimension") {
-    const lengthResult = Parsers.Length.parseLengthNode(firstNode);
-    if (lengthResult.ok) {
-      const value = lengthResult.value.value;
-      return {
-        ok: true,
-        property: "perspective",
-        value: { kind: "length", value: lengthResult.value },
-        issues:
-          value < 0
-            ? [
-                {
-                  code: "invalid-value",
-                  severity: "warning",
-                  message: "perspective should be non-negative",
-                },
-              ]
-            : [],
-      };
-    }
+  const valueResult = Parsers.Utils.parseNodeToCssValue(firstNode);
+
+  if (valueResult.ok) {
     return {
-      ok: false,
+      ok: true,
       property: "perspective",
-      value: undefined,
-      issues: lengthResult.issues,
+      value: { kind: "value", value: valueResult.value },
+      issues: valueResult.issues,
     };
   }
 
-  return {
-    ok: false,
-    property: "perspective",
-    value: undefined,
-    issues: [{ code: "invalid-value", severity: "error", message: "Invalid perspective value" }],
-  };
+  return valueResult as ParseResult<PerspectiveIR>;
 }
 
 
 === File: packages/b_declarations/src/properties/perspective/types.ts ===
 // b_path:: packages/b_declarations/src/properties/perspective/types.ts
 
-import type * as Type from "@b/types";
+import type { z } from "zod";
+import type { CssValue } from "@b/types";
+import type * as Keywords from "@b/keywords";
 
 export type PerspectiveIR =
-  | {
-      kind: "keyword";
-      value: "initial" | "inherit" | "unset" | "revert" | "revert-layer" | "none";
-    }
-  | {
-      kind: "length";
-      value: Type.Length;
-    };
+  | { kind: "keyword"; value: z.infer<typeof Keywords.cssWide> | "none" }
+  | { kind: "value"; value: CssValue };
 
 
 === File: packages/b_declarations/src/properties/text-align/definition.ts ===
@@ -8835,7 +8743,7 @@ export const transitionDelay = defineProperty<TransitionDelayIR>({
 // b_path:: packages/b_declarations/src/properties/transition-delay/generator.ts
 
 import { generateOk, type GenerateResult } from "@b/types";
-import * as Generators from "@b/generators";
+import { cssValueToCss } from "@b/utils";
 import type { TransitionDelayIR } from "./types";
 
 export function generateTransitionDelay(ir: TransitionDelayIR): GenerateResult {
@@ -8843,8 +8751,8 @@ export function generateTransitionDelay(ir: TransitionDelayIR): GenerateResult {
     return generateOk(ir.value);
   }
 
-  const result = Generators.Time.generate(ir.value);
-  return result;
+  const css = cssValueToCss(ir.value);
+  return generateOk(css);
 }
 
 
@@ -8861,6 +8769,7 @@ export * from "./definition";
 // b_path:: packages/b_declarations/src/properties/transition-delay/parser.ts
 
 import type { ParseResult } from "@b/types";
+import * as Keywords from "@b/keywords";
 import * as Parsers from "@b/parsers";
 import type * as csstree from "@eslint/css-tree";
 import type { TransitionDelayIR } from "./types";
@@ -8877,40 +8786,44 @@ export function parseTransitionDelay(ast: csstree.Value): ParseResult<Transition
     };
   }
 
-  const timeResult = Parsers.Time.parseTimeNode(firstNode);
+  if (firstNode.type === "Identifier") {
+    const name = firstNode.name.toLowerCase();
+    const cssWideResult = Keywords.cssWide.safeParse(name);
+    if (cssWideResult.success) {
+      return {
+        ok: true,
+        property: "transition-delay",
+        value: { kind: "keyword", value: cssWideResult.data },
+        issues: [],
+      };
+    }
+  }
 
-  if (timeResult.ok) {
+  const valueResult = Parsers.Utils.parseNodeToCssValue(firstNode);
+
+  if (valueResult.ok) {
     return {
       ok: true,
       property: "transition-delay",
-      value: { kind: "value", value: timeResult.value },
-      issues: timeResult.issues,
+      value: { kind: "value", value: valueResult.value },
+      issues: valueResult.issues,
     };
   }
 
-  return timeResult as ParseResult<TransitionDelayIR>;
+  return valueResult as ParseResult<TransitionDelayIR>;
 }
 
 
 === File: packages/b_declarations/src/properties/transition-delay/types.ts ===
 // b_path:: packages/b_declarations/src/properties/transition-delay/types.ts
 
-import { z } from "zod";
-import { timeSchema } from "@b/types";
-import * as Keywords from "@b/keywords";
+import type { z } from "zod";
+import type { CssValue } from "@b/types";
+import type * as Keywords from "@b/keywords";
 
-export const transitionDelayIRSchema = z.discriminatedUnion("kind", [
-  z.object({
-    kind: z.literal("keyword"),
-    value: Keywords.cssWide,
-  }),
-  z.object({
-    kind: z.literal("value"),
-    value: timeSchema,
-  }),
-]);
-
-export type TransitionDelayIR = z.infer<typeof transitionDelayIRSchema>;
+export type TransitionDelayIR =
+  | { kind: "keyword"; value: z.infer<typeof Keywords.cssWide> }
+  | { kind: "value"; value: CssValue };
 
 
 === File: packages/b_declarations/src/properties/transition-duration/definition.ts ===
@@ -8935,7 +8848,7 @@ export const transitionDuration = defineProperty<TransitionDurationIR>({
 // b_path:: packages/b_declarations/src/properties/transition-duration/generator.ts
 
 import { generateOk, type GenerateResult } from "@b/types";
-import * as Generators from "@b/generators";
+import { cssValueToCss } from "@b/utils";
 import type { TransitionDurationIR } from "./types";
 
 export function generateTransitionDuration(ir: TransitionDurationIR): GenerateResult {
@@ -8943,8 +8856,8 @@ export function generateTransitionDuration(ir: TransitionDurationIR): GenerateRe
     return generateOk(ir.value);
   }
 
-  const result = Generators.Time.generate(ir.value);
-  return result;
+  const css = cssValueToCss(ir.value);
+  return generateOk(css);
 }
 
 
@@ -8961,6 +8874,7 @@ export * from "./definition";
 // b_path:: packages/b_declarations/src/properties/transition-duration/parser.ts
 
 import type { ParseResult } from "@b/types";
+import * as Keywords from "@b/keywords";
 import * as Parsers from "@b/parsers";
 import type * as csstree from "@eslint/css-tree";
 import type { TransitionDurationIR } from "./types";
@@ -8977,40 +8891,44 @@ export function parseTransitionDuration(ast: csstree.Value): ParseResult<Transit
     };
   }
 
-  const timeResult = Parsers.Time.parseTimeNode(firstNode);
+  if (firstNode.type === "Identifier") {
+    const name = firstNode.name.toLowerCase();
+    const cssWideResult = Keywords.cssWide.safeParse(name);
+    if (cssWideResult.success) {
+      return {
+        ok: true,
+        property: "transition-duration",
+        value: { kind: "keyword", value: cssWideResult.data },
+        issues: [],
+      };
+    }
+  }
 
-  if (timeResult.ok) {
+  const valueResult = Parsers.Utils.parseNodeToCssValue(firstNode);
+
+  if (valueResult.ok) {
     return {
       ok: true,
       property: "transition-duration",
-      value: { kind: "value", value: timeResult.value },
-      issues: timeResult.issues,
+      value: { kind: "value", value: valueResult.value },
+      issues: valueResult.issues,
     };
   }
 
-  return timeResult as ParseResult<TransitionDurationIR>;
+  return valueResult as ParseResult<TransitionDurationIR>;
 }
 
 
 === File: packages/b_declarations/src/properties/transition-duration/types.ts ===
 // b_path:: packages/b_declarations/src/properties/transition-duration/types.ts
 
-import { z } from "zod";
-import { timeSchema } from "@b/types";
-import * as Keywords from "@b/keywords";
+import type { z } from "zod";
+import type { CssValue } from "@b/types";
+import type * as Keywords from "@b/keywords";
 
-export const transitionDurationIRSchema = z.discriminatedUnion("kind", [
-  z.object({
-    kind: z.literal("keyword"),
-    value: Keywords.cssWide,
-  }),
-  z.object({
-    kind: z.literal("value"),
-    value: timeSchema,
-  }),
-]);
-
-export type TransitionDurationIR = z.infer<typeof transitionDurationIRSchema>;
+export type TransitionDurationIR =
+  | { kind: "keyword"; value: z.infer<typeof Keywords.cssWide> }
+  | { kind: "value"; value: CssValue };
 
 
 === File: packages/b_declarations/src/properties/transition-property/definition.ts ===
@@ -9784,17 +9702,30 @@ export type RegisteredProperty = keyof PropertyIRMap;
 === File: packages/b_declarations/src/types.ts ===
 // b_path:: packages/b_declarations/src/types.ts
 
-// This module defines the core types for the @b/declarations package.
-//
-// - PropertyIRMap is now derived from PROPERTY_DEFINITIONS (see types.derived.ts)
-// - RegisteredProperty is the union of all known property names
-// - PropertyDefinition describes how each property integrates into the registry
-// - Parser / generator function signatures used by property implementations
+/**
+ * This module defines the core types for the @b/declarations package.
+ *
+ * - PropertyIRMap is now derived from PROPERTY_DEFINITIONS (see types.derived.ts)
+ * - RegisteredProperty is the union of all known property names
+ * - PropertyDefinition describes how each property integrates into the registry
+ * - Parser / generator function signatures used by property implementations
+ */
 
 import type { ParseResult, GenerateResult } from "@b/types";
 import type { PropertyIRMap } from "./types.derived";
+import type { GenerateDeclarationInput } from "./generator";
+import type { RegisteredProperty } from "./types";
 
 export type { PropertyIRMap, RegisteredProperty } from "./types.derived";
+
+/**
+ * Union of all possible declaration inputs for registered properties.
+ *
+ * This type is used for type-safe declaration generation and parsing.
+ */
+export type AnyDeclarationInput = {
+  [K in RegisteredProperty]: GenerateDeclarationInput<K>;
+}[RegisteredProperty];
 
 /**
  * Basic CSS declaration input structure.
@@ -12080,8 +12011,7 @@ export function generate(time: Type.Time): GenerateResult {
 
 import { generateErr, generateOk, type GenerateResult } from "@b/types";
 import type * as Type from "@b/types";
-import * as Length from "../length";
-import * as Angle from "../angle";
+import { cssValueToCss } from "@b/utils";
 
 /**
  * Generate transform function CSS from IR
@@ -12089,116 +12019,100 @@ import * as Angle from "../angle";
 export function generate(ir: Type.TransformFunction): GenerateResult {
   switch (ir.kind) {
     case "translate": {
-      const x = Length.generateLengthPercentage(ir.x);
-      const y = Length.generateLengthPercentage(ir.y);
-      if (!x.ok) return x;
-      if (!y.ok) return y;
-      return generateOk(`translate(${x.value}, ${y.value})`);
+      const x = cssValueToCss(ir.x);
+      const y = cssValueToCss(ir.y);
+      return generateOk(`translate(${x}, ${y})`);
     }
 
     case "translateX": {
-      const x = Length.generateLengthPercentage(ir.x);
-      if (!x.ok) return x;
-      return generateOk(`translateX(${x.value})`);
+      const x = cssValueToCss(ir.x);
+      return generateOk(`translateX(${x})`);
     }
 
     case "translateY": {
-      const y = Length.generateLengthPercentage(ir.y);
-      if (!y.ok) return y;
-      return generateOk(`translateY(${y.value})`);
+      const y = cssValueToCss(ir.y);
+      return generateOk(`translateY(${y})`);
     }
 
     case "translateZ": {
-      const z = Length.generateLengthPercentage(ir.z);
-      if (!z.ok) return z;
-      return generateOk(`translateZ(${z.value})`);
+      const z = cssValueToCss(ir.z);
+      return generateOk(`translateZ(${z})`);
     }
 
     case "translate3d": {
-      const x = Length.generateLengthPercentage(ir.x);
-      const y = Length.generateLengthPercentage(ir.y);
-      const z = Length.generateLengthPercentage(ir.z);
-      if (!x.ok) return x;
-      if (!y.ok) return y;
-      if (!z.ok) return z;
-      return generateOk(`translate3d(${x.value}, ${y.value}, ${z.value})`);
+      const x = cssValueToCss(ir.x);
+      const y = cssValueToCss(ir.y);
+      const z = cssValueToCss(ir.z);
+      return generateOk(`translate3d(${x}, ${y}, ${z})`);
     }
 
     case "rotate": {
-      const angle = Angle.generate(ir.angle);
-      if (!angle.ok) return angle;
-      return generateOk(`rotate(${angle.value})`);
+      const angle = cssValueToCss(ir.angle);
+      return generateOk(`rotate(${angle})`);
     }
 
     case "rotateX": {
-      const angle = Angle.generate(ir.angle);
-      if (!angle.ok) return angle;
-      return generateOk(`rotateX(${angle.value})`);
+      const angle = cssValueToCss(ir.angle);
+      return generateOk(`rotateX(${angle})`);
     }
 
     case "rotateY": {
-      const angle = Angle.generate(ir.angle);
-      if (!angle.ok) return angle;
-      return generateOk(`rotateY(${angle.value})`);
+      const angle = cssValueToCss(ir.angle);
+      return generateOk(`rotateY(${angle})`);
     }
 
     case "rotateZ": {
-      const angle = Angle.generate(ir.angle);
-      if (!angle.ok) return angle;
-      return generateOk(`rotateZ(${angle.value})`);
+      const angle = cssValueToCss(ir.angle);
+      return generateOk(`rotateZ(${angle})`);
     }
 
     case "rotate3d": {
-      const angle = Angle.generate(ir.angle);
-      if (!angle.ok) return angle;
-      return generateOk(`rotate3d(${ir.x}, ${ir.y}, ${ir.z}, ${angle.value})`);
+      const angle = cssValueToCss(ir.angle);
+      return generateOk(`rotate3d(${ir.x}, ${ir.y}, ${ir.z}, ${angle})`);
     }
 
     case "scale":
-      return generateOk(`scale(${ir.x}, ${ir.y})`);
+      return generateOk(`scale(${cssValueToCss(ir.x)}, ${cssValueToCss(ir.y)})`);
 
     case "scaleX":
-      return generateOk(`scaleX(${ir.x})`);
+      return generateOk(`scaleX(${cssValueToCss(ir.x)})`);
 
     case "scaleY":
-      return generateOk(`scaleY(${ir.y})`);
+      return generateOk(`scaleY(${cssValueToCss(ir.y)})`);
 
     case "scaleZ":
-      return generateOk(`scaleZ(${ir.z})`);
+      return generateOk(`scaleZ(${cssValueToCss(ir.z)})`);
 
     case "scale3d":
-      return generateOk(`scale3d(${ir.x}, ${ir.y}, ${ir.z})`);
+      return generateOk(`scale3d(${cssValueToCss(ir.x)}, ${cssValueToCss(ir.y)}, ${cssValueToCss(ir.z)})`);
 
     case "skew": {
-      const x = Angle.generate(ir.x);
-      const y = Angle.generate(ir.y);
-      if (!x.ok) return x;
-      if (!y.ok) return y;
-      return generateOk(`skew(${x.value}, ${y.value})`);
+      const x = cssValueToCss(ir.x);
+      const y = cssValueToCss(ir.y);
+      return generateOk(`skew(${x}, ${y})`);
     }
 
     case "skewX": {
-      const x = Angle.generate(ir.x);
-      if (!x.ok) return x;
-      return generateOk(`skewX(${x.value})`);
+      const x = cssValueToCss(ir.x);
+      return generateOk(`skewX(${x})`);
     }
 
     case "skewY": {
-      const y = Angle.generate(ir.y);
-      if (!y.ok) return y;
-      return generateOk(`skewY(${y.value})`);
+      const y = cssValueToCss(ir.y);
+      return generateOk(`skewY(${y})`);
     }
 
     case "matrix":
-      return generateOk(`matrix(${ir.a}, ${ir.b}, ${ir.c}, ${ir.d}, ${ir.e}, ${ir.f})`);
+      return generateOk(
+        `matrix(${cssValueToCss(ir.a)}, ${cssValueToCss(ir.b)}, ${cssValueToCss(ir.c)}, ${cssValueToCss(ir.d)}, ${cssValueToCss(ir.e)}, ${cssValueToCss(ir.f)})`,
+      );
 
     case "matrix3d":
-      return generateOk(`matrix3d(${ir.values.join(", ")})`);
+      return generateOk(`matrix3d(${ir.values.map(cssValueToCss).join(", ")})`);
 
     case "perspective": {
-      const length = Length.generate(ir.length);
-      if (!length.ok) return length;
-      return generateOk(`perspective(${length.value})`);
+      const length = cssValueToCss(ir.length);
+      return generateOk(`perspective(${length})`);
     }
 
     default:
@@ -16728,7 +16642,7 @@ import type * as Type from "@b/types";
  * @see https://drafts.csswg.org/css-transforms-2/#funcdef-matrix
  */
 
-function parseNumber(node: csstree.CssNode): ParseResult<number> {
+function parseNumber(node: csstree.CssNode): ParseResult<Type.CssValue> {
   if (node.type !== "Number") {
     return parseErr("transform", createError("invalid-syntax", "Expected number"));
   }
@@ -16736,7 +16650,7 @@ function parseNumber(node: csstree.CssNode): ParseResult<number> {
   if (Number.isNaN(num)) {
     return parseErr("transform", createError("invalid-value", "Invalid number"));
   }
-  return parseOk(num);
+  return parseOk({ kind: "literal", value: num });
 }
 
 export function parseMatrixFunction(node: csstree.FunctionNode): ParseResult<Type.MatrixFunction> {
@@ -16754,7 +16668,7 @@ export function parseMatrixFunction(node: csstree.FunctionNode): ParseResult<Typ
       return parseErr("transform", createError("invalid-value", "Invalid matrix arguments"));
     }
 
-    const [a, b, c, d, e, f] = results.map((r) => (r as { ok: true; value: number }).value);
+    const [a, b, c, d, e, f] = results.map((r) => (r as { ok: true; value: Type.CssValue }).value);
 
     return parseOk({
       kind: "matrix",
@@ -16777,23 +16691,23 @@ export function parseMatrixFunction(node: csstree.FunctionNode): ParseResult<Typ
       return parseErr("transform", createError("invalid-value", "Invalid matrix3d arguments"));
     }
 
-    const values = results.map((r) => (r as { ok: true; value: number }).value) as [
-      number,
-      number,
-      number,
-      number,
-      number,
-      number,
-      number,
-      number,
-      number,
-      number,
-      number,
-      number,
-      number,
-      number,
-      number,
-      number,
+    const values = results.map((r) => (r as { ok: true; value: Type.CssValue }).value) as [
+      Type.CssValue,
+      Type.CssValue,
+      Type.CssValue,
+      Type.CssValue,
+      Type.CssValue,
+      Type.CssValue,
+      Type.CssValue,
+      Type.CssValue,
+      Type.CssValue,
+      Type.CssValue,
+      Type.CssValue,
+      Type.CssValue,
+      Type.CssValue,
+      Type.CssValue,
+      Type.CssValue,
+      Type.CssValue,
     ];
 
     return parseOk({
@@ -16812,7 +16726,7 @@ export function parseMatrixFunction(node: csstree.FunctionNode): ParseResult<Typ
 import type * as csstree from "@eslint/css-tree";
 import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
 import type * as Type from "@b/types";
-import { parseLengthNode } from "../length";
+import { parseNodeToCssValue } from "../utils/css-value-parser";
 
 /**
  * Parse perspective function from css-tree AST
@@ -16832,7 +16746,7 @@ export function parsePerspectiveFunction(node: csstree.FunctionNode): ParseResul
     return parseErr("transform", createError("invalid-syntax", "perspective() requires 1 argument"));
   }
 
-  const lengthResult = parseLengthNode(args[0]);
+  const lengthResult = parseNodeToCssValue(args[0]);
   if (!lengthResult.ok) {
     return parseErr("transform", lengthResult.issues[0] ?? createError("invalid-value", "Invalid length"));
   }
@@ -16850,7 +16764,7 @@ export function parsePerspectiveFunction(node: csstree.FunctionNode): ParseResul
 import type * as csstree from "@eslint/css-tree";
 import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
 import type * as Type from "@b/types";
-import { parseAngleNode } from "../angle";
+import { parseNodeToCssValue } from "../utils/css-value-parser";
 
 /**
  * Parse rotate functions from css-tree AST
@@ -16866,7 +16780,7 @@ export function parseRotateFunction(node: csstree.FunctionNode): ParseResult<Typ
     if (args.length !== 1) {
       return parseErr("transform", createError("invalid-syntax", "rotate() requires 1 argument"));
     }
-    const angleResult = parseAngleNode(args[0]);
+    const angleResult = parseNodeToCssValue(args[0]);
     if (!angleResult.ok) {
       return parseErr("transform", angleResult.issues[0] ?? createError("invalid-value", "Invalid angle"));
     }
@@ -16880,7 +16794,7 @@ export function parseRotateFunction(node: csstree.FunctionNode): ParseResult<Typ
     if (args.length !== 1) {
       return parseErr("transform", createError("invalid-syntax", "rotateX() requires 1 argument"));
     }
-    const angleResult = parseAngleNode(args[0]);
+    const angleResult = parseNodeToCssValue(args[0]);
     if (!angleResult.ok) {
       return parseErr("transform", angleResult.issues[0] ?? createError("invalid-value", "Invalid angle"));
     }
@@ -16894,7 +16808,7 @@ export function parseRotateFunction(node: csstree.FunctionNode): ParseResult<Typ
     if (args.length !== 1) {
       return parseErr("transform", createError("invalid-syntax", "rotateY() requires 1 argument"));
     }
-    const angleResult = parseAngleNode(args[0]);
+    const angleResult = parseNodeToCssValue(args[0]);
     if (!angleResult.ok) {
       return parseErr("transform", angleResult.issues[0] ?? createError("invalid-value", "Invalid angle"));
     }
@@ -16908,7 +16822,7 @@ export function parseRotateFunction(node: csstree.FunctionNode): ParseResult<Typ
     if (args.length !== 1) {
       return parseErr("transform", createError("invalid-syntax", "rotateZ() requires 1 argument"));
     }
-    const angleResult = parseAngleNode(args[0]);
+    const angleResult = parseNodeToCssValue(args[0]);
     if (!angleResult.ok) {
       return parseErr("transform", angleResult.issues[0] ?? createError("invalid-value", "Invalid angle"));
     }
@@ -16938,7 +16852,7 @@ export function parseRotateFunction(node: csstree.FunctionNode): ParseResult<Typ
     const xResult = parseNumber(args[0]);
     const yResult = parseNumber(args[1]);
     const zResult = parseNumber(args[2]);
-    const angleResult = parseAngleNode(args[3]);
+    const angleResult = parseNodeToCssValue(args[3]);
 
     if (!xResult.ok || !yResult.ok || !zResult.ok || !angleResult.ok) {
       return parseErr("transform", createError("invalid-value", "Invalid rotate3d arguments"));
@@ -16969,7 +16883,7 @@ import type * as Type from "@b/types";
  * @see https://drafts.csswg.org/css-transforms-2/#funcdef-scale
  */
 
-function parseNumber(node: csstree.CssNode): ParseResult<number> {
+function parseNumber(node: csstree.CssNode): ParseResult<Type.CssValue> {
   if (node.type !== "Number") {
     return parseErr("transform", createError("invalid-syntax", "Expected number"));
   }
@@ -16977,7 +16891,7 @@ function parseNumber(node: csstree.CssNode): ParseResult<number> {
   if (Number.isNaN(num)) {
     return parseErr("transform", createError("invalid-value", "Invalid number"));
   }
-  return parseOk(num);
+  return parseOk({ kind: "literal", value: num });
 }
 
 export function parseScaleFunction(node: csstree.FunctionNode): ParseResult<Type.ScaleFunction> {
@@ -17081,7 +16995,7 @@ export function parseScaleFunction(node: csstree.FunctionNode): ParseResult<Type
 import type * as csstree from "@eslint/css-tree";
 import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
 import type * as Type from "@b/types";
-import { parseAngleNode } from "../angle";
+import { parseNodeToCssValue } from "../utils/css-value-parser";
 
 /**
  * Parse skew functions from css-tree AST
@@ -17098,15 +17012,15 @@ export function parseSkewFunction(node: csstree.FunctionNode): ParseResult<Type.
       return parseErr("transform", createError("invalid-syntax", "skew() requires 1-2 arguments"));
     }
 
-    const xResult = parseAngleNode(args[0]);
+    const xResult = parseNodeToCssValue(args[0]);
     if (!xResult.ok) {
       return parseErr("transform", xResult.issues[0] ?? createError("invalid-value", "Invalid x angle"));
     }
 
     // Y defaults to 0deg if not provided
-    let y: Type.Angle = { value: 0, unit: "deg" };
+    let y: Type.CssValue = { kind: "literal", value: 0, unit: "deg" };
     if (args.length === 2) {
-      const yResult = parseAngleNode(args[1]);
+      const yResult = parseNodeToCssValue(args[1]);
       if (!yResult.ok) {
         return parseErr("transform", yResult.issues[0] ?? createError("invalid-value", "Invalid y angle"));
       }
@@ -17124,7 +17038,7 @@ export function parseSkewFunction(node: csstree.FunctionNode): ParseResult<Type.
     if (args.length !== 1) {
       return parseErr("transform", createError("invalid-syntax", "skewX() requires 1 argument"));
     }
-    const xResult = parseAngleNode(args[0]);
+    const xResult = parseNodeToCssValue(args[0]);
     if (!xResult.ok) {
       return parseErr("transform", xResult.issues[0] ?? createError("invalid-value", "Invalid x angle"));
     }
@@ -17138,7 +17052,7 @@ export function parseSkewFunction(node: csstree.FunctionNode): ParseResult<Type.
     if (args.length !== 1) {
       return parseErr("transform", createError("invalid-syntax", "skewY() requires 1 argument"));
     }
-    const yResult = parseAngleNode(args[0]);
+    const yResult = parseNodeToCssValue(args[0]);
     if (!yResult.ok) {
       return parseErr("transform", yResult.issues[0] ?? createError("invalid-value", "Invalid y angle"));
     }
@@ -17158,7 +17072,7 @@ export function parseSkewFunction(node: csstree.FunctionNode): ParseResult<Type.
 import type * as csstree from "@eslint/css-tree";
 import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
 import type * as Type from "@b/types";
-import { parseLengthPercentageNode } from "../length";
+import { parseNodeToCssValue } from "../utils/css-value-parser";
 
 /**
  * Parse translate functions from css-tree AST
@@ -17178,15 +17092,15 @@ export function parseTranslateFunction(node: csstree.FunctionNode): ParseResult<
       return parseErr("transform", createError("invalid-syntax", "translate() requires at least 1 argument"));
     }
 
-    const xResult = parseLengthPercentageNode(args[0]);
+    const xResult = parseNodeToCssValue(args[0]);
     if (!xResult.ok) {
       return parseErr("transform", xResult.issues[0] ?? createError("invalid-value", "Invalid x value"));
     }
 
     // Y defaults to 0 if not provided
-    let y: Type.LengthPercentage = { value: 0, unit: "px" };
+    let y: Type.CssValue = { kind: "literal", value: 0, unit: "px" };
     if (args.length >= 2) {
-      const yResult = parseLengthPercentageNode(args[1]);
+      const yResult = parseNodeToCssValue(args[1]);
       if (!yResult.ok) {
         return parseErr("transform", yResult.issues[0] ?? createError("invalid-value", "Invalid y value"));
       }
@@ -17204,7 +17118,7 @@ export function parseTranslateFunction(node: csstree.FunctionNode): ParseResult<
     if (args.length !== 1) {
       return parseErr("transform", createError("invalid-syntax", "translateX() requires 1 argument"));
     }
-    const xResult = parseLengthPercentageNode(args[0]);
+    const xResult = parseNodeToCssValue(args[0]);
     if (!xResult.ok) {
       return parseErr("transform", xResult.issues[0] ?? createError("invalid-value", "Invalid x value"));
     }
@@ -17218,7 +17132,7 @@ export function parseTranslateFunction(node: csstree.FunctionNode): ParseResult<
     if (args.length !== 1) {
       return parseErr("transform", createError("invalid-syntax", "translateY() requires 1 argument"));
     }
-    const yResult = parseLengthPercentageNode(args[0]);
+    const yResult = parseNodeToCssValue(args[0]);
     if (!yResult.ok) {
       return parseErr("transform", yResult.issues[0] ?? createError("invalid-value", "Invalid y value"));
     }
@@ -17232,7 +17146,7 @@ export function parseTranslateFunction(node: csstree.FunctionNode): ParseResult<
     if (args.length !== 1) {
       return parseErr("transform", createError("invalid-syntax", "translateZ() requires 1 argument"));
     }
-    const zResult = parseLengthPercentageNode(args[0]);
+    const zResult = parseNodeToCssValue(args[0]);
     if (!zResult.ok) {
       return parseErr("transform", zResult.issues[0] ?? createError("invalid-value", "Invalid z value"));
     }
@@ -17246,9 +17160,9 @@ export function parseTranslateFunction(node: csstree.FunctionNode): ParseResult<
     if (args.length !== 3) {
       return parseErr("transform", createError("invalid-syntax", "translate3d() requires 3 arguments"));
     }
-    const xResult = parseLengthPercentageNode(args[0]);
-    const yResult = parseLengthPercentageNode(args[1]);
-    const zResult = parseLengthPercentageNode(args[2]);
+    const xResult = parseNodeToCssValue(args[0]);
+    const yResult = parseNodeToCssValue(args[1]);
+    const zResult = parseNodeToCssValue(args[2]);
 
     if (!xResult.ok || !yResult.ok || !zResult.ok) {
       return parseErr("transform", createError("invalid-value", "Invalid translate3d arguments"));
@@ -19864,6 +19778,7 @@ export type TransformList = z.infer<typeof transformListSchema>;
 // b_path:: packages/b_types/src/transform/matrix.ts
 
 import { z } from "zod";
+import { cssValueSchema } from "../values";
 
 /**
  * Matrix transform functions
@@ -19873,12 +19788,12 @@ import { z } from "zod";
 export const matrixSchema = z
   .object({
     kind: z.literal("matrix"),
-    a: z.number(),
-    b: z.number(),
-    c: z.number(),
-    d: z.number(),
-    e: z.number(),
-    f: z.number(),
+    a: cssValueSchema,
+    b: cssValueSchema,
+    c: cssValueSchema,
+    d: cssValueSchema,
+    e: cssValueSchema,
+    f: cssValueSchema,
   })
   .strict();
 
@@ -19886,22 +19801,22 @@ export const matrix3dSchema = z
   .object({
     kind: z.literal("matrix3d"),
     values: z.tuple([
-      z.number(),
-      z.number(),
-      z.number(),
-      z.number(),
-      z.number(),
-      z.number(),
-      z.number(),
-      z.number(),
-      z.number(),
-      z.number(),
-      z.number(),
-      z.number(),
-      z.number(),
-      z.number(),
-      z.number(),
-      z.number(),
+      cssValueSchema,
+      cssValueSchema,
+      cssValueSchema,
+      cssValueSchema,
+      cssValueSchema,
+      cssValueSchema,
+      cssValueSchema,
+      cssValueSchema,
+      cssValueSchema,
+      cssValueSchema,
+      cssValueSchema,
+      cssValueSchema,
+      cssValueSchema,
+      cssValueSchema,
+      cssValueSchema,
+      cssValueSchema,
     ]),
   })
   .strict();
@@ -19917,7 +19832,7 @@ export type MatrixFunction = z.infer<typeof matrixFunctionSchema>;
 // b_path:: packages/b_types/src/transform/perspective.ts
 
 import { z } from "zod";
-import { lengthSchema } from "../length";
+import { cssValueSchema } from "../values";
 
 /**
  * Perspective transform function
@@ -19927,7 +19842,7 @@ import { lengthSchema } from "../length";
 export const perspectiveFunctionSchema = z
   .object({
     kind: z.literal("perspective"),
-    length: lengthSchema,
+    length: cssValueSchema,
   })
   .strict();
 
@@ -19938,7 +19853,7 @@ export type PerspectiveFunction = z.infer<typeof perspectiveFunctionSchema>;
 // b_path:: packages/b_types/src/transform/rotate.ts
 
 import { z } from "zod";
-import { angleSchema } from "../angle";
+import { cssValueSchema } from "../values";
 
 /**
  * Rotate transform functions
@@ -19948,28 +19863,28 @@ import { angleSchema } from "../angle";
 export const rotateSchema = z
   .object({
     kind: z.literal("rotate"),
-    angle: angleSchema,
+    angle: cssValueSchema,
   })
   .strict();
 
 export const rotateXSchema = z
   .object({
     kind: z.literal("rotateX"),
-    angle: angleSchema,
+    angle: cssValueSchema,
   })
   .strict();
 
 export const rotateYSchema = z
   .object({
     kind: z.literal("rotateY"),
-    angle: angleSchema,
+    angle: cssValueSchema,
   })
   .strict();
 
 export const rotateZSchema = z
   .object({
     kind: z.literal("rotateZ"),
-    angle: angleSchema,
+    angle: cssValueSchema,
   })
   .strict();
 
@@ -19979,7 +19894,7 @@ export const rotate3dSchema = z
     x: z.number(),
     y: z.number(),
     z: z.number(),
-    angle: angleSchema,
+    angle: cssValueSchema,
   })
   .strict();
 
@@ -20003,6 +19918,7 @@ export type RotateFunction = z.infer<typeof rotateFunctionSchema>;
 // b_path:: packages/b_types/src/transform/scale.ts
 
 import { z } from "zod";
+import { cssValueSchema } from "../values";
 
 /**
  * Scale transform functions
@@ -20012,38 +19928,38 @@ import { z } from "zod";
 export const scaleSchema = z
   .object({
     kind: z.literal("scale"),
-    x: z.number(),
-    y: z.number(),
+    x: cssValueSchema,
+    y: cssValueSchema,
   })
   .strict();
 
 export const scaleXSchema = z
   .object({
     kind: z.literal("scaleX"),
-    x: z.number(),
+    x: cssValueSchema,
   })
   .strict();
 
 export const scaleYSchema = z
   .object({
     kind: z.literal("scaleY"),
-    y: z.number(),
+    y: cssValueSchema,
   })
   .strict();
 
 export const scaleZSchema = z
   .object({
     kind: z.literal("scaleZ"),
-    z: z.number(),
+    z: cssValueSchema,
   })
   .strict();
 
 export const scale3dSchema = z
   .object({
     kind: z.literal("scale3d"),
-    x: z.number(),
-    y: z.number(),
-    z: z.number(),
+    x: cssValueSchema,
+    y: cssValueSchema,
+    z: cssValueSchema,
   })
   .strict();
 
@@ -20061,7 +19977,7 @@ export type ScaleFunction = z.infer<typeof scaleFunctionSchema>;
 // b_path:: packages/b_types/src/transform/skew.ts
 
 import { z } from "zod";
-import { angleSchema } from "../angle";
+import { cssValueSchema } from "../values";
 
 /**
  * Skew transform functions
@@ -20071,22 +19987,22 @@ import { angleSchema } from "../angle";
 export const skewSchema = z
   .object({
     kind: z.literal("skew"),
-    x: angleSchema,
-    y: angleSchema,
+    x: cssValueSchema,
+    y: cssValueSchema,
   })
   .strict();
 
 export const skewXSchema = z
   .object({
     kind: z.literal("skewX"),
-    x: angleSchema,
+    x: cssValueSchema,
   })
   .strict();
 
 export const skewYSchema = z
   .object({
     kind: z.literal("skewY"),
-    y: angleSchema,
+    y: cssValueSchema,
   })
   .strict();
 
@@ -20102,7 +20018,7 @@ export type SkewFunction = z.infer<typeof skewFunctionSchema>;
 // b_path:: packages/b_types/src/transform/translate.ts
 
 import { z } from "zod";
-import { lengthPercentageSchema } from "../length-percentage";
+import { cssValueSchema } from "../values";
 
 /**
  * Translate transform functions
@@ -20112,38 +20028,38 @@ import { lengthPercentageSchema } from "../length-percentage";
 export const translateSchema = z
   .object({
     kind: z.literal("translate"),
-    x: lengthPercentageSchema,
-    y: lengthPercentageSchema,
+    x: cssValueSchema,
+    y: cssValueSchema,
   })
   .strict();
 
 export const translateXSchema = z
   .object({
     kind: z.literal("translateX"),
-    x: lengthPercentageSchema,
+    x: cssValueSchema,
   })
   .strict();
 
 export const translateYSchema = z
   .object({
     kind: z.literal("translateY"),
-    y: lengthPercentageSchema,
+    y: cssValueSchema,
   })
   .strict();
 
 export const translateZSchema = z
   .object({
     kind: z.literal("translateZ"),
-    z: lengthPercentageSchema,
+    z: cssValueSchema,
   })
   .strict();
 
 export const translate3dSchema = z
   .object({
     kind: z.literal("translate3d"),
-    x: lengthPercentageSchema,
-    y: lengthPercentageSchema,
-    z: lengthPercentageSchema,
+    x: cssValueSchema,
+    y: cssValueSchema,
+    z: cssValueSchema,
   })
   .strict();
 

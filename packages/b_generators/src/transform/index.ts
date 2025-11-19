@@ -2,8 +2,7 @@
 
 import { generateErr, generateOk, type GenerateResult } from "@b/types";
 import type * as Type from "@b/types";
-import * as Length from "../length";
-import * as Angle from "../angle";
+import { cssValueToCss } from "@b/utils";
 
 /**
  * Generate transform function CSS from IR
@@ -11,116 +10,100 @@ import * as Angle from "../angle";
 export function generate(ir: Type.TransformFunction): GenerateResult {
   switch (ir.kind) {
     case "translate": {
-      const x = Length.generateLengthPercentage(ir.x);
-      const y = Length.generateLengthPercentage(ir.y);
-      if (!x.ok) return x;
-      if (!y.ok) return y;
-      return generateOk(`translate(${x.value}, ${y.value})`);
+      const x = cssValueToCss(ir.x);
+      const y = cssValueToCss(ir.y);
+      return generateOk(`translate(${x}, ${y})`);
     }
 
     case "translateX": {
-      const x = Length.generateLengthPercentage(ir.x);
-      if (!x.ok) return x;
-      return generateOk(`translateX(${x.value})`);
+      const x = cssValueToCss(ir.x);
+      return generateOk(`translateX(${x})`);
     }
 
     case "translateY": {
-      const y = Length.generateLengthPercentage(ir.y);
-      if (!y.ok) return y;
-      return generateOk(`translateY(${y.value})`);
+      const y = cssValueToCss(ir.y);
+      return generateOk(`translateY(${y})`);
     }
 
     case "translateZ": {
-      const z = Length.generateLengthPercentage(ir.z);
-      if (!z.ok) return z;
-      return generateOk(`translateZ(${z.value})`);
+      const z = cssValueToCss(ir.z);
+      return generateOk(`translateZ(${z})`);
     }
 
     case "translate3d": {
-      const x = Length.generateLengthPercentage(ir.x);
-      const y = Length.generateLengthPercentage(ir.y);
-      const z = Length.generateLengthPercentage(ir.z);
-      if (!x.ok) return x;
-      if (!y.ok) return y;
-      if (!z.ok) return z;
-      return generateOk(`translate3d(${x.value}, ${y.value}, ${z.value})`);
+      const x = cssValueToCss(ir.x);
+      const y = cssValueToCss(ir.y);
+      const z = cssValueToCss(ir.z);
+      return generateOk(`translate3d(${x}, ${y}, ${z})`);
     }
 
     case "rotate": {
-      const angle = Angle.generate(ir.angle);
-      if (!angle.ok) return angle;
-      return generateOk(`rotate(${angle.value})`);
+      const angle = cssValueToCss(ir.angle);
+      return generateOk(`rotate(${angle})`);
     }
 
     case "rotateX": {
-      const angle = Angle.generate(ir.angle);
-      if (!angle.ok) return angle;
-      return generateOk(`rotateX(${angle.value})`);
+      const angle = cssValueToCss(ir.angle);
+      return generateOk(`rotateX(${angle})`);
     }
 
     case "rotateY": {
-      const angle = Angle.generate(ir.angle);
-      if (!angle.ok) return angle;
-      return generateOk(`rotateY(${angle.value})`);
+      const angle = cssValueToCss(ir.angle);
+      return generateOk(`rotateY(${angle})`);
     }
 
     case "rotateZ": {
-      const angle = Angle.generate(ir.angle);
-      if (!angle.ok) return angle;
-      return generateOk(`rotateZ(${angle.value})`);
+      const angle = cssValueToCss(ir.angle);
+      return generateOk(`rotateZ(${angle})`);
     }
 
     case "rotate3d": {
-      const angle = Angle.generate(ir.angle);
-      if (!angle.ok) return angle;
-      return generateOk(`rotate3d(${ir.x}, ${ir.y}, ${ir.z}, ${angle.value})`);
+      const angle = cssValueToCss(ir.angle);
+      return generateOk(`rotate3d(${ir.x}, ${ir.y}, ${ir.z}, ${angle})`);
     }
 
     case "scale":
-      return generateOk(`scale(${ir.x}, ${ir.y})`);
+      return generateOk(`scale(${cssValueToCss(ir.x)}, ${cssValueToCss(ir.y)})`);
 
     case "scaleX":
-      return generateOk(`scaleX(${ir.x})`);
+      return generateOk(`scaleX(${cssValueToCss(ir.x)})`);
 
     case "scaleY":
-      return generateOk(`scaleY(${ir.y})`);
+      return generateOk(`scaleY(${cssValueToCss(ir.y)})`);
 
     case "scaleZ":
-      return generateOk(`scaleZ(${ir.z})`);
+      return generateOk(`scaleZ(${cssValueToCss(ir.z)})`);
 
     case "scale3d":
-      return generateOk(`scale3d(${ir.x}, ${ir.y}, ${ir.z})`);
+      return generateOk(`scale3d(${cssValueToCss(ir.x)}, ${cssValueToCss(ir.y)}, ${cssValueToCss(ir.z)})`);
 
     case "skew": {
-      const x = Angle.generate(ir.x);
-      const y = Angle.generate(ir.y);
-      if (!x.ok) return x;
-      if (!y.ok) return y;
-      return generateOk(`skew(${x.value}, ${y.value})`);
+      const x = cssValueToCss(ir.x);
+      const y = cssValueToCss(ir.y);
+      return generateOk(`skew(${x}, ${y})`);
     }
 
     case "skewX": {
-      const x = Angle.generate(ir.x);
-      if (!x.ok) return x;
-      return generateOk(`skewX(${x.value})`);
+      const x = cssValueToCss(ir.x);
+      return generateOk(`skewX(${x})`);
     }
 
     case "skewY": {
-      const y = Angle.generate(ir.y);
-      if (!y.ok) return y;
-      return generateOk(`skewY(${y.value})`);
+      const y = cssValueToCss(ir.y);
+      return generateOk(`skewY(${y})`);
     }
 
     case "matrix":
-      return generateOk(`matrix(${ir.a}, ${ir.b}, ${ir.c}, ${ir.d}, ${ir.e}, ${ir.f})`);
+      return generateOk(
+        `matrix(${cssValueToCss(ir.a)}, ${cssValueToCss(ir.b)}, ${cssValueToCss(ir.c)}, ${cssValueToCss(ir.d)}, ${cssValueToCss(ir.e)}, ${cssValueToCss(ir.f)})`,
+      );
 
     case "matrix3d":
-      return generateOk(`matrix3d(${ir.values.join(", ")})`);
+      return generateOk(`matrix3d(${ir.values.map(cssValueToCss).join(", ")})`);
 
     case "perspective": {
-      const length = Length.generate(ir.length);
-      if (!length.ok) return length;
-      return generateOk(`perspective(${length.value})`);
+      const length = cssValueToCss(ir.length);
+      return generateOk(`perspective(${length})`);
     }
 
     default:

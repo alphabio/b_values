@@ -9,7 +9,7 @@ import type * as Type from "@b/types";
  * @see https://drafts.csswg.org/css-transforms-2/#funcdef-scale
  */
 
-function parseNumber(node: csstree.CssNode): ParseResult<number> {
+function parseNumber(node: csstree.CssNode): ParseResult<Type.CssValue> {
   if (node.type !== "Number") {
     return parseErr("transform", createError("invalid-syntax", "Expected number"));
   }
@@ -17,7 +17,7 @@ function parseNumber(node: csstree.CssNode): ParseResult<number> {
   if (Number.isNaN(num)) {
     return parseErr("transform", createError("invalid-value", "Invalid number"));
   }
-  return parseOk(num);
+  return parseOk({ kind: "literal", value: num });
 }
 
 export function parseScaleFunction(node: csstree.FunctionNode): ParseResult<Type.ScaleFunction> {

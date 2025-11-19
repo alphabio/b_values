@@ -229,6 +229,33 @@ describe("parseDeclarationList", () => {
 
       expect(result.ok).toBe(false);
     });
+
+    it("should reject malformed !important and skip declaration", () => {
+      const result = parseDeclarationList("--valid: red; background-color: blue !xxx; --another: green");
+
+      // Has errors, so ok=false, but we get partial results
+      expect(result.ok).toBe(false);
+
+      // Should skip the malformed declaration but parse the others
+      expect(result.value).toHaveLength(2);
+      expect(result.value?.[0]?.property).toBe("--valid");
+      expect(result.value?.[1]?.property).toBe("--another");
+
+      // Should have error about malformed !important
+      expect(result.issues).toHaveLength(1);
+      expect(result.issues[0]?.code).toBe("invalid-syntax");
+      expect(result.issues[0]?.message).toContain('Invalid !important syntax: got "!xxx"');
+      expect(result.issues[0]?.property).toBe("background-color");
+    });
+
+    it("should reject bare exclamation mark", () => {
+      const result = parseDeclarationList("background-color: red !");
+
+      // css-tree creates a Raw node for malformed syntax in declaration list context
+      expect(result.ok).toBe(false);
+      expect(result.issues[0]?.code).toBe("invalid-syntax");
+      expect(result.issues[0]?.message).toContain("Unexpected node type: Raw");
+    });
   });
 
   describe("duplicate properties", () => {

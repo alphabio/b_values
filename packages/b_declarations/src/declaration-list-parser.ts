@@ -64,7 +64,25 @@ export function parseDeclarationList(css: string): ParseResult<DeclarationResult
     // Extract property and value from AST node
     const property = node.property;
     const valueNode = node.value;
-    const important = Boolean(node.important);
+
+    // Validate !important syntax
+    // css-tree returns true for valid "!important", or the string value for malformed (e.g., "!xxx" → "xxx")
+    const importantValue = node.important;
+    let important = false;
+
+    if (importantValue) {
+      if (importantValue === true) {
+        important = true;
+      } else {
+        // Malformed !important syntax - add error and skip this declaration
+        allIssues.push(
+          createError("invalid-syntax", `Invalid !important syntax: got "!${importantValue}", expected "!important"`, {
+            property,
+          }),
+        );
+        return;
+      }
+    }
 
     if (!valueNode) {
       allIssues.push(createError("missing-value", `Missing value for property: ${property}`, { property }));
