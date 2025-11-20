@@ -55,7 +55,7 @@ export function parseAnimationDuration(ast: csstree.Value): ParseResult<Animatio
       ok: true,
       property: "animation-duration",
       value: { kind: "value", value: cssValueResult.value },
-      issues: cssValueResult.issues,
+      issues: [...timeResult.issues, ...cssValueResult.issues],
     };
   }
 

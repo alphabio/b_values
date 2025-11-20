@@ -9,6 +9,11 @@ export function generateBackgroundPositionX(ir: BackgroundPositionXIR): Generate
     return generateOk(ir.value);
   }
 
-  const css = cssValueToCss(ir.value);
-  return generateOk(css);
+  const valueStrings: string[] = [];
+  for (const value of ir.values) {
+    const css = cssValueToCss(value);
+    valueStrings.push(css);
+  }
+
+  return generateOk(valueStrings.join(", "));
 }

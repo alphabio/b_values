@@ -21,6 +21,8 @@
   "[typescript]": { "editor.defaultFormatter": "biomejs.biome" },
   "[javascriptreact]": { "editor.defaultFormatter": "biomejs.biome" },
   "[typescriptreact]": { "editor.defaultFormatter": "biomejs.biome" },
+  // If using Prettier for tailwind class sorting ONLY:
+  // "[typescriptreact]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
   "[markdown]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode",
     "editor.formatOnSave": true,
@@ -46,8 +48,6 @@
     "typescriptreact": "javascript"
   },
   "css.lint.unknownAtRules": "ignore",
-  // If using Prettier for tailwind class sorting ONLY:
-  // "[typescriptreact]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
 
   // ---------- Biome ----------
   "biome.enabled": true,

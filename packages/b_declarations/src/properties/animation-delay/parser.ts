@@ -33,6 +33,7 @@ export function parseAnimationDelay(ast: csstree.Value): ParseResult<AnimationDe
 
   // Try concrete Time first
   const timeResult = Parsers.Time.parseTimeNode(firstNode);
+
   if (timeResult.ok) {
     return {
       ok: true,
@@ -49,7 +50,7 @@ export function parseAnimationDelay(ast: csstree.Value): ParseResult<AnimationDe
       ok: true,
       property: "animation-delay",
       value: { kind: "value", value: cssValueResult.value },
-      issues: cssValueResult.issues,
+      issues: [...timeResult.issues, ...cssValueResult.issues],
     };
   }
 

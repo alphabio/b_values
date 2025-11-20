@@ -1,32 +1,28 @@
 // b_path:: packages/b_declarations/src/properties/background-position-x/parser.ts
 
-import type { ParseResult } from "@b/types";
+import type { ParseResult, CssValue } from "@b/types";
 import * as Parsers from "@b/parsers";
+import { createMultiValueParser } from "../../utils";
 import type * as csstree from "@eslint/css-tree";
 import type { BackgroundPositionXIR } from "./types";
 
-export function parseBackgroundPositionX(ast: csstree.Value): ParseResult<BackgroundPositionXIR> {
-  const firstNode = ast.children.first;
+export const parseBackgroundPositionX = createMultiValueParser<CssValue, BackgroundPositionXIR>({
+  propertyName: "background-position-x",
 
-  if (!firstNode) {
-    return {
-      ok: false,
-      property: "background-position-x",
-      value: undefined,
-      issues: [{ code: "missing-value", severity: "error", message: "Empty value for background-position-x" }],
-    };
-  }
+  itemParser(valueNode: csstree.Value): ParseResult<CssValue> {
+    const firstNode = valueNode.children.first;
+    if (!firstNode) {
+      return {
+        ok: false,
+        property: "background-position-x",
+        value: undefined,
+        issues: [{ code: "missing-value", severity: "error", message: "Empty value" }],
+      };
+    }
+    return Parsers.Utils.parseNodeToCssValue(firstNode);
+  },
 
-  const valueResult = Parsers.Utils.parseNodeToCssValue(firstNode);
-
-  if (valueResult.ok) {
-    return {
-      ok: true,
-      property: "background-position-x",
-      value: { kind: "value", value: valueResult.value },
-      issues: valueResult.issues,
-    };
-  }
-
-  return valueResult as ParseResult<BackgroundPositionXIR>;
-}
+  aggregator(values: CssValue[]): BackgroundPositionXIR {
+    return { kind: "list", values };
+  },
+});

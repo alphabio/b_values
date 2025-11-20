@@ -57,6 +57,8 @@ export function parseDeclarationList(css: string): ParseResult<DeclarationResult
 
   ast.children.forEach((node) => {
     if (node.type !== "Declaration") {
+      // TODO: Revisit not sure if this should be an error / not useful to UX
+      // maybe a console log instead? It is useful for DX
       allIssues.push(createError("invalid-syntax", `Unexpected node type: ${node.type}`));
       return;
     }

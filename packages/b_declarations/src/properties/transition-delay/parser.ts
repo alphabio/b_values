@@ -49,7 +49,7 @@ export function parseTransitionDelay(ast: csstree.Value): ParseResult<Transition
       ok: true,
       property: "transition-delay",
       value: { kind: "value", value: cssValueResult.value },
-      issues: cssValueResult.issues,
+      issues: [...timeResult.issues, ...cssValueResult.issues],
     };
   }
 

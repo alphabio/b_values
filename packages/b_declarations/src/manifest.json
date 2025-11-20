@@ -1,6 +1,6 @@
 {
   "$schema": "./manifest.schema.json",
-  "generated": "2025-11-19T17:35:51.248Z",
+  "generated": "2025-11-20T13:08:15.393Z",
   "properties": {
     "animation-delay": {
       "name": "animation-delay",
@@ -127,7 +127,7 @@
       "syntax": "<length-percentage> | left | center | right",
       "inherited": false,
       "initial": "0%",
-      "mode": "single",
+      "mode": "multi",
       "irType": "BackgroundPositionXIR"
     },
     "background-position-y": {
@@ -135,7 +135,7 @@
       "syntax": "<length-percentage> | top | center | bottom",
       "inherited": false,
       "initial": "0%",
-      "mode": "single",
+      "mode": "multi",
       "irType": "BackgroundPositionYIR"
     },
     "background-repeat": {
