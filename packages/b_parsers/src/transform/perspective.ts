@@ -3,7 +3,7 @@
 import type * as csstree from "@eslint/css-tree";
 import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
 import type * as Type from "@b/types";
-import { parseLengthNode } from "../length";
+import { parseNodeToCssValue } from "../utils/css-value-parser";
 
 /**
  * Parse perspective function from css-tree AST
@@ -23,7 +23,7 @@ export function parsePerspectiveFunction(node: csstree.FunctionNode): ParseResul
     return parseErr("transform", createError("invalid-syntax", "perspective() requires 1 argument"));
   }
 
-  const lengthResult = parseLengthNode(args[0]);
+  const lengthResult = parseNodeToCssValue(args[0]);
   if (!lengthResult.ok) {
     return parseErr("transform", lengthResult.issues[0] ?? createError("invalid-value", "Invalid length"));
   }

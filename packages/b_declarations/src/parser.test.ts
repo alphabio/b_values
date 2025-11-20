@@ -86,7 +86,7 @@ background-image: url(image.png);
       expect(result.ok).toBe(false);
       if (result.ok) return;
 
-      expect(result.issues[0]?.message).toContain("missing colon");
+      expect(result.issues[0]?.message).toContain("Colon is expected");
     });
 
     it("should fail for string with empty property", () => {
@@ -95,7 +95,7 @@ background-image: url(image.png);
       expect(result.ok).toBe(false);
       if (result.ok) return;
 
-      expect(result.issues[0]?.message).toContain("empty property");
+      expect(result.issues[0]?.message).toContain("Identifier is expected");
     });
 
     it("should fail for string with empty value", () => {
@@ -104,7 +104,27 @@ background-image: url(image.png);
       expect(result.ok).toBe(false);
       if (result.ok) return;
 
-      expect(result.issues[0]?.message).toContain("empty value");
+      expect(result.issues[0]?.message).toContain("Empty value");
+    });
+
+    it("should fail for malformed !important", () => {
+      const result = parseDeclaration("background-color: red !xxx");
+
+      expect(result.ok).toBe(false);
+      if (result.ok) return;
+
+      expect(result.issues[0]?.code).toBe("invalid-syntax");
+      expect(result.issues[0]?.message).toContain('Invalid !important syntax: got "!xxx"');
+    });
+
+    it("should fail for bare exclamation mark", () => {
+      const result = parseDeclaration("background-color: red !");
+
+      expect(result.ok).toBe(false);
+      if (result.ok) return;
+
+      expect(result.issues[0]?.code).toBe("invalid-syntax");
+      expect(result.issues[0]?.message).toContain("Identifier is expected");
     });
   });
 
@@ -314,6 +334,88 @@ background-image: url(image.png);
       expect(result.issues[0]).toMatchObject({
         code: "invalid-value",
         property: "test-multi",
+      });
+    });
+  });
+
+  describe("error path property enrichment", () => {
+    it("should include property name in malformed !important error", () => {
+      defineProperty({
+        name: "color",
+        syntax: "<color>",
+        multiValue: false,
+        parser: (node: csstree.Value): ParseResult<string> => {
+          const value = csstree.generate(node).trim();
+          return parseOk(value);
+        },
+        inherited: true,
+        initial: "black",
+      });
+
+      const result = parseDeclaration("color: red !mportant");
+
+      expect(result.ok).toBe(false);
+      if (result.ok) return;
+
+      expect(result.property).toBe("color");
+      expect(result.issues[0]).toMatchObject({
+        code: "invalid-syntax",
+        message: 'Invalid !important syntax: got "!mportant", expected "!important"',
+        property: "color",
+      });
+    });
+
+    it("should include property name in malformed !important error for custom properties", () => {
+      const result = parseDeclaration("--my-var: blue !xyz");
+
+      expect(result.ok).toBe(false);
+      if (result.ok) return;
+
+      expect(result.property).toBe("--my-var");
+      expect(result.issues[0]).toMatchObject({
+        code: "invalid-syntax",
+        property: "--my-var",
+      });
+    });
+
+    it("should include property name in unknown property error", () => {
+      const result = parseDeclaration("unknown-prop: value");
+
+      expect(result.ok).toBe(false);
+      if (result.ok) return;
+
+      expect(result.property).toBe("unknown-prop");
+      expect(result.issues[0]).toMatchObject({
+        code: "invalid-value",
+        message: "Unknown CSS property: unknown-prop",
+        property: "unknown-prop",
+      });
+    });
+
+    it("should include property name in empty value error", () => {
+      defineProperty({
+        name: "color",
+        syntax: "<color>",
+        multiValue: false,
+        parser: (node: csstree.Value): ParseResult<string> => {
+          const value = csstree.generate(node).trim();
+          return parseOk(value);
+        },
+        inherited: true,
+        initial: "black",
+      });
+
+      // css-tree parses "color:" successfully but generates empty value
+      const result = parseDeclaration("color:");
+
+      expect(result.ok).toBe(false);
+      if (result.ok) return;
+
+      expect(result.property).toBe("color");
+      // Issue is enriched in parseDeclarationString
+      expect(result.issues[0]).toMatchObject({
+        code: "missing-value",
+        property: "color",
       });
     });
   });

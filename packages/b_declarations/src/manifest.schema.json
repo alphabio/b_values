@@ -39,45 +39,12 @@
           "enum": ["single", "multi", "raw"],
           "description": "Parser mode: single value, comma-separated, or raw string"
         },
-        "requirements": {
-          "$ref": "#/definitions/Requirements"
+        "irType": {
+          "type": "string",
+          "description": "IR type name (e.g., 'BackgroundColorIR')"
         }
       },
-      "required": ["name", "syntax", "inherited", "initial", "mode", "requirements"]
-    },
-    "Requirements": {
-      "type": "object",
-      "properties": {
-        "keywords": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "Property-specific keywords (e.g., ['auto', 'none'])"
-        },
-        "types": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "Required types from @b/types (e.g., ['color', 'length-percentage'])"
-        },
-        "parser": {
-          "type": "string",
-          "description": "Parser to use from @b/parsers (e.g., 'Color.parseNode')"
-        },
-        "generator": {
-          "type": "string",
-          "description": "Generator to use from @b/generators (e.g., 'Color.generate')"
-        },
-        "cssValues": {
-          "type": "string",
-          "enum": ["auto", "none", "explicit"],
-          "default": "auto",
-          "description": "CSS universal functions support: auto (include), none (exclude), explicit (manual)"
-        }
-      },
-      "required": ["types", "parser", "generator"]
+      "required": ["name", "syntax", "inherited", "initial", "mode", "irType"]
     }
   }
 }

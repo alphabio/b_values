@@ -1,6 +1,6 @@
 {
   "$schema": "./manifest.schema.json",
-  "generated": "2025-11-14T15:40:03.700Z",
+  "generated": "2025-11-20T13:08:15.393Z",
   "properties": {
     "animation-delay": {
       "name": "animation-delay",
@@ -66,6 +66,14 @@
       "mode": "single",
       "irType": "AnimationTimingFunctionIR"
     },
+    "backdrop-filter": {
+      "name": "backdrop-filter",
+      "syntax": "none | <filter-value-list>",
+      "inherited": false,
+      "initial": "none",
+      "mode": "single",
+      "irType": "BackdropFilterIR"
+    },
     "background-attachment": {
       "name": "background-attachment",
       "syntax": "<attachment>#",
@@ -119,7 +127,7 @@
       "syntax": "<length-percentage> | left | center | right",
       "inherited": false,
       "initial": "0%",
-      "mode": "single",
+      "mode": "multi",
       "irType": "BackgroundPositionXIR"
     },
     "background-position-y": {
@@ -127,7 +135,7 @@
       "syntax": "<length-percentage> | top | center | bottom",
       "inherited": false,
       "initial": "0%",
-      "mode": "single",
+      "mode": "multi",
       "irType": "BackgroundPositionYIR"
     },
     "background-repeat": {
@@ -282,6 +290,118 @@
       "mode": "single",
       "irType": "ColorIR"
     },
+    "filter": {
+      "name": "filter",
+      "syntax": "none | <filter-value-list>",
+      "inherited": false,
+      "initial": "none",
+      "mode": "single",
+      "irType": "FilterIR"
+    },
+    "font-family": {
+      "name": "font-family",
+      "syntax": "[ <family-name> | <generic-family> ]#",
+      "inherited": true,
+      "initial": "serif",
+      "mode": "single",
+      "irType": "FontFamilyIR"
+    },
+    "font-kerning": {
+      "name": "font-kerning",
+      "syntax": "auto | normal | none",
+      "inherited": true,
+      "initial": "auto",
+      "mode": "single",
+      "irType": "FontKerningIR"
+    },
+    "font-optical-sizing": {
+      "name": "font-optical-sizing",
+      "syntax": "auto | none",
+      "inherited": true,
+      "initial": "auto",
+      "mode": "single",
+      "irType": "FontOpticalSizingIR"
+    },
+    "font-size": {
+      "name": "font-size",
+      "syntax": "<absolute-size> | <relative-size> | <length-percentage [0,∞]> | math",
+      "inherited": true,
+      "initial": "medium",
+      "mode": "single",
+      "irType": "FontSizeIR"
+    },
+    "font-stretch": {
+      "name": "font-stretch",
+      "syntax": "normal | ultra-condensed | extra-condensed | condensed | semi-condensed | semi-expanded | expanded | extra-expanded | ultra-expanded",
+      "inherited": true,
+      "initial": "normal",
+      "mode": "single",
+      "irType": "FontStretchIR"
+    },
+    "font-style": {
+      "name": "font-style",
+      "syntax": "normal | italic | oblique <angle [-90deg,90deg]>?",
+      "inherited": true,
+      "initial": "normal",
+      "mode": "single",
+      "irType": "FontStyleIR"
+    },
+    "font-variant": {
+      "name": "font-variant",
+      "syntax": "normal | small-caps",
+      "inherited": true,
+      "initial": "normal",
+      "mode": "single",
+      "irType": "FontVariantIR"
+    },
+    "font-variant-caps": {
+      "name": "font-variant-caps",
+      "syntax": "normal | small-caps | all-small-caps | petite-caps | all-petite-caps | unicase | titling-caps",
+      "inherited": true,
+      "initial": "normal",
+      "mode": "single",
+      "irType": "FontVariantCapsIR"
+    },
+    "font-variant-ligatures": {
+      "name": "font-variant-ligatures",
+      "syntax": "normal | none | [ common-ligatures | no-common-ligatures ] || [ discretionary-ligatures | no-discretionary-ligatures ] || [ historical-ligatures | no-historical-ligatures ] || [ contextual | no-contextual ]",
+      "inherited": true,
+      "initial": "normal",
+      "mode": "single",
+      "irType": "FontVariantLigaturesIR"
+    },
+    "font-variant-numeric": {
+      "name": "font-variant-numeric",
+      "syntax": "normal | [ lining-nums | oldstyle-nums ] || [ proportional-nums | tabular-nums ] || [ diagonal-fractions | stacked-fractions ] || ordinal || slashed-zero",
+      "inherited": true,
+      "initial": "normal",
+      "mode": "single",
+      "irType": "FontVariantNumericIR"
+    },
+    "font-weight": {
+      "name": "font-weight",
+      "syntax": "normal | bold | bolder | lighter | <number [1,1000]>",
+      "inherited": true,
+      "initial": "normal",
+      "mode": "single",
+      "irType": "FontWeightIR"
+    },
+    "letter-spacing": {
+      "name": "letter-spacing",
+      "syntax": "normal | <length>",
+      "inherited": true,
+      "initial": "normal",
+      "mode": "single",
+      "irType": "LetterSpacingIR"
+    },
+    "line-height": {
+      "name": "line-height",
+      "syntax": "normal | <number [0,∞]> | <length-percentage [0,∞]> | math",
+      "inherited": true,
+      "initial": "normal",
+      "mode": "single",
+      "irType": "LineHeightIR"
+    },
     "margin-bottom": {
       "name": "margin-bottom",
       "syntax": "<length-percentage> | auto",
@@ -370,6 +490,46 @@
       "mode": "single",
       "irType": "PerspectiveIR"
     },
+    "perspective-origin": {
+      "name": "perspective-origin",
+      "syntax": "<position>",
+      "inherited": false,
+      "initial": "50% 50%",
+      "mode": "single",
+      "irType": "PerspectiveOriginIR"
+    },
+    "text-align": {
+      "name": "text-align",
+      "syntax": "start | end | left | right | center | justify | match-parent",
+      "inherited": true,
+      "initial": "start",
+      "mode": "single",
+      "irType": "TextAlignIR"
+    },
+    "text-indent": {
+      "name": "text-indent",
+      "syntax": "<length-percentage>",
+      "inherited": true,
+      "initial": "0",
+      "mode": "single",
+      "irType": "TextIndentIR"
+    },
+    "text-overflow": {
+      "name": "text-overflow",
+      "syntax": "clip | ellipsis",
+      "inherited": false,
+      "initial": "clip",
+      "mode": "single",
+      "irType": "TextOverflowIR"
+    },
+    "text-transform": {
+      "name": "text-transform",
+      "syntax": "none | capitalize | uppercase | lowercase | full-width | full-size-kana",
+      "inherited": true,
+      "initial": "none",
+      "mode": "single",
+      "irType": "TextTransformIR"
+    },
     "transform": {
       "name": "transform",
       "syntax": "none | <transform-list>",
@@ -433,6 +593,22 @@
       "initial": "visible",
       "mode": "single",
       "irType": "VisibilityIR"
+    },
+    "white-space": {
+      "name": "white-space",
+      "syntax": "normal | pre | nowrap | pre-wrap | pre-line | break-spaces",
+      "inherited": true,
+      "initial": "normal",
+      "mode": "single",
+      "irType": "WhiteSpaceIR"
+    },
+    "word-spacing": {
+      "name": "word-spacing",
+      "syntax": "normal | <length-percentage>",
+      "inherited": true,
+      "initial": "normal",
+      "mode": "single",
+      "irType": "WordSpacingIR"
     }
   }
 }

@@ -1,72 +1,133 @@
-# Session 075: Animation Properties + Wave 1 Visual Properties
+# Session 077: Filter Effects
 
-**Date:** 2025-11-14
-**Focus:** Complete animation support + visual properties (opacity, color, visibility)
+**Date:** 2025-11-15
+**Focus:** Wave 3 - Filter and backdrop-filter properties
 **Status:** 🟢 COMPLETE
 
 ---
 
 ## ✅ Accomplished
 
-- Fixed `parseDeclarationList` logic (cleaner conditional)
-- Added 3 animation keyword sets (direction, fill-mode, play-state)
-- Added 8 animation properties (complete animation support)
-- Executed Wave 1: opacity, color, visibility
-- Fixed test failures
-- Created master plan (`docs/sessions/075/MASTER_PLAN.md`)
+**Infrastructure (Full Stack):**
 
----
+1. **@b/types** - Filter function types
+   - 11 filter function types (10 functions + index)
+   - All 10 CSS filter functions with proper Zod schemas
+   - Union type + list type for filter values
 
-## 📊 Metrics
+2. **@b/parsers** - Filter parsers
+   - 12 parser files (10 functions + number/percentage helper + index)
+   - Main dispatcher with all 10 filter functions
+   - Domain-specific `parseNumberOrPercentage` helper
+   - SVG filter references (url()) blocked with clear error (Phase 1)
 
-- **Properties:** 51 total (40 → 51, +11)
-- **Tests:** 2484 passing
-- **Commits:** 3
-  - Animation properties
-  - Wave 1 visual properties
-  - Test fixes
+3. **@b/generators** - Filter generators
+   - Single generator file with all 10 filter functions
+   - Proper handling of optional parameters
+   - Number vs percentage discrimination
+
+4. **@b/declarations** - Properties
+   - `filter` property: none | filter-value-list
+   - `backdrop-filter` property: none | filter-value-list
+   - Both registered in manifest
+
+**Filter functions implemented:**
+
+- `blur(length?)`
+- `brightness(number|percentage?)`
+- `contrast(number|percentage?)`
+- `grayscale(number|percentage?)`
+- `hue-rotate(angle?)`
+- `invert(number|percentage?)`
+- `opacity(number|percentage?)` ← filter function (not property)
+- `saturate(number|percentage?)`
+- `sepia(number|percentage?)`
+- `drop-shadow(color? && length{2,3})`
+
+**Metrics:**
+
+- **1,030 lines** of production code
+- **25 files** created across 4 packages
+- **57 properties** total (55 → 57, +2)
+- All 2481 tests passing ✅
+- All quality gates passing ✅
+- 17 smoke test scenarios verified ✅
+
+**Commits:**
+
+- `11b87b5` - feat: add filter and backdrop-filter properties
+- `20ddfe7` - docs: mark session 077 complete
 
 ---
 
 ## 📊 Current State
 
+**Properties:** 57 total
+**Tests:** 2481 passing
+**Last session:** 077 (filter properties complete)
+
 **Working:**
 
-- All 51 properties parse/generate correctly
-- Animation properties: 8 longhands (animation-name, animation-duration, animation-timing-function, animation-delay, animation-iteration-count, animation-direction, animation-fill-mode, animation-play-state)
-- Visual properties: opacity, color, visibility
-- Transition properties: 4 longhands
-- Box model: width, height, padding-_, margin-_, border-\*-width
-
-**Not working:**
-
-- CSS-wide keyword repetition (tracked debt, deferred)
+- All 10 filter functions
+- Multiple filter lists (space-separated)
+- Universal CSS functions (var, calc, etc.)
+- Optional parameters with defaults
+- Number and percentage variants
 
 ---
 
 ## 🎯 Next Steps
 
-**Priority: Wave 2 - Transform Core (4 properties)**
+**Master Plan Progress:**
 
-Movement, rotation, scaling = CRITICAL for visualizations
+- ✅ Wave 1: Opacity, color, visibility (Session 075)
+- ✅ Wave 2: Transform core (Session 076)
+- ✅ Wave 3: Filter effects (Session 077) ← **Just completed**
+- 🔜 Wave 4: Perspective properties (perspective-origin, backface-visibility)
 
-1. `transform`
-2. `transform-origin`
-3. `transform-style`
-4. `perspective`
+**Options:**
+
+1. **Complete Phase 1:** Wave 4 perspective properties (~45 min) → 59 properties total
+2. **Layout essentials:** display, position, z-index (~2 hours)
+3. **Font & text:** font-family, font-size, line-height (~2 hours)
+4. **NPM publishing:** Prepare @b/values for release
+
+**Recommended:** Complete Wave 4 → Strong v0.1.0 with full visualization effects stack
 
 ---
 
 ## 💡 Key Decisions
 
-- **Velocity over purity:** CSS-wide keyword repetition tracked, not blocking progress
-- **Hybrid strategy validated:** Fix quick wins, defer bigger architectural debt
-- **No shorthands:** Enforced longhands-only principle (ADR 001)
-- **Property count milestone:** 51 properties (from 40)
+1. **Domain-specific helper is correct**
+   - `parseNumberOrPercentage` kept in filter directory
+   - Not promoted to utils (different semantics across CSS)
+   - Documented in NUMBER_PERCENTAGE_ANALYSIS.md
+
+2. **SVG filter references deferred**
+   - `url()` filters blocked with clear error (Phase 1)
+   - Can add pass-through support later (~30 min)
+   - Documented in FILTER_INTEL.md
+
+3. **Parser precedence fixed**
+   - Try filter list FIRST (more specific)
+   - Fallback to universal css-value (var, calc)
+   - Enables multi-filter lists
+
+4. **TypeScript union narrowing**
+   - Fixed FilterIR to include all CSS-wide keywords
+   - Pattern: `"initial" | "inherit" | "unset" | "revert" | "revert-layer" | "none"`
+   - Consistent with transform property
 
 ---
 
 ## 🔗 References
 
+- Session docs: `docs/sessions/077/`
+- Filter intel: `docs/sessions/077/FILTER_INTEL.md`
+- Number/percentage analysis: `docs/sessions/077/NUMBER_PERCENTAGE_ANALYSIS.md`
 - Master plan: `docs/sessions/075/MASTER_PLAN.md`
-- ADR 001: `docs/architecture/decisions/001-longhands-only.md`
+
+---
+
+**Session duration:** ~90 minutes  
+**Last updated:** 2025-11-15 06:15 UTC

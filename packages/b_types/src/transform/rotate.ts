@@ -1,7 +1,7 @@
 // b_path:: packages/b_types/src/transform/rotate.ts
 
 import { z } from "zod";
-import { angleSchema } from "../angle";
+import { cssValueSchema } from "../values";
 
 /**
  * Rotate transform functions
@@ -11,28 +11,28 @@ import { angleSchema } from "../angle";
 export const rotateSchema = z
   .object({
     kind: z.literal("rotate"),
-    angle: angleSchema,
+    angle: cssValueSchema,
   })
   .strict();
 
 export const rotateXSchema = z
   .object({
     kind: z.literal("rotateX"),
-    angle: angleSchema,
+    angle: cssValueSchema,
   })
   .strict();
 
 export const rotateYSchema = z
   .object({
     kind: z.literal("rotateY"),
-    angle: angleSchema,
+    angle: cssValueSchema,
   })
   .strict();
 
 export const rotateZSchema = z
   .object({
     kind: z.literal("rotateZ"),
-    angle: angleSchema,
+    angle: cssValueSchema,
   })
   .strict();
 
@@ -42,7 +42,7 @@ export const rotate3dSchema = z
     x: z.number(),
     y: z.number(),
     z: z.number(),
-    angle: angleSchema,
+    angle: cssValueSchema,
   })
   .strict();
 

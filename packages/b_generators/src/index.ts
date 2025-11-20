@@ -7,6 +7,8 @@ export * as EasingFunction from "./easing-function";
 export * as Gradient from "./gradient";
 export * as Image from "./image";
 export * as Length from "./length";
+export * as Number from "./number";
 export * as Position from "./position";
 export * as Time from "./time";
 export * as Transform from "./transform";
+export * as Filter from "./filter";

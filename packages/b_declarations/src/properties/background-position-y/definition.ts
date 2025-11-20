@@ -10,6 +10,7 @@ export const backgroundPositionY = defineProperty<BackgroundPositionYIR>({
   syntax: "<length-percentage> | top | center | bottom",
   parser: parseBackgroundPositionY,
   generator: generateBackgroundPositionY,
+  multiValue: true,
   inherited: false,
   initial: "0%",
 });

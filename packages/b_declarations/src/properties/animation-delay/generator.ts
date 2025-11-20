@@ -2,13 +2,20 @@
 
 import { generateOk, type GenerateResult } from "@b/types";
 import * as Generators from "@b/generators";
+import { cssValueToCss } from "@b/utils";
 import type { AnimationDelayIR } from "./types";
 
 export function generateAnimationDelay(ir: AnimationDelayIR): GenerateResult {
-  if (ir.kind === "keyword") {
-    return generateOk(ir.value);
-  }
+  switch (ir.kind) {
+    case "keyword":
+      return generateOk(ir.value);
 
-  const result = Generators.Time.generate(ir.value);
-  return result;
+    case "time":
+      return Generators.Time.generate(ir.value);
+
+    case "value": {
+      const css = cssValueToCss(ir.value);
+      return generateOk(css);
+    }
+  }
 }

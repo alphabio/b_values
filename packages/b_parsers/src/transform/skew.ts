@@ -3,7 +3,7 @@
 import type * as csstree from "@eslint/css-tree";
 import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
 import type * as Type from "@b/types";
-import { parseAngleNode } from "../angle";
+import { parseNodeToCssValue } from "../utils/css-value-parser";
 
 /**
  * Parse skew functions from css-tree AST
@@ -20,15 +20,15 @@ export function parseSkewFunction(node: csstree.FunctionNode): ParseResult<Type.
       return parseErr("transform", createError("invalid-syntax", "skew() requires 1-2 arguments"));
     }
 
-    const xResult = parseAngleNode(args[0]);
+    const xResult = parseNodeToCssValue(args[0]);
     if (!xResult.ok) {
       return parseErr("transform", xResult.issues[0] ?? createError("invalid-value", "Invalid x angle"));
     }
 
     // Y defaults to 0deg if not provided
-    let y: Type.Angle = { value: 0, unit: "deg" };
+    let y: Type.CssValue = { kind: "literal", value: 0, unit: "deg" };
     if (args.length === 2) {
-      const yResult = parseAngleNode(args[1]);
+      const yResult = parseNodeToCssValue(args[1]);
       if (!yResult.ok) {
         return parseErr("transform", yResult.issues[0] ?? createError("invalid-value", "Invalid y angle"));
       }
@@ -46,7 +46,7 @@ export function parseSkewFunction(node: csstree.FunctionNode): ParseResult<Type.
     if (args.length !== 1) {
       return parseErr("transform", createError("invalid-syntax", "skewX() requires 1 argument"));
     }
-    const xResult = parseAngleNode(args[0]);
+    const xResult = parseNodeToCssValue(args[0]);
     if (!xResult.ok) {
       return parseErr("transform", xResult.issues[0] ?? createError("invalid-value", "Invalid x angle"));
     }
@@ -60,7 +60,7 @@ export function parseSkewFunction(node: csstree.FunctionNode): ParseResult<Type.
     if (args.length !== 1) {
       return parseErr("transform", createError("invalid-syntax", "skewY() requires 1 argument"));
     }
-    const yResult = parseAngleNode(args[0]);
+    const yResult = parseNodeToCssValue(args[0]);
     if (!yResult.ok) {
       return parseErr("transform", yResult.issues[0] ?? createError("invalid-value", "Invalid y angle"));
     }

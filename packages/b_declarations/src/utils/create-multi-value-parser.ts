@@ -151,8 +151,10 @@ export function createMultiValueParser<TItem, TFinal>(
       // 5. Check for universal CSS functions first (var, calc, min, max, clamp, etc.)
       // These are handled at the declaration layer, not by property-specific parsers.
       // This follows the same pattern as CSS-wide keywords (Session 057).
-      const firstNode = itemAst.children.first;
-      if (firstNode && isUniversalFunction(firstNode)) {
+      // ONLY short-circuit if the entire value is a single universal function.
+      const children = itemAst.children.toArray();
+      const firstNode = children[0];
+      if (children.length === 1 && firstNode && isUniversalFunction(firstNode)) {
         const universalResult = Utils.parseNodeToCssValue(firstNode);
         if (universalResult.ok) {
           // Cast is safe: TItem can be CssValue (union type in property schemas)

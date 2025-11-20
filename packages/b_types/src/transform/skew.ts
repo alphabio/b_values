@@ -1,7 +1,7 @@
 // b_path:: packages/b_types/src/transform/skew.ts
 
 import { z } from "zod";
-import { angleSchema } from "../angle";
+import { cssValueSchema } from "../values";
 
 /**
  * Skew transform functions
@@ -11,22 +11,22 @@ import { angleSchema } from "../angle";
 export const skewSchema = z
   .object({
     kind: z.literal("skew"),
-    x: angleSchema,
-    y: angleSchema,
+    x: cssValueSchema,
+    y: cssValueSchema,
   })
   .strict();
 
 export const skewXSchema = z
   .object({
     kind: z.literal("skewX"),
-    x: angleSchema,
+    x: cssValueSchema,
   })
   .strict();
 
 export const skewYSchema = z
   .object({
     kind: z.literal("skewY"),
-    y: angleSchema,
+    y: cssValueSchema,
   })
   .strict();
 

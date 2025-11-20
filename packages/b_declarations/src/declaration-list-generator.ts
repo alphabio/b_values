@@ -1,25 +1,18 @@
 // b_path:: packages/b_declarations/src/declaration-list-generator.ts
 import { createError, generateOk, type GenerateResult, type Issue } from "@b/types";
 import { generateDeclaration } from "./generator";
-import type { DeclarationResult } from "./types";
+import type { AnyDeclarationInput } from "./types";
 
 /**
- * Generate CSS declaration list from array of DeclarationResult.
+ * Generate CSS declaration list from array of typed declaration inputs.
  * Produces semicolon-separated declarations.
  *
- * @param declarations - Array of DeclarationResult to generate from
+ * @param declarations - Array of typed declarations to generate from
  * @returns GenerateResult with semicolon-separated string
  *
  * @example
- * ```ts
- * const result = generateDeclarationList([
- *   { property: "color", ir: colorIR },
- *   { property: "font-size", ir: fontSizeIR }
- * ]);
- * // Result: "color: red; font-size: 16px"
- * ```
  */
-export function generateDeclarationList(declarations: DeclarationResult[]): GenerateResult {
+export function generateDeclarationList(declarations: AnyDeclarationInput[]): GenerateResult {
   // Handle empty array
   if (declarations.length === 0) {
     return generateOk("");
@@ -30,16 +23,10 @@ export function generateDeclarationList(declarations: DeclarationResult[]): Gene
 
   // Generate each declaration
   for (const decl of declarations) {
-    // Note: Don't pass important flag here to avoid double appending
-    const result = generateDeclaration({
-      property: decl.property as never,
-      ir: decl.ir as never,
-    });
+    const result = generateDeclaration(decl);
 
     if (result.ok) {
-      // Append !important based on DeclarationResult flag
-      const cssText = decl.important ? `${result.value} !important` : result.value;
-      results.push(cssText);
+      results.push(result.value);
     }
 
     if (result.issues.length > 0) {

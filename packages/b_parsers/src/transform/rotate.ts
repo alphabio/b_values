@@ -3,7 +3,7 @@
 import type * as csstree from "@eslint/css-tree";
 import { createError, parseErr, parseOk, type ParseResult } from "@b/types";
 import type * as Type from "@b/types";
-import { parseAngleNode } from "../angle";
+import { parseNodeToCssValue } from "../utils/css-value-parser";
 
 /**
  * Parse rotate functions from css-tree AST
@@ -19,7 +19,7 @@ export function parseRotateFunction(node: csstree.FunctionNode): ParseResult<Typ
     if (args.length !== 1) {
       return parseErr("transform", createError("invalid-syntax", "rotate() requires 1 argument"));
     }
-    const angleResult = parseAngleNode(args[0]);
+    const angleResult = parseNodeToCssValue(args[0]);
     if (!angleResult.ok) {
       return parseErr("transform", angleResult.issues[0] ?? createError("invalid-value", "Invalid angle"));
     }
@@ -33,7 +33,7 @@ export function parseRotateFunction(node: csstree.FunctionNode): ParseResult<Typ
     if (args.length !== 1) {
       return parseErr("transform", createError("invalid-syntax", "rotateX() requires 1 argument"));
     }
-    const angleResult = parseAngleNode(args[0]);
+    const angleResult = parseNodeToCssValue(args[0]);
     if (!angleResult.ok) {
       return parseErr("transform", angleResult.issues[0] ?? createError("invalid-value", "Invalid angle"));
     }
@@ -47,7 +47,7 @@ export function parseRotateFunction(node: csstree.FunctionNode): ParseResult<Typ
     if (args.length !== 1) {
       return parseErr("transform", createError("invalid-syntax", "rotateY() requires 1 argument"));
     }
-    const angleResult = parseAngleNode(args[0]);
+    const angleResult = parseNodeToCssValue(args[0]);
     if (!angleResult.ok) {
       return parseErr("transform", angleResult.issues[0] ?? createError("invalid-value", "Invalid angle"));
     }
@@ -61,7 +61,7 @@ export function parseRotateFunction(node: csstree.FunctionNode): ParseResult<Typ
     if (args.length !== 1) {
       return parseErr("transform", createError("invalid-syntax", "rotateZ() requires 1 argument"));
     }
-    const angleResult = parseAngleNode(args[0]);
+    const angleResult = parseNodeToCssValue(args[0]);
     if (!angleResult.ok) {
       return parseErr("transform", angleResult.issues[0] ?? createError("invalid-value", "Invalid angle"));
     }
@@ -91,7 +91,7 @@ export function parseRotateFunction(node: csstree.FunctionNode): ParseResult<Typ
     const xResult = parseNumber(args[0]);
     const yResult = parseNumber(args[1]);
     const zResult = parseNumber(args[2]);
-    const angleResult = parseAngleNode(args[3]);
+    const angleResult = parseNodeToCssValue(args[3]);
 
     if (!xResult.ok || !yResult.ok || !zResult.ok || !angleResult.ok) {
       return parseErr("transform", createError("invalid-value", "Invalid rotate3d arguments"));

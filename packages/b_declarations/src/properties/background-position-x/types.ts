@@ -4,4 +4,4 @@ import type { CssValue } from "@b/types";
 
 export type BackgroundPositionXIR =
   | { kind: "keyword"; value: "initial" | "inherit" | "unset" | "revert" | "revert-layer" }
-  | { kind: "value"; value: CssValue };
+  | { kind: "list"; values: CssValue[] };

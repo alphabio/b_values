@@ -2,6 +2,7 @@
 
 import type { ParseResult } from "@b/types";
 import * as Keywords from "@b/keywords";
+import * as Parsers from "@b/parsers";
 import type * as csstree from "@eslint/css-tree";
 import type { AnimationIterationCountIR } from "./types";
 
@@ -46,42 +47,16 @@ export function parseAnimationIterationCount(ast: csstree.Value): ParseResult<An
     }
   }
 
-  if (firstNode.type === "Number") {
-    const num = Number.parseFloat(firstNode.value);
+  const valueResult = Parsers.Utils.parseNodeToCssValue(firstNode);
 
-    if (Number.isNaN(num) || num < 0) {
-      return {
-        ok: false,
-        property: "animation-iteration-count",
-        value: undefined,
-        issues: [
-          {
-            code: "invalid-value",
-            severity: "error",
-            message: "animation-iteration-count must be a non-negative number",
-          },
-        ],
-      };
-    }
-
+  if (valueResult.ok) {
     return {
       ok: true,
       property: "animation-iteration-count",
-      value: { kind: "number", value: num },
-      issues: [],
+      value: { kind: "value", value: valueResult.value },
+      issues: valueResult.issues,
     };
   }
 
-  return {
-    ok: false,
-    property: "animation-iteration-count",
-    value: undefined,
-    issues: [
-      {
-        code: "invalid-value",
-        severity: "error",
-        message: "Invalid animation-iteration-count value",
-      },
-    ],
-  };
+  return valueResult as ParseResult<AnimationIterationCountIR>;
 }

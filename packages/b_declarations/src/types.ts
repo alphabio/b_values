@@ -1,16 +1,29 @@
 // b_path:: packages/b_declarations/src/types.ts
 
-// This module defines the core types for the @b/declarations package.
-//
-// - PropertyIRMap is now derived from PROPERTY_DEFINITIONS (see types.derived.ts)
-// - RegisteredProperty is the union of all known property names
-// - PropertyDefinition describes how each property integrates into the registry
-// - Parser / generator function signatures used by property implementations
+/**
+ * This module defines the core types for the @b/declarations package.
+ *
+ * - PropertyIRMap is now derived from PROPERTY_DEFINITIONS (see types.derived.ts)
+ * - RegisteredProperty is the union of all known property names
+ * - PropertyDefinition describes how each property integrates into the registry
+ * - Parser / generator function signatures used by property implementations
+ */
 
 import type { ParseResult, GenerateResult } from "@b/types";
 import type { PropertyIRMap } from "./types.derived";
+import type { GenerateDeclarationInput } from "./generator";
+import type { RegisteredProperty } from "./types";
 
 export type { PropertyIRMap, RegisteredProperty } from "./types.derived";
+
+/**
+ * Union of all possible declaration inputs for registered properties.
+ *
+ * This type is used for type-safe declaration generation and parsing.
+ */
+export type AnyDeclarationInput = {
+  [K in RegisteredProperty]: GenerateDeclarationInput<K>;
+}[RegisteredProperty];
 
 /**
  * Basic CSS declaration input structure.

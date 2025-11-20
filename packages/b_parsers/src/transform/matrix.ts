@@ -9,7 +9,7 @@ import type * as Type from "@b/types";
  * @see https://drafts.csswg.org/css-transforms-2/#funcdef-matrix
  */
 
-function parseNumber(node: csstree.CssNode): ParseResult<number> {
+function parseNumber(node: csstree.CssNode): ParseResult<Type.CssValue> {
   if (node.type !== "Number") {
     return parseErr("transform", createError("invalid-syntax", "Expected number"));
   }
@@ -17,7 +17,7 @@ function parseNumber(node: csstree.CssNode): ParseResult<number> {
   if (Number.isNaN(num)) {
     return parseErr("transform", createError("invalid-value", "Invalid number"));
   }
-  return parseOk(num);
+  return parseOk({ kind: "literal", value: num });
 }
 
 export function parseMatrixFunction(node: csstree.FunctionNode): ParseResult<Type.MatrixFunction> {
@@ -35,7 +35,7 @@ export function parseMatrixFunction(node: csstree.FunctionNode): ParseResult<Typ
       return parseErr("transform", createError("invalid-value", "Invalid matrix arguments"));
     }
 
-    const [a, b, c, d, e, f] = results.map((r) => (r as { ok: true; value: number }).value);
+    const [a, b, c, d, e, f] = results.map((r) => (r as { ok: true; value: Type.CssValue }).value);
 
     return parseOk({
       kind: "matrix",
@@ -58,23 +58,23 @@ export function parseMatrixFunction(node: csstree.FunctionNode): ParseResult<Typ
       return parseErr("transform", createError("invalid-value", "Invalid matrix3d arguments"));
     }
 
-    const values = results.map((r) => (r as { ok: true; value: number }).value) as [
-      number,
-      number,
-      number,
-      number,
-      number,
-      number,
-      number,
-      number,
-      number,
-      number,
-      number,
-      number,
-      number,
-      number,
-      number,
-      number,
+    const values = results.map((r) => (r as { ok: true; value: Type.CssValue }).value) as [
+      Type.CssValue,
+      Type.CssValue,
+      Type.CssValue,
+      Type.CssValue,
+      Type.CssValue,
+      Type.CssValue,
+      Type.CssValue,
+      Type.CssValue,
+      Type.CssValue,
+      Type.CssValue,
+      Type.CssValue,
+      Type.CssValue,
+      Type.CssValue,
+      Type.CssValue,
+      Type.CssValue,
+      Type.CssValue,
     ];
 
     return parseOk({

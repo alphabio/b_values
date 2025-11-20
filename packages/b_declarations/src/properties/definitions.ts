@@ -34,6 +34,7 @@ import { animationIterationCount } from "./animation-iteration-count/definition"
 import { animationName } from "./animation-name/definition";
 import { animationPlayState } from "./animation-play-state/definition";
 import { animationTimingFunction } from "./animation-timing-function/definition";
+import { backdropFilterProperty } from "./backdrop-filter/definition";
 import { backgroundAttachment } from "./background-attachment/definition";
 import { backgroundBlendMode } from "./background-blend-mode/definition";
 import { backgroundClip } from "./background-clip/definition";
@@ -61,6 +62,20 @@ import { borderTopRightRadius } from "./border-top-right-radius/definition";
 import { borderTopStyle } from "./border-top-style/definition";
 import { borderTopWidth } from "./border-top-width/definition";
 import { color } from "./color/definition";
+import { filterProperty } from "./filter/definition";
+import { fontFamily } from "./font-family/definition";
+import { fontKerning } from "./font-kerning/definition";
+import { fontOpticalSizing } from "./font-optical-sizing/definition";
+import { fontSize } from "./font-size/definition";
+import { fontStretch } from "./font-stretch/definition";
+import { fontStyle } from "./font-style/definition";
+import { fontVariant } from "./font-variant/definition";
+import { fontVariantCaps } from "./font-variant-caps/definition";
+import { fontVariantLigatures } from "./font-variant-ligatures/definition";
+import { fontVariantNumeric } from "./font-variant-numeric/definition";
+import { fontWeight } from "./font-weight/definition";
+import { letterSpacing } from "./letter-spacing/definition";
+import { lineHeight } from "./line-height/definition";
 import { marginBottom } from "./margin-bottom/definition";
 import { marginLeft } from "./margin-left/definition";
 import { marginRight } from "./margin-right/definition";
@@ -72,6 +87,11 @@ import { paddingLeft } from "./padding-left/definition";
 import { paddingRight } from "./padding-right/definition";
 import { paddingTop } from "./padding-top/definition";
 import { perspective } from "./perspective/definition";
+import { perspectiveOrigin } from "./perspective-origin/definition";
+import { textAlign } from "./text-align/definition";
+import { textIndent } from "./text-indent/definition";
+import { textOverflow } from "./text-overflow/definition";
+import { textTransform } from "./text-transform/definition";
 import { transform } from "./transform/definition";
 import { transformOrigin } from "./transform-origin/definition";
 import { transformStyle } from "./transform-style/definition";
@@ -80,6 +100,8 @@ import { transitionDuration } from "./transition-duration/definition";
 import { transitionProperty } from "./transition-property/definition";
 import { transitionTimingFunction } from "./transition-timing-function/definition";
 import { visibility } from "./visibility/definition";
+import { whiteSpace } from "./white-space/definition";
+import { wordSpacing } from "./word-spacing/definition";
 
 /**
  * Central definitions object.
@@ -102,6 +124,7 @@ export const PROPERTY_DEFINITIONS = {
   "animation-name": animationName,
   "animation-play-state": animationPlayState,
   "animation-timing-function": animationTimingFunction,
+  "backdrop-filter": backdropFilterProperty,
   "background-attachment": backgroundAttachment,
   "background-blend-mode": backgroundBlendMode,
   "background-clip": backgroundClip,
@@ -128,26 +151,47 @@ export const PROPERTY_DEFINITIONS = {
   "border-top-right-radius": borderTopRightRadius,
   "border-top-style": borderTopStyle,
   "border-top-width": borderTopWidth,
-  "color": color,
+  color: color,
+  filter: filterProperty,
+  "font-family": fontFamily,
+  "font-kerning": fontKerning,
+  "font-optical-sizing": fontOpticalSizing,
+  "font-size": fontSize,
+  "font-stretch": fontStretch,
+  "font-style": fontStyle,
+  "font-variant": fontVariant,
+  "font-variant-caps": fontVariantCaps,
+  "font-variant-ligatures": fontVariantLigatures,
+  "font-variant-numeric": fontVariantNumeric,
+  "font-weight": fontWeight,
+  "letter-spacing": letterSpacing,
+  "line-height": lineHeight,
   "margin-bottom": marginBottom,
   "margin-left": marginLeft,
   "margin-right": marginRight,
   "margin-top": marginTop,
   "mix-blend-mode": mixBlendMode,
-  "opacity": opacity,
+  opacity: opacity,
   "padding-bottom": paddingBottom,
   "padding-left": paddingLeft,
   "padding-right": paddingRight,
   "padding-top": paddingTop,
-  "perspective": perspective,
-  "transform": transform,
+  perspective: perspective,
+  "perspective-origin": perspectiveOrigin,
+  "text-align": textAlign,
+  "text-indent": textIndent,
+  "text-overflow": textOverflow,
+  "text-transform": textTransform,
+  transform: transform,
   "transform-origin": transformOrigin,
   "transform-style": transformStyle,
   "transition-delay": transitionDelay,
   "transition-duration": transitionDuration,
   "transition-property": transitionProperty,
   "transition-timing-function": transitionTimingFunction,
-  "visibility": visibility,
+  visibility: visibility,
+  "white-space": whiteSpace,
+  "word-spacing": wordSpacing,
 } as const;
 
 /**

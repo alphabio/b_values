@@ -1,6 +1,7 @@
 // b_path:: packages/b_types/src/transform/matrix.ts
 
 import { z } from "zod";
+import { cssValueSchema } from "../values";
 
 /**
  * Matrix transform functions
@@ -10,12 +11,12 @@ import { z } from "zod";
 export const matrixSchema = z
   .object({
     kind: z.literal("matrix"),
-    a: z.number(),
-    b: z.number(),
-    c: z.number(),
-    d: z.number(),
-    e: z.number(),
-    f: z.number(),
+    a: cssValueSchema,
+    b: cssValueSchema,
+    c: cssValueSchema,
+    d: cssValueSchema,
+    e: cssValueSchema,
+    f: cssValueSchema,
   })
   .strict();
 
@@ -23,22 +24,22 @@ export const matrix3dSchema = z
   .object({
     kind: z.literal("matrix3d"),
     values: z.tuple([
-      z.number(),
-      z.number(),
-      z.number(),
-      z.number(),
-      z.number(),
-      z.number(),
-      z.number(),
-      z.number(),
-      z.number(),
-      z.number(),
-      z.number(),
-      z.number(),
-      z.number(),
-      z.number(),
-      z.number(),
-      z.number(),
+      cssValueSchema,
+      cssValueSchema,
+      cssValueSchema,
+      cssValueSchema,
+      cssValueSchema,
+      cssValueSchema,
+      cssValueSchema,
+      cssValueSchema,
+      cssValueSchema,
+      cssValueSchema,
+      cssValueSchema,
+      cssValueSchema,
+      cssValueSchema,
+      cssValueSchema,
+      cssValueSchema,
+      cssValueSchema,
     ]),
   })
   .strict();
